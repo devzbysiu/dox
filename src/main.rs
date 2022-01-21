@@ -29,8 +29,8 @@ fn main() -> Result<()> {
     });
 
     loop {
-        let docs = doc_rx.recv()?;
-        let _ = docs
+        let paths = doc_rx.recv()?;
+        let _paths = paths
             .par_iter()
             .map(extract_text)
             .filter_map(Result::ok)
