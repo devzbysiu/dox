@@ -1,0 +1,32 @@
+# When releasing to crates.io:
+#
+# - last check for all TODO, FIXME, expect, unwrap.
+# - re-read and final polish of documentation
+# - run cargo udeps
+# - run cargo clippy
+# - recheck log statements (informative, none left that were just for development, ...)
+# - Update CHANGELOG.md.
+# - Update version numbers in Cargo.yml, Cargo.toml, install section of readme.
+# - verify CI result
+# - run cargo test on dependent crates
+# - cargo publish
+# - merge dev branch into master
+# - create git tag with version number
+#
+[package]
+name = "dox"
+version = "0.1.0"
+authors = ["Bartosz Zbytniewski <bartosz.zbytniewski.dev@gmail.com>"]
+edition = "2018"
+description = ""
+repository = "https://github.com/{[username]}/dox"
+license = "MIT/Apache-2.0"
+readme = "README.md"
+keywords = []
+categories = []
+homepage = ""
+documentation = ""
+
+[dependencies]
+log = "0.4.11"
+pretty_env_logger = "0.4.0"
