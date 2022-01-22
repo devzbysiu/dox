@@ -5,7 +5,7 @@ use leptess::LepTess;
 use log::{debug, error};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
@@ -77,11 +77,8 @@ fn main() -> Result<()> {
         Path::new("/home/zbychu/tests/scanned-docs/doc7.jpg").to_path_buf(),
         Path::new("/home/zbychu/tests/scanned-docs/doc8.webp").to_path_buf(),
     ];
-    let tuples = paths
-        .par_iter()
-        .map(extract_text)
-        .filter_map(Result::ok)
-        .collect::<Vec<IndexTuple>>();
+
+    let tuples = extract_text(&paths);
 
     let index_path = dirs::data_dir().unwrap().join("dox");
     let mut schema_builder = Schema::builder();
@@ -114,7 +111,15 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn extract_text<P: AsRef<Path>>(path: P) -> Result<IndexTuple> {
+fn extract_text(paths: &[PathBuf]) -> Vec<IndexTuple> {
+    paths
+        .par_iter()
+        .map(make_tuple)
+        .filter_map(Result::ok)
+        .collect::<Vec<IndexTuple>>()
+}
+
+fn make_tuple<P: AsRef<Path>>(path: P) -> Result<IndexTuple> {
     let mut lt = LepTess::new(None, "pol")?;
     lt.set_image(path.as_ref())?;
     Ok(IndexTuple::new(path, lt.get_utf8_text()?))
