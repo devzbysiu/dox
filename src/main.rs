@@ -118,6 +118,8 @@ fn extract_text(paths: &[PathBuf]) -> Vec<IndexTuple> {
 }
 
 fn make_tuple<P: AsRef<Path>>(path: P) -> Result<IndexTuple> {
+    // it's actually more efficient to create LepTess
+    // each time than sharing it between threads
     let mut lt = LepTess::new(None, "pol")?;
     lt.set_image(path.as_ref())?;
     Ok(IndexTuple::new(path, lt.get_utf8_text()?))
