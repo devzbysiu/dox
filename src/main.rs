@@ -118,7 +118,7 @@ fn extract_text(paths: &[PathBuf]) -> Vec<IndexTuple> {
 }
 
 fn make_tuple<P: AsRef<Path>>(path: P) -> Result<IndexTuple> {
-    // it's actually more efficient to create LepTess
+    // NOTE: it's actually more efficient to create LepTess
     // each time than sharing it between threads
     let mut lt = LepTess::new(None, "pol")?;
     lt.set_image(path.as_ref())?;
@@ -127,6 +127,8 @@ fn make_tuple<P: AsRef<Path>>(path: P) -> Result<IndexTuple> {
 
 fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy::Result<()> {
     debug!("indexing...");
+    // NOTE: IndexWriter is already multithreaded and
+    // cannot be shared between external threads
     let mut index_writer = index.writer(50_000_000)?;
     let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
     let body = schema.get_field(&Fields::Body.to_string()).unwrap();
