@@ -86,11 +86,7 @@ fn index_docs<P: AsRef<Path>>(
     let mut index_writer = index.writer(50_000_000)?;
     let path = schema.get_field("path").unwrap();
     let body = schema.get_field("body").unwrap();
-    index_writer.add_document(doc!(
-        path => p.as_ref().display().to_string(),
-        body => s
-    ));
+    index_writer.add_document(doc!(path => p.as_ref().display().to_string(), body => s));
     index_writer.commit()?;
-
     Ok(p)
 }
