@@ -1,5 +1,6 @@
 use anyhow::Result;
 use cooldown_buffer::cooldown_buffer;
+use core::fmt;
 use leptess::LepTess;
 use log::{debug, error};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
@@ -15,13 +16,27 @@ use tantivy::schema::*;
 use tantivy::{doc, Index, ReloadPolicy};
 
 struct IndexTuple {
-    name: String,
+    filename: String,
     body: String,
+}
+
+enum Fields {
+    Filename,
+    Body,
+}
+
+impl fmt::Display for Fields {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Fields::Filename => write!(f, "filename"),
+            Fields::Body => write!(f, "body"),
+        }
+    }
 }
 
 impl IndexTuple {
     fn new<S: Into<String>, A: AsRef<Path>>(path: A, body: S) -> Self {
-        let name = path
+        let filename = path
             .as_ref()
             .file_name()
             .unwrap()
@@ -29,7 +44,7 @@ impl IndexTuple {
             .unwrap()
             .to_string();
         let body = body.into();
-        Self { name, body }
+        Self { filename, body }
     }
 }
 
@@ -70,8 +85,8 @@ fn main() -> Result<()> {
 
     let index_path = dirs::data_dir().unwrap().join("dox");
     let mut schema_builder = Schema::builder();
-    schema_builder.add_text_field("path", TEXT | STORED);
-    schema_builder.add_text_field("body", TEXT);
+    schema_builder.add_text_field(&Fields::Filename.to_string(), TEXT | STORED);
+    schema_builder.add_text_field(&Fields::Body.to_string(), TEXT);
     let schema = schema_builder.build();
     let index = Index::create_in_dir(&index_path, schema.clone())?;
 
@@ -85,9 +100,9 @@ fn main() -> Result<()> {
         .reload_policy(ReloadPolicy::OnCommit)
         .try_into()?;
     let searcher = reader.searcher();
-    let path = schema.get_field("path").unwrap();
-    let body = schema.get_field("body").unwrap();
-    let query_parser = QueryParser::for_index(&index, vec![path, body]);
+    let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
+    let body = schema.get_field(&Fields::Body.to_string()).unwrap();
+    let query_parser = QueryParser::for_index(&index, vec![filename, body]);
     let query = query_parser.parse_query("komentarz dotyczący przebiegu akcji")?;
     let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
 
@@ -99,19 +114,22 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn extract_text<P: AsRef<Path>>(p: P) -> Result<IndexTuple> {
+fn extract_text<P: AsRef<Path>>(path: P) -> Result<IndexTuple> {
     let mut lt = LepTess::new(None, "pol")?;
-    lt.set_image(p.as_ref())?;
-    Ok(IndexTuple::new(p, lt.get_utf8_text()?))
+    lt.set_image(path.as_ref())?;
+    Ok(IndexTuple::new(path, lt.get_utf8_text()?))
 }
 
 fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy::Result<()> {
     let mut index_writer = index.writer(50_000_000)?;
-    let path = schema.get_field("path").unwrap();
-    let body = schema.get_field("body").unwrap();
+    let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
+    let body = schema.get_field(&Fields::Body.to_string()).unwrap();
     tuples.iter().for_each(|tuple| {
-        debug!("indexing {}", tuple.name);
-        index_writer.add_document(doc!(path => tuple.name.clone(), body => tuple.body.clone()));
+        debug!("indexing {}", tuple.filename);
+        index_writer.add_document(doc!(
+            filename => tuple.filename.clone(),
+            body => tuple.body.clone()
+        ));
         index_writer.commit().unwrap();
     });
     Ok(())
