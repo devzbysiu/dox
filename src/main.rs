@@ -65,31 +65,18 @@ fn main() -> Result<()> {
         }
     });
 
-    // loop {
-    // let paths = doc_rx.recv()?;
-    let paths = vec![
-        Path::new("/home/zbychu/tests/scanned-docs/doc1.png").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc2.jpg").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc3.jpg").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc4.webp").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc5.png").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc6.jpg").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc7.jpg").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc8.webp").to_path_buf(),
-    ];
+    let (index, schema) = mk_idx_and_schema("dox")?;
 
-    let tuples = extract_text(&paths);
-
-    let index_path = dirs::data_dir().unwrap().join("dox");
-    let mut schema_builder = Schema::builder();
-    schema_builder.add_text_field(&Fields::Filename.to_string(), TEXT | STORED);
-    schema_builder.add_text_field(&Fields::Body.to_string(), TEXT);
-    let schema = schema_builder.build();
-    let index = Index::create_in_dir(&index_path, schema.clone())?;
-
-    index_docs(&tuples, &index, &schema)?;
-
-    // }
+    let (thread_idx, thread_schema) = (index.clone(), schema.clone());
+    thread::spawn(move || -> Result<()> {
+        loop {
+            let paths = doc_rx.recv()?;
+            debug!("new docs: {:?}", paths);
+            let tuples = extract_text(&paths);
+            index_docs(&tuples, &thread_idx, &thread_schema)?;
+        }
+    });
+    thread::sleep(Duration::from_secs(10));
 
     debug!("searching...");
     let reader = index
@@ -111,7 +98,18 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+fn mk_idx_and_schema<A: AsRef<Path>>(relative_path: A) -> Result<(Index, Schema)> {
+    let index_path = dirs::data_dir().unwrap().join(relative_path);
+    let mut schema_builder = Schema::builder();
+    schema_builder.add_text_field(&Fields::Filename.to_string(), TEXT | STORED);
+    schema_builder.add_text_field(&Fields::Body.to_string(), TEXT);
+    let schema = schema_builder.build();
+    let index = Index::create_in_dir(&index_path, schema.clone())?;
+    Ok((index, schema))
+}
+
 fn extract_text(paths: &[PathBuf]) -> Vec<IndexTuple> {
+    debug!("extracting text...");
     paths
         .par_iter()
         .map(make_tuple)
@@ -126,6 +124,7 @@ fn make_tuple<P: AsRef<Path>>(path: P) -> Result<IndexTuple> {
 }
 
 fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy::Result<()> {
+    debug!("indexing...");
     let mut index_writer = index.writer(50_000_000)?;
     let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
     let body = schema.get_field(&Fields::Body.to_string()).unwrap();
@@ -138,4 +137,18 @@ fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy:
         index_writer.commit().unwrap();
     });
     Ok(())
+}
+
+#[allow(dead_code)] // TODO: for testing purposes only
+fn test_files() -> Vec<PathBuf> {
+    vec![
+        Path::new("/home/zbychu/tests/scanned-docs/doc1.png").to_path_buf(),
+        Path::new("/home/zbychu/tests/scanned-docs/doc2.jpg").to_path_buf(),
+        Path::new("/home/zbychu/tests/scanned-docs/doc3.jpg").to_path_buf(),
+        Path::new("/home/zbychu/tests/scanned-docs/doc4.webp").to_path_buf(),
+        Path::new("/home/zbychu/tests/scanned-docs/doc5.png").to_path_buf(),
+        Path::new("/home/zbychu/tests/scanned-docs/doc6.jpg").to_path_buf(),
+        Path::new("/home/zbychu/tests/scanned-docs/doc7.jpg").to_path_buf(),
+        Path::new("/home/zbychu/tests/scanned-docs/doc8.webp").to_path_buf(),
+    ]
 }
