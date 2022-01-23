@@ -5,6 +5,9 @@ use leptess::LepTess;
 use log::{debug, error};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rocket::serde::json::Json;
+use rocket::serde::Serialize;
+use rocket::{get, launch, routes, State};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
 use std::thread;
@@ -14,8 +17,6 @@ use tantivy::collector::TopDocs;
 use tantivy::query::QueryParser;
 use tantivy::schema::*;
 use tantivy::{doc, Index, LeasedItem, ReloadPolicy, Searcher};
-
-use rocket::{get, launch, routes, State};
 
 struct IndexTuple {
     filename: String,
@@ -53,7 +54,7 @@ impl IndexTuple {
 struct Repo {
     searcher: LeasedItem<Searcher>,
     parser: QueryParser,
-    schema: Schema,
+    filename: Field,
 }
 
 impl Repo {
@@ -70,28 +71,59 @@ impl Repo {
         Ok(Self {
             searcher,
             parser,
-            schema,
+            filename,
         })
     }
 
-    fn search(&self, term: String) -> Result<Vec<String>> {
+    fn search(&self, term: String) -> Result<SearchResults> {
         debug!("searching '{}'...", term);
         let query = self.parser.parse_query(&term)?;
         let top_docs = self.searcher.search(&query, &TopDocs::with_limit(10))?;
 
         if top_docs.is_empty() {
             debug!("no results found for term '{}'", term);
-            return Ok(Vec::new());
+            return Ok(SearchResults::empty());
         }
-        debug!("results:");
-        let mut res = Vec::new();
+        let mut results = Vec::new();
         for (_score, doc_address) in top_docs {
-            let retrieved_doc = self.searcher.doc(doc_address)?;
-            let json = self.schema.to_json(&retrieved_doc);
-            debug!("\t{}", json);
-            res.push(json);
+            let retrieved_doc: Document = self.searcher.doc(doc_address)?;
+            let filenames = retrieved_doc.get_all(self.filename);
+            results.extend(
+                filenames
+                    .filter_map(Value::text)
+                    .map(ToString::to_string)
+                    .map(SearchEntry::new)
+                    .collect::<Vec<SearchEntry>>(),
+            );
         }
-        Ok(res)
+        debug!("results: {:?}", results);
+        Ok(SearchResults::new(results))
+    }
+}
+
+#[derive(Debug, Serialize, Default)]
+struct SearchResults {
+    results: Vec<SearchEntry>,
+}
+
+impl SearchResults {
+    fn new(results: Vec<SearchEntry>) -> Self {
+        Self { results }
+    }
+
+    fn empty() -> Self {
+        Self::default()
+    }
+}
+
+#[derive(Debug, Serialize, Default)]
+struct SearchEntry {
+    filename: String,
+}
+
+impl SearchEntry {
+    fn new(filename: String) -> Self {
+        Self { filename }
     }
 }
 
@@ -180,8 +212,8 @@ fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy:
 }
 
 #[get("/search/<query>")]
-fn search(query: String, repo: &State<Repo>) -> String {
-    format!("{:?}", repo.search(query).unwrap())
+fn search(query: String, repo: &State<Repo>) -> Json<SearchResults> {
+    Json(repo.search(query).unwrap())
 }
 
 #[allow(dead_code)] // TODO: for testing purposes only
