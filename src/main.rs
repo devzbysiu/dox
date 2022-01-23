@@ -81,25 +81,23 @@ impl Repo {
         let query = self.parser.parse_query(&term)?;
         let top_docs = self.searcher.search(&query, &TopDocs::with_limit(10))?;
 
-        if top_docs.is_empty() {
-            debug!("no results found for term '{}'", term);
-            return Ok(SearchResults::empty());
-        }
         let mut results = Vec::new();
         for (_score, doc_address) in top_docs {
-            let retrieved_doc: Document = self.searcher.doc(doc_address)?;
+            let retrieved_doc = self.searcher.doc(doc_address)?;
             let filenames = retrieved_doc.get_all(self.filename);
-            results.extend(
-                filenames
-                    .filter_map(Value::text)
-                    .map(ToString::to_string)
-                    .map(SearchEntry::new)
-                    .collect::<Vec<SearchEntry>>(),
-            );
+            results.extend(to_search_entries(filenames));
         }
         debug!("results: {:?}", results);
         Ok(SearchResults::new(results))
     }
+}
+
+fn to_search_entries<'a, I: Iterator<Item = &'a Value>>(filenames: I) -> Vec<SearchEntry> {
+    filenames
+        .filter_map(Value::text)
+        .map(ToString::to_string)
+        .map(SearchEntry::new)
+        .collect::<Vec<SearchEntry>>()
 }
 
 #[derive(Debug, Serialize, Default)]
@@ -110,10 +108,6 @@ struct SearchResults {
 impl SearchResults {
     fn new(results: Vec<SearchEntry>) -> Self {
         Self { results }
-    }
-
-    fn empty() -> Self {
-        Self::default()
     }
 }
 
