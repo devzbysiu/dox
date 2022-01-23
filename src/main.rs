@@ -13,9 +13,9 @@ use std::time::Duration;
 use tantivy::collector::TopDocs;
 use tantivy::query::QueryParser;
 use tantivy::schema::*;
-use tantivy::{doc, Index, ReloadPolicy};
+use tantivy::{doc, Index, LeasedItem, ReloadPolicy, Searcher};
 
-use rocket::{get, launch, routes};
+use rocket::{get, launch, routes, State};
 
 struct IndexTuple {
     filename: String,
@@ -50,12 +50,59 @@ impl IndexTuple {
     }
 }
 
-#[launch]
-fn launch() -> _ {
-    rocket::build().mount("/", routes![search])
+struct Repo {
+    searcher: LeasedItem<Searcher>,
+    parser: QueryParser,
+    schema: Schema,
 }
 
-fn setup() -> Result<()> {
+impl Repo {
+    fn new(index: Index, schema: Schema) -> Result<Self> {
+        let reader = index
+            .reader_builder()
+            .reload_policy(ReloadPolicy::OnCommit)
+            .try_into()?;
+        let searcher = reader.searcher();
+        let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
+        let body = schema.get_field(&Fields::Body.to_string()).unwrap();
+        let parser = QueryParser::for_index(&index, vec![filename, body]);
+
+        Ok(Self {
+            searcher,
+            parser,
+            schema,
+        })
+    }
+
+    fn search(&self, term: String) -> Result<Vec<String>> {
+        debug!("searching '{}'...", term);
+        let query = self.parser.parse_query(&term)?;
+        let top_docs = self.searcher.search(&query, &TopDocs::with_limit(10))?;
+
+        if top_docs.is_empty() {
+            debug!("no results found for term '{}'", term);
+            return Ok(Vec::new());
+        }
+        debug!("results:");
+        let mut res = Vec::new();
+        for (_score, doc_address) in top_docs {
+            let retrieved_doc = self.searcher.doc(doc_address)?;
+            let json = self.schema.to_json(&retrieved_doc);
+            debug!("\t{}", json);
+            res.push(json);
+        }
+        Ok(res)
+    }
+}
+
+#[launch]
+fn launch() -> _ {
+    let repo = setup().expect("failed to setup indexer");
+    debug!("starting server...");
+    rocket::build().mount("/", routes![search]).manage(repo)
+}
+
+fn setup() -> Result<Repo> {
     pretty_env_logger::init();
 
     let (doc_tx, doc_rx) = cooldown_buffer(Duration::from_secs(1));
@@ -83,26 +130,8 @@ fn setup() -> Result<()> {
             index_docs(&tuples, &thread_idx, &thread_schema)?;
         }
     });
-    thread::sleep(Duration::from_secs(10));
-
-    debug!("searching...");
-    let reader = index
-        .reader_builder()
-        .reload_policy(ReloadPolicy::OnCommit)
-        .try_into()?;
-    let searcher = reader.searcher();
-    let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
-    let body = schema.get_field(&Fields::Body.to_string()).unwrap();
-    let query_parser = QueryParser::for_index(&index, vec![filename, body]);
-    let query = query_parser.parse_query("komentarz dotyczący przebiegu akcji")?;
-    let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
-
-    debug!("results:");
-    for (_score, doc_address) in top_docs {
-        let retrieved_doc = searcher.doc(doc_address)?;
-        debug!("\t{}", schema.to_json(&retrieved_doc));
-    }
-    Ok(())
+    thread::sleep(Duration::from_secs(20));
+    Repo::new(index, schema)
 }
 
 fn mk_idx_and_schema<A: AsRef<Path>>(relative_path: A) -> Result<(Index, Schema)> {
@@ -151,8 +180,8 @@ fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy:
 }
 
 #[get("/search/<query>")]
-fn search(query: String) -> String {
-    format!("using query: {}", query)
+fn search(query: String, repo: &State<Repo>) -> String {
+    format!("{:?}", repo.search(query).unwrap())
 }
 
 #[allow(dead_code)] // TODO: for testing purposes only
