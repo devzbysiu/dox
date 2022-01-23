@@ -124,14 +124,14 @@ impl SearchEntry {
 
 #[launch]
 fn launch() -> _ {
+    pretty_env_logger::init();
+
     let repo = setup().expect("failed to setup indexer");
     debug!("starting server...");
     rocket::build().mount("/", routes![search]).manage(repo)
 }
 
 fn setup() -> Result<Repo> {
-    pretty_env_logger::init();
-
     let (doc_tx, doc_rx) = cooldown_buffer(Duration::from_secs(1));
     thread::spawn(move || -> Result<()> {
         let (tx, rx) = channel();
