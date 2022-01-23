@@ -15,6 +15,8 @@ use tantivy::query::QueryParser;
 use tantivy::schema::*;
 use tantivy::{doc, Index, ReloadPolicy};
 
+use rocket::{get, launch, routes};
+
 struct IndexTuple {
     filename: String,
     body: String,
@@ -48,7 +50,12 @@ impl IndexTuple {
     }
 }
 
-fn main() -> Result<()> {
+#[launch]
+fn launch() -> _ {
+    rocket::build().mount("/", routes![search])
+}
+
+fn setup() -> Result<()> {
     pretty_env_logger::init();
 
     let (doc_tx, doc_rx) = cooldown_buffer(Duration::from_secs(1));
@@ -141,6 +148,11 @@ fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy:
         index_writer.commit().unwrap();
     });
     Ok(())
+}
+
+#[get("/search/<query>")]
+fn search(query: String) -> String {
+    format!("using query: {}", query)
 }
 
 #[allow(dead_code)] // TODO: for testing purposes only

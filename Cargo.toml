@@ -37,3 +37,4 @@ rayon = "1.5.1"
 leptess = "0.13.2"
 tantivy = "0.16.1"
 dirs = "4.0.0"
+rocket = { git = "https://github.com/SergioBenitez/Rocket/", tag = "v0.5.0-rc.1" }
