@@ -1,10 +1,11 @@
-use anyhow::Result;
+use anyhow::{Error, Result};
 use cooldown_buffer::cooldown_buffer;
 use core::fmt;
 use leptess::LepTess;
 use log::{debug, error};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::serde::Serialize;
 use rocket::{get, launch, routes, State};
@@ -211,9 +212,9 @@ fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy:
     Ok(())
 }
 
-#[get("/search/<query>")]
-fn search(query: String, repo: &State<Repo>) -> Json<SearchResults> {
-    Json(repo.search(query).unwrap())
+#[get("/search?<q>")]
+fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>, Debug<Error>> {
+    Ok(Json(repo.search(q)?))
 }
 
 #[allow(dead_code)] // TODO: for testing purposes only
