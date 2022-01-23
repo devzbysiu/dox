@@ -175,12 +175,12 @@ fn extract_text(paths: &[PathBuf]) -> Vec<IndexTuple> {
     debug!("extracting text...");
     paths
         .par_iter()
-        .map(make_tuple)
+        .map(do_ocr)
         .filter_map(Result::ok)
         .collect::<Vec<IndexTuple>>()
 }
 
-fn make_tuple<P: AsRef<Path>>(path: P) -> Result<IndexTuple> {
+fn do_ocr<P: AsRef<Path>>(path: P) -> Result<IndexTuple> {
     // NOTE: it's actually more efficient to create LepTess
     // each time than sharing it between threads
     let mut lt = LepTess::new(None, "pol")?;
