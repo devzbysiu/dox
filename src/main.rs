@@ -184,6 +184,7 @@ fn extract_text(paths: &[PathBuf]) -> Vec<IndexTuple> {
 }
 
 fn do_ocr<P: AsRef<Path>>(path: P) -> Result<IndexTuple> {
+    debug!("executing OCR on {}", path.as_ref().display());
     // NOTE: it's actually more efficient to create LepTess
     // each time than sharing it between threads
     let mut lt = LepTess::new(None, "pol")?;
