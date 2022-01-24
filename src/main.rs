@@ -1,3 +1,5 @@
+#![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
+
 use anyhow::{Error, Result};
 use cooldown_buffer::cooldown_buffer;
 use core::fmt;
@@ -8,14 +10,14 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::serde::Serialize;
-use rocket::{get, launch, routes, State};
+use rocket::{get, launch, routes, Build, Rocket, State};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
 use tantivy::collector::TopDocs;
 use tantivy::query::QueryParser;
-use tantivy::schema::*;
+use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
 use tantivy::{doc, Index, ReloadPolicy};
 
 struct IndexTuple {
@@ -61,7 +63,8 @@ impl Repo {
         Self { index, schema }
     }
 
-    fn search(&self, term: String) -> Result<SearchResults> {
+    fn search<S: Into<String>>(&self, term: S) -> Result<SearchResults> {
+        let term = term.into();
         debug!("searching '{}'...", term);
 
         let searcher = self
@@ -125,7 +128,7 @@ impl SearchEntry {
 }
 
 #[launch]
-fn launch() -> _ {
+fn launch() -> Rocket<Build> {
     pretty_env_logger::init();
 
     let repo = setup().expect("failed to setup indexer");
@@ -197,11 +200,11 @@ fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy:
     let mut index_writer = index.writer(50_000_000)?;
     let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
     let body = schema.get_field(&Fields::Body.to_string()).unwrap();
-    tuples.iter().for_each(|t| {
+    for t in tuples {
         debug!("indexing {}", t.filename);
         index_writer.add_document(doc!(filename => t.filename.clone(), body => t.body.clone()));
         index_writer.commit().unwrap();
-    });
+    }
     Ok(())
 }
 
