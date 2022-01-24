@@ -160,7 +160,6 @@ fn setup() -> Result<Repo> {
             index_docs(&tuples, &thread_idx, &thread_schema)?;
         }
     });
-    thread::sleep(Duration::from_secs(20));
     Repo::new(index, schema)
 }
 
