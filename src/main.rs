@@ -52,38 +52,42 @@ impl IndexTuple {
 }
 
 struct Repo {
-    searcher: LeasedItem<Searcher>,
-    parser: QueryParser,
-    filename: Field,
+    index: Index,
+    schema: Schema,
 }
 
 impl Repo {
     fn new(index: Index, schema: Schema) -> Result<Self> {
-        let reader = index
-            .reader_builder()
-            .reload_policy(ReloadPolicy::OnCommit)
-            .try_into()?;
-        let searcher = reader.searcher();
-        let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
-        let body = schema.get_field(&Fields::Body.to_string()).unwrap();
-        let parser = QueryParser::for_index(&index, vec![filename, body]);
-
-        Ok(Self {
-            searcher,
-            parser,
-            filename,
-        })
+        Ok(Self { index, schema })
     }
 
     fn search(&self, term: String) -> Result<SearchResults> {
         debug!("searching '{}'...", term);
-        let query = self.parser.parse_query(&term)?;
-        let top_docs = self.searcher.search(&query, &TopDocs::with_limit(10))?;
+
+        let reader = self
+            .index
+            .reader_builder()
+            .reload_policy(ReloadPolicy::OnCommit)
+            .try_into()?;
+        let searcher = reader.searcher();
+        let filename = self
+            .schema
+            .get_field(&Fields::Filename.to_string())
+            .unwrap();
+        let body = self.schema.get_field(&Fields::Body.to_string()).unwrap();
+        let parser = QueryParser::for_index(&self.index, vec![filename, body]);
+
+        let query = parser.parse_query(&term)?;
+        let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
 
         let mut results = Vec::new();
         for (_score, doc_address) in top_docs {
-            let retrieved_doc = self.searcher.doc(doc_address)?;
-            let filenames = retrieved_doc.get_all(self.filename);
+            let retrieved_doc = searcher.doc(doc_address)?;
+            let filename_field = self
+                .schema
+                .get_field(&Fields::Filename.to_string())
+                .unwrap();
+            let filenames = retrieved_doc.get_all(filename_field);
             results.extend(to_search_entries(filenames));
         }
         debug!("results: {:?}", results);
