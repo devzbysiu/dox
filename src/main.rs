@@ -16,7 +16,7 @@ use std::time::Duration;
 use tantivy::collector::TopDocs;
 use tantivy::query::QueryParser;
 use tantivy::schema::*;
-use tantivy::{doc, Index, LeasedItem, ReloadPolicy, Searcher};
+use tantivy::{doc, Index, ReloadPolicy};
 
 struct IndexTuple {
     filename: String,
