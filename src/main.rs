@@ -64,34 +64,33 @@ impl Repo {
     fn search(&self, term: String) -> Result<SearchResults> {
         debug!("searching '{}'...", term);
 
-        let reader = self
+        let searcher = self
             .index
             .reader_builder()
             .reload_policy(ReloadPolicy::OnCommit)
-            .try_into()?;
-        let searcher = reader.searcher();
-        let filename = self
-            .schema
-            .get_field(&Fields::Filename.to_string())
-            .unwrap();
-        let body = self.schema.get_field(&Fields::Body.to_string()).unwrap();
-        let parser = QueryParser::for_index(&self.index, vec![filename, body]);
+            .try_into()?
+            .searcher();
 
+        let filename_field = self.field(&Fields::Filename);
+        let body_field = self.field(&Fields::Body);
+        let parser = QueryParser::for_index(&self.index, vec![filename_field, body_field]);
         let query = parser.parse_query(&term)?;
         let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
 
         let mut results = Vec::new();
         for (_score, doc_address) in top_docs {
             let retrieved_doc = searcher.doc(doc_address)?;
-            let filename_field = self
-                .schema
-                .get_field(&Fields::Filename.to_string())
-                .unwrap();
             let filenames = retrieved_doc.get_all(filename_field);
             results.extend(to_search_entries(filenames));
         }
         debug!("results: {:?}", results);
         Ok(SearchResults::new(results))
+    }
+
+    fn field(&self, field: &Fields) -> Field {
+        // can unwrap because this field comes from an
+        // enum and I'm using this enym to get the field
+        self.schema.get_field(&field.to_string()).unwrap()
     }
 }
 
