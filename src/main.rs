@@ -198,12 +198,9 @@ fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy:
     let mut index_writer = index.writer(50_000_000)?;
     let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
     let body = schema.get_field(&Fields::Body.to_string()).unwrap();
-    tuples.iter().for_each(|tuple| {
-        debug!("indexing {}", tuple.filename);
-        index_writer.add_document(doc!(
-            filename => tuple.filename.clone(),
-            body => tuple.body.clone()
-        ));
+    tuples.iter().for_each(|t| {
+        debug!("indexing {}", t.filename);
+        index_writer.add_document(doc!(filename => t.filename.clone(), body => t.body.clone()));
         index_writer.commit().unwrap();
     });
     Ok(())
