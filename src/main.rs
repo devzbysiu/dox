@@ -57,8 +57,8 @@ struct Repo {
 }
 
 impl Repo {
-    fn new(index: Index, schema: Schema) -> Result<Self> {
-        Ok(Self { index, schema })
+    fn new(index: Index, schema: Schema) -> Self {
+        Self { index, schema }
     }
 
     fn search(&self, term: String) -> Result<SearchResults> {
@@ -159,7 +159,7 @@ fn setup() -> Result<Repo> {
             index_docs(&tuples, &thread_idx, &thread_schema)?;
         }
     });
-    Repo::new(index, schema)
+    Ok(Repo::new(index, schema))
 }
 
 fn mk_idx_and_schema<A: AsRef<Path>>(relative_path: A) -> Result<(Index, Schema)> {
