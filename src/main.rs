@@ -212,17 +212,3 @@ fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy:
 fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>, Debug<Error>> {
     Ok(Json(repo.search(q)?))
 }
-
-#[allow(dead_code)] // TODO: for testing purposes only
-fn test_files() -> Vec<PathBuf> {
-    vec![
-        Path::new("/home/zbychu/tests/scanned-docs/doc1.png").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc2.jpg").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc3.jpg").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc4.webp").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc5.png").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc6.jpg").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc7.jpg").to_path_buf(),
-        Path::new("/home/zbychu/tests/scanned-docs/doc8.webp").to_path_buf(),
-    ]
-}
