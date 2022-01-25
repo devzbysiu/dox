@@ -11,7 +11,7 @@ struct SearchResults {
     results: Vec<SearchEntry>,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, PartialEq, Eq)]
 struct SearchEntry {
     filename: String,
 }
@@ -35,7 +35,20 @@ fn it_works() -> Result<()> {
 
     let search = make_search("ale")?;
 
-    assert_eq!(search.results.len(), 2);
+    let mut results = search.results;
+    assert_eq!(results.len(), 2);
+    results.sort_by(|a, b| a.filename.cmp(&b.filename));
+    assert_eq!(
+        results,
+        vec![
+            SearchEntry {
+                filename: "doc1.png".to_string()
+            },
+            SearchEntry {
+                filename: "doc5.png".to_string()
+            },
+        ]
+    );
 
     child.kill()?;
     Ok(())
