@@ -107,12 +107,12 @@ fn to_search_entries<'a, I: Iterator<Item = &'a Value>>(filenames: I) -> Vec<Sea
 
 #[derive(Debug, Serialize, Default)]
 struct SearchResults {
-    results: Vec<SearchEntry>,
+    entries: Vec<SearchEntry>,
 }
 
 impl SearchResults {
-    fn new(results: Vec<SearchEntry>) -> Self {
-        Self { results }
+    fn new(entries: Vec<SearchEntry>) -> Self {
+        Self { entries }
     }
 }
 

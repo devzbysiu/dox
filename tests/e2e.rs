@@ -8,7 +8,7 @@ use std::time::Duration;
 
 #[derive(Debug, Deserialize, Default)]
 struct SearchResults {
-    results: Vec<SearchEntry>,
+    entries: Vec<SearchEntry>,
 }
 
 #[derive(Debug, Deserialize, Default, PartialEq, Eq)]
@@ -26,19 +26,19 @@ fn it_works() -> Result<()> {
 
     let search = make_search("ale")?;
 
-    assert!(search.results.is_empty());
+    assert!(search.entries.is_empty());
 
     // when
     initiate_indexing()?;
 
     // then
-    let search = make_search("ale")?;
+    let results = make_search("ale")?;
 
-    let mut results = search.results;
-    assert_eq!(results.len(), 2);
-    results.sort_by(|a, b| a.filename.cmp(&b.filename));
+    let mut entries = results.entries;
+    assert_eq!(entries.len(), 2);
+    entries.sort_by(|a, b| a.filename.cmp(&b.filename));
     assert_eq!(
-        results,
+        entries,
         vec![
             SearchEntry {
                 filename: "doc1.png".to_string()
