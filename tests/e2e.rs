@@ -22,17 +22,16 @@ fn it_works() -> Result<()> {
     // given
     recreate_index_dir()?;
     recreate_watched_dir()?;
-
-    // when
     let mut child = spawn_dox()?;
 
-    // then
     let search = make_search("ale")?;
 
     assert!(search.results.is_empty());
 
+    // when
     initiate_indexing()?;
 
+    // then
     let search = make_search("ale")?;
 
     let mut results = search.results;
