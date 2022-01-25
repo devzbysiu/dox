@@ -16,9 +16,9 @@ use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
 use tantivy::collector::TopDocs;
-use tantivy::query::QueryParser;
+use tantivy::query::{Query, QueryParser};
 use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
-use tantivy::{doc, Index, ReloadPolicy};
+use tantivy::{doc, Index, LeasedItem, ReloadPolicy, Searcher};
 
 struct IndexTuple {
     filename: String,
@@ -66,28 +66,33 @@ impl Repo {
     fn search<S: Into<String>>(&self, term: S) -> Result<SearchResults> {
         let term = term.into();
         debug!("searching '{}'...", term);
-
-        let searcher = self
-            .index
-            .reader_builder()
-            .reload_policy(ReloadPolicy::OnCommit)
-            .try_into()?
-            .searcher();
-
-        let filename_field = self.field(&Fields::Filename);
-        let body_field = self.field(&Fields::Body);
-        let parser = QueryParser::for_index(&self.index, vec![filename_field, body_field]);
-        let query = parser.parse_query(&term)?;
-        let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
-
+        let searcher = self.create_searcher()?;
+        let top_docs = searcher.search(&self.make_query(term)?, &TopDocs::with_limit(10))?;
         let mut results = Vec::new();
         for (_score, doc_address) in top_docs {
             let retrieved_doc = searcher.doc(doc_address)?;
-            let filenames = retrieved_doc.get_all(filename_field);
+            let filenames = retrieved_doc.get_all(self.field(&Fields::Filename));
             results.extend(to_search_entries(filenames));
         }
         debug!("results: {:?}", results);
         Ok(SearchResults::new(results))
+    }
+
+    fn create_searcher(&self) -> Result<LeasedItem<Searcher>> {
+        Ok(self
+            .index
+            .reader_builder()
+            .reload_policy(ReloadPolicy::OnCommit)
+            .try_into()?
+            .searcher())
+    }
+
+    fn make_query<S: Into<String>>(&self, term: S) -> Result<Box<dyn Query>> {
+        let parser = QueryParser::for_index(
+            &self.index,
+            vec![self.field(&Fields::Filename), self.field(&Fields::Body)],
+        );
+        Ok(parser.parse_query(&term.into())?)
     }
 
     fn field(&self, field: &Fields) -> Field {
