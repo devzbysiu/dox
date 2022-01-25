@@ -90,12 +90,9 @@ fn initiate_indexing() -> Result<()> {
     let watched_dir = dirs::home_dir().unwrap().join("tests/notify");
     for file in fs::read_dir(docs_dir)? {
         let file = file?;
-        debug!(
-            "\tcopying {} to {}",
-            file.path().display(),
-            watched_dir.display()
-        );
-        fs::copy(file.path(), &watched_dir.join(file.file_name()))?;
+        let from = file.path();
+        debug!("\tfrom {} to {}", from.display(), watched_dir.display());
+        fs::copy(from, &watched_dir.join(file.file_name()))?;
     }
     thread::sleep(Duration::from_secs(10));
     Ok(())
