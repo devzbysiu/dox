@@ -4,7 +4,7 @@ use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 
 use anyhow::{Error, Result};
 use cooldown_buffer::cooldown_buffer;
-use log::{debug, error};
+use log::{debug, error, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::response::Debug;
 use rocket::serde::json::Json;
@@ -49,7 +49,7 @@ fn setup(cfg: Config) -> Result<Repo> {
         loop {
             match rx.recv() {
                 Ok(DebouncedEvent::Create(path)) => doc_tx.send(path)?,
-                Ok(_) => { /* not supported */ }
+                Ok(_) => warn!("this FS event is not supported"),
                 Err(e) => error!("watch error: {:?}", e),
             }
         }
