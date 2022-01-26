@@ -1,12 +1,12 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
+use crate::ocr::IndexTuple;
+
 use anyhow::{Error, Result};
 use cooldown_buffer::cooldown_buffer;
 use core::fmt;
-use leptess::LepTess;
 use log::{debug, error};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::serde::Serialize;
@@ -20,10 +20,7 @@ use tantivy::query::{Query, QueryParser};
 use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
 use tantivy::{doc, Index, LeasedItem, ReloadPolicy, Searcher};
 
-struct IndexTuple {
-    filename: String,
-    body: String,
-}
+mod ocr;
 
 enum Fields {
     Filename,
@@ -36,20 +33,6 @@ impl fmt::Display for Fields {
             Fields::Filename => write!(f, "filename"),
             Fields::Body => write!(f, "body"),
         }
-    }
-}
-
-impl IndexTuple {
-    fn new<S: Into<String>, A: AsRef<Path>>(path: A, body: S) -> Self {
-        let filename = path
-            .as_ref()
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string();
-        let body = body.into();
-        Self { filename, body }
     }
 }
 
@@ -176,7 +159,7 @@ fn setup(cfg: Config) -> Result<Repo> {
         loop {
             let paths = doc_rx.recv()?;
             debug!("new docs: {:?}", paths);
-            let tuples = extract_text(&paths);
+            let tuples = ocr::extract_text(&paths);
             index_docs(&tuples, &thread_idx, &thread_schema)?;
         }
     });
@@ -190,24 +173,6 @@ fn mk_idx_and_schema<P: AsRef<Path>>(index_path: P) -> Result<(Index, Schema)> {
     let schema = schema_builder.build();
     let index = Index::create_in_dir(index_path, schema.clone())?;
     Ok((index, schema))
-}
-
-fn extract_text(paths: &[PathBuf]) -> Vec<IndexTuple> {
-    debug!("extracting text...");
-    paths
-        .par_iter()
-        .map(do_ocr)
-        .filter_map(Result::ok)
-        .collect::<Vec<IndexTuple>>()
-}
-
-fn do_ocr<P: AsRef<Path>>(path: P) -> Result<IndexTuple> {
-    debug!("executing OCR on {}", path.as_ref().display());
-    // NOTE: it's actually more efficient to create LepTess
-    // each time than sharing it between threads
-    let mut lt = LepTess::new(None, "pol")?;
-    lt.set_image(path.as_ref())?;
-    Ok(IndexTuple::new(path, lt.get_utf8_text()?))
 }
 
 fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy::Result<()> {
