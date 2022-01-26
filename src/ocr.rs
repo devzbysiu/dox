@@ -10,7 +10,7 @@ pub struct FilenameToBody {
 }
 
 impl FilenameToBody {
-    fn new<S: Into<String>, A: AsRef<Path>>(path: A, body: S) -> Self {
+    fn new<P: AsRef<Path>, S: Into<String>>(path: P, body: S) -> Self {
         let filename = path
             .as_ref()
             .file_name()
