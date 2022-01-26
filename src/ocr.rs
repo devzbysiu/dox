@@ -4,12 +4,12 @@ use log::debug;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::path::{Path, PathBuf};
 
-pub struct IndexTuple {
+pub struct FilenameToBody {
     pub filename: String,
     pub body: String,
 }
 
-impl IndexTuple {
+impl FilenameToBody {
     fn new<S: Into<String>, A: AsRef<Path>>(path: A, body: S) -> Self {
         let filename = path
             .as_ref()
@@ -23,20 +23,20 @@ impl IndexTuple {
     }
 }
 
-pub fn extract_text(paths: &[PathBuf]) -> Vec<IndexTuple> {
+pub fn extract_text(paths: &[PathBuf]) -> Vec<FilenameToBody> {
     debug!("extracting text...");
     paths
         .par_iter()
         .map(do_ocr)
         .filter_map(Result::ok)
-        .collect::<Vec<IndexTuple>>()
+        .collect::<Vec<FilenameToBody>>()
 }
 
-fn do_ocr<P: AsRef<Path>>(path: P) -> Result<IndexTuple> {
+fn do_ocr<P: AsRef<Path>>(path: P) -> Result<FilenameToBody> {
     debug!("executing OCR on {}", path.as_ref().display());
     // NOTE: it's actually more efficient to create LepTess
     // each time than sharing it between threads
     let mut lt = LepTess::new(None, "pol")?;
     lt.set_image(path.as_ref())?;
-    Ok(IndexTuple::new(path, lt.get_utf8_text()?))
+    Ok(FilenameToBody::new(path, lt.get_utf8_text()?))
 }
