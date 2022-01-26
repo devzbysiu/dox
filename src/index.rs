@@ -112,6 +112,7 @@ pub fn mk_idx_and_schema<P: AsRef<Path>>(index_path: P) -> Result<(Index, Schema
     Ok((index, schema))
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub fn index_docs(tuples: &[IndexTuple], index: &Index, schema: &Schema) -> tantivy::Result<()> {
     debug!("indexing...");
     // NOTE: IndexWriter is already multithreaded and
