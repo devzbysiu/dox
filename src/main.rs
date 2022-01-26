@@ -132,21 +132,34 @@ impl SearchEntry {
     }
 }
 
+struct Config {
+    watched_dir: PathBuf,
+    index_dir: PathBuf,
+    cooldown_time: Duration,
+}
+
 #[launch]
 fn launch() -> Rocket<Build> {
     pretty_env_logger::init();
 
-    let repo = setup().expect("failed to setup indexer");
+    let cfg = Config {
+        watched_dir: Path::new("/home/zbychu/tests/notify").to_path_buf(),
+        index_dir: dirs::data_dir().unwrap().join("dox"),
+        cooldown_time: Duration::from_secs(1),
+    };
+
+    let repo = setup(cfg).expect("failed to setup indexer");
     debug!("starting server...");
     rocket::build().mount("/", routes![search]).manage(repo)
 }
 
-fn setup() -> Result<Repo> {
-    let (doc_tx, doc_rx) = cooldown_buffer(Duration::from_secs(1));
+fn setup(cfg: Config) -> Result<Repo> {
+    let (doc_tx, doc_rx) = cooldown_buffer(cfg.cooldown_time);
+    let watched_dir = cfg.watched_dir;
     thread::spawn(move || -> Result<()> {
         let (tx, rx) = channel();
         let mut watcher = watcher(tx, Duration::from_millis(100))?;
-        watcher.watch("/home/zbychu/tests/notify", RecursiveMode::Recursive)?;
+        watcher.watch(watched_dir, RecursiveMode::Recursive)?;
         loop {
             match rx.recv() {
                 Ok(DebouncedEvent::Create(path)) => doc_tx.send(path)?,
@@ -156,7 +169,7 @@ fn setup() -> Result<Repo> {
         }
     });
 
-    let (index, schema) = mk_idx_and_schema("dox")?;
+    let (index, schema) = mk_idx_and_schema(cfg.index_dir)?;
 
     let (thread_idx, thread_schema) = (index.clone(), schema.clone());
     thread::spawn(move || -> Result<()> {
@@ -170,13 +183,12 @@ fn setup() -> Result<Repo> {
     Ok(Repo::new(index, schema))
 }
 
-fn mk_idx_and_schema<A: AsRef<Path>>(relative_path: A) -> Result<(Index, Schema)> {
-    let index_path = dirs::data_dir().unwrap().join(relative_path);
+fn mk_idx_and_schema<P: AsRef<Path>>(index_path: P) -> Result<(Index, Schema)> {
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field(&Fields::Filename.to_string(), TEXT | STORED);
     schema_builder.add_text_field(&Fields::Body.to_string(), TEXT);
     let schema = schema_builder.build();
-    let index = Index::create_in_dir(&index_path, schema.clone())?;
+    let index = Index::create_in_dir(index_path, schema.clone())?;
     Ok((index, schema))
 }
 
