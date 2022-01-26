@@ -17,6 +17,7 @@ use std::time::Duration;
 mod index;
 mod ocr;
 
+#[derive(Debug)]
 struct Config {
     watched_dir: PathBuf,
     index_dir: PathBuf,
