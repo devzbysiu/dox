@@ -20,10 +20,18 @@ struct SearchEntry {
 }
 
 #[derive(Debug, Serialize)]
-pub struct Config {
+struct Config {
     watched_dir: PathBuf,
     index_dir: PathBuf,
     cooldown_time: Duration,
+}
+
+struct DoxProcess(Child);
+
+impl Drop for DoxProcess {
+    fn drop(&mut self) {
+        self.0.kill().expect("failed to kill dox process");
+    }
 }
 
 #[test]
@@ -38,7 +46,7 @@ fn it_works() -> Result<()> {
         cooldown_time: Duration::from_secs(1),
     })?;
 
-    let mut dox_process = spawn_dox(config_path(&config_dir))?;
+    let _dox_process = spawn_dox(config_path(&config_dir))?;
 
     let search = make_search("ale")?;
 
@@ -65,7 +73,6 @@ fn it_works() -> Result<()> {
         ]
     );
 
-    dox_process.kill()?;
     Ok(())
 }
 
@@ -94,14 +101,14 @@ fn config_path<P: AsRef<Path>>(config_dir: P) -> PathBuf {
     config_dir.as_ref().join("dox.toml")
 }
 
-fn spawn_dox<P: AsRef<Path>>(config_path: P) -> Result<Child> {
+fn spawn_dox<P: AsRef<Path>>(config_path: P) -> Result<DoxProcess> {
     debug!("spawning 'dox {} &'", config_path.as_ref().display());
     let child = Command::new("./target/debug/dox")
         .arg(format!("{}", config_path.as_ref().display()))
         .arg("&")
         .spawn()?;
     thread::sleep(Duration::from_secs(2));
-    Ok(child)
+    Ok(DoxProcess(child))
 }
 
 fn make_search<S: Into<String>>(query: S) -> Result<SearchResults> {
