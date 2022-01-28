@@ -452,6 +452,7 @@ dependencies = [
  "rocket",
  "serde",
  "tantivy",
+ "tempfile",
  "toml",
  "ureq",
 ]

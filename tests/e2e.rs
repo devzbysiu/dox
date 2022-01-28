@@ -1,11 +1,13 @@
 use anyhow::Result;
 use log::debug;
-use rocket::serde::Deserialize;
+use rocket::serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::Path;
+use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
 use std::thread;
 use std::time::Duration;
+use tempfile::TempDir;
 
 #[derive(Debug, Deserialize, Default)]
 struct SearchResults {
@@ -17,20 +19,41 @@ struct SearchEntry {
     filename: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct Config {
+    watched_dir: PathBuf,
+    index_dir: PathBuf,
+    cooldown_time: Duration,
+}
+
 #[test]
 fn it_works() -> Result<()> {
     pretty_env_logger::init();
     // given
-    recreate_index_dir()?;
-    recreate_watched_dir()?;
-    let mut child = spawn_dox()?;
+    let config_dir = tempfile::tempdir()?;
+    let config_path = config_dir.path().join("dox.toml");
+    let index_dir = create_index_dir()?;
+    let watched_dir = create_watched_dir()?;
+
+    let cfg = Config {
+        watched_dir: watched_dir.path().to_path_buf(),
+        index_dir: index_dir.path().to_path_buf(),
+        cooldown_time: Duration::from_secs(1),
+    };
+
+    let config = toml::to_string(&cfg)?;
+    let mut file = fs::File::create(&config_path)?;
+    debug!("writing {} to {}", config, config_path.display());
+    file.write_all(config.as_bytes())?;
+
+    let mut child = spawn_dox(config_path)?;
 
     let search = make_search("ale")?;
 
     assert!(search.entries.is_empty());
 
     // when
-    initiate_indexing()?;
+    initiate_indexing(watched_dir.path())?;
 
     // then
     let results = make_search("ale")?;
@@ -54,25 +77,22 @@ fn it_works() -> Result<()> {
     Ok(())
 }
 
-fn recreate_index_dir() -> Result<()> {
-    debug!("recreating index directory");
-    let index_dir = dirs::data_dir().unwrap().join("dox");
-    fs::remove_dir_all(&index_dir)?;
-    fs::create_dir_all(&index_dir)?;
-    Ok(())
+fn create_index_dir() -> Result<TempDir> {
+    debug!("creating index directory");
+    Ok(tempfile::tempdir()?)
 }
 
-fn recreate_watched_dir() -> Result<()> {
-    debug!("recreating watched directory");
-    let watched_dir = dirs::home_dir().unwrap().join("tests/notify");
-    fs::remove_dir_all(&watched_dir)?;
-    fs::create_dir_all(&watched_dir)?;
-    Ok(())
+fn create_watched_dir() -> Result<TempDir> {
+    debug!("creating watched directory");
+    Ok(tempfile::tempdir()?)
 }
 
-fn spawn_dox() -> Result<Child> {
-    debug!("spawning dox");
-    let child = Command::new("./target/debug/dox").arg("&").spawn()?;
+fn spawn_dox<P: AsRef<Path>>(config_path: P) -> Result<Child> {
+    debug!("spawning 'dox {} &'", config_path.as_ref().display());
+    let child = Command::new("./target/debug/dox")
+        .arg(format!("{}", config_path.as_ref().display()))
+        .arg("&")
+        .spawn()?;
     thread::sleep(Duration::from_secs(2));
     Ok(child)
 }
@@ -84,10 +104,10 @@ fn make_search<S: Into<String>>(query: S) -> Result<SearchResults> {
     Ok(res)
 }
 
-fn initiate_indexing() -> Result<()> {
+fn initiate_indexing<P: AsRef<Path>>(watched_dir: P) -> Result<()> {
     debug!("copying docs to watched dir");
     let docs_dir = Path::new("./res");
-    let watched_dir = dirs::home_dir().unwrap().join("tests/notify");
+    let watched_dir = watched_dir.as_ref();
     for file in fs::read_dir(docs_dir)? {
         let file = file?;
         let from = file.path();

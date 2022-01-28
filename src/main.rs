@@ -10,6 +10,7 @@ use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::{get, launch, routes, Build, Rocket, State};
+use std::env;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
@@ -22,8 +23,10 @@ mod ocr;
 fn launch() -> Rocket<Build> {
     pretty_env_logger::init();
 
-    debug!("reading configuration...");
-    let config_path = dirs::config_dir().unwrap().join("dox");
+    let args = env::args().collect::<Vec<String>>();
+    let config_path = args
+        .get(1)
+        .expect("you need to specify the path to the configuration file");
     let cfg = cfg::read_config(config_path).expect("failed to read config");
 
     let repo = setup(cfg).expect("failed to setup indexer");
@@ -32,6 +35,7 @@ fn launch() -> Rocket<Build> {
 }
 
 fn setup(cfg: Config) -> Result<Repo> {
+    debug!("setting up with config: {:?}", cfg);
     let (doc_tx, doc_rx) = cooldown_buffer(cfg.cooldown_time);
     let watched_dir = cfg.watched_dir;
     thread::spawn(move || -> Result<()> {
