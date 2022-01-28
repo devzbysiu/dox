@@ -30,21 +30,15 @@ pub struct Config {
 fn it_works() -> Result<()> {
     pretty_env_logger::init();
     // given
-    let config_dir = tempfile::tempdir()?;
-    let config_path = config_dir.path().join("dox.toml");
     let index_dir = create_index_dir()?;
     let watched_dir = create_watched_dir()?;
-
     let cfg = Config {
         watched_dir: watched_dir.path().to_path_buf(),
         index_dir: index_dir.path().to_path_buf(),
         cooldown_time: Duration::from_secs(1),
     };
-
-    let config = toml::to_string(&cfg)?;
-    let mut file = fs::File::create(&config_path)?;
-    debug!("writing {} to {}", config, config_path.display());
-    file.write_all(config.as_bytes())?;
+    let config_dir = tempfile::tempdir()?;
+    let config_path = create_cfg_file(&config_dir, &cfg)?;
 
     let mut child = spawn_dox(config_path)?;
 
@@ -87,6 +81,15 @@ fn create_watched_dir() -> Result<TempDir> {
     Ok(tempfile::tempdir()?)
 }
 
+fn create_cfg_file<P: AsRef<Path>>(config_dir: P, cfg: &Config) -> Result<PathBuf> {
+    let config_path = config_dir.as_ref().join("dox.toml");
+    let config = toml::to_string(&cfg)?;
+    let mut file = fs::File::create(&config_path)?;
+    debug!("writing {} to {}", config, config_path.display());
+    file.write_all(config.as_bytes())?;
+    Ok(config_path)
+}
+
 fn spawn_dox<P: AsRef<Path>>(config_path: P) -> Result<Child> {
     debug!("spawning 'dox {} &'", config_path.as_ref().display());
     let child = Command::new("./target/debug/dox")
@@ -105,7 +108,7 @@ fn make_search<S: Into<String>>(query: S) -> Result<SearchResults> {
 }
 
 fn initiate_indexing<P: AsRef<Path>>(watched_dir: P) -> Result<()> {
-    debug!("copying docs to watched dir");
+    debug!("copying docs to watched dir...");
     let docs_dir = Path::new("./res");
     let watched_dir = watched_dir.as_ref();
     for file in fs::read_dir(docs_dir)? {
@@ -114,6 +117,7 @@ fn initiate_indexing<P: AsRef<Path>>(watched_dir: P) -> Result<()> {
         debug!("\tfrom {} to {}", from.display(), watched_dir.display());
         fs::copy(from, &watched_dir.join(file.file_name()))?;
     }
+    debug!("done");
     thread::sleep(Duration::from_secs(10));
     Ok(())
 }
