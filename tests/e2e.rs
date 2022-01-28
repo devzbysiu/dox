@@ -32,28 +32,26 @@ fn it_works() -> Result<()> {
     // given
     let index_dir = create_index_dir()?;
     let watched_dir = create_watched_dir()?;
-    let cfg = Config {
+    let config_dir = create_cfg_file(&Config {
         watched_dir: watched_dir.path().to_path_buf(),
         index_dir: index_dir.path().to_path_buf(),
         cooldown_time: Duration::from_secs(1),
-    };
-    let config_dir = tempfile::tempdir()?;
-    let config_path = create_cfg_file(&config_dir, &cfg)?;
+    })?;
 
-    let mut child = spawn_dox(config_path)?;
+    let mut dox_process = spawn_dox(config_path(&config_dir))?;
 
     let search = make_search("ale")?;
 
-    assert!(search.entries.is_empty());
+    assert!(search.entries.is_empty()); // initial search returns no results
 
     // when
-    initiate_indexing(watched_dir.path())?;
+    cp_docs(watched_dir.path())?; // then we copy documents and indexing starts
 
     // then
     let results = make_search("ale")?;
 
     let mut entries = results.entries;
-    assert_eq!(entries.len(), 2);
+    assert_eq!(entries.len(), 2); // then we have two results
     entries.sort_by(|a, b| a.filename.cmp(&b.filename));
     assert_eq!(
         entries,
@@ -67,7 +65,7 @@ fn it_works() -> Result<()> {
         ]
     );
 
-    child.kill()?;
+    dox_process.kill()?;
     Ok(())
 }
 
@@ -81,13 +79,19 @@ fn create_watched_dir() -> Result<TempDir> {
     Ok(tempfile::tempdir()?)
 }
 
-fn create_cfg_file<P: AsRef<Path>>(config_dir: P, cfg: &Config) -> Result<PathBuf> {
-    let config_path = config_dir.as_ref().join("dox.toml");
+fn create_cfg_file(cfg: &Config) -> Result<TempDir> {
+    let config_dir = tempfile::tempdir()?;
+    let config_path = config_path(&config_dir);
     let config = toml::to_string(&cfg)?;
     let mut file = fs::File::create(&config_path)?;
     debug!("writing {} to {}", config, config_path.display());
     file.write_all(config.as_bytes())?;
-    Ok(config_path)
+    Ok(config_dir)
+}
+
+#[inline]
+fn config_path<P: AsRef<Path>>(config_dir: P) -> PathBuf {
+    config_dir.as_ref().join("dox.toml")
 }
 
 fn spawn_dox<P: AsRef<Path>>(config_path: P) -> Result<Child> {
@@ -107,7 +111,7 @@ fn make_search<S: Into<String>>(query: S) -> Result<SearchResults> {
     Ok(res)
 }
 
-fn initiate_indexing<P: AsRef<Path>>(watched_dir: P) -> Result<()> {
+fn cp_docs<P: AsRef<Path>>(watched_dir: P) -> Result<()> {
     debug!("copying docs to watched dir...");
     let docs_dir = Path::new("./res");
     let watched_dir = watched_dir.as_ref();
