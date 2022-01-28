@@ -1,5 +1,6 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
+use crate::cfg::Config;
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 
 use anyhow::{Error, Result};
@@ -9,39 +10,25 @@ use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::{get, launch, routes, Build, Rocket, State};
-use serde::Deserialize;
-use std::fs::read_to_string;
-use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
 
+mod cfg;
 mod index;
 mod ocr;
-
-#[derive(Debug, Deserialize)]
-struct Config {
-    watched_dir: PathBuf,
-    index_dir: PathBuf,
-    cooldown_time: Duration,
-}
 
 #[launch]
 fn launch() -> Rocket<Build> {
     pretty_env_logger::init();
 
-    let cfg = read_config().expect("failed to read config");
+    debug!("reading configuration...");
+    let config_path = dirs::config_dir().unwrap().join("dox");
+    let cfg = cfg::read_config(config_path).expect("failed to read config");
 
     let repo = setup(cfg).expect("failed to setup indexer");
     debug!("starting server...");
     rocket::build().mount("/", routes![search]).manage(repo)
-}
-
-fn read_config() -> Result<Config> {
-    let config_path = dirs::config_dir().unwrap().join("dox");
-    Ok(toml::from_str(&read_to_string(
-        config_path.join("dox.toml"),
-    )?)?)
 }
 
 fn setup(cfg: Config) -> Result<Repo> {
