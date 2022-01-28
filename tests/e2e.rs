@@ -46,6 +46,7 @@ fn it_works() -> Result<()> {
         cooldown_time: Duration::from_secs(1),
     })?;
 
+    // NOTE: Drop trait causes this `_dox_process` to be killed on drop (even when the test fails)
     let _dox_process = spawn_dox(config_path(&config_dir))?;
 
     let search = make_search("ale")?;
