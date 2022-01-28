@@ -2,6 +2,7 @@ use anyhow::Result;
 use log::debug;
 use rocket::serde::Deserialize;
 use std::fs;
+use std::path::Path;
 use std::process::{Child, Command};
 use std::thread;
 use std::time::Duration;
@@ -85,7 +86,7 @@ fn make_search<S: Into<String>>(query: S) -> Result<SearchResults> {
 
 fn initiate_indexing() -> Result<()> {
     debug!("copying docs to watched dir");
-    let docs_dir = dirs::home_dir().unwrap().join("tests/scanned-docs");
+    let docs_dir = Path::new("./res");
     let watched_dir = dirs::home_dir().unwrap().join("tests/notify");
     for file in fs::read_dir(docs_dir)? {
         let file = file?;
