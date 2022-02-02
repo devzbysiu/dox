@@ -24,7 +24,7 @@ jobs:
         override: true
     - uses: davidB/rust-cargo-make@v1
     - name: Run tests
-      working_directory: ./core
+      working-directory: ./core
       run: cargo make --profile ci all
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
