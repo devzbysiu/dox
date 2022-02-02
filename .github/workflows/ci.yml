@@ -14,7 +14,8 @@ jobs:
       uses: actions/checkout@v2
 
     - uses: Swatinem/rust-cache@v1
-      working-directory: ./core
+      with:
+        working-directory: ./core
 
     - name: Run cargo-make
       uses: actions-rs/toolchain@v1
