@@ -30,7 +30,7 @@ documentation = ""
 [dependencies]
 log = "0.4.11"
 pretty_env_logger = "0.4.0"
-cooldown-buffer = { path = "../cooldown-buffer" }
+cooldown-buffer = { path = "../../cooldown-buffer" }
 notify = "4.0.17"
 anyhow = "1.0.52"
 rayon = "1.5.1"
