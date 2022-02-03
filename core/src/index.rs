@@ -108,6 +108,7 @@ pub fn mk_idx_and_schema<P: AsRef<Path>>(index_path: P) -> Result<(Index, Schema
     schema_builder.add_text_field(&Fields::Filename.to_string(), TEXT | STORED);
     schema_builder.add_text_field(&Fields::Body.to_string(), TEXT);
     let schema = schema_builder.build();
+    // FIXME: take care of a case when the index already exists
     let index = Index::create_in_dir(index_path, schema.clone())?;
     Ok((index, schema))
 }
