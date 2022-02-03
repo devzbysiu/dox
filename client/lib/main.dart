@@ -20,7 +20,7 @@ void main() {
 
   runApp(
     MaterialApp(
-      title: 'Material Floating Search Bar Example',
+      title: 'Dox Client',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.light().copyWith(
         iconTheme: const IconThemeData(
@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Dox Client',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
