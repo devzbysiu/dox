@@ -111,9 +111,21 @@ class _HomeState extends State<Home> {
         onQueryChanged: model.onQueryChanged,
         scrollPadding: EdgeInsets.zero,
         transition: CircularFloatingSearchBarTransition(spacing: 16),
+        onSubmitted: (_query) => onSubmitted(model),
+        body: buildBody(),
         builder: (context, _) => buildExpandableBody(model),
       ),
     );
+  }
+
+  void onSubmitted(SearchModel model) {}
+
+  Widget buildBody() {
+    return ListView(children: [
+      Image.network("http://10.0.2.2:8000/document/doc1.png"),
+      Image.network("http://10.0.2.2:8000/document/doc1.png"),
+      Image.network("http://10.0.2.2:8000/document/doc1.png"),
+    ]);
   }
 
   Widget buildExpandableBody(SearchModel model) {
@@ -173,7 +185,8 @@ class _HomeState extends State<Home> {
                     duration: const Duration(milliseconds: 500),
                     child: model.suggestions == history
                         ? const Icon(Icons.history, key: Key('history'))
-                        : const Icon(Icons.document_scanner, key: Key('document')),
+                        : const Icon(Icons.document_scanner,
+                            key: Key('document')),
                   ),
                 ),
                 const SizedBox(width: 16),
