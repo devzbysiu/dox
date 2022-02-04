@@ -30,18 +30,18 @@ fn launch() -> Rocket<Build> {
         .expect("you need to specify the path to the configuration file");
     let cfg = cfg::read_config(config_path).expect("failed to read config");
 
-    let repo = setup(cfg).expect("failed to setup indexer");
+    let repo = setup(&cfg).expect("failed to setup indexer");
     debug!("starting server...");
     rocket::build()
         .mount("/", routes![search])
-        .mount("/document", FileServer::from(relative!("res")))
+        .mount("/document", FileServer::from(cfg.watched_dir))
         .manage(repo)
 }
 
-fn setup(cfg: Config) -> Result<Repo> {
+fn setup(cfg: &Config) -> Result<Repo> {
     debug!("setting up with config: {:?}", cfg);
     let (doc_tx, doc_rx) = cooldown_buffer(cfg.cooldown_time);
-    let watched_dir = cfg.watched_dir;
+    let watched_dir = cfg.watched_dir.clone();
     thread::spawn(move || -> Result<()> {
         let (tx, rx) = channel();
         let mut watcher = watcher(tx, Duration::from_millis(100))?;
@@ -55,7 +55,7 @@ fn setup(cfg: Config) -> Result<Repo> {
         }
     });
 
-    let (index, schema) = mk_idx_and_schema(cfg.index_dir)?;
+    let (index, schema) = mk_idx_and_schema(&cfg.index_dir)?;
 
     let (thread_idx, thread_schema) = (index.clone(), schema.clone());
     thread::spawn(move || -> Result<()> {
