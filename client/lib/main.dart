@@ -91,19 +91,6 @@ class _HomeState extends State<Home> {
   }
 
   Widget buildSearchBar() {
-    final actions = [
-      FloatingSearchBarAction(
-        showIfOpened: false,
-        child: CircularButton(
-          icon: const Icon(Icons.place),
-          onPressed: () {},
-        ),
-      ),
-      FloatingSearchBarAction.searchToClear(
-        showIfClosed: false,
-      ),
-    ];
-
     final isPortrait =
         MediaQuery.of(context).orientation == Orientation.portrait;
 
@@ -119,7 +106,6 @@ class _HomeState extends State<Home> {
         physics: const BouncingScrollPhysics(),
         axisAlignment: isPortrait ? 0.0 : -1.0,
         openAxisAlignment: 0.0,
-        actions: actions,
         progress: model.isLoading,
         debounceDelay: const Duration(milliseconds: 500),
         onQueryChanged: model.onQueryChanged,
@@ -160,7 +146,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget buildItem(BuildContext context, Document place) {
+  Widget buildItem(BuildContext context, Document doc) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
@@ -187,7 +173,7 @@ class _HomeState extends State<Home> {
                     duration: const Duration(milliseconds: 500),
                     child: model.suggestions == history
                         ? const Icon(Icons.history, key: Key('history'))
-                        : const Icon(Icons.place, key: Key('place')),
+                        : const Icon(Icons.document_scanner, key: Key('document')),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -197,12 +183,12 @@ class _HomeState extends State<Home> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        place.filename,
+                        doc.filename,
                         style: textTheme.subtitle1,
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        place.filename,
+                        doc.filename,
                         style: textTheme.bodyText2
                             ?.copyWith(color: Colors.grey.shade600),
                       ),
@@ -213,7 +199,7 @@ class _HomeState extends State<Home> {
             ),
           ),
         ),
-        if (model.suggestions.isNotEmpty && place != model.suggestions.last)
+        if (model.suggestions.isNotEmpty && doc != model.suggestions.last)
           const Divider(height: 0),
       ],
     );
