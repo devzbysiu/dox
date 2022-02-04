@@ -1,9 +1,12 @@
 import 'dart:math';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:implicitly_animated_reorderable_list/implicitly_animated_reorderable_list.dart';
 import 'package:implicitly_animated_reorderable_list/transitions.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 import 'package:provider/provider.dart';
 
 import 'package:material_floating_search_bar/material_floating_search_bar.dart';
@@ -120,11 +123,44 @@ class _HomeState extends State<Home> {
 
   void onSubmitted(SearchModel model) {}
 
+  Widget cachedNetworkImage(mediaUrl) {
+    return CachedNetworkImage(
+      imageUrl: mediaUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => const Padding(
+        padding: EdgeInsets.all(20.0),
+        child: CircularProgressIndicator(),
+      ),
+      errorWidget: (context, url, error) => const Icon(Icons.error),
+    );
+  }
+
   Widget buildBody() {
     return ListView(children: [
-      Image.network("http://10.0.2.2:8000/document/doc1.png"),
-      Image.network("http://10.0.2.2:8000/document/doc1.png"),
-      Image.network("http://10.0.2.2:8000/document/doc1.png"),
+      InteractiveViewer(
+        boundaryMargin: const EdgeInsets.all(20.0),
+        minScale: 0.1,
+        maxScale: 1.6,
+        child: cachedNetworkImage("http://10.0.2.2:8000/document/doc1.png"),
+      ),
+      InteractiveViewer(
+        boundaryMargin: const EdgeInsets.all(20.0),
+        minScale: 0.1,
+        maxScale: 1.6,
+        child: cachedNetworkImage("http://10.0.2.2:8000/document/doc1.png"),
+      ),
+      InteractiveViewer(
+        boundaryMargin: const EdgeInsets.all(20.0),
+        minScale: 0.1,
+        maxScale: 1.6,
+        child: cachedNetworkImage("http://10.0.2.2:8000/document/doc1.png"),
+      ),
+      InteractiveViewer(
+        boundaryMargin: const EdgeInsets.all(20.0),
+        minScale: 0.1,
+        maxScale: 1.6,
+        child: cachedNetworkImage("http://127.0.0.1:8000/document/doc1.png"),
+      ),
     ]);
   }
 
