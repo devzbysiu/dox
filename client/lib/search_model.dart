@@ -7,12 +7,15 @@ import 'place.dart';
 
 class SearchModel extends ChangeNotifier {
   bool _isLoading = false;
+
   bool get isLoading => _isLoading;
 
   List<Place> _suggestions = history;
+
   List<Place> get suggestions => _suggestions;
 
   String _query = '';
+
   String get query => _query;
 
   void onQueryChanged(String query) async {
@@ -26,7 +29,7 @@ class SearchModel extends ChangeNotifier {
       _suggestions = history;
     } else {
       final response =
-      await http.get(Uri.parse('https://photon.komoot.io/api/?q=$query'));
+          await http.get(Uri.parse('https://photon.komoot.io/api/?q=$query'));
       final body = json.decode(utf8.decode(response.bodyBytes));
       final features = body['features'] as List;
 

@@ -68,7 +68,9 @@ class _HomeState extends State<Home> {
   final controller = FloatingSearchBarController();
 
   int _index = 0;
+
   int get index => _index;
+
   set index(int value) {
     _index = min(value, 2);
     _index == 2 ? controller.hide() : controller.show();
@@ -102,7 +104,8 @@ class _HomeState extends State<Home> {
       ),
     ];
 
-    final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    final isPortrait =
+        MediaQuery.of(context).orientation == Orientation.portrait;
 
     return Consumer<SearchModel>(
       builder: (context, model, _) => FloatingSearchBar(
@@ -171,7 +174,7 @@ class _HomeState extends State<Home> {
             FloatingSearchBar.of(context)?.close();
             Future.delayed(
               const Duration(milliseconds: 500),
-                  () => model.clear(),
+              () => model.clear(),
             );
           },
           child: Padding(
@@ -200,7 +203,8 @@ class _HomeState extends State<Home> {
                       const SizedBox(height: 2),
                       Text(
                         place.level2Address,
-                        style: textTheme.bodyText2?.copyWith(color: Colors.grey.shade600),
+                        style: textTheme.bodyText2
+                            ?.copyWith(color: Colors.grey.shade600),
                       ),
                     ],
                   ),

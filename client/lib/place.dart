@@ -2,6 +2,7 @@ class Place {
   final String name;
   final String state;
   final String country;
+
   const Place({
     required this.name,
     this.state = '',
@@ -9,9 +10,11 @@ class Place {
   });
 
   bool get hasState => state.isNotEmpty == true;
+
   bool get hasCountry => country.isNotEmpty == true;
 
   bool get isCountry => hasCountry && name == country;
+
   bool get isState => hasState && name == state;
 
   factory Place.fromJson(Map<String, dynamic> map) {
@@ -47,7 +50,10 @@ class Place {
   bool operator ==(Object o) {
     if (identical(this, o)) return true;
 
-    return o is Place && o.name == name && o.state == state && o.country == country;
+    return o is Place &&
+        o.name == name &&
+        o.state == state &&
+        o.country == country;
   }
 
   @override
