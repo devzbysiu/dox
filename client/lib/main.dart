@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 
 import 'package:material_floating_search_bar/material_floating_search_bar.dart';
 
-import 'place.dart';
+import 'document.dart';
 import 'search_model.dart';
 
 void main() {
@@ -137,7 +137,7 @@ class _HomeState extends State<Home> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         clipBehavior: Clip.antiAlias,
-        child: ImplicitlyAnimatedList<Place>(
+        child: ImplicitlyAnimatedList<Document>(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           items: model.suggestions,
@@ -160,7 +160,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget buildItem(BuildContext context, Place place) {
+  Widget buildItem(BuildContext context, Document place) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
@@ -197,12 +197,12 @@ class _HomeState extends State<Home> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        place.name,
+                        place.filename,
                         style: textTheme.subtitle1,
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        place.level2Address,
+                        place.filename,
                         style: textTheme.bodyText2
                             ?.copyWith(color: Colors.grey.shade600),
                       ),

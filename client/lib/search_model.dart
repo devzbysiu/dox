@@ -3,16 +3,16 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import 'place.dart';
+import 'document.dart';
 
 class SearchModel extends ChangeNotifier {
   bool _isLoading = false;
 
   bool get isLoading => _isLoading;
 
-  List<Place> _suggestions = history;
+  List<Document> _suggestions = history;
 
-  List<Place> get suggestions => _suggestions;
+  List<Document> get suggestions => _suggestions;
 
   String _query = '';
 
@@ -29,11 +29,12 @@ class SearchModel extends ChangeNotifier {
       _suggestions = history;
     } else {
       final response =
-          await http.get(Uri.parse('https://photon.komoot.io/api/?q=$query'));
-      final body = json.decode(utf8.decode(response.bodyBytes));
-      final features = body['features'] as List;
+          await http.get(Uri.parse('http://10.0.2.2:8000/search?q=$query'));
 
-      _suggestions = features.map((e) => Place.fromJson(e)).toSet().toList();
+      final body = json.decode(utf8.decode(response.bodyBytes));
+      final entries = body['entries'] as List;
+
+      _suggestions = entries.map((e) => Document.fromJson(e)).toSet().toList();
     }
 
     _isLoading = false;
@@ -46,23 +47,9 @@ class SearchModel extends ChangeNotifier {
   }
 }
 
-const List<Place> history = [
-  Place(
-    name: 'San Fracisco',
-    country: 'United States of America',
-    state: 'California',
-  ),
-  Place(
-    name: 'Singapore',
-    country: 'Singapore',
-  ),
-  Place(
-    name: 'Munich',
-    state: 'Bavaria',
-    country: 'Germany',
-  ),
-  Place(
-    name: 'London',
-    country: 'United Kingdom',
-  ),
+const List<Document> history = [
+  Document(filename: 'Doc1.jpg'),
+  Document(filename: 'Doc2.jpg'),
+  Document(filename: 'Doc4.jpg'),
+  Document(filename: 'Doc4.jpg'),
 ];
