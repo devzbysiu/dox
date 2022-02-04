@@ -7,6 +7,7 @@ use anyhow::{Error, Result};
 use cooldown_buffer::cooldown_buffer;
 use log::{debug, error, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
+use rocket::fs::{relative, FileServer};
 use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::{get, launch, routes, Build, Rocket, State};
@@ -31,7 +32,10 @@ fn launch() -> Rocket<Build> {
 
     let repo = setup(cfg).expect("failed to setup indexer");
     debug!("starting server...");
-    rocket::build().mount("/", routes![search]).manage(repo)
+    rocket::build()
+        .mount("/", routes![search])
+        .mount("/document", FileServer::from(relative!("res")))
+        .manage(repo)
 }
 
 fn setup(cfg: Config) -> Result<Repo> {
