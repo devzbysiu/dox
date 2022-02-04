@@ -7,7 +7,7 @@ use anyhow::{Error, Result};
 use cooldown_buffer::cooldown_buffer;
 use log::{debug, error, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
-use rocket::fs::{relative, FileServer};
+use rocket::fs::FileServer;
 use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::{get, launch, routes, Build, Rocket, State};
