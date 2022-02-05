@@ -263,14 +263,10 @@ class OpenableImage extends StatelessWidget {
 class HeroPhotoViewRouteWrapper extends StatelessWidget {
   final ImageProvider imageProvider;
   final BoxDecoration? backgroundDecoration;
-  final dynamic minScale;
-  final dynamic maxScale;
 
   const HeroPhotoViewRouteWrapper({
     required this.imageProvider,
     this.backgroundDecoration,
-    this.minScale,
-    this.maxScale,
   });
 
   @override
@@ -282,9 +278,6 @@ class HeroPhotoViewRouteWrapper extends StatelessWidget {
       child: PhotoView(
         imageProvider: imageProvider,
         backgroundDecoration: backgroundDecoration,
-        minScale: minScale,
-        maxScale: maxScale,
-        heroAttributes: const PhotoViewHeroAttributes(tag: "someTag"),
       ),
     );
   }
