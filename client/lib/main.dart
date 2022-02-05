@@ -1,15 +1,12 @@
 import 'dart:math';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:implicitly_animated_reorderable_list/implicitly_animated_reorderable_list.dart';
 import 'package:implicitly_animated_reorderable_list/transitions.dart';
-import 'package:photo_view/photo_view.dart';
-import 'package:photo_view/photo_view_gallery.dart';
-import 'package:provider/provider.dart';
-
 import 'package:material_floating_search_bar/material_floating_search_bar.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:provider/provider.dart';
 
 import 'document.dart';
 import 'search_model.dart';
@@ -123,44 +120,13 @@ class _HomeState extends State<Home> {
 
   void onSubmitted(SearchModel model) {}
 
-  Widget cachedNetworkImage(mediaUrl) {
-    return CachedNetworkImage(
-      imageUrl: mediaUrl,
-      fit: BoxFit.cover,
-      placeholder: (context, url) => const Padding(
-        padding: EdgeInsets.all(20.0),
-        child: CircularProgressIndicator(),
-      ),
-      errorWidget: (context, url, error) => const Icon(Icons.error),
-    );
-  }
-
   Widget buildBody() {
-    return ListView(children: [
-      InteractiveViewer(
-        boundaryMargin: const EdgeInsets.all(20.0),
-        minScale: 0.1,
-        maxScale: 1.6,
-        child: cachedNetworkImage("http://10.0.2.2:8000/document/doc1.png"),
-      ),
-      InteractiveViewer(
-        boundaryMargin: const EdgeInsets.all(20.0),
-        minScale: 0.1,
-        maxScale: 1.6,
-        child: cachedNetworkImage("http://10.0.2.2:8000/document/doc1.png"),
-      ),
-      InteractiveViewer(
-        boundaryMargin: const EdgeInsets.all(20.0),
-        minScale: 0.1,
-        maxScale: 1.6,
-        child: cachedNetworkImage("http://10.0.2.2:8000/document/doc1.png"),
-      ),
-      InteractiveViewer(
-        boundaryMargin: const EdgeInsets.all(20.0),
-        minScale: 0.1,
-        maxScale: 1.6,
-        child: cachedNetworkImage("http://127.0.0.1:8000/document/doc1.png"),
-      ),
+    return ListView(children: const [
+      OpenableImage(url: "http://10.0.2.2:8000/document/doc1.png"),
+      OpenableImage(url: "http://10.0.2.2:8000/document/doc1.png"),
+      OpenableImage(url: "http://10.0.2.2:8000/document/doc1.png"),
+      OpenableImage(url: "http://10.0.2.2:8000/document/doc1.png"),
+      OpenableImage(url: "http://10.0.2.2:8000/document/doc1.png"),
     ]);
   }
 
@@ -258,5 +224,68 @@ class _HomeState extends State<Home> {
   void dispose() {
     controller.dispose();
     super.dispose();
+  }
+}
+
+class OpenableImage extends StatelessWidget {
+  final String url;
+
+  const OpenableImage({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HeroPhotoViewRouteWrapper(
+                imageProvider: NetworkImage(url),
+              ),
+            ),
+          );
+        },
+        child: Hero(
+          tag: "someTag",
+          child: Image.network(
+            url,
+            width: 350.0,
+            loadingBuilder: (_, child, chunk) =>
+                chunk != null ? const Text("loading") : child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class HeroPhotoViewRouteWrapper extends StatelessWidget {
+  final ImageProvider imageProvider;
+  final BoxDecoration? backgroundDecoration;
+  final dynamic minScale;
+  final dynamic maxScale;
+
+  const HeroPhotoViewRouteWrapper({
+    required this.imageProvider,
+    this.backgroundDecoration,
+    this.minScale,
+    this.maxScale,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints.expand(
+        height: MediaQuery.of(context).size.height,
+      ),
+      child: PhotoView(
+        imageProvider: imageProvider,
+        backgroundDecoration: backgroundDecoration,
+        minScale: minScale,
+        maxScale: maxScale,
+        heroAttributes: const PhotoViewHeroAttributes(tag: "someTag"),
+      ),
+    );
   }
 }
