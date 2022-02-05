@@ -111,23 +111,22 @@ class _HomeState extends State<Home> {
         onQueryChanged: model.onQueryChanged,
         scrollPadding: EdgeInsets.zero,
         transition: CircularFloatingSearchBarTransition(spacing: 16),
-        onSubmitted: (_query) => onSubmitted(model),
-        body: buildBody(),
+        body: buildBody(model),
         builder: (context, _) => buildExpandableBody(model),
       ),
     );
   }
 
-  void onSubmitted(SearchModel model) {}
+  Widget buildBody(SearchModel model) {
+    final children = model.suggestions
+        .map(toImageUrl)
+        .map((url) => OpenableImage(url: url))
+        .toList();
+    return ListView(children: children);
+  }
 
-  Widget buildBody() {
-    return ListView(children: const [
-      OpenableImage(url: "http://10.0.2.2:8000/document/doc1.png"),
-      OpenableImage(url: "http://10.0.2.2:8000/document/doc1.png"),
-      OpenableImage(url: "http://10.0.2.2:8000/document/doc1.png"),
-      OpenableImage(url: "http://10.0.2.2:8000/document/doc1.png"),
-      OpenableImage(url: "http://10.0.2.2:8000/document/doc1.png"),
-    ]);
+  String toImageUrl(Document doc) {
+    return "http://10.0.2.2:8000/document/${doc.filename}";
   }
 
   Widget buildExpandableBody(SearchModel model) {

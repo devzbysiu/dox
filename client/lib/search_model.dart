@@ -48,8 +48,8 @@ class SearchModel extends ChangeNotifier {
 }
 
 const List<Document> history = [
-  Document(filename: 'Doc1.jpg'),
-  Document(filename: 'Doc2.jpg'),
-  Document(filename: 'Doc4.jpg'),
-  Document(filename: 'Doc4.jpg'),
+  Document(filename: 'doc1.png'),
+  Document(filename: 'doc1.png'),
+  Document(filename: 'doc1.png'),
+  Document(filename: 'doc1.png'),
 ];
