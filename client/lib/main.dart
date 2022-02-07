@@ -14,7 +14,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -30,26 +29,10 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends StatelessWidget {
   final String title;
 
   const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  TextEditingController editingController = TextEditingController();
-
-  final duplicateItems = List<String>.generate(10000, (i) => "Item $i");
-  var items = <String>[];
-
-  @override
-  void initState() {
-    items.addAll(duplicateItems);
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,10 +43,7 @@ class _MyHomePageState extends State<MyHomePage> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
-              onChanged: (value) async {
-                await filterSearchResults(model, value);
-              },
-              controller: editingController,
+              onChanged: (query) async => model.onQueryChanged(query),
               decoration: const InputDecoration(
                   labelText: "Search",
                   hintText: "Search",
@@ -80,7 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
     ));
   }
 
-  Future<void> filterSearchResults(SearchModel model, String query) async {
+  Future<void> search(SearchModel model, String query) async {
     model.onQueryChanged(query);
   }
 
@@ -101,7 +81,7 @@ class _MyHomePageState extends State<MyHomePage> {
 class OpenableImage extends StatelessWidget {
   final String url;
 
-  const OpenableImage({required this.url});
+  const OpenableImage({Key? key, required this.url}): super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -136,9 +116,10 @@ class HeroPhotoViewRouteWrapper extends StatelessWidget {
   final BoxDecoration? backgroundDecoration;
 
   const HeroPhotoViewRouteWrapper({
+    Key? key,
     required this.imageProvider,
     this.backgroundDecoration,
-  });
+  }): super(key: key);
 
   @override
   Widget build(BuildContext context) {
