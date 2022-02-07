@@ -38,42 +38,41 @@ class MyHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         body: Consumer<SearchModel>(
-      builder: (context, model, _) => Column(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              onChanged: (query) async => model.onQueryChanged(query),
-              decoration: const InputDecoration(
-                  labelText: "Search",
-                  hintText: "Search",
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(25.0)))),
-            ),
+          builder: (context, model, _) => Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  onChanged: (query) async => model.onQueryChanged(query),
+                  decoration: const InputDecoration(
+                      labelText: "Search",
+                      hintText: "Search",
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+                ),
+              ),
+              Expanded(
+                child: ListView(children: buildChildren(model)),
+              ),
+            ],
           ),
-          Expanded(
-            child: buildListView(model),
-          ),
-        ],
-      ),
-    ));
+        ));
   }
 
-  Future<void> search(SearchModel model, String query) async {
-    model.onQueryChanged(query);
-  }
-
-  Widget buildListView(SearchModel model) {
-    final children = model.suggestions
+  List<Widget> buildChildren(SearchModel model) {
+    return model.suggestions
         .map(toImageUrl)
-        .map((url) => Padding(
-            padding: const EdgeInsets.all(15), child: OpenableImage(url: url)))
+        .map(buildImage)
         .toList();
-    return ListView(children: children);
   }
 
   String toImageUrl(Document doc) {
     return "http://10.0.2.2:8000/document/${doc.filename}";
+  }
+
+  Widget buildImage(String url) {
+    return Padding(
+        padding: const EdgeInsets.all(15), child: OpenableImage(url: url));
   }
 }
