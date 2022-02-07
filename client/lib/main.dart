@@ -23,48 +23,43 @@ class MyApp extends StatelessWidget {
       ),
       home: ChangeNotifierProvider(
         create: (_) => SearchModel(),
-        child: const MyHomePage(title: 'ListView with Search'),
+        child: const MyHomePage(),
       ),
     );
   }
 }
 
 class MyHomePage extends StatelessWidget {
-  final String title;
-
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         body: Consumer<SearchModel>(
-          builder: (context, model, _) => Column(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  onChanged: (query) async => model.onQueryChanged(query),
-                  decoration: const InputDecoration(
-                      labelText: "Search",
-                      hintText: "Search",
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(25.0)))),
-                ),
-              ),
-              Expanded(
-                child: ListView(children: buildChildren(model)),
-              ),
-            ],
+      builder: (context, model, _) => Column(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              onChanged: (query) async => model.onQueryChanged(query),
+              decoration: const InputDecoration(
+                  labelText: "Search",
+                  hintText: "Search",
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+            ),
           ),
-        ));
+          Expanded(
+            child: ListView(children: buildChildren(model)),
+          ),
+        ],
+      ),
+    ));
   }
 
   List<Widget> buildChildren(SearchModel model) {
-    return model.suggestions
-        .map(toImageUrl)
-        .map(buildImage)
-        .toList();
+    return model.suggestions.map(toImageUrl).map(buildImage).toList();
   }
 
   String toImageUrl(Document doc) {
