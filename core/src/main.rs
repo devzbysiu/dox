@@ -13,6 +13,7 @@ use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::{get, launch, routes, Build, Rocket, State};
 use std::env;
+use std::fs::DirEntry;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
@@ -80,15 +81,25 @@ fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>, Debug<Er
 fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<Error>> {
     debug!("listing files from '{}':", cfg.watched_dir.display());
     let mut documents = Vec::new();
-    for file in cfg
-        .watched_dir
-        .read_dir()
-        .map_err(|e| Debug(anyhow!("failed to read dir: '{}'", e)))?
-    {
-        let file = file.map_err(|e| Debug(anyhow!("failed to get file: '{}'", e)))?;
-        let filename = file.file_name().to_str().unwrap().to_string();
+    for file in cfg.watched_dir.read_dir().map_err(to_debug_err)? {
+        let file = file.map_err(to_debug_err)?;
+        let filename = file.filename();
         debug!("\t- {}", filename);
         documents.push(SearchEntry::new(filename));
     }
     Ok(Json(SearchResults::new(documents)))
+}
+
+fn to_debug_err(err: std::io::Error) -> Debug<Error> {
+    Debug(anyhow!("{}", err))
+}
+
+trait DirEntryExt {
+    fn filename(&self) -> String;
+}
+
+impl DirEntryExt for DirEntry {
+    fn filename(&self) -> String {
+        self.file_name().to_str().unwrap().to_string()
+    }
 }
