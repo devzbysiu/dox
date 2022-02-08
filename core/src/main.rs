@@ -3,8 +3,9 @@
 use crate::cfg::Config;
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 
-use anyhow::{Error, Result};
+use anyhow::{anyhow, Error, Result};
 use cooldown_buffer::cooldown_buffer;
+use index::SearchEntry;
 use log::{debug, error, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::fs::FileServer;
@@ -33,9 +34,10 @@ fn launch() -> Rocket<Build> {
     let repo = setup(&cfg).expect("failed to setup indexer");
     debug!("starting server...");
     rocket::build()
-        .mount("/", routes![search])
-        .mount("/document", FileServer::from(cfg.watched_dir))
+        .mount("/", routes![search, all_documents])
+        .mount("/document", FileServer::from(&cfg.watched_dir))
         .manage(repo)
+        .manage(cfg)
 }
 
 fn setup(cfg: &Config) -> Result<Repo> {
@@ -72,4 +74,21 @@ fn setup(cfg: &Config) -> Result<Repo> {
 #[get("/search?<q>")]
 fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>, Debug<Error>> {
     Ok(Json(repo.search(q)?))
+}
+
+#[get("/documents/all")]
+fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<Error>> {
+    debug!("listing files from '{}':", cfg.watched_dir.display());
+    let mut documents = Vec::new();
+    for file in cfg
+        .watched_dir
+        .read_dir()
+        .map_err(|e| Debug(anyhow!("failed to read dir: '{}'", e)))?
+    {
+        let file = file.map_err(|e| Debug(anyhow!("failed to get file: '{}'", e)))?;
+        let filename = file.file_name().to_str().unwrap().to_string();
+        debug!("\t- {}", filename);
+        documents.push(SearchEntry::new(filename));
+    }
+    Ok(Json(SearchResults::new(documents)))
 }

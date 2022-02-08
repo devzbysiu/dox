@@ -87,7 +87,7 @@ pub struct SearchResults {
 }
 
 impl SearchResults {
-    fn new(entries: Vec<SearchEntry>) -> Self {
+    pub fn new(entries: Vec<SearchEntry>) -> Self {
         Self { entries }
     }
 }
@@ -98,7 +98,7 @@ pub struct SearchEntry {
 }
 
 impl SearchEntry {
-    fn new(filename: String) -> Self {
+    pub fn new(filename: String) -> Self {
         Self { filename }
     }
 }
