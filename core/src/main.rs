@@ -1,9 +1,10 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
 use crate::cfg::Config;
+use crate::helpers::{to_debug_err, DirEntryExt};
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result};
 use cooldown_buffer::cooldown_buffer;
 use index::SearchEntry;
 use log::{debug, error, warn};
@@ -13,12 +14,12 @@ use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::{get, launch, routes, Build, Rocket, State};
 use std::env;
-use std::fs::DirEntry;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
 
 mod cfg;
+mod helpers;
 mod index;
 mod ocr;
 
@@ -88,18 +89,4 @@ fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<Error
         documents.push(SearchEntry::new(filename));
     }
     Ok(Json(SearchResults::new(documents)))
-}
-
-fn to_debug_err(err: std::io::Error) -> Debug<Error> {
-    Debug(anyhow!("{}", err))
-}
-
-trait DirEntryExt {
-    fn filename(&self) -> String;
-}
-
-impl DirEntryExt for DirEntry {
-    fn filename(&self) -> String {
-        self.file_name().to_str().unwrap().to_string()
-    }
 }
