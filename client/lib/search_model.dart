@@ -10,7 +10,8 @@ class SearchModel extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  List<Document> _suggestions = history;
+  // TODO: this cannot be empty on start
+  List<Document> _suggestions = List.empty();
 
   List<Document> get suggestions => _suggestions;
 
@@ -26,8 +27,9 @@ class SearchModel extends ChangeNotifier {
     notifyListeners();
 
     if (query.isEmpty) {
-      _suggestions = history;
+      _suggestions = await allDocuments();
     } else {
+      // TODO: move URLs somewhere
       final response =
           await http.get(Uri.parse('http://10.0.2.2:8000/search?q=$query'));
 
@@ -41,15 +43,18 @@ class SearchModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void clear() {
-    _suggestions = history;
+  // TODO: think about pagination (or something similar)
+  Future<List<Document>> allDocuments() async {
+    // TODO: DRY
+    final response =
+        await http.get(Uri.parse('http://10.0.2.2:8000/documents/all'));
+    final body = json.decode(utf8.decode(response.bodyBytes));
+    final entries = body['entries'] as List;
+    return entries.map((e) => Document.fromJson(e)).toSet().toList();
+  }
+
+  void clear() async {
+    _suggestions = await allDocuments();
     notifyListeners();
   }
 }
-
-const List<Document> history = [
-  Document(filename: 'doc1.png'),
-  Document(filename: 'doc1.png'),
-  Document(filename: 'doc1.png'),
-  Document(filename: 'doc1.png'),
-];
