@@ -1,5 +1,5 @@
 #[cfg(test)]
-pub mod utils {
+pub mod helpers {
     use anyhow::Result;
     use log::debug;
     use rocket::serde::{Deserialize, Serialize};

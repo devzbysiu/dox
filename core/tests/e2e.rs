@@ -1,6 +1,9 @@
 use anyhow::Result;
 use std::time::Duration;
-use testutils::utils::*;
+use testutils::helpers::{
+    config_path, cp_docs, create_cfg_file, create_index_dir, create_watched_dir, make_search,
+    spawn_dox, Config, SearchEntry,
+};
 
 mod testutils;
 
