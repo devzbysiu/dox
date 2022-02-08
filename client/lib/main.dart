@@ -1,6 +1,6 @@
-import 'package:client/document.dart';
-import 'package:client/image.dart';
-import 'package:client/search_model.dart';
+import 'package:dox/document.dart';
+import 'package:dox/image.dart';
+import 'package:dox/search_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
