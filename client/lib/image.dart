@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 
 class OpenableImage extends StatelessWidget {
-  final String url;
+  final Uri url;
 
   const OpenableImage({Key? key, required this.url}) : super(key: key);
 
@@ -15,7 +15,7 @@ class OpenableImage extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) => HeroPhotoViewRouteWrapper(
-                imageProvider: NetworkImage(url),
+                imageProvider: NetworkImage(url.toString()),
               ),
             ),
           );
@@ -23,7 +23,7 @@ class OpenableImage extends StatelessWidget {
         child: Hero(
           tag: "someTag",
           child: Image.network(
-            url,
+            url.toString(),
             width: 350.0,
             loadingBuilder: (_, child, chunk) =>
                 chunk != null ? const Text("loading") : child,

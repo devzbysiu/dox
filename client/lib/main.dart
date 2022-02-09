@@ -65,14 +65,10 @@ class MyHomePage extends StatelessWidget {
   }
 
   List<Widget> buildChildren(SearchModel model) {
-    return model.suggestions.map(toImageUrl).map(buildImage).toList();
+    return model.docUrls.map(buildImage).toList();
   }
 
-  String toImageUrl(Document doc) {
-    return "http://10.0.2.2:8000/document/${doc.filename}";
-  }
-
-  Widget buildImage(String url) {
+  Widget buildImage(Uri url) {
     return Padding(
         padding: const EdgeInsets.all(15), child: OpenableImage(url: url));
   }

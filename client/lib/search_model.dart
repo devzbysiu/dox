@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'config.dart';
 import 'document.dart';
-import 'endpoints.dart';
+import 'urls.dart';
 
 class SearchModel extends ChangeNotifier {
   late bool _isLoading;
@@ -56,5 +56,7 @@ class SearchModel extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  List<Document> get suggestions => _suggestions;
+  List<Uri> get docUrls {
+    return _suggestions.map((doc) => _urls.document(doc.filename)).toList();
+  }
 }

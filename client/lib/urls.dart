@@ -14,4 +14,8 @@ class Urls {
   Uri allDocuments() {
     return Uri.parse('${_config.baseUrl}/documents/all');
   }
+
+  Uri document(String filename) {
+    return Uri.parse('${_config.baseUrl}/document/$filename');
+  }
 }
