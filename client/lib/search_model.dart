@@ -9,16 +9,16 @@ import 'endpoints.dart';
 class SearchModel extends ChangeNotifier {
   bool _isLoading = false;
 
-  bool get isLoading => _isLoading;
-
-  // TODO: this cannot be empty on start
-  List<Document> _suggestions = List.empty();
-
-  List<Document> get suggestions => _suggestions;
+  late List<Document> _suggestions;
 
   String _query = '';
 
-  String get query => _query;
+  SearchModel() {
+    fetchDocs(allDocumentsEndpoint()).then((value) {
+      _suggestions = value;
+      notifyListeners();
+    });
+  }
 
   void onQueryChanged(String query) async {
     if (query == _query) return;
@@ -46,4 +46,10 @@ class SearchModel extends ChangeNotifier {
     _suggestions = await fetchDocs(allDocumentsEndpoint());
     notifyListeners();
   }
+
+  bool get isLoading => _isLoading;
+
+  List<Document> get suggestions => _suggestions;
+
+  String get query => _query;
 }
