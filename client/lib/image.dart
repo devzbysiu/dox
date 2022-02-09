@@ -4,7 +4,7 @@ import 'package:photo_view/photo_view.dart';
 class OpenableImage extends StatelessWidget {
   final String url;
 
-  const OpenableImage({Key? key, required this.url}): super(key: key);
+  const OpenableImage({Key? key, required this.url}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class OpenableImage extends StatelessWidget {
             url,
             width: 350.0,
             loadingBuilder: (_, child, chunk) =>
-            chunk != null ? const Text("loading") : child,
+                chunk != null ? const Text("loading") : child,
           ),
         ),
       ),
@@ -42,7 +42,7 @@ class HeroPhotoViewRouteWrapper extends StatelessWidget {
     Key? key,
     required this.imageProvider,
     this.backgroundDecoration,
-  }): super(key: key);
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
