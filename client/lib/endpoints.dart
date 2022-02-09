@@ -1,7 +1,17 @@
-Uri searchEndpoint(String query) {
-  return Uri.parse('http://10.0.2.2:8000/search?q=$query');
-}
+import 'package:dox/config.dart';
 
-Uri allDocumentsEndpoint() {
-  return Uri.parse('http://10.0.2.2:8000/documents/all');
+class Urls {
+  late final Config _config;
+
+  Urls(config) {
+    _config = config;
+  }
+
+  Uri search(String query) {
+    return Uri.parse('${_config.baseUrl}/search?q=$query');
+  }
+
+  Uri allDocuments() {
+    return Uri.parse('${_config.baseUrl}/documents/all');
+  }
 }

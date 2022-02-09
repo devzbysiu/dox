@@ -3,18 +3,25 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import 'config.dart';
 import 'document.dart';
 import 'endpoints.dart';
 
 class SearchModel extends ChangeNotifier {
-  bool _isLoading = false;
+  late bool _isLoading;
 
-  List<Document> _suggestions = List.empty();
+  late List<Document> _suggestions;
 
-  String _query = '';
+  late String _query;
 
-  SearchModel() {
-    fetchDocs(allDocumentsEndpoint()).then((value) {
+  late final Urls _urls;
+
+  SearchModel(Config config) {
+    _isLoading = false;
+    _suggestions = List.empty();
+    _urls = Urls(config);
+    _query = '';
+    fetchDocs(_urls.allDocuments()).then((value) {
       _suggestions = value;
       notifyListeners();
     });
@@ -27,7 +34,7 @@ class SearchModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final uri = query.isEmpty ? allDocumentsEndpoint() : searchEndpoint(query);
+    final uri = query.isEmpty ? _urls.allDocuments() : _urls.search(query);
     _suggestions = await fetchDocs(uri);
 
     _isLoading = false;
@@ -43,13 +50,11 @@ class SearchModel extends ChangeNotifier {
   }
 
   void clear() async {
-    _suggestions = await fetchDocs(allDocumentsEndpoint());
+    _suggestions = await fetchDocs(_urls.allDocuments());
     notifyListeners();
   }
 
   bool get isLoading => _isLoading;
 
   List<Document> get suggestions => _suggestions;
-
-  String get query => _query;
 }
