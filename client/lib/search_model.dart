@@ -9,7 +9,7 @@ import 'endpoints.dart';
 class SearchModel extends ChangeNotifier {
   bool _isLoading = false;
 
-  late List<Document> _suggestions;
+  List<Document> _suggestions = List.empty();
 
   String _query = '';
 
