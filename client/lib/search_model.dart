@@ -27,30 +27,23 @@ class SearchModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    if (query.isEmpty) {
-      _suggestions = await allDocuments();
-    } else {
-      final response = await http.get(searchEndpoint(query));
-      final body = json.decode(utf8.decode(response.bodyBytes));
-      final entries = body['entries'] as List;
-      _suggestions = entries.map((e) => Document.fromJson(e)).toSet().toList();
-    }
+    final uri = query.isEmpty ? allDocumentsEndpoint() : searchEndpoint(query);
+    _suggestions = await fetchDocs(uri);
 
     _isLoading = false;
     notifyListeners();
   }
 
   // TODO: think about pagination (or something similar)
-  Future<List<Document>> allDocuments() async {
-    // TODO: DRY
-    final response = await http.get(allDocumentsEndpoint());
+  Future<List<Document>> fetchDocs(Uri endpoint) async {
+    final response = await http.get(endpoint);
     final body = json.decode(utf8.decode(response.bodyBytes));
     final entries = body['entries'] as List;
     return entries.map((e) => Document.fromJson(e)).toSet().toList();
   }
 
   void clear() async {
-    _suggestions = await allDocuments();
+    _suggestions = await fetchDocs(allDocumentsEndpoint());
     notifyListeners();
   }
 }
