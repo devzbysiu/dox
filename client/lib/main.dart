@@ -1,4 +1,4 @@
-import 'package:dox/image.dart';
+import 'package:dox/openable_image_list.dart';
 import 'package:dox/search_input.dart';
 import 'package:dox/search_model.dart';
 import 'package:flutter/material.dart';
@@ -52,20 +52,9 @@ class MyHomePage extends StatelessWidget {
                 padding: const EdgeInsets.all(8.0),
                 child: SearchInput(onQueryChanged: model.onQueryChanged),
               ),
-              Expanded(
-                child: ListView(children: buildChildren(model)),
-              ),
+              Expanded(child: OpenableImageList(docUrls: model.docUrls)),
             ],
           ),
         )));
-  }
-
-  List<Widget> buildChildren(SearchModel model) {
-    return model.docUrls.map(buildImage).toList();
-  }
-
-  Widget buildImage(Uri url) {
-    return Padding(
-        padding: const EdgeInsets.all(15), child: OpenableImage(url: url));
   }
 }
