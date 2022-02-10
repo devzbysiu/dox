@@ -1,4 +1,3 @@
-import 'package:dox/document.dart';
 import 'package:dox/image.dart';
 import 'package:dox/search_model.dart';
 import 'package:flutter/material.dart';
