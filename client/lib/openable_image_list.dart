@@ -5,7 +5,7 @@ import 'openable_image.dart';
 class OpenableImageList extends StatelessWidget {
   final List<Uri> docUrls;
 
-  OpenableImageList({Key? key, required this.docUrls}) : super(key: key)
+  const OpenableImageList({Key? key, required this.docUrls}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
