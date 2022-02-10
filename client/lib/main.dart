@@ -1,4 +1,5 @@
 import 'package:dox/image.dart';
+import 'package:dox/search_input.dart';
 import 'package:dox/search_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,23 +42,15 @@ class MyHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        onVerticalDragDown: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+        onVerticalDragDown: (_) =>
+            FocusManager.instance.primaryFocus?.unfocus(),
         child: Scaffold(
             body: Consumer<SearchModel>(
           builder: (context, model, _) => Column(
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  onChanged: (query) async => model.onQueryChanged(query),
-                  decoration: const InputDecoration(
-                      labelText: "Search",
-                      hintText: "Search",
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.all(Radius.circular(25.0)))),
-                ),
+                child: SearchInput(onQueryChanged: model.onQueryChanged),
               ),
               Expanded(
                 child: ListView(children: buildChildren(model)),
