@@ -21,7 +21,7 @@ class OpenableImage extends StatelessWidget {
           );
         },
         child: Hero(
-          tag: "someTag",
+          tag: url.toString(),
           child: Image.network(
             url.toString(),
             width: 350.0,
