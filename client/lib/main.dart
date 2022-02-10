@@ -41,9 +41,8 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        onVerticalDragDown: (_) =>
-            FocusManager.instance.primaryFocus?.unfocus(),
+        onTap: () => _hideKeyboard(),
+        onVerticalDragDown: (_) => _hideKeyboard(),
         child: Scaffold(
             body: Consumer<SearchModel>(
           builder: (context, model, _) => Column(
@@ -56,5 +55,9 @@ class MyHomePage extends StatelessWidget {
             ],
           ),
         )));
+  }
+
+  void _hideKeyboard() {
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 }
