@@ -39,28 +39,32 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: Consumer<SearchModel>(
-      builder: (context, model, _) => Column(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              onChanged: (query) async => model.onQueryChanged(query),
-              decoration: const InputDecoration(
-                  labelText: "Search",
-                  hintText: "Search",
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(25.0)))),
-            ),
+    return GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        onVerticalDragDown: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+        child: Scaffold(
+            body: Consumer<SearchModel>(
+          builder: (context, model, _) => Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  onChanged: (query) async => model.onQueryChanged(query),
+                  decoration: const InputDecoration(
+                      labelText: "Search",
+                      hintText: "Search",
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(25.0)))),
+                ),
+              ),
+              Expanded(
+                child: ListView(children: buildChildren(model)),
+              ),
+            ],
           ),
-          Expanded(
-            child: ListView(children: buildChildren(model)),
-          ),
-        ],
-      ),
-    ));
+        )));
   }
 
   List<Widget> buildChildren(SearchModel model) {
