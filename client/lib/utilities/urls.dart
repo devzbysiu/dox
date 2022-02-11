@@ -1,4 +1,4 @@
-import 'package:dox/config.dart';
+import 'package:dox/utilities/config.dart';
 
 class Urls {
   late final Config _config;
