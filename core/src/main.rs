@@ -12,7 +12,7 @@ use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::fs::FileServer;
 use rocket::response::Debug;
 use rocket::serde::json::Json;
-use rocket::{get, launch, routes, Build, Rocket, State};
+use rocket::{get, launch, post, routes, Build, Rocket, State};
 use std::env;
 use std::sync::mpsc::channel;
 use std::thread;
@@ -36,7 +36,7 @@ fn launch() -> Rocket<Build> {
     let repo = setup(&cfg).expect("failed to setup indexer");
     debug!("starting server...");
     rocket::build()
-        .mount("/", routes![search, all_documents])
+        .mount("/", routes![search, all_documents, receive_document])
         .mount("/document", FileServer::from(&cfg.watched_dir))
         .manage(repo)
         .manage(cfg)
@@ -89,4 +89,10 @@ fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<Error
         documents.push(SearchEntry::new(filename));
     }
     Ok(Json(SearchResults::new(documents)))
+}
+
+#[post("/document/upload")]
+fn receive_document() -> String {
+    debug!("receiving documents");
+    "OK".to_string()
 }
