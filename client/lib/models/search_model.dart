@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:dox/models/document.dart';
-import 'package:dox/utilities/config.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -15,10 +14,10 @@ class SearchModel extends ChangeNotifier {
 
   late final Urls _urls;
 
-  SearchModel(Config config) {
+  SearchModel(Urls urls) {
     _isLoading = false;
     _suggestions = List.empty();
-    _urls = Urls(config);
+    _urls = urls;
     _query = '';
     fetchDocs(_urls.allDocuments()).then((value) {
       _suggestions = value;

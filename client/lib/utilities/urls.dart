@@ -18,4 +18,8 @@ class Urls {
   Uri document(String filename) {
     return Uri.parse('${_config.baseUrl}/document/$filename');
   }
+
+  Uri upload() {
+    return Uri.parse('${_config.baseUrl}/document/upload');
+  }
 }
