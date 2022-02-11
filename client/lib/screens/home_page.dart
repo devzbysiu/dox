@@ -14,16 +14,16 @@ class HomePage extends StatelessWidget {
         onVerticalDragDown: (_) => _hideKeyboard(),
         child: Scaffold(
             body: Consumer<SearchModel>(
-              builder: (context, model, _) => Column(
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: SearchInput(onQueryChanged: model.onQueryChanged),
-                  ),
-                  Expanded(child: OpenableImageList(docUrls: model.docUrls)),
-                ],
+          builder: (context, model, _) => Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SearchInput(onQueryChanged: model.onQueryChanged),
               ),
-            )));
+              Expanded(child: OpenableImageList(docUrls: model.docUrls)),
+            ],
+          ),
+        )));
   }
 
   void _hideKeyboard() {

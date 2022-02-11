@@ -1,12 +1,9 @@
-import 'package:dox/screens/home_page.dart';
-import 'package:dox/widgets/openable_image_list.dart';
-import 'package:dox/widgets/search_input.dart';
 import 'package:dox/models/search_model.dart';
+import 'package:dox/screens/home_page.dart';
+import 'package:dox/utilities/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
-import 'utilities/config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,5 +32,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-

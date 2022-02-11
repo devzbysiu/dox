@@ -1,6 +1,5 @@
+import 'package:dox/widgets/openable_image.dart';
 import 'package:flutter/cupertino.dart';
-
-import 'openable_image.dart';
 
 class OpenableImageList extends StatelessWidget {
   final List<Uri> docUrls;
