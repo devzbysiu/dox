@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
       ),
       home: ChangeNotifierProvider(
         create: (_) => SearchModel(_config),
-        child: const MyHomePage(),
+        child: const HomePage(),
       ),
     );
   }
