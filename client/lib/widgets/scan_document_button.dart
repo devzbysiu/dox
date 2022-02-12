@@ -40,10 +40,9 @@ class ScanDocumentButton extends StatelessWidget {
   }
 
   Future<void> _sendFile(File file) async {
-    var req = http.MultipartRequest('POST', _urls.upload());
+    var req = http.MultipartRequest('POST', _urls.upload(name(file)));
     req.files.add(multipartFile(file));
-    final res = await req.send();
-    print(res.statusCode);
+    await req.send();
   }
 
   http.MultipartFile multipartFile(File file) {
