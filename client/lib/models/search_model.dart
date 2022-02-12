@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:dox/models/document.dart';
 import 'package:dox/utilities/dox_service.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 class SearchModel extends ChangeNotifier {
   late bool _isLoading;
