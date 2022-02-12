@@ -40,14 +40,6 @@ class SearchModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // TODO: think about pagination (or something similar)
-  Future<List<Document>> fetchDocs(Uri endpoint) async {
-    final response = await http.get(endpoint);
-    final body = json.decode(utf8.decode(response.bodyBytes));
-    final entries = body['entries'] as List;
-    return entries.map((e) => Document.fromJson(e)).toSet().toList();
-  }
-
   void clear() async {
     _suggestions = await _dox.fetchAllFiles();
     notifyListeners();
