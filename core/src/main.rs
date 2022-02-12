@@ -10,8 +10,7 @@ use index::SearchEntry;
 use log::{debug, error, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::data::ToByteUnit;
-use rocket::form::Form;
-use rocket::fs::{FileServer, TempFile};
+use rocket::fs::FileServer;
 use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::{get, launch, post, routes, Build, Data, Rocket, State};
@@ -93,13 +92,9 @@ fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<Error
     Ok(Json(SearchResults::new(documents)))
 }
 
-#[post(
-    "/document/upload",
-    format = "multipart/form-data",
-    data = "<document>"
-)]
+#[post("/document/upload", data = "<document>")]
 async fn receive_document(cfg: &State<Config>, document: Data<'_>) -> std::io::Result<String> {
-    // debug!("receiving document: {}", document.name());
+    debug!("receiving document");
     document
         .open(2.mebibytes())
         .into_file(cfg.watched_dir.join("parabole.png"))
