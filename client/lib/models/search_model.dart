@@ -3,19 +3,16 @@ import 'package:dox/utilities/dox_service.dart';
 import 'package:flutter/material.dart';
 
 class SearchModel extends ChangeNotifier {
-  late bool _isLoading;
+  bool _isLoading = false;
 
-  late List<Document> _suggestions;
+  List<Document> _suggestions = List.empty();
 
-  late String _query;
+  String _query = '';
 
   late final DoxService _dox;
 
   SearchModel(DoxService dox) {
-    _isLoading = false;
-    _suggestions = List.empty();
     _dox = dox;
-    _query = '';
     _dox.fetchAllFiles().then((value) {
       _suggestions = value;
       notifyListeners();
@@ -29,12 +26,16 @@ class SearchModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    _suggestions = query.isEmpty
-        ? await _dox.fetchAllFiles()
-        : await _dox.searchDocs(query);
+    _suggestions = await _giveSuggestions(query);
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<List<Document>> _giveSuggestions(String query) async {
+    return query.isEmpty
+        ? await _dox.fetchAllFiles()
+        : await _dox.searchDocs(query);
   }
 
   void clear() async {
