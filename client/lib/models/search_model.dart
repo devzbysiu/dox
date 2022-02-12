@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:dox/models/document.dart';
-import 'package:dox/utilities/urls.dart';
+import 'package:dox/utilities/dox_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -12,14 +12,14 @@ class SearchModel extends ChangeNotifier {
 
   late String _query;
 
-  late final Urls _urls;
+  late final DoxService _dox;
 
-  SearchModel(Urls urls) {
+  SearchModel(DoxService dox) {
     _isLoading = false;
     _suggestions = List.empty();
-    _urls = urls;
+    _dox = dox;
     _query = '';
-    fetchDocs(_urls.allDocuments()).then((value) {
+    _dox.fetchAllFiles().then((value) {
       _suggestions = value;
       notifyListeners();
     });
@@ -32,8 +32,9 @@ class SearchModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final uri = query.isEmpty ? _urls.allDocuments() : _urls.search(query);
-    _suggestions = await fetchDocs(uri);
+    _suggestions = query.isEmpty
+        ? await _dox.fetchAllFiles()
+        : await _dox.searchDocs(query);
 
     _isLoading = false;
     notifyListeners();
@@ -48,13 +49,13 @@ class SearchModel extends ChangeNotifier {
   }
 
   void clear() async {
-    _suggestions = await fetchDocs(_urls.allDocuments());
+    _suggestions = await _dox.fetchAllFiles();
     notifyListeners();
   }
 
   bool get isLoading => _isLoading;
 
   List<Uri> get docUrls {
-    return _suggestions.map((doc) => _urls.document(doc.filename)).toList();
+    return _suggestions.map((doc) => _dox.toDocUrl(doc.filename)).toList();
   }
 }

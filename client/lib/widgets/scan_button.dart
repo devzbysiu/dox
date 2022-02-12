@@ -1,17 +1,15 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:document_scanner_flutter/document_scanner_flutter.dart';
-import 'package:dox/utilities/urls.dart';
+import 'package:dox/utilities/dox_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 
-class ScanDocumentButton extends StatelessWidget {
-  late final Urls _urls;
+class ScanButton extends StatelessWidget {
+  late final DoxService _dox;
 
-  ScanDocumentButton(Urls urls, {Key? key}) : super(key: key) {
-    _urls = urls;
+  ScanButton(DoxService dox, {Key? key}) : super(key: key) {
+    _dox = dox;
   }
 
   @override
@@ -26,7 +24,7 @@ class ScanDocumentButton extends StatelessWidget {
   Future<void> _scanAndSendDocument(BuildContext context) async {
     final doc = await _scanDocument(context);
     if (doc == null) return;
-    await _sendFile(doc);
+    await _dox.uploadDoc(doc);
   }
 
   Future<File?> _scanDocument(BuildContext context) async {
@@ -37,28 +35,5 @@ class ScanDocumentButton extends StatelessWidget {
       // TODO: add logging or something
     }
     return null;
-  }
-
-  Future<void> _sendFile(File file) async {
-    var req = http.MultipartRequest('POST', _urls.upload(name(file)));
-    req.files.add(multipartFile(file));
-    await req.send();
-  }
-
-  http.MultipartFile multipartFile(File file) {
-    return http.MultipartFile('document', stream(file), length(file),
-        filename: name(file));
-  }
-
-  Stream<Uint8List> stream(File file) {
-    return file.readAsBytes().asStream();
-  }
-
-  int length(File file) {
-    return file.lengthSync();
-  }
-
-  String name(File file) {
-    return file.path.split('/').last;
   }
 }
