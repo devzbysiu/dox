@@ -9,10 +9,12 @@ use cooldown_buffer::cooldown_buffer;
 use index::SearchEntry;
 use log::{debug, error, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
-use rocket::fs::FileServer;
+use rocket::data::ToByteUnit;
+use rocket::form::Form;
+use rocket::fs::{FileServer, TempFile};
 use rocket::response::Debug;
 use rocket::serde::json::Json;
-use rocket::{get, launch, post, routes, Build, Rocket, State};
+use rocket::{get, launch, post, routes, Build, Data, Rocket, State};
 use std::env;
 use std::sync::mpsc::channel;
 use std::thread;
@@ -91,8 +93,16 @@ fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<Error
     Ok(Json(SearchResults::new(documents)))
 }
 
-#[post("/document/upload")]
-fn receive_document() -> String {
-    debug!("receiving documents");
-    "OK".to_string()
+#[post(
+    "/document/upload",
+    format = "multipart/form-data",
+    data = "<document>"
+)]
+async fn receive_document(cfg: &State<Config>, document: Data<'_>) -> std::io::Result<String> {
+    // debug!("receiving document: {}", document.name());
+    document
+        .open(2.mebibytes())
+        .into_file(cfg.watched_dir.join("parabole.png"))
+        .await?;
+    Ok("OK".to_string())
 }
