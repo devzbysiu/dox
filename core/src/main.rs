@@ -15,6 +15,7 @@ use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::{get, launch, post, routes, Build, Data, Rocket, State};
 use std::env;
+use std::io::Result as IoResult;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
@@ -92,12 +93,11 @@ fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<Error
     Ok(Json(SearchResults::new(documents)))
 }
 
-#[post("/document/upload", data = "<document>")]
-async fn receive_document(cfg: &State<Config>, document: Data<'_>) -> std::io::Result<String> {
-    debug!("receiving document");
-    document
-        .open(2.mebibytes())
-        .into_file(cfg.watched_dir.join("parabole.png"))
+#[post("/document/upload?<name>", data = "<img>")]
+async fn receive_document(name: String, img: Data<'_>, cfg: &State<Config>) -> IoResult<String> {
+    debug!("receiving document: {}", name);
+    img.open(2.mebibytes())
+        .into_file(cfg.watched_dir.join(name))
         .await?;
     Ok("OK".to_string())
 }
