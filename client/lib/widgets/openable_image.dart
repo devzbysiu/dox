@@ -16,6 +16,7 @@ class OpenableImage extends StatelessWidget {
             MaterialPageRoute(
               builder: (context) => HeroPhotoViewRouteWrapper(
                 imageProvider: NetworkImage(url.toString()),
+                backgroundDecoration: const BoxDecoration(color: Colors.white),
               ),
             ),
           );
