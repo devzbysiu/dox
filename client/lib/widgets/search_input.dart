@@ -7,15 +7,28 @@ class SearchInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(onChanged: onQueryChanged, decoration: _inputDecoration());
+    return Material(
+        borderRadius: const BorderRadius.all(Radius.circular(25)),
+        elevation: 18,
+        shadowColor: Colors.black,
+        child: TextField(
+            onChanged: onQueryChanged, decoration: _inputDecoration()));
   }
 
   InputDecoration _inputDecoration() {
-    return const InputDecoration(
-        labelText: "Search",
+    return InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
         hintText: "Search",
-        prefixIcon: Icon(Icons.search),
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(25.0))));
+        prefixIcon: const Icon(Icons.search),
+        focusedBorder: _border(),
+        enabledBorder: _border(),
+        border: _border());
+  }
+
+  OutlineInputBorder _border() {
+    return const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.transparent, width: 0),
+        borderRadius: BorderRadius.all(Radius.circular(25.0)));
   }
 }
