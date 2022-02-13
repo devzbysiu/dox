@@ -18,7 +18,7 @@ class ScanButton extends StatelessWidget {
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(15))),
       onPressed: () => _scanAndSendDocument(context),
-      backgroundColor: Colors.deepPurple,
+      backgroundColor: Colors.purple,
       child: const Icon(Icons.document_scanner, color: Colors.white),
     );
   }
