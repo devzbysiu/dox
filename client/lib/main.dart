@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Dox',
       theme: ThemeData(
-        primarySwatch: Colors.orange,
+        primarySwatch: Colors.deepPurple,
       ),
       home: ChangeNotifierProvider(
         create: (_) => SearchModel(_dox),

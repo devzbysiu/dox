@@ -22,11 +22,17 @@ class OpenableImage extends StatelessWidget {
         },
         child: Hero(
           tag: url.toString(),
-          child: Image.network(
-            url.toString(),
-            width: 350.0,
-            loadingBuilder: (_, child, chunk) =>
-                chunk != null ? const Text("loading") : child,
+          child: Container(
+            decoration: const BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(15)),
+                color: Color.fromRGBO(242, 242, 246, 1)),
+            padding: const EdgeInsets.all(20),
+            child: Image.network(
+              url.toString(),
+              width: 350.0,
+              loadingBuilder: (_, child, chunk) =>
+                  chunk != null ? const Text("loading") : child,
+            ),
           ),
         ),
       ),
