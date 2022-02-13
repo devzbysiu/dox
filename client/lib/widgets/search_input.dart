@@ -8,7 +8,7 @@ class SearchInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-        borderRadius: const BorderRadius.all(Radius.circular(25)),
+        borderRadius: const BorderRadius.all(Radius.circular(15)),
         elevation: 18,
         shadowColor: Colors.black,
         child: TextField(
@@ -29,6 +29,6 @@ class SearchInput extends StatelessWidget {
   OutlineInputBorder _border() {
     return const OutlineInputBorder(
         borderSide: BorderSide(color: Colors.transparent, width: 0),
-        borderRadius: BorderRadius.all(Radius.circular(25.0)));
+        borderRadius: BorderRadius.all(Radius.circular(15.0)));
   }
 }
