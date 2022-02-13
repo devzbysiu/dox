@@ -94,10 +94,10 @@ fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<Error
 }
 
 #[post("/document/upload?<name>", data = "<img>")]
-async fn receive_document(name: String, img: Data<'_>, cfg: &State<Config>) -> IoResult<String> {
+async fn receive_document(name: String, img: Data<'_>, cfg: &State<Config>) -> IoResult<()> {
     debug!("receiving document: {}", name);
     img.open(2.mebibytes())
         .into_file(cfg.watched_dir.join(name))
         .await?;
-    Ok("OK".to_string())
+    Ok(())
 }
