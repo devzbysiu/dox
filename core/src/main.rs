@@ -100,7 +100,7 @@ fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<Error
 
 #[derive(Deserialize)]
 struct Document {
-    name: String,
+    filename: String,
     body: String,
 }
 
@@ -109,8 +109,8 @@ async fn receive_document(
     doc: Json<Document>,
     cfg: &State<Config>,
 ) -> Result<Status, Debug<Error>> {
-    debug!("receiving document: {}", doc.name);
-    let mut document = File::create(cfg.watched_dir.join(&doc.name))
+    debug!("receiving document: {}", doc.filename);
+    let mut document = File::create(cfg.watched_dir.join(&doc.filename))
         .map_err(|_| anyhow!("failed to create a file"))?;
     document
         .write_all(&base64::decode(&doc.body).map_err(|_| anyhow!("failed"))?)
