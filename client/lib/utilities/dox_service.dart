@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:dox/models/document.dart';
 import 'package:dox/utilities/urls.dart';
@@ -30,35 +29,10 @@ class DoxService {
   }
 
   Future<void> uploadDoc(File file) async {
-    http.post(_urls.upload(),
-        body: jsonEncode(FileUpload(file)),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        });
-  }
-
-  // Future<void> uploadDoc(File file) async {
-  //   var req = http.MultipartRequest('POST', _urls.upload(_name(file)));
-  //   req.files.add(_multipartFile(file));
-  //   await req.send();
-  // }
-
-  http.MultipartFile _multipartFile(File file) {
-    return http.MultipartFile('document', _stream(file), _length(file),
-        filename: _name(file));
-  }
-
-  Stream<Uint8List> _stream(File file) {
-    return file.readAsBytes().asStream();
-  }
-
-  int _length(File file) {
-    return file.lengthSync();
-  }
-
-  String _name(File file) {
-    return file.path.split('/').last;
+    http.post(_urls.upload(), body: jsonEncode(_Document(file)), headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    });
   }
 
   Uri toDocUrl(String filename) {
@@ -66,20 +40,22 @@ class DoxService {
   }
 }
 
-class FileUpload {
-  late final String _name;
+class _Document {
+  late final String _filename;
 
   late final String _body;
 
-  FileUpload(File file) {
-    _name = file.path.split('/').last;
+  _Document(File file) {
+    _filename = _name(file);
+    // TODO: do I need to move it to isolate?
     _body = base64Encode(file.readAsBytesSync());
   }
 
+  String _name(File file) {
+    return file.path.split('/').last;
+  }
+
   Map<String, dynamic> toJson() {
-    return {
-      'name': _name,
-      'body': _body
-    };
+    return {'filename': _filename, 'body': _body};
   }
 }
