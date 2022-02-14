@@ -29,12 +29,8 @@ class ScanButton extends StatelessWidget {
   Future<void> _scanAndSendDocument(BuildContext context) async {
     final doc = await _scanDocument(context);
     if (doc == null) return;
-    try {
-      // TODO: the receiving of the image is broken
-      await _dox.uploadDoc(doc);
-    } on SocketException {
-      // nothing
-    }
+    // TODO: check if upload successful
+    await _dox.uploadDoc(doc);
     Future.delayed(const Duration(seconds: 1), () {
       onScanned();
     });
