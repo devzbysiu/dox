@@ -1,3 +1,6 @@
 ## defaults for _all_ profiles
 [default]
 address = "0.0.0.0"
+
+[global.limits]
+json = 52428800

@@ -4,17 +4,22 @@ use crate::cfg::Config;
 use crate::helpers::{to_debug_err, DirEntryExt};
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 
-use anyhow::{Error, Result};
+use anyhow::{anyhow, Error, Result};
 use cooldown_buffer::cooldown_buffer;
 use index::SearchEntry;
 use log::{debug, error, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::data::ToByteUnit;
-use rocket::fs::FileServer;
+use rocket::form::Form;
+use rocket::fs::{FileServer, TempFile};
+use rocket::http::{ContentType, Status};
 use rocket::response::Debug;
 use rocket::serde::json::Json;
-use rocket::{get, launch, post, routes, Build, Data, Rocket, State};
+use rocket::serde::Deserialize;
+use rocket::{get, launch, post, routes, Build, Data, FromForm, Rocket, State};
 use std::env;
+use std::fs::File;
+use std::io::prelude::*;
 use std::io::Result as IoResult;
 use std::sync::mpsc::channel;
 use std::thread;
@@ -93,11 +98,22 @@ fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<Error
     Ok(Json(SearchResults::new(documents)))
 }
 
-#[post("/document/upload?<name>", data = "<img>")]
-async fn receive_document(name: String, img: Data<'_>, cfg: &State<Config>) -> IoResult<()> {
-    debug!("receiving document: {}", name);
-    img.open(2.mebibytes())
-        .into_file(cfg.watched_dir.join(name))
-        .await?;
-    Ok(())
+#[derive(Deserialize)]
+struct Document {
+    name: String,
+    body: String,
+}
+
+#[post("/document/upload", data = "<doc>")]
+async fn receive_document(
+    doc: Json<Document>,
+    cfg: &State<Config>,
+) -> Result<Status, Debug<Error>> {
+    debug!("receiving document: {}", doc.name);
+    let mut document = File::create(cfg.watched_dir.join(&doc.name))
+        .map_err(|_| anyhow!("failed to create a file"))?;
+    document
+        .write_all(&base64::decode(&doc.body).map_err(|_| anyhow!("failed"))?)
+        .map_err(|_| anyhow!("failed to write to file"))?;
+    Ok(Status::Created)
 }
