@@ -1,9 +1,21 @@
 import 'package:flutter/material.dart';
 
-class SearchInput extends StatelessWidget {
+class SearchInput extends StatefulWidget {
   final Function(String) onQueryChanged;
 
   const SearchInput({Key? key, required this.onQueryChanged}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() =>
+      _SearchInputState(onQueryChanged: onQueryChanged);
+}
+
+class _SearchInputState extends State<SearchInput> {
+  final Function(String) onQueryChanged;
+
+  final TextEditingController _controller = TextEditingController();
+
+  _SearchInputState({required this.onQueryChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +24,9 @@ class SearchInput extends StatelessWidget {
         elevation: 18,
         shadowColor: Colors.black,
         child: TextField(
-            onChanged: onQueryChanged, decoration: _inputDecoration()));
+            controller: _controller,
+            onChanged: onQueryChanged,
+            decoration: _inputDecoration()));
   }
 
   InputDecoration _inputDecoration() {
@@ -21,9 +35,17 @@ class SearchInput extends StatelessWidget {
         fillColor: Colors.white,
         hintText: "Search",
         prefixIcon: const Icon(Icons.search),
+        suffixIcon:
+            IconButton(icon: const Icon(Icons.clear), onPressed: _clear),
         focusedBorder: _border(),
         enabledBorder: _border(),
         border: _border());
+  }
+
+  void _clear() {
+    _controller.clear();
+    onQueryChanged('');
+    setState(() {});
   }
 
   OutlineInputBorder _border() {

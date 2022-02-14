@@ -8,7 +8,10 @@ import 'package:flutter/services.dart';
 class ScanButton extends StatelessWidget {
   late final DoxService _dox;
 
-  ScanButton(DoxService dox, {Key? key}) : super(key: key) {
+  late final Function onScanned;
+
+  ScanButton(DoxService dox, {Key? key, required this.onScanned})
+      : super(key: key) {
     _dox = dox;
   }
 
@@ -26,7 +29,15 @@ class ScanButton extends StatelessWidget {
   Future<void> _scanAndSendDocument(BuildContext context) async {
     final doc = await _scanDocument(context);
     if (doc == null) return;
-    await _dox.uploadDoc(doc);
+    try {
+      // TODO: the receiving of the image is broken
+      await _dox.uploadDoc(doc);
+    } on SocketException {
+      // nothing
+    }
+    Future.delayed(const Duration(seconds: 1), () {
+      onScanned();
+    });
   }
 
   Future<File?> _scanDocument(BuildContext context) async {
