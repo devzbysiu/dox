@@ -30,10 +30,19 @@ class DoxService {
   }
 
   Future<void> uploadDoc(File file) async {
-    var req = http.MultipartRequest('POST', _urls.upload(_name(file)));
-    req.files.add(_multipartFile(file));
-    await req.send();
+    http.post(_urls.upload(),
+        body: jsonEncode(FileUpload(file)),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        });
   }
+
+  // Future<void> uploadDoc(File file) async {
+  //   var req = http.MultipartRequest('POST', _urls.upload(_name(file)));
+  //   req.files.add(_multipartFile(file));
+  //   await req.send();
+  // }
 
   http.MultipartFile _multipartFile(File file) {
     return http.MultipartFile('document', _stream(file), _length(file),
@@ -54,5 +63,23 @@ class DoxService {
 
   Uri toDocUrl(String filename) {
     return _urls.document(filename);
+  }
+}
+
+class FileUpload {
+  late final String _name;
+
+  late final String _body;
+
+  FileUpload(File file) {
+    _name = file.path.split('/').last;
+    _body = base64Encode(file.readAsBytesSync());
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': _name,
+      'body': _body
+    };
   }
 }

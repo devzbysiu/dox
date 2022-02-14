@@ -19,7 +19,7 @@ class Urls {
     return Uri.parse('${_config.baseUrl}/document/$filename');
   }
 
-  Uri upload(String filename) {
-    return Uri.parse('${_config.baseUrl}/document/upload?name=$filename');
+  Uri upload() {
+    return Uri.parse('${_config.baseUrl}/document/upload');
   }
 }
