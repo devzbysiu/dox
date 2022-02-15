@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use rocket::response::Debug;
+use rocket::{http::Status, response::Responder};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -41,8 +41,12 @@ pub enum DoxError {
 
 pub type Result<T> = std::result::Result<T, DoxError>;
 
-pub type RocketResult<T> = std::result::Result<T, Debug<DoxError>>;
-
-pub fn to_debug_err(err: std::io::Error) -> Debug<DoxError> {
-    Debug(DoxError::from(err))
+// TODO: make sure that's the right way to go
+impl<'r, 'o> Responder<'r, 'o> for DoxError
+where
+    'o: 'r,
+{
+    fn respond_to(self, _request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
+        Err(Status::new(500))
+    }
 }

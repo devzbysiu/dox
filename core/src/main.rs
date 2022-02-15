@@ -1,7 +1,7 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
 use crate::cfg::Config;
-use crate::error::{to_debug_err, DoxError, Result, RocketResult};
+use crate::error::{DoxError, Result};
 use crate::helpers::DirEntryExt;
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 
@@ -79,16 +79,16 @@ fn setup(cfg: &Config) -> Result<Repo> {
 }
 
 #[get("/search?<q>")]
-fn search(q: String, repo: &State<Repo>) -> RocketResult<Json<SearchResults>> {
+fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>> {
     Ok(Json(repo.search(q)?))
 }
 
 #[get("/documents/all")]
-fn all_documents(cfg: &State<Config>) -> RocketResult<Json<SearchResults>> {
+fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>> {
     debug!("listing files from '{}':", cfg.watched_dir.display());
     let mut documents = Vec::new();
-    for file in cfg.watched_dir.read_dir().map_err(to_debug_err)? {
-        let file = file.map_err(to_debug_err)?;
+    for file in cfg.watched_dir.read_dir()? {
+        let file = file?;
         let filename = file.filename();
         debug!("\t- {}", filename);
         documents.push(SearchEntry::new(filename));
@@ -103,7 +103,7 @@ struct Document {
 }
 
 #[post("/document/upload", data = "<doc>")]
-async fn receive_document(doc: Json<Document>, cfg: &State<Config>) -> RocketResult<Status> {
+async fn receive_document(doc: Json<Document>, cfg: &State<Config>) -> Result<Status> {
     debug!("receiving document: {}", doc.filename);
     let document = create_file(cfg.watched_dir.join(&doc.filename))?;
     write(document, &decode(&doc.body)?)?;
