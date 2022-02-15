@@ -29,6 +29,7 @@ class DoxService {
   }
 
   Future<void> uploadDoc(File file) async {
+    // FIXME: this is still not working correctly
     http.post(_urls.upload(), body: jsonEncode(_Document(file)), headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
