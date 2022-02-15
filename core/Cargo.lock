@@ -459,6 +459,7 @@ dependencies = [
  "serde",
  "tantivy",
  "tempfile",
+ "thiserror",
  "toml",
  "ureq",
 ]

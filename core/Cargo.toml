@@ -41,6 +41,7 @@ rocket = { git = "https://github.com/SergioBenitez/Rocket/", tag = "v0.5.0-rc.1"
 serde = "1.0.135"
 toml = "0.5.8"
 base64 = "0.13.0"
+thiserror = "1.0.30"
 
 [dev-dependencies]
 tempfile = "3.3.0"

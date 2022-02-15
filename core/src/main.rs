@@ -4,7 +4,7 @@ use crate::cfg::Config;
 use crate::helpers::{to_debug_err, DirEntryExt};
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error as AnyError, Result};
 use cooldown_buffer::cooldown_buffer;
 use index::SearchEntry;
 use log::{debug, error, warn};
@@ -18,14 +18,25 @@ use rocket::{get, launch, post, routes, Build, Rocket, State};
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::Path;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
+use thiserror::Error;
 
 mod cfg;
 mod helpers;
 mod index;
 mod ocr;
+
+#[derive(Debug, Error)]
+enum Error {
+    #[error("failed to create or write file")]
+    Io(#[from] std::io::Error),
+
+    #[error("failed to decode from base64")]
+    Decode(#[from] base64::DecodeError),
+}
 
 #[launch]
 fn launch() -> Rocket<Build> {
@@ -78,12 +89,12 @@ fn setup(cfg: &Config) -> Result<Repo> {
 }
 
 #[get("/search?<q>")]
-fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>, Debug<Error>> {
+fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>, Debug<AnyError>> {
     Ok(Json(repo.search(q)?))
 }
 
 #[get("/documents/all")]
-fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<Error>> {
+fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<AnyError>> {
     debug!("listing files from '{}':", cfg.watched_dir.display());
     let mut documents = Vec::new();
     for file in cfg.watched_dir.read_dir().map_err(to_debug_err)? {
@@ -107,10 +118,19 @@ async fn receive_document(
     cfg: &State<Config>,
 ) -> Result<Status, Debug<Error>> {
     debug!("receiving document: {}", doc.filename);
-    let mut document = File::create(cfg.watched_dir.join(&doc.filename))
-        .map_err(|_| anyhow!("failed to create a file"))?;
-    document
-        .write_all(&base64::decode(&doc.body).map_err(|_| anyhow!("failed"))?)
-        .map_err(|_| anyhow!("failed to write to file"))?;
+    let document = create_file(cfg.watched_dir.join(&doc.filename))?;
+    write(document, &decode(&doc.body)?)?;
     Ok(Status::Created)
+}
+
+fn create_file<P: AsRef<Path>>(path: P) -> Result<File, Error> {
+    File::create(path).map_err(Error::Io)
+}
+
+fn decode<S: Into<String>>(body: S) -> Result<Vec<u8>, Error> {
+    base64::decode(body.into()).map_err(Error::Decode)
+}
+
+fn write(mut file: File, body: &[u8]) -> Result<(), Error> {
+    file.write_all(body).map_err(Error::Io)
 }
