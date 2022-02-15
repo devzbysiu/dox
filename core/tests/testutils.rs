@@ -1,3 +1,5 @@
+#![allow(clippy::missing_errors_doc)]
+
 #[cfg(test)]
 pub mod helpers {
     use anyhow::Result;

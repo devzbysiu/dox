@@ -4,7 +4,7 @@ use rocket::{http::Status, response::Responder};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum DoxError {
+pub enum DoxErr {
     #[error("failed to create or write file: '{0}'")]
     Io(#[from] std::io::Error),
 
@@ -39,10 +39,10 @@ pub enum DoxError {
     Utf8(#[from] std::str::Utf8Error),
 }
 
-pub type Result<T> = std::result::Result<T, DoxError>;
+pub type Result<T> = std::result::Result<T, DoxErr>;
 
 // TODO: make sure that's the right way to go
-impl<'r, 'o> Responder<'r, 'o> for DoxError
+impl<'r, 'o> Responder<'r, 'o> for DoxErr
 where
     'o: 'r,
 {
