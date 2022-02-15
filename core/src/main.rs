@@ -1,7 +1,7 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
 use crate::cfg::Config;
-use crate::error::{DoxError, Result};
+use crate::error::Result;
 use crate::helpers::DirEntryExt;
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 
@@ -17,7 +17,6 @@ use rocket::{get, launch, post, routes, Build, Rocket, State};
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
-use std::path::Path;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
@@ -105,19 +104,7 @@ struct Document {
 #[post("/document/upload", data = "<doc>")]
 async fn receive_document(doc: Json<Document>, cfg: &State<Config>) -> Result<Status> {
     debug!("receiving document: {}", doc.filename);
-    let document = create_file(cfg.watched_dir.join(&doc.filename))?;
-    write(document, &decode(&doc.body)?)?;
+    let mut document = File::create(cfg.watched_dir.join(&doc.filename))?;
+    document.write_all(doc.body.as_bytes())?;
     Ok(Status::Created)
-}
-
-fn create_file<P: AsRef<Path>>(path: P) -> Result<File> {
-    File::create(path).map_err(DoxError::Io)
-}
-
-fn decode<S: Into<String>>(body: S) -> Result<Vec<u8>> {
-    base64::decode(body.into()).map_err(DoxError::Decode)
-}
-
-fn write(mut file: File, body: &[u8]) -> Result<()> {
-    file.write_all(body).map_err(DoxError::Io)
 }
