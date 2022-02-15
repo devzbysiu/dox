@@ -33,18 +33,13 @@ fn it_allows_to_search_through_api() -> Result<()> {
     let results = make_search("ale")?;
 
     let mut entries = results.entries;
-    assert_eq!(entries.len(), 2); // then we have two results
+    assert_eq!(entries.len(), 1); // then we have two results
     entries.sort_by(|a, b| a.filename.cmp(&b.filename));
     assert_eq!(
         entries,
-        vec![
-            SearchEntry {
-                filename: "doc1.png".to_string()
-            },
-            SearchEntry {
-                filename: "doc5.png".to_string()
-            },
-        ]
+        vec![SearchEntry {
+            filename: "doc1.png".to_string()
+        }]
     );
 
     Ok(())

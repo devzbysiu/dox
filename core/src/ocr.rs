@@ -1,4 +1,4 @@
-use anyhow::Result;
+use crate::error::Result;
 use leptess::LepTess;
 use log::debug;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};

@@ -1,17 +1,16 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
 use crate::cfg::Config;
-use crate::helpers::{to_debug_err, DirEntryExt};
+use crate::error::{to_debug_err, DoxError, Result, RocketResult};
+use crate::helpers::DirEntryExt;
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 
-use anyhow::{Error as AnyError, Result};
 use cooldown_buffer::cooldown_buffer;
 use index::SearchEntry;
 use log::{debug, error, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::fs::FileServer;
 use rocket::http::Status;
-use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, launch, post, routes, Build, Rocket, State};
@@ -22,21 +21,12 @@ use std::path::Path;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
-use thiserror::Error;
 
 mod cfg;
+mod error;
 mod helpers;
 mod index;
 mod ocr;
-
-#[derive(Debug, Error)]
-enum Error {
-    #[error("failed to create or write file")]
-    Io(#[from] std::io::Error),
-
-    #[error("failed to decode from base64")]
-    Decode(#[from] base64::DecodeError),
-}
 
 #[launch]
 fn launch() -> Rocket<Build> {
@@ -89,12 +79,12 @@ fn setup(cfg: &Config) -> Result<Repo> {
 }
 
 #[get("/search?<q>")]
-fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>, Debug<AnyError>> {
+fn search(q: String, repo: &State<Repo>) -> RocketResult<Json<SearchResults>> {
     Ok(Json(repo.search(q)?))
 }
 
 #[get("/documents/all")]
-fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>, Debug<AnyError>> {
+fn all_documents(cfg: &State<Config>) -> RocketResult<Json<SearchResults>> {
     debug!("listing files from '{}':", cfg.watched_dir.display());
     let mut documents = Vec::new();
     for file in cfg.watched_dir.read_dir().map_err(to_debug_err)? {
@@ -113,24 +103,21 @@ struct Document {
 }
 
 #[post("/document/upload", data = "<doc>")]
-async fn receive_document(
-    doc: Json<Document>,
-    cfg: &State<Config>,
-) -> Result<Status, Debug<Error>> {
+async fn receive_document(doc: Json<Document>, cfg: &State<Config>) -> RocketResult<Status> {
     debug!("receiving document: {}", doc.filename);
     let document = create_file(cfg.watched_dir.join(&doc.filename))?;
     write(document, &decode(&doc.body)?)?;
     Ok(Status::Created)
 }
 
-fn create_file<P: AsRef<Path>>(path: P) -> Result<File, Error> {
-    File::create(path).map_err(Error::Io)
+fn create_file<P: AsRef<Path>>(path: P) -> Result<File> {
+    File::create(path).map_err(DoxError::Io)
 }
 
-fn decode<S: Into<String>>(body: S) -> Result<Vec<u8>, Error> {
-    base64::decode(body.into()).map_err(Error::Decode)
+fn decode<S: Into<String>>(body: S) -> Result<Vec<u8>> {
+    base64::decode(body.into()).map_err(DoxError::Decode)
 }
 
-fn write(mut file: File, body: &[u8]) -> Result<(), Error> {
-    file.write_all(body).map_err(Error::Io)
+fn write(mut file: File, body: &[u8]) -> Result<()> {
+    file.write_all(body).map_err(DoxError::Io)
 }

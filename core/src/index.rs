@@ -1,6 +1,6 @@
 use crate::ocr::FilenameToBody;
 
-use anyhow::Result;
+use crate::error::Result;
 use core::fmt;
 use log::debug;
 use rocket::serde::Serialize;
@@ -114,11 +114,7 @@ pub fn mk_idx_and_schema<P: AsRef<Path>>(index_path: P) -> Result<(Index, Schema
 }
 
 #[allow(clippy::module_name_repetitions)]
-pub fn index_docs(
-    tuples: &[FilenameToBody],
-    index: &Index,
-    schema: &Schema,
-) -> tantivy::Result<()> {
+pub fn index_docs(tuples: &[FilenameToBody], index: &Index, schema: &Schema) -> Result<()> {
     debug!("indexing...");
     // NOTE: IndexWriter is already multithreaded and
     // cannot be shared between external threads
@@ -128,7 +124,7 @@ pub fn index_docs(
     for t in tuples {
         debug!("indexing {}", t.filename);
         index_writer.add_document(doc!(filename => t.filename.clone(), body => t.body.clone()));
-        index_writer.commit().unwrap();
+        index_writer.commit()?;
     }
     Ok(())
 }
