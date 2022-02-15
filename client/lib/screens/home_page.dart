@@ -1,5 +1,6 @@
 import 'package:dox/models/search_model.dart';
 import 'package:dox/utilities/dox_service.dart';
+import 'package:dox/widgets/app_bar.dart';
 import 'package:dox/widgets/openable_image_list.dart';
 import 'package:dox/widgets/scan_button.dart';
 import 'package:dox/widgets/search_input.dart';
@@ -19,47 +20,33 @@ class HomePage extends StatelessWidget {
         onTap: () => _hideKeyboard(),
         onVerticalDragDown: (_) => _hideKeyboard(),
         child: Consumer<SearchModel>(
-            builder: (context, model, _) =>
-                Scaffold(
-                    backgroundColor: Colors.white,
-                    body: NestedScrollView(
-                      headerSliverBuilder:
-                          (BuildContext context, bool innerBoxIsScrolled) {
-                        return <Widget>[
-                          SliverAppBar(
-                            title: const Text(
-                              'Dox',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            expandedHeight: 220.0,
-                            flexibleSpace: FlexibleSpaceBar(
-                                centerTitle: true,
-                                background: Image.asset(
-                                  'assets/app-bar.webp',
-                                  fit: BoxFit.cover,
-                                )),
-                          ),
-                        ];
-                      },
-                      body: Column(
-                        children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: SearchInput(
-                                onQueryChanged: model.onQueryChanged),
-                          ),
-                          Expanded(
-                              child: OpenableImageList(docUrls: model.docUrls)),
-                        ],
-                      ),
-                    ),
-                    floatingActionButton: ScanButton(
-                        _dox, onScanned: model.clear)
-                )
-        ));
+            builder: (context, model, _) => Scaffold(
+                backgroundColor: Colors.white,
+                body: NestedScrollView(
+                  headerSliverBuilder: _scrollableAppBarBuilder,
+                  body: _searchInput(model),
+                ),
+                floatingActionButton:
+                    ScanButton(_dox, onScanned: model.clear))));
   }
 
   void _hideKeyboard() {
     FocusManager.instance.primaryFocus?.unfocus();
+  }
+
+  List<Widget> _scrollableAppBarBuilder(BuildContext _ctx, bool _) {
+    return const [ScrollableAppBar()];
+  }
+
+  Widget _searchInput(SearchModel model) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SearchInput(onChanged: model.onQueryChanged),
+        ),
+        Expanded(child: OpenableImageList(urls: model.docUrls)),
+      ],
+    );
   }
 }

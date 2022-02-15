@@ -2,9 +2,9 @@ import 'package:dox/widgets/openable_image.dart';
 import 'package:flutter/cupertino.dart';
 
 class OpenableImageList extends StatelessWidget {
-  final List<Uri> docUrls;
+  final List<Uri> urls;
 
-  const OpenableImageList({Key? key, required this.docUrls}) : super(key: key);
+  const OpenableImageList({Key? key, required this.urls}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +12,7 @@ class OpenableImageList extends StatelessWidget {
   }
 
   List<Widget> _buildOpenableImages() {
-    return docUrls.map(_buildImage).toList();
+    return urls.map(_buildImage).toList();
   }
 
   Widget _buildImage(Uri url) {

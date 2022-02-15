@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 class SearchInput extends StatefulWidget {
-  final Function(String) onQueryChanged;
+  final Function(String) onChanged;
 
-  const SearchInput({Key? key, required this.onQueryChanged}) : super(key: key);
+  const SearchInput({Key? key, required this.onChanged}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() =>
-      _SearchInputState(onQueryChanged: onQueryChanged);
+      _SearchInputState(onQueryChanged: onChanged);
 }
 
 class _SearchInputState extends State<SearchInput> {
