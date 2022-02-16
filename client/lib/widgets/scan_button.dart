@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:document_scanner_flutter/document_scanner_flutter.dart';
 import 'package:dox/utilities/dox_service.dart';
+import 'package:expendable_fab/expendable_fab.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -17,12 +18,18 @@ class ScanButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton(
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(15))),
-      onPressed: () => _scanAndSendDocument(context),
-      backgroundColor: Colors.purple,
-      child: const Icon(Icons.document_scanner, color: Colors.white),
+    return ExpendableFab(
+      distance: 112.0,
+      children: [
+        ActionButton(
+          onPressed: () => _scanAndSendDocument(context),
+          icon: const Icon(Icons.camera_alt, color: Colors.white),
+        ),
+        ActionButton(
+          onPressed: () => {},
+          icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+        ),
+      ],
     );
   }
 
