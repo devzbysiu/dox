@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:document_scanner_flutter/document_scanner_flutter.dart';
 import 'package:dox/utilities/dox_service.dart';
 import 'package:expendable_fab/expendable_fab.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -26,7 +27,7 @@ class ScanButton extends StatelessWidget {
           icon: const Icon(Icons.camera_alt, color: Colors.white),
         ),
         ActionButton(
-          onPressed: () => {},
+          onPressed: () => _pickAndSendPdf(),
           icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
         ),
       ],
@@ -51,5 +52,17 @@ class ScanButton extends StatelessWidget {
       // TODO: add logging or something
     }
     return null;
+  }
+
+  void _pickAndSendPdf() async {
+    FilePickerResult? result = await FilePicker.platform
+        .pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
+
+    if (result != null) {
+      File file = File(result.files.single.path!);
+      await _dox.uploadDoc(file);
+    } else {
+      // User canceled the picker
+    }
   }
 }

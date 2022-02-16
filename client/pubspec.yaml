@@ -19,6 +19,7 @@ dependencies:
   flutter_dotenv: ^5.0.2
   document_scanner_flutter: ^0.2.7
   expendable_fab: ^0.0.3
+  file_picker: ^4.4.0
 
 dev_dependencies:
   flutter_test:
