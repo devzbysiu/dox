@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:document_scanner_flutter/document_scanner_flutter.dart';
 import 'package:dox/utilities/dox_service.dart';
-import 'package:expendable_fab/expendable_fab.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:simple_speed_dial/simple_speed_dial.dart';
 
 class ScanButton extends StatelessWidget {
   late final DoxService _dox;
@@ -19,16 +19,26 @@ class ScanButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ExpendableFab(
-      distance: 112.0,
-      children: [
-        ActionButton(
+    return SpeedDial(
+      child: const Icon(Icons.add),
+      closedForegroundColor: Colors.white,
+      openForegroundColor: Colors.white,
+      closedBackgroundColor: Colors.purple,
+      openBackgroundColor: Colors.deepPurple,
+      speedDialChildren: [
+        SpeedDialChild(
+          child: const Icon(Icons.camera_alt, color: Colors.white),
+          foregroundColor: Colors.white,
+          backgroundColor: Colors.purple,
+          label: 'Scan document',
           onPressed: () => _scanAndSendDocument(context),
-          icon: const Icon(Icons.camera_alt, color: Colors.white),
         ),
-        ActionButton(
+        SpeedDialChild(
+          child: const Icon(Icons.picture_as_pdf),
+          foregroundColor: Colors.white,
+          backgroundColor: Colors.purple,
+          label: 'Pick PDF',
           onPressed: () => _pickAndSendPdf(),
-          icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
         ),
       ],
     );
