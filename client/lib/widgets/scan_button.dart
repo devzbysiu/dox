@@ -31,7 +31,7 @@ class ScanButton extends StatelessWidget {
     if (doc == null) return;
     // TODO: check if upload successful
     await _dox.uploadDoc(doc);
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(seconds: 2), () {
       onScanned();
     });
   }
