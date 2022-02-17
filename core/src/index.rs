@@ -1,4 +1,4 @@
-use crate::ocr::FilenameToBody;
+use crate::extractor::FilenameToBody;
 
 use crate::error::Result;
 use core::fmt;
