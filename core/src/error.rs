@@ -30,13 +30,16 @@ pub enum DoxErr {
     Toml(#[from] toml::de::Error),
 
     #[error("error when initializing LepTess: '{0}'")]
-    Ocr(#[from] leptess::tesseract::TessInitError),
+    OcrExtract(#[from] leptess::tesseract::TessInitError),
 
     #[error("error when setting image: '{0}'")]
     Image(#[from] leptess::leptonica::PixError),
 
     #[error("error when converting to utf8: '{0}'")]
     Utf8(#[from] std::str::Utf8Error),
+
+    #[error("error when extracting text from pdf: '{0}'")]
+    PdfExtract(#[from] pdf_extract::OutputError),
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;
