@@ -1,4 +1,4 @@
-use crate::extractor::{Extractor, FilenameToBody};
+use crate::extractor::{TextExtractor, FilenameToBody};
 use crate::result::Result;
 
 use leptess::LepTess;
@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Default)]
 pub struct Ocr;
 
-impl Extractor for Ocr {
+impl TextExtractor for Ocr {
     fn extract_text(&self, paths: &[PathBuf]) -> Vec<FilenameToBody> {
         debug!("extracting text...");
         paths

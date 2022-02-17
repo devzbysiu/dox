@@ -1,4 +1,4 @@
-use crate::extractor::{Extractor, FilenameToBody};
+use crate::extractor::{TextExtractor, FilenameToBody};
 use crate::result::Result;
 
 use pdf_extract::extract_text;
@@ -8,7 +8,7 @@ use std::path::Path;
 #[derive(Debug, Default)]
 pub struct Pdf;
 
-impl Extractor for Pdf {
+impl TextExtractor for Pdf {
     fn extract_text(&self, paths: &[std::path::PathBuf]) -> Vec<FilenameToBody> {
         paths
             .par_iter()

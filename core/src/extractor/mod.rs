@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 pub mod image;
 pub mod pdf;
 
-pub trait Extractor {
+pub trait TextExtractor {
     fn extract_text(&self, path: &[PathBuf]) -> Vec<FilenameToBody>;
 }
 
@@ -33,7 +33,7 @@ impl FilenameToBody {
 pub struct ExtractorFactory;
 
 impl ExtractorFactory {
-    pub fn from_ext(ext: &Ext) -> Box<dyn Extractor> {
+    pub fn from_ext(ext: &Ext) -> Extractor {
         match ext {
             Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Ocr),
             Ext::Pdf => Box::new(Pdf),
@@ -60,3 +60,5 @@ impl<S: Into<String>> From<S> for Ext {
         }
     }
 }
+
+pub type Extractor = Box<dyn TextExtractor>;
