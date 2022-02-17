@@ -32,3 +32,4 @@ flutter:
     - '.simulator.env'
     - '.realdevice.env'
     - './assets/app-bar.webp'
+    - './assets/pdf-icon.webp'

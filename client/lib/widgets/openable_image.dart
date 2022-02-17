@@ -15,7 +15,7 @@ class OpenableImage extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) => HeroPhotoViewRouteWrapper(
-                imageProvider: NetworkImage(url.toString()),
+                imageProvider: _imgProvider(),
                 backgroundDecoration: const BoxDecoration(color: Colors.white),
               ),
             ),
@@ -28,16 +28,46 @@ class OpenableImage extends StatelessWidget {
                 borderRadius: BorderRadius.all(Radius.circular(15)),
                 color: Color.fromRGBO(242, 242, 246, 1)),
             padding: const EdgeInsets.all(20),
-            child: Image.network(
-              url.toString(),
-              width: 350.0,
-              loadingBuilder: (_, child, chunk) =>
-                  chunk != null ? const Text("loading") : child,
-            ),
+            child: _img(),
           ),
         ),
       ),
     );
+  }
+
+  ImageProvider _imgProvider() {
+    // TODO: this should be improved
+    final extension = url.toString().split('.').last;
+    switch (extension) {
+      case "jpg":
+      case "jpeg":
+      case "webp":
+      case "png":
+        return NetworkImage(url.toString());
+      case "pdf":
+      default:
+        return const AssetImage('assets/pdf-icon.webp');
+    }
+  }
+
+  Image _img() {
+    // TODO: this should be improved
+    final extension = url.toString().split('.').last;
+    switch (extension) {
+      case "jpg":
+      case "jpeg":
+      case "webp":
+      case "png":
+        return Image.network(
+          url.toString(),
+          width: 350.0,
+          loadingBuilder: (_, child, chunk) =>
+              chunk != null ? const Text("loading") : child,
+        );
+      case "pdf":
+      default:
+        return Image.asset('assets/pdf-icon.webp', width: 350.0);
+    }
   }
 }
 
