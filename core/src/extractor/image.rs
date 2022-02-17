@@ -11,7 +11,7 @@ pub struct Ocr;
 
 impl TextExtractor for Ocr {
     fn extract_text(&self, paths: &[PathBuf]) -> Vec<FilenameToBody> {
-        debug!("extracting text...");
+        debug!("extracting text from image...");
         paths
             .par_iter()
             .map(do_ocr)
