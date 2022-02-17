@@ -1,10 +1,10 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
 use crate::cfg::Config;
-use crate::error::Result;
 use crate::extractor::ExtractorFactory;
 use crate::helpers::{DirEntryExt, ExtensionExt};
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
+use crate::result::Result;
 
 use cooldown_buffer::cooldown_buffer;
 use index::SearchEntry;
@@ -23,10 +23,10 @@ use std::thread;
 use std::time::Duration;
 
 mod cfg;
-mod error;
 mod extractor;
 mod helpers;
 mod index;
+mod result;
 
 #[launch]
 fn launch() -> Rocket<Build> {

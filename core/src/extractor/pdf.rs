@@ -1,5 +1,5 @@
-use crate::error::Result;
 use crate::extractor::{Extractor, FilenameToBody};
+use crate::result::Result;
 
 use pdf_extract::extract_text;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};

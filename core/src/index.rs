@@ -1,6 +1,6 @@
 use crate::extractor::FilenameToBody;
 
-use crate::error::Result;
+use crate::result::Result;
 use core::fmt;
 use log::debug;
 use rocket::serde::Serialize;

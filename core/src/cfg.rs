@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::result::Result;
 use log::debug;
 use serde::Deserialize;
 use std::fs::read_to_string;

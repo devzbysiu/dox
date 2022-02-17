@@ -1,5 +1,5 @@
-use crate::error::Result;
 use crate::extractor::{Extractor, FilenameToBody};
+use crate::result::Result;
 
 use leptess::LepTess;
 use log::debug;
