@@ -2,12 +2,11 @@
 
 use crate::cfg::Config;
 use crate::error::Result;
-use crate::extractor::{image, ExtractorFactory};
+use crate::extractor::ExtractorFactory;
 use crate::helpers::{DirEntryExt, ExtensionExt};
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 
 use cooldown_buffer::cooldown_buffer;
-use extractor::Ext;
 use index::SearchEntry;
 use log::{debug, error, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
@@ -19,7 +18,6 @@ use rocket::{get, launch, post, routes, Build, Rocket, State};
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
-use std::path::Path;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
