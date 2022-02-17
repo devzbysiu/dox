@@ -29,10 +29,11 @@ impl FilenameToBody {
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub struct ExtractorFactory;
 
 impl ExtractorFactory {
-    pub fn from_ext(ext: Ext) -> Box<dyn Extractor> {
+    pub fn from_ext(ext: &Ext) -> Box<dyn Extractor> {
         match ext {
             Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Ocr),
             Ext::Pdf => Box::new(Pdf),
@@ -52,8 +53,7 @@ impl<S: Into<String>> From<S> for Ext {
         let ext = ext.into();
         match ext.as_ref() {
             "png" => Self::Png,
-            "jpg" => Self::Jpg,
-            "jpeg" => Self::Jpg,
+            "jpg" | "jpeg" => Self::Jpg,
             "webp" => Self::Webp,
             "pdf" => Self::Pdf,
             _ => panic!("failed to create extension from '{}'", ext),

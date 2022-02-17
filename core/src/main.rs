@@ -73,7 +73,7 @@ fn setup(cfg: &Config) -> Result<Repo> {
             debug!("new docs: {:?}", paths);
             // NOTE: I'm assuming the batched paths are all the same filetype
             let extension = paths[0].ext();
-            let extractor = ExtractorFactory::from_ext(extension);
+            let extractor = ExtractorFactory::from_ext(&extension);
             let tuples = extractor.extract_text(&paths);
             index_docs(&tuples, &thread_idx, &thread_schema)?;
         }
