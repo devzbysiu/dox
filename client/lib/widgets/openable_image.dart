@@ -1,6 +1,6 @@
+import 'package:dox/utilities/filetype.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:path/path.dart' as path;
 
 class OpenableImage extends StatelessWidget {
   final Uri url;
@@ -37,45 +37,31 @@ class OpenableImage extends StatelessWidget {
   }
 
   ImageProvider _imgProvider() {
-    switch (_filetype()) {
-      case _Filetype.image:
+    switch (filetype(url)) {
+      case Filetype.image:
         return NetworkImage(url.toString());
-      case _Filetype.pdf:
+      case Filetype.pdf:
         return const AssetImage('assets/pdf-icon.webp');
       default:
-        // TODO: it should be logged and failed in a safe way
-        throw Exception('Not supported file extension');
+        // NOTE: this shouldn't happen as files are filtered earlier
+        throw Exception('filetype "${filetype(url)}" is not supported');
     }
   }
 
   Image _img() {
-    switch (_filetype()) {
-      case _Filetype.image:
+    switch (filetype(url)) {
+      case Filetype.image:
         return Image.network(
           url.toString(),
           width: 350.0,
           loadingBuilder: (_, child, chunk) =>
               chunk != null ? const Text("loading") : child,
         );
-      case _Filetype.pdf:
+      case Filetype.pdf:
         return Image.asset('assets/pdf-icon.webp', width: 350.0);
       default:
-        // TODO: it should be logged and failed in a safe way
-        throw Exception('${_filetype()} not supported');
-    }
-  }
-
-  _Filetype _filetype() {
-    switch (path.extension(url.path)) {
-      case ".jpg":
-      case ".jpeg":
-      case ".webp":
-      case ".png":
-        return _Filetype.image;
-      case ".pdf":
-        return _Filetype.pdf;
-      default:
-        return _Filetype.other;
+        // NOTE: this shouldn't happen as files are filtered earlier
+        throw Exception('filetype "${filetype(url)}" is not supported');
     }
   }
 }
@@ -103,5 +89,3 @@ class _HeroPhotoViewRouteWrapper extends StatelessWidget {
     );
   }
 }
-
-enum _Filetype { image, pdf, other }

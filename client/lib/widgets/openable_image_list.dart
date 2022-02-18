@@ -1,10 +1,14 @@
 import 'package:dox/widgets/openable_image.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:dox/utilities/filetype.dart';
 
+// ignore: must_be_immutable
 class OpenableImageList extends StatelessWidget {
-  final List<Uri> urls;
+  List<Uri> urls = List.empty();
 
-  const OpenableImageList({Key? key, required this.urls}) : super(key: key);
+  OpenableImageList({Key? key, required urls}) : super(key: key) {
+    this.urls = urls.where(_isSupportedFiletype).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,4 +23,9 @@ class OpenableImageList extends StatelessWidget {
     return Padding(
         padding: const EdgeInsets.all(15), child: OpenableImage(url: url));
   }
+}
+
+bool _isSupportedFiletype(Uri url) {
+  final type = filetype(url);
+  return type == Filetype.image || type == Filetype.pdf;
 }
