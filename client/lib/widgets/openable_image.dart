@@ -38,9 +38,9 @@ class OpenableImage extends StatelessWidget {
 
   ImageProvider _imgProvider() {
     switch (_filetype()) {
-      case Filetype.image:
+      case _Filetype.image:
         return NetworkImage(url.toString());
-      case Filetype.pdf:
+      case _Filetype.pdf:
         return const AssetImage('assets/pdf-icon.webp');
       default:
         // TODO: it should be logged and failed in a safe way
@@ -50,14 +50,14 @@ class OpenableImage extends StatelessWidget {
 
   Image _img() {
     switch (_filetype()) {
-      case Filetype.image:
+      case _Filetype.image:
         return Image.network(
           url.toString(),
           width: 350.0,
           loadingBuilder: (_, child, chunk) =>
               chunk != null ? const Text("loading") : child,
         );
-      case Filetype.pdf:
+      case _Filetype.pdf:
         return Image.asset('assets/pdf-icon.webp', width: 350.0);
       default:
         // TODO: it should be logged and failed in a safe way
@@ -65,17 +65,17 @@ class OpenableImage extends StatelessWidget {
     }
   }
 
-  Filetype _filetype() {
+  _Filetype _filetype() {
     switch (path.extension(url.path)) {
       case ".jpg":
       case ".jpeg":
       case ".webp":
       case ".png":
-        return Filetype.image;
+        return _Filetype.image;
       case ".pdf":
-        return Filetype.pdf;
+        return _Filetype.pdf;
       default:
-        return Filetype.other;
+        return _Filetype.other;
     }
   }
 }
@@ -104,4 +104,4 @@ class HeroPhotoViewRouteWrapper extends StatelessWidget {
   }
 }
 
-enum Filetype { image, pdf, other }
+enum _Filetype { image, pdf, other }
