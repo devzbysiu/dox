@@ -15,7 +15,7 @@ class OpenableImage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => HeroPhotoViewRouteWrapper(
+              builder: (context) => _HeroPhotoViewRouteWrapper(
                 imageProvider: _imgProvider(),
                 backgroundDecoration: const BoxDecoration(color: Colors.white),
               ),
@@ -80,11 +80,11 @@ class OpenableImage extends StatelessWidget {
   }
 }
 
-class HeroPhotoViewRouteWrapper extends StatelessWidget {
+class _HeroPhotoViewRouteWrapper extends StatelessWidget {
   final ImageProvider imageProvider;
   final BoxDecoration? backgroundDecoration;
 
-  const HeroPhotoViewRouteWrapper({
+  const _HeroPhotoViewRouteWrapper({
     Key? key,
     required this.imageProvider,
     this.backgroundDecoration,
