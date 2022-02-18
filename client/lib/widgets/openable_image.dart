@@ -37,14 +37,10 @@ class OpenableImage extends StatelessWidget {
   }
 
   ImageProvider _imgProvider() {
-    final extension = path.extension(url.path);
-    switch (extension) {
-      case ".jpg":
-      case ".jpeg":
-      case ".webp":
-      case ".png":
+    switch (_filetype()) {
+      case Filetype.image:
         return NetworkImage(url.toString());
-      case ".pdf":
+      case Filetype.pdf:
         return const AssetImage('assets/pdf-icon.webp');
       default:
         // TODO: it should be logged and failed in a safe way
@@ -53,23 +49,33 @@ class OpenableImage extends StatelessWidget {
   }
 
   Image _img() {
-    final extension = path.extension(url.path);
-    switch (extension) {
-      case ".jpg":
-      case ".jpeg":
-      case ".webp":
-      case ".png":
+    switch (_filetype()) {
+      case Filetype.image:
         return Image.network(
           url.toString(),
           width: 350.0,
           loadingBuilder: (_, child, chunk) =>
               chunk != null ? const Text("loading") : child,
         );
-      case ".pdf":
+      case Filetype.pdf:
         return Image.asset('assets/pdf-icon.webp', width: 350.0);
       default:
         // TODO: it should be logged and failed in a safe way
-        throw Exception('Not supported file extension');
+        throw Exception('${_filetype()} not supported');
+    }
+  }
+
+  Filetype _filetype() {
+    switch (path.extension(url.path)) {
+      case ".jpg":
+      case ".jpeg":
+      case ".webp":
+      case ".png":
+        return Filetype.image;
+      case ".pdf":
+        return Filetype.pdf;
+      default:
+        return Filetype.other;
     }
   }
 }
@@ -97,3 +103,5 @@ class HeroPhotoViewRouteWrapper extends StatelessWidget {
     );
   }
 }
+
+enum Filetype { image, pdf, other }
