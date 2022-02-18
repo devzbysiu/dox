@@ -28,8 +28,8 @@ class DoxService {
     return _fetchDocs(_urls.search(query));
   }
 
-  Future<void> uploadDoc(File file) async {
-    http.post(_urls.upload(), body: jsonEncode(_Document(file)), headers: {
+  Future<http.Response> uploadDoc(File file) async {
+    return http.post(_urls.upload(), body: jsonEncode(_Doc(file)), headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     });
@@ -40,12 +40,12 @@ class DoxService {
   }
 }
 
-class _Document {
+class _Doc {
   late final String _filename;
 
   late final String _body;
 
-  _Document(File file) {
+  _Doc(File file) {
     _filename = _name(file);
     // TODO: do I need to move it to isolate?
     _body = base64Encode(file.readAsBytesSync());
