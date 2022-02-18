@@ -63,18 +63,22 @@ class ScanButton extends StatelessWidget {
 
   Future<void> _sendAndRefreshList(File doc, BuildContext context) async {
     try {
-      final resp = await _dox.uploadDoc(doc);
-      if (resp.statusCode != 201) {
-        _showUploadFailed(context);
-        return;
-      }
-      _showUploadSuccessful(context);
+      await _uploadAndShowToast(doc, context);
       Future.delayed(const Duration(seconds: 2), () {
         onScanned();
       });
     } on Exception {
       _showUploadFailed(context);
     }
+  }
+
+  Future<void> _uploadAndShowToast(File doc, BuildContext context) async {
+    final resp = await _dox.uploadDoc(doc);
+    if (resp.statusCode != 201) {
+      _showUploadFailed(context);
+      return;
+    }
+    _showUploadSuccessful(context);
   }
 
   void _pickAndSendPdf(BuildContext context) async {
