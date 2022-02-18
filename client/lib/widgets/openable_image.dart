@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:path/path.dart' as path;
 
 class OpenableImage extends StatelessWidget {
   final Uri url;
@@ -36,37 +37,39 @@ class OpenableImage extends StatelessWidget {
   }
 
   ImageProvider _imgProvider() {
-    // TODO: this should be improved
-    final extension = url.toString().split('.').last;
+    final extension = path.extension(url.path);
     switch (extension) {
-      case "jpg":
-      case "jpeg":
-      case "webp":
-      case "png":
+      case ".jpg":
+      case ".jpeg":
+      case ".webp":
+      case ".png":
         return NetworkImage(url.toString());
-      case "pdf":
-      default:
+      case ".pdf":
         return const AssetImage('assets/pdf-icon.webp');
+      default:
+        // TODO: it should be logged and failed in a safe way
+        throw Exception('Not supported file extension');
     }
   }
 
   Image _img() {
-    // TODO: this should be improved
-    final extension = url.toString().split('.').last;
+    final extension = path.extension(url.path);
     switch (extension) {
-      case "jpg":
-      case "jpeg":
-      case "webp":
-      case "png":
+      case ".jpg":
+      case ".jpeg":
+      case ".webp":
+      case ".png":
         return Image.network(
           url.toString(),
           width: 350.0,
           loadingBuilder: (_, child, chunk) =>
               chunk != null ? const Text("loading") : child,
         );
-      case "pdf":
-      default:
+      case ".pdf":
         return Image.asset('assets/pdf-icon.webp', width: 350.0);
+      default:
+        // TODO: it should be logged and failed in a safe way
+        throw Exception('Not supported file extension');
     }
   }
 }
