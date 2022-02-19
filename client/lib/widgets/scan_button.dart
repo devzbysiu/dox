@@ -95,10 +95,12 @@ class ScanButton extends StatelessWidget {
   }
 
   void _showUploadFailed(BuildContext context) {
-    MotionToast.error(
-            title: const Text('Error'),
-            description: const Text('Failed to upload file'))
-        .show(context);
+    MotionToast(
+      title: const Text('Error'),
+      description: const Text('Failed to upload file'),
+      icon: Icons.error,
+      primaryColor: Colors.purple,
+    ).show(context);
   }
 
   void _showUploadSuccessful(BuildContext context) {
