@@ -9,16 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatelessWidget {
-  late final DoxService _dox;
-
-  HomePage(DoxService dox, {Key? key}) : super(key: key) {
-    _dox = dox;
-  }
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-        create: (_) => SearchModel(_dox),
+        create: (_) => SearchModel(DoxService.get()),
         child: GestureDetector(
             onTap: () => _hideKeyboard(),
             onVerticalDragDown: (_) => _hideKeyboard(),
@@ -29,8 +25,8 @@ class HomePage extends StatelessWidget {
                       headerSliverBuilder: _scrollableAppBarBuilder,
                       body: _searchInput(model),
                     ),
-                    floatingActionButton:
-                        ScanButton(_dox, onScanned: model.clear)))));
+                    floatingActionButton: ScanButton(DoxService.get(),
+                        onScanned: model.clear)))));
   }
 
   void _hideKeyboard() {

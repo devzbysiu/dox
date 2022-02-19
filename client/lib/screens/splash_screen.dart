@@ -6,8 +6,8 @@ import 'package:lottie/lottie.dart';
 class SplashScreen extends StatefulWidget {
   late final DoxService _dox;
 
-  SplashScreen(DoxService dox, {Key? key}) : super(key: key) {
-    _dox = dox;
+  SplashScreen({Key? key}) : super(key: key) {
+    _dox = DoxService.get();
   }
 
   @override
@@ -40,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen>
             ..duration = composition.duration
             ..forward().whenComplete(() => Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => HomePage(widget._dox)),
+                  MaterialPageRoute(builder: (context) => const HomePage()),
                 ));
         },
       ),

@@ -13,10 +13,8 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  late final DoxService _dox;
-
   MyApp(Config config, {Key? key}) : super(key: key) {
-    _dox = DoxService(Urls(config));
+    DoxService.init(Urls(config));
   }
 
   @override
@@ -24,7 +22,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Dox',
       theme: theme(),
-      home: SplashScreen(_dox),
+      home: SplashScreen(),
     );
   }
 }

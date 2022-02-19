@@ -8,7 +8,19 @@ import 'package:http/http.dart' as http;
 class DoxService {
   late final Urls _urls;
 
-  DoxService(Urls urls) {
+  static DoxService? _instance;
+
+  factory DoxService.init(Urls urls) {
+    _instance ??= DoxService._(urls);
+    return _instance!;
+  }
+
+  factory DoxService.get() {
+    if (_instance == null) throw Exception('You need to initialize it first');
+    return _instance!;
+  }
+
+  DoxService._(Urls urls) {
     _urls = urls;
   }
 
