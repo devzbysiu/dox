@@ -1,14 +1,9 @@
 import 'package:dox/screens/home_page.dart';
-import 'package:dox/utilities/dox_service.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
 class SplashScreen extends StatefulWidget {
-  late final DoxService _dox;
-
-  SplashScreen({Key? key}) : super(key: key) {
-    _dox = DoxService.get();
-  }
+  const SplashScreen({Key? key}) : super(key: key);
 
   @override
   _SplashScreenState createState() => _SplashScreenState();

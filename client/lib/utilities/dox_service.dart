@@ -15,13 +15,13 @@ class DoxService {
     return _instance!;
   }
 
-  factory DoxService.get() {
-    if (_instance == null) throw Exception('You need to initialize it first');
-    return _instance!;
-  }
-
   DoxService._(Urls urls) {
     _urls = urls;
+  }
+
+  factory DoxService() {
+    if (_instance == null) throw Exception('You need to initialize it first');
+    return _instance!;
   }
 
   Future<List<Document>> fetchAllFiles() async {

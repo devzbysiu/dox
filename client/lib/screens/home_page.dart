@@ -14,7 +14,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-        create: (_) => SearchModel(DoxService.get()),
+        create: (_) => SearchModel(DoxService()),
         child: GestureDetector(
             onTap: () => _hideKeyboard(),
             onVerticalDragDown: (_) => _hideKeyboard(),
@@ -25,8 +25,8 @@ class HomePage extends StatelessWidget {
                       headerSliverBuilder: _scrollableAppBarBuilder,
                       body: _searchInput(model),
                     ),
-                    floatingActionButton: ScanButton(DoxService.get(),
-                        onScanned: model.clear)))));
+                    floatingActionButton:
+                        ScanButton(DoxService(), onScanned: model.clear)))));
   }
 
   void _hideKeyboard() {
