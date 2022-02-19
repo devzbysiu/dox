@@ -1,3 +1,4 @@
+import 'package:dox/utilities/theme.dart';
 import 'package:flutter/material.dart';
 
 class ScrollableAppBar extends StatelessWidget {
@@ -6,7 +7,7 @@ class ScrollableAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      title: const Text('Dox', style: TextStyle(color: Colors.white)),
+      title: Text('Dox', style: TextStyle(color: onPrimary(context))),
       expandedHeight: 220.0,
       flexibleSpace: FlexibleSpaceBar(
           centerTitle: true,

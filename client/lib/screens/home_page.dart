@@ -1,5 +1,6 @@
 import 'package:dox/models/search_model.dart';
 import 'package:dox/utilities/dox_service.dart';
+import 'package:dox/utilities/theme.dart';
 import 'package:dox/widgets/app_bar.dart';
 import 'package:dox/widgets/openable_image_list.dart';
 import 'package:dox/widgets/scan_button.dart';
@@ -23,7 +24,7 @@ class HomePage extends StatelessWidget {
             onVerticalDragDown: (_) => _hideKeyboard(),
             child: Consumer<SearchModel>(
                 builder: (context, model, _) => Scaffold(
-                    backgroundColor: Colors.white,
+                    backgroundColor: background(context),
                     body: NestedScrollView(
                       headerSliverBuilder: _scrollableAppBarBuilder,
                       body: _searchInput(model),

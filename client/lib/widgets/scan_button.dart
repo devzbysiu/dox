@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:document_scanner_flutter/document_scanner_flutter.dart';
 import 'package:dox/utilities/dox_service.dart';
+import 'package:dox/utilities/theme.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,22 +23,22 @@ class ScanButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SpeedDial(
       child: const Icon(Icons.add),
-      closedForegroundColor: Colors.white,
-      openForegroundColor: Colors.white,
-      closedBackgroundColor: Colors.purple,
-      openBackgroundColor: Colors.deepPurple,
+      closedForegroundColor: onPrimary(context),
+      openForegroundColor: secondary(context),
+      closedBackgroundColor: primary(context),
+      openBackgroundColor: secondary(context),
       speedDialChildren: [
         SpeedDialChild(
-          child: const Icon(Icons.camera_alt, color: Colors.white),
-          foregroundColor: Colors.white,
-          backgroundColor: Colors.purple,
+          child: Icon(Icons.camera_alt, color: onPrimary(context)),
+          foregroundColor: secondary(context),
+          backgroundColor: primary(context),
           label: 'Scan document',
           onPressed: () => _scanAndSendImage(context),
         ),
         SpeedDialChild(
           child: const Icon(Icons.picture_as_pdf),
-          foregroundColor: Colors.white,
-          backgroundColor: Colors.purple,
+          foregroundColor: secondary(context),
+          backgroundColor: primary(context),
           label: 'Pick PDF',
           onPressed: () => _pickAndSendPdf(context),
         ),
@@ -99,7 +100,7 @@ class ScanButton extends StatelessWidget {
       title: const Text('Error'),
       description: const Text('Failed to upload file'),
       icon: Icons.error,
-      primaryColor: Theme.of(context).primaryColor,
+      primaryColor: primary(context),
     ).show(context);
   }
 

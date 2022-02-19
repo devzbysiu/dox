@@ -1,4 +1,5 @@
 import 'package:dox/utilities/filetype.dart';
+import 'package:dox/utilities/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 
@@ -17,7 +18,7 @@ class OpenableImage extends StatelessWidget {
             MaterialPageRoute(
               builder: (context) => _HeroPhotoViewRouteWrapper(
                 imageProvider: _imgProvider(),
-                backgroundDecoration: const BoxDecoration(color: Colors.white),
+                backgroundDecoration: BoxDecoration(color: onPrimary(context)),
               ),
             ),
           );

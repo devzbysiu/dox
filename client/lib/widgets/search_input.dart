@@ -1,3 +1,4 @@
+import 'package:dox/utilities/theme.dart';
 import 'package:flutter/material.dart';
 
 class SearchInput extends StatefulWidget {
@@ -17,17 +18,17 @@ class _SearchInputState extends State<SearchInput> {
     return Material(
         borderRadius: const BorderRadius.all(Radius.circular(15)),
         elevation: 18,
-        shadowColor: Colors.black,
+        shadowColor: onBackground(context),
         child: TextField(
             controller: _controller,
             onChanged: widget.onChanged,
-            decoration: _inputDecoration()));
+            decoration: _inputDecoration(context)));
   }
 
-  InputDecoration _inputDecoration() {
+  InputDecoration _inputDecoration(BuildContext context) {
     return InputDecoration(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: onPrimary(context),
         hintText: "Search",
         prefixIcon: const Icon(Icons.search),
         suffixIcon:

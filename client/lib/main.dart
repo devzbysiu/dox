@@ -1,12 +1,10 @@
-import 'package:dox/models/search_model.dart';
-import 'package:dox/screens/home_page.dart';
 import 'package:dox/screens/splash_screen.dart';
 import 'package:dox/utilities/config.dart';
 import 'package:dox/utilities/dox_service.dart';
+import 'package:dox/utilities/theme.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,9 +23,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Dox',
-      theme: ThemeData(
-        primarySwatch: Colors.purple,
-      ),
+      theme: theme(),
       home: SplashScreen(_dox),
     );
   }
