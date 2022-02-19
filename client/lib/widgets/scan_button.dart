@@ -99,7 +99,7 @@ class ScanButton extends StatelessWidget {
       title: const Text('Error'),
       description: const Text('Failed to upload file'),
       icon: Icons.error,
-      primaryColor: Colors.purple,
+      primaryColor: Theme.of(context).primaryColor,
     ).show(context);
   }
 
