@@ -3,7 +3,7 @@
   <h1><code>dox</code></h1>
 
   <h3>
-    <strong>CHANGEME</strong>
+    <strong>DOcument indeXer</strong>
   </h3>
 
   <p>
@@ -12,9 +12,7 @@
     <a href="https://codecov.io/gh/devzbysiu/dox">
       <img src="https://img.shields.io/codecov/c/github/devzbysiu/dox?style=for-the-badge&token=f2339b3de9e44be0a902458a669c1160" alt="Code coverage"/>
     </a>
-    <a href="https://crates.io/crates/dox">
-      <img src="https://img.shields.io/crates/l/dox?style=for-the-badge" alt="License"/>
-    </a>
+    <img src="https://img.shields.io/badge/license-MIT%2FAPACHE--2.0-blue?style=for-the-badge" alt="License"/>
     <a href="https://docs.rs/dox">
       <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=for-the-badge" alt="docs.rs docs" />
     </a>
@@ -32,12 +30,21 @@
     <a href="#contribution">Contribution</a>
   </h3>
 
-  <sub><h4>Built with 🦀</h4></sub>
+  <sub><h4>Built with 🦀 and <img src="./assets/flutter.png" width="17" alt="flutter icon"></h4></sub>
 </div>
 
 # <p id="about">About</p>
 
-## --- TODO ---
+One of the most frustrating activities I had to do from time to time is to search through a pile
+of documents to find the one you are looking for. Wouldn't be better to just open an app and type
+keywords in the search bar?
+
+That's what this project is for. TLDR: you install a [core](./core) on your PC. Through the
+configuration file, you tell it which directory should be watched for new files. Every time new
+file appears, core will extract the text from the file and index it.
+
+You also install [client](./client) app on your smartphone. It allows you to list and search
+scanned files. It also allows to scan new documents using camera or just pick a PDF.
 
 # <p id="installation">Installation</p>
 
