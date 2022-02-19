@@ -11,18 +11,12 @@ class SplashScreen extends StatefulWidget {
   }
 
   @override
-  _SplashScreenState createState() => _SplashScreenState(_dox);
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   late final AnimationController _controller;
-
-  late final DoxService _dox;
-
-  _SplashScreenState(DoxService dox) {
-    _dox = dox;
-  }
 
   @override
   void initState() {
@@ -46,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen>
             ..duration = composition.duration
             ..forward().whenComplete(() => Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => HomePage(_dox)),
+                  MaterialPageRoute(builder: (context) => HomePage(widget._dox)),
                 ));
         },
       ),

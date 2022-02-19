@@ -6,16 +6,11 @@ class SearchInput extends StatefulWidget {
   const SearchInput({Key? key, required this.onChanged}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() =>
-      _SearchInputState(onQueryChanged: onChanged);
+  State<StatefulWidget> createState() => _SearchInputState();
 }
 
 class _SearchInputState extends State<SearchInput> {
-  final Function(String) onQueryChanged;
-
   final TextEditingController _controller = TextEditingController();
-
-  _SearchInputState({required this.onQueryChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +20,7 @@ class _SearchInputState extends State<SearchInput> {
         shadowColor: Colors.black,
         child: TextField(
             controller: _controller,
-            onChanged: onQueryChanged,
+            onChanged: widget.onChanged,
             decoration: _inputDecoration()));
   }
 
@@ -44,7 +39,7 @@ class _SearchInputState extends State<SearchInput> {
 
   void _clear() {
     _controller.clear();
-    onQueryChanged('');
+    widget.onChanged('');
     setState(() {});
   }
 
