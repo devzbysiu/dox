@@ -1,5 +1,6 @@
 import 'package:dox/models/search_model.dart';
 import 'package:dox/screens/home_page.dart';
+import 'package:dox/screens/splash_screen.dart';
 import 'package:dox/utilities/config.dart';
 import 'package:dox/utilities/dox_service.dart';
 import 'package:dox/utilities/urls.dart';
@@ -27,10 +28,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.purple,
       ),
-      home: ChangeNotifierProvider(
-        create: (_) => SearchModel(_dox),
-        child: HomePage(_dox),
-      ),
+      home: SplashScreen(_dox),
     );
   }
 }

@@ -16,18 +16,20 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-        onTap: () => _hideKeyboard(),
-        onVerticalDragDown: (_) => _hideKeyboard(),
-        child: Consumer<SearchModel>(
-            builder: (context, model, _) => Scaffold(
-                backgroundColor: Colors.white,
-                body: NestedScrollView(
-                  headerSliverBuilder: _scrollableAppBarBuilder,
-                  body: _searchInput(model),
-                ),
-                floatingActionButton:
-                    ScanButton(_dox, onScanned: model.clear))));
+    return ChangeNotifierProvider(
+        create: (_) => SearchModel(_dox),
+        child: GestureDetector(
+            onTap: () => _hideKeyboard(),
+            onVerticalDragDown: (_) => _hideKeyboard(),
+            child: Consumer<SearchModel>(
+                builder: (context, model, _) => Scaffold(
+                    backgroundColor: Colors.white,
+                    body: NestedScrollView(
+                      headerSliverBuilder: _scrollableAppBarBuilder,
+                      body: _searchInput(model),
+                    ),
+                    floatingActionButton:
+                        ScanButton(_dox, onScanned: model.clear)))));
   }
 
   void _hideKeyboard() {
