@@ -3,7 +3,7 @@
   <h1><code>dox</code></h1>
 
   <h3>
-    <strong>DOcument indeXer</strong>
+    <strong>DOcuments indeXer</strong>
   </h3>
 
   <p>
