@@ -59,7 +59,7 @@ scanned files. It also allows scanning new documents using camera or just pick a
      documents through your printer, use the directory to which your printer is saving scanner files.
   2. `index_dir` - directory holding and indexed text.
   3. `cooldown_time` - time after which the buffered files will be indexed.
-3. After configuration, the `dox` server will be exposed on port 8000. Keep this in mind, you'll need
+3. After configuration, the `dox` server will be exposed on port `8000`. Keep this in mind, you'll need
    to point the client to the `dox` server
 
 ## Client
