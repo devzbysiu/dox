@@ -44,7 +44,7 @@ configuration file, you tell it which directory should be watched for new files.
 file appears, core will extract the text from the file and index it.
 
 You also install [client](./client) app on your smartphone. It allows you to list and search
-scanned files. It also allows to scan new documents using camera or just pick a PDF.
+scanned files. It also allows scanning new documents using camera or just pick a PDF.
 
 # <p id="installation">Installation</p>
 
