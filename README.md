@@ -6,18 +6,34 @@
     <strong>DOcuments indeXer</strong>
   </h3>
 
-  <p>
-   <img src="https://github.com/devzbysiu/dox/workflows/ci/badge.svg" alt="CI status
-    badge" />
-    <a href="https://codecov.io/gh/devzbysiu/dox">
-      <img src="https://img.shields.io/codecov/c/github/devzbysiu/dox?style=for-the-badge&token=f2339b3de9e44be0a902458a669c1160" alt="Code coverage"/>
-    </a>
-    <img src="https://img.shields.io/badge/license-MIT%2FAPACHE--2.0-blue?style=for-the-badge" alt="License"/>
-    <a href="https://docs.rs/dox">
-      <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=for-the-badge" alt="docs.rs docs" />
-    </a>
-  </p>
+  <table>
+    <tr>
+      <th>core</th>
+      <th>client</th>
+    </tr>
+    <tr>
+      <td>
+        <p>
+        <img src="https://github.com/devzbysiu/dox/workflows/ci/badge.svg" alt="CI status
+          badge" />
+          <a href="https://codecov.io/gh/devzbysiu/dox">
+            <img src="https://img.shields.io/codecov/c/github/devzbysiu/dox?style=for-the-badge&token=f2339b3de9e44be0a902458a669c1160" alt="Code coverage"/>
+          </a>
+        </p>
+      </td>
+      <td>
+        <p>
+        <img src="https://github.com/devzbysiu/dox/workflows/ci/badge.svg" alt="CI status
+          badge" />
+          <a href="https://codecov.io/gh/devzbysiu/dox">
+            <img src="https://img.shields.io/codecov/c/github/devzbysiu/dox?style=for-the-badge&token=f2339b3de9e44be0a902458a669c1160" alt="Code coverage"/>
+          </a>
+        </p>
+      </td>
+    </tr>
+  </table>
 
+  <p><img src="https://img.shields.io/badge/license-MIT%2FAPACHE--2.0-blue?style=for-the-badge" alt="License"/></p>
   <h3>
     <a href="#about">About</a>
     <span> | </span>
