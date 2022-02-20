@@ -21,9 +21,9 @@
   <h3>
     <a href="#about">About</a>
     <span> | </span>
-    <a href="#installation">Installation</a>
+    <a href="#demo">Demo</a>
     <span> | </span>
-    <a href="#configuration">Configuration</a>
+    <a href="#installation">Installation and Configuration</a>
     <span> | </span>
     <a href="#license">License</a>
     <span> | </span>
@@ -46,13 +46,29 @@ file appears, core will extract the text from the file and index it.
 You also install [client](./client) app on your smartphone. It allows you to list and search
 scanned files. It also allows scanning new documents using camera or just pick a PDF.
 
-# <p id="installation">Installation</p>
+# <p id="demo">Demo</p>
 
 ## --- TODO ---
 
-# <p id="configuration">Configuration</p>
+# <p id="installation">Installation and configuration</p>
 
-## --- TODO ---
+## Core
+1. Go to [releases](https://github.com/devzbysiu/dox/releases) and download binary for your system.
+2. Run `dox init`. It will display a CLI so you can configure it:
+  1. `watched_directory` - a directory which is monitored for new files. If you are going to scan
+     documents through your printer, use the directory to which your printer is saving scanner files.
+  2. `index_dir` - directory holding and indexed text.
+  3. `cooldown_time` - time after which the buffered files will be indexed.
+3. After configuration, the `dox` server will be exposed on port 8000. Keep this in mind, you'll need
+   to point the client to the `dox` server
+
+## Client
+1. Go to [releases](https://github.com/devzbysiu/dox/releases) page and download APK file.
+2. Install it on your device.
+3. Run the app. On first run, it will show you settings page:
+  - `dox address` - the address of the dox server
+  > :warn: **NOTE**: the dox server needs to be accessible to the client. If you are setting the core
+  on local machine, make sure that the phone is in the same network as the local machine.
 
 # <p id="license">License</p>
 
