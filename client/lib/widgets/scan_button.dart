@@ -25,7 +25,7 @@ class ScanButton extends StatelessWidget {
       child: const Icon(Icons.add),
       closedForegroundColor: onPrimary(context),
       openForegroundColor: secondary(context),
-      closedBackgroundColor: primary(context),
+      closedBackgroundColor: onPrimary(context),
       openBackgroundColor: secondary(context),
       speedDialChildren: [
         SpeedDialChild(
