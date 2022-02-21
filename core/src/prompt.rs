@@ -9,28 +9,34 @@ use std::time::Duration;
 
 pub fn show() -> Result<Config> {
     let config = Config::default();
-    let watched_dir = PathBuf::from(
+    cfg::store(&Config {
+        watched_dir: watched_dir_prompt()?,
+        index_dir: index_dir_prompt(&config)?,
+        cooldown_time: cooldown_time_prompt(&config)?,
+    })?;
+    Ok(config)
+}
+
+fn watched_dir_prompt() -> Result<PathBuf> {
+    Ok(PathBuf::from(
         Text::new("Path to a directory you want to watch for changes:")
             .with_validator(required!())
             .prompt()?,
-    );
-    let index_dir = PathBuf::from(
+    ))
+}
+
+fn index_dir_prompt(config: &Config) -> Result<PathBuf> {
+    Ok(PathBuf::from(
         Text::new("Path to a directory for storing index files:")
             .with_default(config.index_dir.str())
             .prompt()?,
-    );
-    let cooldown_time = Duration::from_secs(
+    ))
+}
+
+fn cooldown_time_prompt(config: &Config) -> Result<Duration> {
+    Ok(Duration::from_secs(
         CustomType::<u64>::new("Cooldown time - # of seconds after which indexing starts:")
             .with_default((config.cooldown_time.as_secs(), &|secs| format!("{}", secs)))
             .prompt()?,
-    );
-
-    let config = Config {
-        watched_dir,
-        index_dir,
-        cooldown_time,
-    };
-
-    cfg::store(&config)?;
-    Ok(config)
+    ))
 }

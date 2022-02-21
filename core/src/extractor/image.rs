@@ -1,4 +1,4 @@
-use crate::extractor::{TextExtractor, FilenameToBody};
+use crate::extractor::{FilenameToBody, TextExtractor};
 use crate::result::Result;
 
 use leptess::LepTess;
