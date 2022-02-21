@@ -2,13 +2,12 @@
 
 use crate::cfg::{config_path, Config};
 use crate::extractor::ExtractorFactory;
-use crate::helpers::{DirEntryExt, ExtensionExt, PathBufExt};
+use crate::helpers::{DirEntryExt, ExtensionExt};
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 use crate::result::Result;
 
 use cooldown_buffer::cooldown_buffer;
 use index::SearchEntry;
-use inquire::{required, CustomType, Text};
 use log::{debug, error, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::fs::FileServer;
@@ -16,10 +15,8 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, launch, post, routes, Build, Rocket, State};
-use std::env;
 use std::fs::File;
 use std::io::prelude::*;
-use std::path::PathBuf;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
@@ -28,6 +25,7 @@ mod cfg;
 mod extractor;
 mod helpers;
 mod index;
+mod prompt;
 mod result;
 
 #[launch]
@@ -46,39 +44,11 @@ fn launch() -> Rocket<Build> {
 }
 
 fn handle_config() -> Result<Config> {
-    Ok(if !config_path().exists() {
-        from_prompt()?
+    if !config_path().exists() {
+        prompt::show()
     } else {
-        cfg::read_config(config_path())?
-    })
-}
-
-fn from_prompt() -> Result<Config> {
-    let config = Config::default();
-    let watched_dir = PathBuf::from(
-        Text::new("Path to a directory you want to watch for changes:")
-            .with_validator(required!())
-            .prompt()?,
-    );
-    let index_dir = PathBuf::from(
-        Text::new("Path to a directory for storing index files:")
-            .with_default(config.index_dir.str())
-            .prompt()?,
-    );
-    let cooldown_time = Duration::from_secs(
-        CustomType::<u64>::new("Cooldown time - # of seconds after which indexing starts:")
-            .with_default((config.cooldown_time.as_secs(), &|secs| format!("{}", secs)))
-            .prompt()?,
-    );
-
-    let config = Config {
-        watched_dir,
-        index_dir,
-        cooldown_time,
-    };
-
-    cfg::store(&config)?;
-    Ok(config)
+        cfg::read_config(config_path())
+    }
 }
 
 fn setup(cfg: &Config) -> Result<Repo> {
