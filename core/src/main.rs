@@ -1,6 +1,6 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
-use crate::cfg::{config_path, store, Config};
+use crate::cfg::{config_path, Config};
 use crate::extractor::ExtractorFactory;
 use crate::helpers::{DirEntryExt, ExtensionExt, PathBufExt};
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
@@ -30,8 +30,30 @@ mod helpers;
 mod index;
 mod result;
 
-fn main() -> Result<()> {
-    // if !config_path().exists() {
+#[launch]
+fn launch() -> Rocket<Build> {
+    pretty_env_logger::init();
+
+    let cfg = handle_config().expect("failed to get config");
+
+    let repo = setup(&cfg).expect("failed to setup indexer");
+    debug!("starting server...");
+    rocket::build()
+        .mount("/", routes![search, all_documents, receive_document])
+        .mount("/document", FileServer::from(&cfg.watched_dir))
+        .manage(repo)
+        .manage(cfg)
+}
+
+fn handle_config() -> Result<Config> {
+    Ok(if !config_path().exists() {
+        from_prompt()?
+    } else {
+        cfg::read_config(config_path())?
+    })
+}
+
+fn from_prompt() -> Result<Config> {
     let config = Config::default();
     let watched_dir = PathBuf::from(
         Text::new("Path to a directory you want to watch for changes:")
@@ -55,31 +77,9 @@ fn main() -> Result<()> {
         cooldown_time,
     };
 
-    store(&config)?;
-
-    // }
-
-    Ok(())
+    cfg::store(&config)?;
+    Ok(config)
 }
-
-// #[launch]
-// fn launch() -> Rocket<Build> {
-//     pretty_env_logger::init();
-
-//     let args = env::args().collect::<Vec<String>>();
-//     let config_path = args
-//         .get(1)
-//         .expect("you need to specify the path to the configuration file");
-//     let cfg = cfg::read_config(config_path).expect("failed to read config");
-
-//     let repo = setup(&cfg).expect("failed to setup indexer");
-//     debug!("starting server...");
-//     rocket::build()
-//         .mount("/", routes![search, all_documents, receive_document])
-//         .mount("/document", FileServer::from(&cfg.watched_dir))
-//         .manage(repo)
-//         .manage(cfg)
-// }
 
 fn setup(cfg: &Config) -> Result<Repo> {
     debug!("setting up with config: {:?}", cfg);
