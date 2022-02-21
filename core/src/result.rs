@@ -27,7 +27,7 @@ pub enum DoxErr {
     Recv(#[from] std::sync::mpsc::RecvError),
 
     #[error("error when deserializing from toml: '{0}'")]
-    Toml(#[from] toml::de::Error),
+    TomlDe(#[from] toml::de::Error),
 
     #[error("error when initializing LepTess: '{0}'")]
     OcrExtract(#[from] leptess::tesseract::TessInitError),
@@ -40,6 +40,12 @@ pub enum DoxErr {
 
     #[error("error when extracting text from pdf: '{0}'")]
     PdfExtract(#[from] pdf_extract::OutputError),
+
+    #[error("error while displaying prompt: '{0}'")]
+    Prompt(#[from] inquire::error::InquireError),
+
+    #[error("error while serializing configuration: '{0}'")]
+    TomlSe(#[from] toml::ser::Error),
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;
