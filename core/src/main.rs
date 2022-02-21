@@ -2,7 +2,7 @@
 
 use crate::cfg::{config_path, Config};
 use crate::extractor::ExtractorFactory;
-use crate::helpers::{DirEntryExt, ExtensionExt};
+use crate::helpers::{DirEntryExt, ExtensionExt, PathBufExt};
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 use crate::result::Result;
 
@@ -15,8 +15,10 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, launch, post, routes, Build, Rocket, State};
+use std::env;
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::PathBuf;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
@@ -32,7 +34,8 @@ mod result;
 fn launch() -> Rocket<Build> {
     pretty_env_logger::init();
 
-    let cfg = handle_config().expect("failed to get config");
+    let path_override = env::args().nth(1);
+    let cfg = handle_config(path_override).expect("failed to get config");
 
     let repo = setup(&cfg).expect("failed to setup indexer");
     debug!("starting server...");
@@ -43,11 +46,15 @@ fn launch() -> Rocket<Build> {
         .manage(cfg)
 }
 
-fn handle_config() -> Result<Config> {
-    if !config_path().exists() {
+fn handle_config(path_override: Option<String>) -> Result<Config> {
+    debug!("handling config with {:?}", path_override);
+    let config_path = path_override.map_or(config_path(), PathBuf::from);
+    if !config_path.exists() {
+        debug!("config path '{}' doesn't exist", config_path.str());
         prompt::show()
     } else {
-        cfg::read_config(config_path())
+        debug!("loading config from '{}'", config_path.str());
+        cfg::read_config(config_path)
     }
 }
 
