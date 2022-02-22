@@ -1,6 +1,6 @@
 import 'package:dox/screens/splash_screen.dart';
 import 'package:dox/utilities/config.dart';
-import 'package:dox/utilities/dox_service.dart';
+import 'package:dox/utilities/api.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +14,7 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   MyApp(Config config, {Key? key}) : super(key: key) {
-    DoxService.init(Urls(config));
+    Api.init(Urls(config));
   }
 
   @override

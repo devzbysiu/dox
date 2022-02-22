@@ -1,5 +1,5 @@
 import 'package:dox/models/document.dart';
-import 'package:dox/utilities/dox_service.dart';
+import 'package:dox/utilities/api.dart';
 import 'package:flutter/material.dart';
 
 class SearchModel extends ChangeNotifier {
@@ -9,11 +9,11 @@ class SearchModel extends ChangeNotifier {
 
   String _query = '';
 
-  late final DoxService _dox;
+  late final Api _api;
 
-  SearchModel(DoxService dox) {
-    _dox = dox;
-    _dox.fetchAllFiles().then((value) {
+  SearchModel(Api api) {
+    _api = api;
+    _api.fetchAllFiles().then((value) {
       _suggestions = value;
       notifyListeners();
     });
@@ -34,18 +34,18 @@ class SearchModel extends ChangeNotifier {
 
   Future<List<Document>> _giveSuggestions(String query) async {
     return query.isEmpty
-        ? await _dox.fetchAllFiles()
-        : await _dox.searchDocs(query);
+        ? await _api.fetchAllFiles()
+        : await _api.searchDocs(query);
   }
 
   void clear() async {
-    _suggestions = await _dox.fetchAllFiles();
+    _suggestions = await _api.fetchAllFiles();
     notifyListeners();
   }
 
   bool get isLoading => _isLoading;
 
   List<Uri> get docUrls {
-    return _suggestions.map((doc) => _dox.toDocUrl(doc.filename)).toList();
+    return _suggestions.map((doc) => _api.toDocUrl(doc.filename)).toList();
   }
 }

@@ -5,21 +5,21 @@ import 'package:dox/models/document.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:http/http.dart' as http;
 
-class DoxService {
+class Api {
   late final Urls _urls;
 
-  static DoxService? _instance;
+  static Api? _instance;
 
-  factory DoxService.init(Urls urls) {
-    _instance ??= DoxService._(urls);
+  factory Api.init(Urls urls) {
+    _instance ??= Api._(urls);
     return _instance!;
   }
 
-  DoxService._(Urls urls) {
+  Api._(Urls urls) {
     _urls = urls;
   }
 
-  factory DoxService() {
+  factory Api() {
     if (_instance == null) throw Exception('You need to initialize it first');
     return _instance!;
   }

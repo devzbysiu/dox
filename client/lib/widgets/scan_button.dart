@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:document_scanner_flutter/document_scanner_flutter.dart';
-import 'package:dox/utilities/dox_service.dart';
+import 'package:dox/utilities/api.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -10,13 +10,12 @@ import 'package:motion_toast/motion_toast.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 
 class ScanButton extends StatelessWidget {
-  late final DoxService _dox;
+  late final Api _api;
 
   late final Function onScanned;
 
-  ScanButton(DoxService dox, {Key? key, required this.onScanned})
-      : super(key: key) {
-    _dox = dox;
+  ScanButton(Api api, {Key? key, required this.onScanned}) : super(key: key) {
+    _api = api;
   }
 
   @override
@@ -74,7 +73,7 @@ class ScanButton extends StatelessWidget {
   }
 
   Future<void> _uploadAndShowToast(File doc, BuildContext context) async {
-    final resp = await _dox.uploadDoc(doc);
+    final resp = await _api.uploadDoc(doc);
     if (resp.statusCode != 201) {
       _showUploadFailed(context);
       return;

@@ -1,5 +1,5 @@
 import 'package:dox/models/search_model.dart';
-import 'package:dox/utilities/dox_service.dart';
+import 'package:dox/utilities/api.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:dox/widgets/app_bar.dart';
 import 'package:dox/widgets/openable_image_list.dart';
@@ -14,7 +14,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => SearchModel(DoxService()),
+      create: (_) => SearchModel(Api()),
       child: GestureDetector(
         onTap: () => _hideKeyboard(),
         onVerticalDragDown: (_) => _hideKeyboard(),
@@ -25,8 +25,7 @@ class HomePage extends StatelessWidget {
               headerSliverBuilder: _scrollableAppBarBuilder,
               body: _searchInput(model),
             ),
-            floatingActionButton:
-                ScanButton(DoxService(), onScanned: model.clear),
+            floatingActionButton: ScanButton(Api(), onScanned: model.clear),
           ),
         ),
       ),
