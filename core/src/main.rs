@@ -54,7 +54,9 @@ fn handle_config(path_override: Option<String>) -> Result<Config> {
         cfg::read_config(config_path)
     } else {
         debug!("config path '{}' doesn't exist", config_path.str());
-        prompt::show()
+        let cfg = prompt::show()?;
+        cfg::store(config_path, &cfg)?;
+        Ok(cfg)
     }
 }
 

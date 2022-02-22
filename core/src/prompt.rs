@@ -1,4 +1,3 @@
-use crate::cfg;
 use crate::cfg::Config;
 use crate::helpers::PathBufExt;
 use crate::result::Result;
@@ -9,13 +8,11 @@ use std::time::Duration;
 
 pub fn show() -> Result<Config> {
     let config = Config::default();
-    // TODO: move storing config out of show fn
-    cfg::store(&Config {
+    Ok(Config {
         watched_dir: watched_dir_prompt()?,
         index_dir: index_dir_prompt(&config)?,
         cooldown_time: cooldown_time_prompt(&config)?,
-    })?;
-    Ok(config)
+    })
 }
 
 fn watched_dir_prompt() -> Result<PathBuf> {
