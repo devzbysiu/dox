@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 pub mod image;
 pub mod pdf;
 
-// TODO: item name ends with mod name
+#[allow(clippy::module_name_repetitions)]
 pub trait TextExtractor {
     fn extract_text(&self, path: &[PathBuf]) -> Vec<FilenameToBody>;
 }
