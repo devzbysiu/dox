@@ -106,8 +106,8 @@ class ScanButton extends StatelessWidget {
 
   void _showUploadSuccessful(BuildContext context) {
     MotionToast.success(
-            title: const Text('Success'),
-            description: const Text('File uploaded successfully'))
-        .show(context);
+      title: const Text('Success'),
+      description: const Text('File uploaded successfully'),
+    ).show(context);
   }
 }

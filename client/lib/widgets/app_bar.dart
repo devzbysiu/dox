@@ -10,8 +10,9 @@ class ScrollableAppBar extends StatelessWidget {
       title: Text('Dox', style: TextStyle(color: onPrimary(context))),
       expandedHeight: 220.0,
       flexibleSpace: FlexibleSpaceBar(
-          centerTitle: true,
-          background: Image.asset('assets/app-bar.webp', fit: BoxFit.cover)),
+        centerTitle: true,
+        background: Image.asset('assets/app-bar.webp', fit: BoxFit.cover),
+      ),
     );
   }
 }

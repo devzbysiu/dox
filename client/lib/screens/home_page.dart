@@ -14,19 +14,23 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-        create: (_) => SearchModel(DoxService()),
-        child: GestureDetector(
-            onTap: () => _hideKeyboard(),
-            onVerticalDragDown: (_) => _hideKeyboard(),
-            child: Consumer<SearchModel>(
-                builder: (context, model, _) => Scaffold(
-                    backgroundColor: background(context),
-                    body: NestedScrollView(
-                      headerSliverBuilder: _scrollableAppBarBuilder,
-                      body: _searchInput(model),
-                    ),
-                    floatingActionButton:
-                        ScanButton(DoxService(), onScanned: model.clear)))));
+      create: (_) => SearchModel(DoxService()),
+      child: GestureDetector(
+        onTap: () => _hideKeyboard(),
+        onVerticalDragDown: (_) => _hideKeyboard(),
+        child: Consumer<SearchModel>(
+          builder: (context, model, _) => Scaffold(
+            backgroundColor: background(context),
+            body: NestedScrollView(
+              headerSliverBuilder: _scrollableAppBarBuilder,
+              body: _searchInput(model),
+            ),
+            floatingActionButton:
+                ScanButton(DoxService(), onScanned: model.clear),
+          ),
+        ),
+      ),
+    );
   }
 
   void _hideKeyboard() {
@@ -44,7 +48,9 @@ class HomePage extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: SearchInput(onChanged: model.onQueryChanged),
         ),
-        Expanded(child: OpenableImageList(urls: model.docUrls)),
+        Expanded(
+          child: OpenableImageList(urls: model.docUrls),
+        ),
       ],
     );
   }

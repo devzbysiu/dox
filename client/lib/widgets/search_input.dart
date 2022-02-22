@@ -16,26 +16,28 @@ class _SearchInputState extends State<SearchInput> {
   @override
   Widget build(BuildContext context) {
     return Material(
-        borderRadius: const BorderRadius.all(Radius.circular(15)),
-        elevation: 18,
-        shadowColor: onBackground(context),
-        child: TextField(
-            controller: _controller,
-            onChanged: widget.onChanged,
-            decoration: _inputDecoration(context)));
+      borderRadius: const BorderRadius.all(Radius.circular(15)),
+      elevation: 18,
+      shadowColor: onBackground(context),
+      child: TextField(
+        controller: _controller,
+        onChanged: widget.onChanged,
+        decoration: _inputDecoration(context),
+      ),
+    );
   }
 
   InputDecoration _inputDecoration(BuildContext context) {
     return InputDecoration(
-        filled: true,
-        fillColor: onPrimary(context),
-        hintText: "Search",
-        prefixIcon: const Icon(Icons.search),
-        suffixIcon:
-            IconButton(icon: const Icon(Icons.clear), onPressed: _clear),
-        focusedBorder: _border(),
-        enabledBorder: _border(),
-        border: _border());
+      filled: true,
+      fillColor: onPrimary(context),
+      hintText: "Search",
+      prefixIcon: const Icon(Icons.search),
+      suffixIcon: IconButton(icon: const Icon(Icons.clear), onPressed: _clear),
+      focusedBorder: _border(),
+      enabledBorder: _border(),
+      border: _border(),
+    );
   }
 
   void _clear() {
@@ -46,7 +48,10 @@ class _SearchInputState extends State<SearchInput> {
 
   OutlineInputBorder _border() {
     return const OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.transparent, width: 0),
-        borderRadius: BorderRadius.all(Radius.circular(15.0)));
+      borderSide: BorderSide(color: Colors.transparent, width: 0),
+      borderRadius: BorderRadius.all(
+        Radius.circular(15.0),
+      ),
+    );
   }
 }

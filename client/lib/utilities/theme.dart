@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 
 ThemeData theme() {
   return ThemeData(
-      colorScheme: ColorScheme.fromSwatch(
-    primarySwatch: Colors.purple,
-  ).copyWith(
-          onBackground: Colors.black,
-          secondary: Colors.deepPurple,
-          onPrimary: Colors.white,
-          background: Colors.white));
+    colorScheme: ColorScheme.fromSwatch(
+      primarySwatch: Colors.purple,
+    ).copyWith(
+        onBackground: Colors.black,
+        secondary: Colors.deepPurple,
+        onPrimary: Colors.white,
+        background: Colors.white),
+  );
 }
 
 Color primary(BuildContext context) {

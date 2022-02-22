@@ -21,7 +21,9 @@ class OpenableImageList extends StatelessWidget {
 
   Widget _buildImage(Uri url) {
     return Padding(
-        padding: const EdgeInsets.all(15), child: OpenableImage(url: url));
+      padding: const EdgeInsets.all(15),
+      child: OpenableImage(url: url),
+    );
   }
 }
 

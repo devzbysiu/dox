@@ -27,8 +27,9 @@ class OpenableImage extends StatelessWidget {
           tag: url.toString(),
           child: Container(
             decoration: const BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular(15)),
-                color: Color.fromRGBO(242, 242, 246, 1)),
+              borderRadius: BorderRadius.all(Radius.circular(15)),
+              color: Color.fromRGBO(242, 242, 246, 1),
+            ),
             padding: const EdgeInsets.all(20),
             child: _img(),
           ),
