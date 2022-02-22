@@ -49,12 +49,12 @@ fn launch() -> Rocket<Build> {
 fn handle_config(path_override: Option<String>) -> Result<Config> {
     debug!("handling config with {:?}", path_override);
     let config_path = path_override.map_or(config_path(), PathBuf::from);
-    if !config_path.exists() {
-        debug!("config path '{}' doesn't exist", config_path.str());
-        prompt::show()
-    } else {
+    if config_path.exists() {
         debug!("loading config from '{}'", config_path.str());
         cfg::read_config(config_path)
+    } else {
+        debug!("config path '{}' doesn't exist", config_path.str());
+        prompt::show()
     }
 }
 

@@ -9,6 +9,7 @@ use std::time::Duration;
 
 pub fn show() -> Result<Config> {
     let config = Config::default();
+    // TODO: move storing config out of show fn
     cfg::store(&Config {
         watched_dir: watched_dir_prompt()?,
         index_dir: index_dir_prompt(&config)?,

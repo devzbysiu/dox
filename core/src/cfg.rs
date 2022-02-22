@@ -41,6 +41,7 @@ fn index_dir_default() -> PathBuf {
         .join("dox")
 }
 
+// TODO: there should be control over config path
 pub fn store(config: &Config) -> Result<()> {
     let mut file = File::create(config_path())?;
     file.write_all(toml::to_string(config)?.as_bytes())?;
