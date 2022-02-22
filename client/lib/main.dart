@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Dox',
       theme: theme(),
-      home: SplashScreen(),
+      home: const SplashScreen(),
     );
   }
 }
