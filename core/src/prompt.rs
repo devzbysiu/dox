@@ -3,9 +3,11 @@ use crate::helpers::{PathBufExt, PathExt};
 use crate::result::Result;
 
 use inquire::{required, CustomType, Text};
+use rayon::iter::plumbing::UnindexedProducer;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
+use tantivy::collector::SegmentCollector;
 
 pub fn show() -> Result<Config> {
     let config = Config::default();
@@ -27,15 +29,23 @@ fn watched_dir_prompt() -> Result<PathBuf> {
 
 fn path_suggester(input: &str) -> Vec<String> {
     let input = if input.is_empty() { "/" } else { input };
-    let dir = fs::read_dir(input);
+    let mut dir = fs::read_dir(input);
     if dir.is_err() {
-        return vec![];
+        let parent = Path::new(input).parent();
+        if parent.is_none() {
+            return vec![];
+        }
+        dir = fs::read_dir(parent.unwrap()); // can unwrap, it's checked earlier
+        if dir.is_err() {
+            return vec![];
+        }
     }
     dir.unwrap() // can unwrap because it's checked above
         .filter_map(|e| e.ok())
         .map(|entry| entry.path())
         .filter(|path| path.as_path().is_dir())
         .map(|path| path.as_path().string())
+        .filter(|path| path.contains(input))
         .collect::<Vec<String>>()
 }
 
