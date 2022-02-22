@@ -1,8 +1,9 @@
 use crate::cfg::Config;
-use crate::helpers::PathBufExt;
+use crate::helpers::{PathBufExt, PathExt};
 use crate::result::Result;
 
 use inquire::{required, CustomType, Text};
+use std::fs;
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -18,9 +19,24 @@ pub fn show() -> Result<Config> {
 fn watched_dir_prompt() -> Result<PathBuf> {
     Ok(PathBuf::from(
         Text::new("Path to a directory you want to watch for changes:")
+            .with_suggester(&path_suggester)
             .with_validator(required!())
             .prompt()?,
     ))
+}
+
+fn path_suggester(input: &str) -> Vec<String> {
+    let input = if input.is_empty() { "/" } else { input };
+    let dir = fs::read_dir(input);
+    if dir.is_err() {
+        return vec![];
+    }
+    dir.unwrap() // can unwrap because it's checked above
+        .filter_map(|e| e.ok())
+        .map(|entry| entry.path())
+        .filter(|path| path.as_path().is_dir())
+        .map(|path| path.as_path().string())
+        .collect::<Vec<String>>()
 }
 
 fn index_dir_prompt(config: &Config) -> Result<PathBuf> {

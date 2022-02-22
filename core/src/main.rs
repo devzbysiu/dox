@@ -2,7 +2,7 @@
 
 use crate::cfg::{config_path, Config};
 use crate::extractor::ExtractorFactory;
-use crate::helpers::{DirEntryExt, ExtensionExt, PathBufExt};
+use crate::helpers::{DirEntryExt, PathExt, PathBufExt};
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
 use crate::result::Result;
 

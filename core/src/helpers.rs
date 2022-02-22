@@ -13,13 +13,18 @@ impl DirEntryExt for DirEntry {
     }
 }
 
-pub trait ExtensionExt {
+pub trait PathExt {
     fn ext(&self) -> Ext;
+    fn string(&self) -> String;
 }
 
-impl ExtensionExt for Path {
+impl PathExt for Path {
     fn ext(&self) -> Ext {
         Ext::from(self.extension().unwrap().to_str().unwrap())
+    }
+
+    fn string(&self) -> String {
+        self.to_string_lossy().to_string()
     }
 }
 
