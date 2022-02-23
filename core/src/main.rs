@@ -2,9 +2,9 @@
 
 use crate::cfg::{config_path, Config};
 use crate::extractor::ExtractorFactory;
-use crate::helpers::{DirEntryExt, PathExt, PathBufExt};
+use crate::helpers::{DirEntryExt, PathBufExt, PathExt};
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
-use crate::result::Result;
+use crate::result::{DoxErr, Result};
 
 use cooldown_buffer::cooldown_buffer;
 use index::SearchEntry;
@@ -54,7 +54,14 @@ fn handle_config(path_override: Option<String>) -> Result<Config> {
         cfg::read_config(config_path)
     } else {
         debug!("config path '{}' doesn't exist", config_path.str());
-        let cfg = prompt::show()?;
+        let cfg = match prompt::show() {
+            Ok(cfg) => cfg,
+            Err(DoxErr::Prompt(inquire::error::InquireError::OperationCanceled)) => {
+                debug!("operation cancelled");
+                std::process::exit(0);
+            }
+            Err(e) => panic!("failed while showing prompt: {}", e),
+        };
         cfg::store(config_path, &cfg)?;
         Ok(cfg)
     }
