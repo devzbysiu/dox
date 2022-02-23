@@ -51,6 +51,7 @@ fn path_suggester(input: &str) -> Vec<String> {
 fn index_dir_prompt(config: &Config) -> Result<PathBuf> {
     Ok(PathBuf::from(
         Text::new("Path to a directory for storing index files:")
+            .with_suggester(&path_suggester)
             .with_default(config.index_dir.str())
             .prompt()?,
     ))
