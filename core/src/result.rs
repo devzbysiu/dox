@@ -51,10 +51,7 @@ pub enum DoxErr {
 pub type Result<T> = std::result::Result<T, DoxErr>;
 
 // TODO: make sure that's the right way to go
-impl<'r, 'o> Responder<'r, 'o> for DoxErr
-where
-    'o: 'r,
-{
+impl<'r, 'o: 'r> Responder<'r, 'o> for DoxErr {
     fn respond_to(self, _request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
         Err(Status::new(500))
     }
