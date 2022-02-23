@@ -64,9 +64,14 @@ fn handle_config(path_override: Option<String>) -> Result<Config> {
 fn config_from_user() -> Result<Config> {
     match prompt::show() {
         Ok(cfg) => Ok(cfg),
-        Err(DoxErr::Prompt(InquireError::OperationCanceled)) => std::process::exit(0),
+        Err(DoxErr::Prompt(InquireError::OperationCanceled)) => exit_process(),
         Err(e) => panic!("failed while showing prompt: {}", e),
     }
+}
+
+fn exit_process() -> ! {
+    debug!("prompt cancelled, exiting process");
+    std::process::exit(0);
 }
 
 fn setup(cfg: &Config) -> Result<Repo> {
