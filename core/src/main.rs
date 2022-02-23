@@ -8,6 +8,7 @@ use crate::result::{DoxErr, Result};
 
 use cooldown_buffer::cooldown_buffer;
 use index::SearchEntry;
+use inquire::error::InquireError;
 use log::{debug, error, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::fs::FileServer;
@@ -54,16 +55,17 @@ fn handle_config(path_override: Option<String>) -> Result<Config> {
         cfg::read_config(config_path)
     } else {
         debug!("config path '{}' doesn't exist", config_path.str());
-        let cfg = match prompt::show() {
-            Ok(cfg) => cfg,
-            Err(DoxErr::Prompt(inquire::error::InquireError::OperationCanceled)) => {
-                debug!("operation cancelled");
-                std::process::exit(0);
-            }
-            Err(e) => panic!("failed while showing prompt: {}", e),
-        };
+        let cfg = config_from_user()?;
         cfg::store(config_path, &cfg)?;
         Ok(cfg)
+    }
+}
+
+fn config_from_user() -> Result<Config> {
+    match prompt::show() {
+        Ok(cfg) => Ok(cfg),
+        Err(DoxErr::Prompt(InquireError::OperationCanceled)) => std::process::exit(0),
+        Err(e) => panic!("failed while showing prompt: {}", e),
     }
 }
 
