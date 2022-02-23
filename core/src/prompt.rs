@@ -39,7 +39,7 @@ fn path_suggester(input: &str) -> Vec<String> {
         }
     }
     dir.unwrap() // can unwrap because it's checked above
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .map(|entry| entry.path())
         .filter(|path| path.as_path().is_dir())
         .map(|path| path.as_path().string())
