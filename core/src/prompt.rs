@@ -26,6 +26,7 @@ fn watched_dir_prompt() -> Result<PathBuf> {
 }
 
 fn path_suggester(input: &str) -> Vec<String> {
+    // TODO: think if this can be simplified
     let input = if input.is_empty() { "/" } else { input };
     let mut dir = fs::read_dir(input);
     if dir.is_err() {
