@@ -3,11 +3,9 @@ use crate::helpers::{PathBufExt, PathExt};
 use crate::result::Result;
 
 use inquire::{required, CustomType, Text};
-use rayon::iter::plumbing::UnindexedProducer;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use tantivy::collector::SegmentCollector;
 
 pub fn show() -> Result<Config> {
     let config = Config::default();
