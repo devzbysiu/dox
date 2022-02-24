@@ -30,6 +30,7 @@ mod helpers;
 mod index;
 mod prompt;
 mod result;
+mod thumbnail;
 
 #[launch]
 fn launch() -> Rocket<Build> {
