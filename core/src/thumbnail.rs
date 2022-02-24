@@ -1,13 +1,12 @@
+use crate::result::Result;
+
 use cairo::{Context, Format, ImageSurface};
 use poppler::{PopplerDocument, PopplerPage};
 use std::fs::File;
 use std::path::Path;
 
 #[allow(unused)] // TODO: remove that
-pub fn generate<P: AsRef<Path>>(
-    pdf_path: P,
-    out_path: P,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub fn generate<P: AsRef<Path>>(pdf_path: P, out_path: P) -> Result<()> {
     let doc: PopplerDocument = PopplerDocument::new_from_file(pdf_path, "")?;
     let page: PopplerPage = match doc.get_page(0) {
         Some(p) => p,

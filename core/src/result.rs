@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use rocket::{http::Status, response::Responder};
 use thiserror::Error;
 
+// TODO: cleanup error messages and names
 #[derive(Debug, Error)]
 pub enum DoxErr {
     #[error("failed to create or write file: '{0}'")]
@@ -46,6 +47,15 @@ pub enum DoxErr {
 
     #[error("error while serializing configuration: '{0}'")]
     TomlSe(#[from] toml::ser::Error),
+
+    #[error("error while creating pdf thumnail surface: '{0}'")]
+    ThumbnailSurface(#[from] cairo::Error),
+
+    #[error("error while thumnail writing thumbnail to file: '{0}'")]
+    CarioIo(#[from] cairo::IoError),
+
+    #[error("error while creating poppler document for pdf thumbnail: '{0}'")]
+    Poppler(#[from] cairo::glib::error::Error),
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;
