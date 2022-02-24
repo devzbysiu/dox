@@ -14,6 +14,7 @@ pub fn generate_thumbnail<P: AsRef<Path>>(
         None => panic!("failed to get page"),
     };
     let (width, height) = page.get_size();
+    #[allow(clippy::cast_possible_truncation)]
     let surface = ImageSurface::create(Format::Rgb24, width as i32, height as i32)?;
     // Draw a white background to start with.  If you don't, any transparent
     // regions in the PDF will be rendered as black in the final image.
