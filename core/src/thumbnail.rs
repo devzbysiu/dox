@@ -4,7 +4,7 @@ use std::fs::File;
 use std::path::Path;
 
 #[allow(unused)]
-pub fn generate_thumbnail<P: AsRef<Path>>(
+pub fn generate<P: AsRef<Path>>(
     pdf_path: P,
     out_path: P,
 ) -> Result<(), Box<dyn std::error::Error>> {
