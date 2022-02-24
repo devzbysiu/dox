@@ -3,7 +3,7 @@ use poppler::{PopplerDocument, PopplerPage};
 use std::fs::File;
 use std::path::Path;
 
-#[allow(unused)]
+#[allow(unused)] // TODO: remove that
 pub fn generate<P: AsRef<Path>>(
     pdf_path: P,
     out_path: P,
@@ -14,7 +14,7 @@ pub fn generate<P: AsRef<Path>>(
         None => panic!("failed to get page"),
     };
     let (width, height) = page.get_size();
-    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_possible_truncation)] // TODO: make sure that's necessary
     let surface = ImageSurface::create(Format::Rgb24, width as i32, height as i32)?;
     // Draw a white background to start with.  If you don't, any transparent
     // regions in the PDF will be rendered as black in the final image.
