@@ -26,6 +26,7 @@ pub fn generate<P: AsRef<Path>>(pdf_path: P, out_path: P) -> Result<()> {
     let filename = format!("{}_{}.png", out_path.as_ref().display(), 0);
     println!("Exporting {} ...", filename);
     let mut f: File = File::create(filename)?;
+    // TODO: thumbnail generation and saving to file should be separated
     surface.write_to_png(&mut f)?;
     Ok(())
 }
