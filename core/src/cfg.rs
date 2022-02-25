@@ -8,7 +8,7 @@ use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
     pub watched_dir: PathBuf,
     pub thumbnails_dir: PathBuf,

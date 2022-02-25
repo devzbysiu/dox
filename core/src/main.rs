@@ -4,6 +4,7 @@ use crate::cfg::Config;
 use crate::extractor::ExtractorFactory;
 use crate::helpers::{DirEntryExt, PathExt};
 use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
+use crate::preprocessor::PreprocessorFactory;
 use crate::result::Result;
 use crate::user_input::handle_config;
 
@@ -27,6 +28,7 @@ mod cfg;
 mod extractor;
 mod helpers;
 mod index;
+mod preprocessor;
 mod prompt;
 mod result;
 mod thumbnail;
@@ -39,7 +41,8 @@ fn launch() -> Rocket<Build> {
     let path_override = env::args().nth(1);
     let cfg = handle_config(path_override).expect("failed to get config");
 
-    let repo = setup(&cfg).expect("failed to setup indexer");
+    let config = cfg.clone();
+    let repo = setup(config).expect("failed to setup indexer");
     debug!("starting server...");
     rocket::build()
         .mount("/", routes![search, all_documents, receive_document])
@@ -48,7 +51,7 @@ fn launch() -> Rocket<Build> {
         .manage(cfg)
 }
 
-fn setup(cfg: &Config) -> Result<Repo> {
+fn setup(cfg: Config) -> Result<Repo> {
     debug!("setting up with config: {:?}", cfg);
     let (doc_tx, doc_rx) = cooldown_buffer(cfg.cooldown_time);
     let watched_dir = cfg.watched_dir.clone();
@@ -74,6 +77,8 @@ fn setup(cfg: &Config) -> Result<Repo> {
             debug!("new docs: {:?}", paths);
             // NOTE: I'm assuming the batched paths are all the same filetype
             let extension = paths[0].ext();
+            let preprocessor = PreprocessorFactory::from_ext(&extension, &cfg);
+            preprocessor.preprocess(&paths)?;
             let extractor = ExtractorFactory::from_ext(&extension);
             let tuples = extractor.extract_text(&paths);
             index_docs(&tuples, &thread_idx, &thread_schema)?;
