@@ -6,11 +6,20 @@ use thiserror::Error;
 // TODO: cleanup error messages and names
 #[derive(Debug, Error)]
 pub enum DoxErr {
+    #[error("Invalid watched directory path: '{0}'")]
+    InvalidWatchedDirPath(&'static str),
+
+    #[error("Invalid config path: '{0}'")]
+    InvalidConfigPath(&'static str),
+
     #[error("Failed to create or write file: '{0}'")]
     Io(#[from] std::io::Error),
 
     #[error("Failed to decode from base64: '{0}'")]
     Decode(#[from] base64::DecodeError),
+
+    #[error("Invalid index path: '{0}'")]
+    InvalidIndexPath(&'static str),
 
     #[error("Indexer failure: '{0}'")]
     Indexing(#[from] tantivy::TantivyError),
@@ -50,6 +59,9 @@ pub enum DoxErr {
 
     #[error("Error while creating PDF thumnail surface: '{0}'")]
     ThumbnailSurface(#[from] cairo::Error),
+
+    #[error("Invalid thumbnails path: '{0}'")]
+    InvalidThumbnailPath(&'static str),
 
     #[error("Error writing thumbnail to file: '{0}'")]
     CarioIo(#[from] cairo::IoError),

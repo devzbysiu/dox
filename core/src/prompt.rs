@@ -11,6 +11,7 @@ pub fn show() -> Result<Config> {
     let config = Config::default();
     Ok(Config {
         watched_dir: watched_dir_prompt()?,
+        thumbnails_dir: thumbnails_dir_prompt(&config)?,
         index_dir: index_dir_prompt(&config)?,
         cooldown_time: cooldown_time_prompt(&config)?,
     })
@@ -46,6 +47,15 @@ fn path_suggester(input: &str) -> Vec<String> {
         .map(|path| path.as_path().string())
         .filter(|path| path.contains(input))
         .collect::<Vec<String>>()
+}
+
+fn thumbnails_dir_prompt(config: &Config) -> Result<PathBuf> {
+    Ok(PathBuf::from(
+        Text::new("Path to a directory for storing thumbnails:")
+            .with_suggester(&path_suggester)
+            .with_default(config.thumbnails_dir.str())
+            .prompt()?,
+    ))
 }
 
 fn index_dir_prompt(config: &Config) -> Result<PathBuf> {

@@ -1,9 +1,10 @@
 use crate::extractor::FilenameToBody;
+use crate::result::{DoxErr, Result};
 
-use crate::result::Result;
 use core::fmt;
 use log::debug;
 use rocket::serde::Serialize;
+use std::fs::create_dir_all;
 use std::path::Path;
 use tantivy::collector::TopDocs;
 use tantivy::query::{Query, QueryParser};
@@ -104,6 +105,12 @@ impl SearchEntry {
 }
 
 pub fn mk_idx_and_schema<P: AsRef<Path>>(index_path: P) -> Result<(Index, Schema)> {
+    let index_path = index_path.as_ref();
+    debug!("creating index under path: {}", index_path.display());
+    if index_path.exists() && index_path.is_file() {
+        return Err(DoxErr::InvalidIndexPath("It needs to be a directory"));
+    }
+    create_dir_all(index_path)?;
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field(&Fields::Filename.to_string(), TEXT | STORED);
     schema_builder.add_text_field(&Fields::Body.to_string(), TEXT);

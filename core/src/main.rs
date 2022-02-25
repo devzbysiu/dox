@@ -17,7 +17,7 @@ use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, launch, post, routes, Build, Rocket, State};
 use std::env;
-use std::fs::File;
+use std::fs::{create_dir_all, File};
 use std::io::prelude::*;
 use std::path::PathBuf;
 use std::sync::mpsc::channel;
@@ -43,7 +43,7 @@ fn launch() -> Rocket<Build> {
     debug!("starting server...");
     rocket::build()
         .mount("/", routes![search, all_documents, receive_document])
-        .mount("/document", FileServer::from(&cfg.watched_dir))
+        .mount("/document", FileServer::from(&cfg.thumbnails_dir))
         .manage(repo)
         .manage(cfg)
 }
@@ -57,6 +57,7 @@ fn handle_config(path_override: Option<String>) -> Result<Config> {
     } else {
         debug!("config path '{}' doesn't exist", config_path.str());
         let cfg = config_from_user()?;
+        prepare_directories(&cfg)?;
         cfg::store(config_path, &cfg)?;
         Ok(cfg)
     }
@@ -73,6 +74,24 @@ fn config_from_user() -> Result<Config> {
 fn exit_process() -> ! {
     debug!("prompt cancelled, exiting process");
     std::process::exit(0);
+}
+
+fn prepare_directories(config: &Config) -> Result<()> {
+    if config.thumbnails_dir.exists() && !config.thumbnails_dir.is_dir() {
+        return Err(DoxErr::InvalidThumbnailPath("It needs to be a directory"));
+    }
+    create_dir_all(&config.thumbnails_dir)?;
+    if config.thumbnails_dir.read_dir()?.next().is_some() {
+        return Err(DoxErr::InvalidThumbnailPath("Directory needs to be empty"));
+    }
+    if config.watched_dir.exists() && !config.watched_dir.is_dir() {
+        return Err(DoxErr::InvalidWatchedDirPath("It needs to be a directory"));
+    }
+    create_dir_all(&config.watched_dir)?;
+    if config.index_dir.exists() {
+        return Err(DoxErr::InvalidIndexPath("The path is already taken"));
+    }
+    Ok(())
 }
 
 fn setup(cfg: &Config) -> Result<Repo> {
@@ -118,7 +137,7 @@ fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>> {
 fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>> {
     debug!("listing files from '{}':", cfg.watched_dir.display());
     let mut documents = Vec::new();
-    for file in cfg.watched_dir.read_dir()? {
+    for file in cfg.thumbnails_dir.read_dir()? {
         let file = file?;
         let filename = file.filename();
         debug!("\t- {}", filename);
