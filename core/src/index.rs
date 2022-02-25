@@ -108,7 +108,10 @@ pub fn mk_idx_and_schema<P: AsRef<Path>>(index_path: P) -> Result<(Index, Schema
     let index_path = index_path.as_ref();
     debug!("creating index under path: {}", index_path.display());
     if index_path.exists() && index_path.is_file() {
-        return Err(DoxErr::InvalidIndexPath("It needs to be a directory"));
+        return Err(DoxErr::InvalidIndexPath(format!(
+            "It needs to be a directory: '{}'",
+            index_path.display()
+        )));
     }
     create_dir_all(index_path)?;
     let mut schema_builder = Schema::builder();

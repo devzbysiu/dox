@@ -45,18 +45,27 @@ fn prepare_directories(config: &Config) -> Result<()> {
 
 fn check_thumnbails_dir(config: &Config) -> Result<()> {
     if config.thumbnails_dir.exists() && !config.thumbnails_dir.is_dir() {
-        return Err(DoxErr::InvalidThumbnailPath("It needs to be a directory"));
+        return Err(DoxErr::InvalidThumbnailPath(format!(
+            "It needs to be a directory: '{}'",
+            config.thumbnails_dir.str()
+        )));
     }
     create_dir_all(&config.thumbnails_dir)?;
     if config.thumbnails_dir.read_dir()?.next().is_some() {
-        return Err(DoxErr::InvalidThumbnailPath("Directory needs to be empty"));
+        return Err(DoxErr::InvalidThumbnailPath(format!(
+            "Directory needs to be empty: '{}'",
+            config.thumbnails_dir.str()
+        )));
     }
     Ok(())
 }
 
 fn check_watched_dir(config: &Config) -> Result<()> {
     if config.watched_dir.exists() && !config.watched_dir.is_dir() {
-        return Err(DoxErr::InvalidWatchedDirPath("It needs to be a directory"));
+        return Err(DoxErr::InvalidWatchedDirPath(format!(
+            "It needs to be a directory: '{}'",
+            config.watched_dir.str()
+        )));
     }
     create_dir_all(&config.watched_dir)?;
     Ok(())
@@ -64,7 +73,10 @@ fn check_watched_dir(config: &Config) -> Result<()> {
 
 fn check_index_dir(config: &Config) -> Result<()> {
     if config.index_dir.exists() {
-        return Err(DoxErr::InvalidIndexPath("The path is already taken"));
+        return Err(DoxErr::InvalidIndexPath(format!(
+            "The path is already taken: '{}'",
+            config.index_dir.str()
+        )));
     }
     Ok(())
 }

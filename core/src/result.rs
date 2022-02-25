@@ -7,10 +7,10 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum DoxErr {
     #[error("Invalid watched directory path: '{0}'")]
-    InvalidWatchedDirPath(&'static str),
+    InvalidWatchedDirPath(String),
 
     #[error("Invalid config path: '{0}'")]
-    InvalidConfigPath(&'static str),
+    InvalidConfigPath(String),
 
     #[error("Failed to create or write file: '{0}'")]
     Io(#[from] std::io::Error),
@@ -19,7 +19,7 @@ pub enum DoxErr {
     Decode(#[from] base64::DecodeError),
 
     #[error("Invalid index path: '{0}'")]
-    InvalidIndexPath(&'static str),
+    InvalidIndexPath(String),
 
     #[error("Indexer failure: '{0}'")]
     Indexing(#[from] tantivy::TantivyError),
@@ -61,7 +61,7 @@ pub enum DoxErr {
     ThumbnailSurface(#[from] cairo::Error),
 
     #[error("Invalid thumbnails path: '{0}'")]
-    InvalidThumbnailPath(&'static str),
+    InvalidThumbnailPath(String),
 
     #[error("Error writing thumbnail to file: '{0}'")]
     CarioIo(#[from] cairo::IoError),
