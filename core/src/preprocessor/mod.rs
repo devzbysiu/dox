@@ -24,6 +24,7 @@ impl PreprocessorFactory {
 }
 
 pub struct Pdf {
+    #[allow(unused)] // TODO: Remove that
     thumbnails_dir: PathBuf,
 }
 
@@ -34,7 +35,7 @@ impl Pdf {
 }
 
 impl FilePreprocessor for Pdf {
-    fn preprocess(&self, paths: &[PathBuf]) -> Result<()> {
+    fn preprocess(&self, _paths: &[PathBuf]) -> Result<()> {
         Ok(())
     }
 }
