@@ -37,6 +37,13 @@ fn exit_process() -> ! {
 }
 
 fn prepare_directories(config: &Config) -> Result<()> {
+    check_thumnbails_dir(config)?;
+    check_watched_dir(config)?;
+    check_index_dir(config)?;
+    Ok(())
+}
+
+fn check_thumnbails_dir(config: &Config) -> Result<()> {
     if config.thumbnails_dir.exists() && !config.thumbnails_dir.is_dir() {
         return Err(DoxErr::InvalidThumbnailPath("It needs to be a directory"));
     }
@@ -44,10 +51,18 @@ fn prepare_directories(config: &Config) -> Result<()> {
     if config.thumbnails_dir.read_dir()?.next().is_some() {
         return Err(DoxErr::InvalidThumbnailPath("Directory needs to be empty"));
     }
+    Ok(())
+}
+
+fn check_watched_dir(config: &Config) -> Result<()> {
     if config.watched_dir.exists() && !config.watched_dir.is_dir() {
         return Err(DoxErr::InvalidWatchedDirPath("It needs to be a directory"));
     }
     create_dir_all(&config.watched_dir)?;
+    Ok(())
+}
+
+fn check_index_dir(config: &Config) -> Result<()> {
     if config.index_dir.exists() {
         return Err(DoxErr::InvalidIndexPath("The path is already taken"));
     }
