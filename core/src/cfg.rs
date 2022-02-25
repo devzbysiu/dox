@@ -52,9 +52,10 @@ fn thumbnails_dir_default() -> PathBuf {
 
 pub fn store<P: AsRef<Path>>(path: P, cfg: &Config) -> Result<()> {
     debug!("saving '{:?}' to '{}'", &cfg, path.as_ref().display());
-    let config_dir = path.as_ref().parent().ok_or(DoxErr::InvalidConfigPath(
-        "Can't use '/' as a configuration path".into(),
-    ))?;
+    let config_dir = path
+        .as_ref()
+        .parent()
+        .ok_or_else(|| DoxErr::InvalidConfigPath("Can't use '/' as a configuration path".into()))?;
     create_dir_all(config_dir)?;
     let mut file = File::create(path)?;
     file.write_all(toml::to_string(cfg)?.as_bytes())?;
