@@ -1,17 +1,18 @@
-use log::debug;
-
 use crate::cfg::Config;
 use crate::extractor::Ext;
 use crate::helpers::PathBufExt;
 use crate::result::Result;
 
+use log::debug;
 use std::path::PathBuf;
 
+#[allow(clippy::module_name_repetitions)]
 pub trait FilePreprocessor {
     fn preprocess(&self, paths: &[PathBuf]) -> Result<()>;
 }
 
 #[derive(Debug)]
+#[allow(clippy::module_name_repetitions)]
 pub struct PreprocessorFactory;
 
 impl PreprocessorFactory {
@@ -52,11 +53,11 @@ impl Image {
 
 impl FilePreprocessor for Image {
     fn preprocess(&self, paths: &[PathBuf]) -> Result<()> {
-        paths.iter().for_each(|p: &PathBuf| {
+        for p in paths {
             // TODO: take care of this unwrap
             debug!("moving {} to {}", p.display(), self.thumbnails_dir.str());
             std::fs::copy(p, self.thumbnails_dir.join(p.file_name().unwrap())).unwrap();
-        });
+        }
         Ok(())
     }
 }

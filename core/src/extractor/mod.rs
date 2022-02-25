@@ -30,6 +30,7 @@ impl FilenameToBody {
     }
 }
 
+#[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
 pub struct ExtractorFactory;
 
