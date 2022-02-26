@@ -1,4 +1,4 @@
-use crate::helpers::{PathExt, PathRefExt};
+use crate::helpers::PathExt;
 use crate::result::Result;
 
 use cairo::{Context, Format, ImageSurface};
@@ -11,10 +11,11 @@ const FIRST: usize = 0;
 
 #[allow(unused)] // TODO: remove that
 pub fn generate<P: AsRef<Path>>(pdf_path: P, out_path: P) -> Result<()> {
-    debug!("generating thumbnail for {}", pdf_path.as_ref().display());
+    debug!("generating thumbnail for '{}'", pdf_path.as_ref().display());
     let page = first_page(&pdf_path)?;
     let surface = paint_background_and_scale(page)?;
-    let mut f: File = File::create(pdf_path.filename())?;
+    debug!("writing thumbnail to: '{}'", out_path.as_ref().display());
+    let mut f: File = File::create(out_path)?;
     surface.write_to_png(&mut f)?;
     Ok(())
 }

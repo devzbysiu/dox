@@ -16,8 +16,8 @@ impl Pdf {
         Self { thumbnails_dir }
     }
 
-    fn thumbnail_path<P: AsRef<Path>>(&self, pdf_path: P) -> PathBuf {
-        self.thumbnails_dir.join(pdf_path.filename())
+    fn thumbnail_path<P: AsRef<Path>>(&self, path: P) -> PathBuf {
+        self.thumbnails_dir.join(format!("{}.png", path.filestem()))
     }
 }
 

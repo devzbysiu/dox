@@ -62,7 +62,7 @@ fn setup(cfg: Config) -> Result<Repo> {
         loop {
             match rx.recv() {
                 Ok(DebouncedEvent::Create(path)) => doc_tx.send(path)?,
-                Ok(_) => warn!("this FS event is not supported"),
+                Ok(e) => warn!("this FS event is not supported: {:?}", e),
                 Err(e) => error!("watch error: {:?}", e),
             }
         }

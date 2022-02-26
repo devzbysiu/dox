@@ -39,13 +39,13 @@ impl PathBufExt for PathBuf {
 }
 
 pub trait PathRefExt {
-    fn filename(&self) -> String;
+    fn filestem(&self) -> String;
 }
 
 impl<T: AsRef<Path>> PathRefExt for T {
-    fn filename(&self) -> String {
+    fn filestem(&self) -> String {
         let path = self.as_ref();
-        path.file_name()
+        path.file_stem()
             .unwrap_or_else(|| panic!("path '{}' does not have a filename", path.display()))
             .to_string_lossy()
             .to_string()
