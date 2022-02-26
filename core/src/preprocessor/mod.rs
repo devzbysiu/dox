@@ -1,6 +1,7 @@
 use crate::cfg::Config;
 use crate::extractor::Ext;
 use crate::preprocessor::image::Image;
+use crate::preprocessor::pdf::Pdf;
 use crate::result::Result;
 
 use std::path::PathBuf;
@@ -23,22 +24,5 @@ impl PreprocessorFactory {
             Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Image::new(config.thumbnails_dir.clone())),
             Ext::Pdf => Box::new(Pdf::new(config.thumbnails_dir.clone())),
         }
-    }
-}
-
-pub struct Pdf {
-    #[allow(unused)] // TODO: Remove that
-    thumbnails_dir: PathBuf,
-}
-
-impl Pdf {
-    fn new(thumbnails_dir: PathBuf) -> Self {
-        Self { thumbnails_dir }
-    }
-}
-
-impl FilePreprocessor for Pdf {
-    fn preprocess(&self, _paths: &[PathBuf]) -> Result<()> {
-        Ok(())
     }
 }
