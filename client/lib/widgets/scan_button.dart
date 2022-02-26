@@ -23,8 +23,8 @@ class ScanButton extends StatelessWidget {
     return SpeedDial(
       child: const Icon(Icons.add),
       closedForegroundColor: onPrimary(context),
-      openForegroundColor: secondary(context),
-      closedBackgroundColor: onPrimary(context),
+      openForegroundColor: onPrimary(context),
+      closedBackgroundColor: primary(context),
       openBackgroundColor: secondary(context),
       speedDialChildren: [
         SpeedDialChild(
@@ -35,7 +35,7 @@ class ScanButton extends StatelessWidget {
           onPressed: () => _scanAndSendImage(context),
         ),
         SpeedDialChild(
-          child: const Icon(Icons.picture_as_pdf),
+          child: Icon(Icons.picture_as_pdf, color: onPrimary(context)),
           foregroundColor: secondary(context),
           backgroundColor: primary(context),
           label: 'Pick PDF',
