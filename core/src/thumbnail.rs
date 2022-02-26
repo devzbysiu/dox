@@ -1,12 +1,14 @@
 use crate::result::Result;
 
 use cairo::{Context, Format, ImageSurface};
+use log::debug;
 use poppler::{PopplerDocument, PopplerPage};
 use std::fs::File;
 use std::path::Path;
 
 #[allow(unused)] // TODO: remove that
 pub fn generate<P: AsRef<Path>>(pdf_path: P, out_path: P) -> Result<()> {
+    debug!("generating thumbnail for {}", pdf_path.as_ref().display());
     let doc: PopplerDocument = PopplerDocument::new_from_file(pdf_path, "")?;
     let page: PopplerPage = match doc.get_page(0) {
         Some(p) => p,

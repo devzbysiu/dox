@@ -1,5 +1,8 @@
+use log::debug;
+
 use crate::preprocessor::FilePreprocessor;
 use crate::result::Result;
+use crate::thumbnail;
 
 use std::path::PathBuf;
 
@@ -15,7 +18,15 @@ impl Pdf {
 }
 
 impl FilePreprocessor for Pdf {
-    fn preprocess(&self, _paths: &[PathBuf]) -> Result<()> {
+    fn preprocess(&self, paths: &[PathBuf]) -> Result<()> {
+        debug!("generating thumbnails for paths: {:?}", paths);
+        for pdf_path in paths {
+            thumbnail::generate(
+                pdf_path,
+                // TODO: take care of this unwrap
+                &self.thumbnails_dir.join(pdf_path.file_name().unwrap()),
+            )?;
+        }
         Ok(())
     }
 }
