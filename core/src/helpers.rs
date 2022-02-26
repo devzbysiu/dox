@@ -37,3 +37,17 @@ impl PathBufExt for PathBuf {
         self.to_str().expect("path is not utf8")
     }
 }
+
+pub trait PathRefExt {
+    fn filename(&self) -> String;
+}
+
+impl<T: AsRef<Path>> PathRefExt for T {
+    fn filename(&self) -> String {
+        let path = self.as_ref();
+        path.file_name()
+            .unwrap_or_else(|| panic!("path '{}' does not have a filename", path.display()))
+            .to_string_lossy()
+            .to_string()
+    }
+}
