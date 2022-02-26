@@ -1,10 +1,12 @@
 use crate::cfg::Config;
 use crate::extractor::Ext;
-use crate::helpers::PathBufExt;
+use crate::preprocessor::image::Image;
 use crate::result::Result;
 
-use log::debug;
 use std::path::PathBuf;
+
+mod image;
+mod pdf;
 
 #[allow(clippy::module_name_repetitions)]
 pub trait FilePreprocessor {
@@ -37,27 +39,6 @@ impl Pdf {
 
 impl FilePreprocessor for Pdf {
     fn preprocess(&self, _paths: &[PathBuf]) -> Result<()> {
-        Ok(())
-    }
-}
-
-pub struct Image {
-    thumbnails_dir: PathBuf,
-}
-
-impl Image {
-    fn new(thumbnails_dir: PathBuf) -> Self {
-        Self { thumbnails_dir }
-    }
-}
-
-impl FilePreprocessor for Image {
-    fn preprocess(&self, paths: &[PathBuf]) -> Result<()> {
-        for p in paths {
-            // TODO: take care of this unwrap
-            debug!("moving {} to {}", p.display(), self.thumbnails_dir.str());
-            std::fs::copy(p, self.thumbnails_dir.join(p.file_name().unwrap())).unwrap();
-        }
         Ok(())
     }
 }

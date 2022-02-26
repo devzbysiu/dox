@@ -94,7 +94,7 @@ fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>> {
 
 #[get("/documents/all")]
 fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>> {
-    debug!("listing files from '{}':", cfg.watched_dir.display());
+    debug!("listing files from '{}':", cfg.thumbnails_dir.display());
     let mut documents = Vec::new();
     for file in cfg.thumbnails_dir.read_dir()? {
         let file = file?;
