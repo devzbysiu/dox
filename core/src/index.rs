@@ -31,8 +31,11 @@ pub struct Repo {
 }
 
 impl Repo {
-    pub fn new(index: Index, schema: Schema) -> Self {
-        Self { index, schema }
+    pub fn new(repo_tools: RepoTools) -> Self {
+        Self {
+            index: repo_tools.index,
+            schema: repo_tools.schema,
+        }
     }
 
     pub fn search<S: Into<String>>(&self, term: S) -> Result<SearchResults> {
@@ -104,7 +107,7 @@ impl SearchEntry {
     }
 }
 
-pub fn mk_idx_and_schema<P: AsRef<Path>>(index_path: P) -> Result<(Index, Schema)> {
+pub fn mk_idx_and_schema<P: AsRef<Path>>(index_path: P) -> Result<RepoTools> {
     let index_path = index_path.as_ref();
     debug!("creating index under path: {}", index_path.display());
     if index_path.exists() && index_path.is_file() {
@@ -120,7 +123,13 @@ pub fn mk_idx_and_schema<P: AsRef<Path>>(index_path: P) -> Result<(Index, Schema
     let schema = schema_builder.build();
     // FIXME: take care of a case when the index already exists
     let index = Index::create_in_dir(index_path, schema.clone())?;
-    Ok((index, schema))
+    Ok(RepoTools { index, schema })
+}
+
+#[derive(Debug, Clone)]
+pub struct RepoTools {
+    pub index: Index,
+    pub schema: Schema,
 }
 
 #[allow(clippy::module_name_repetitions)]

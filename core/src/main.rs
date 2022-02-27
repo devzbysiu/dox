@@ -3,7 +3,7 @@
 use crate::cfg::Config;
 use crate::extractor::ExtractorFactory;
 use crate::helpers::PathExt;
-use crate::index::{index_docs, mk_idx_and_schema, Repo};
+use crate::index::{index_docs, mk_idx_and_schema, Repo, RepoTools};
 use crate::preprocessor::PreprocessorFactory;
 use crate::result::Result;
 use crate::server::{all_thumbnails, receive_document, search};
@@ -20,8 +20,6 @@ use std::sync::mpsc::channel;
 use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::Duration;
-use tantivy::schema::Schema;
-use tantivy::Index;
 
 mod cfg;
 mod extractor;
@@ -54,10 +52,9 @@ fn launch() -> Rocket<Build> {
 fn setup(cfg: Config) -> Result<Repo> {
     debug!("setting up with config: {:?}", cfg);
     let doc_rx = spawn_watching_dir(&cfg)?;
-    let (index, schema) = mk_idx_and_schema(&cfg.index_dir)?;
-    let (thread_index, thread_schema) = (index.clone(), schema.clone());
-    spawn_indexing_thread(cfg, doc_rx, thread_index, thread_schema)?;
-    Ok(Repo::new(index, schema))
+    let repo_tools = mk_idx_and_schema(&cfg.index_dir)?;
+    spawn_indexing_thread(cfg, doc_rx, repo_tools.clone())?;
+    Ok(Repo::new(repo_tools))
 }
 
 fn spawn_watching_dir(cfg: &Config) -> Result<Receiver<Vec<PathBuf>>> {
@@ -78,15 +75,10 @@ fn spawn_watching_dir(cfg: &Config) -> Result<Receiver<Vec<PathBuf>>> {
     Ok(doc_rx)
 }
 
-fn spawn_indexing_thread(
-    cfg: Config,
-    doc_rx: Receiver<Vec<PathBuf>>,
-    index: Index,
-    schema: Schema,
-) -> Result<()> {
+fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoTools) -> Result<()> {
     thread::spawn(move || -> Result<()> {
         loop {
-            let paths = doc_rx.recv()?;
+            let paths = rx.recv()?;
             debug!("new docs: {:?}", paths);
             // NOTE: I'm assuming the batched paths are all the same filetype
             let extension = paths[0].ext();
@@ -94,7 +86,7 @@ fn spawn_indexing_thread(
             preprocessor.preprocess(&paths)?;
             let extractor = ExtractorFactory::from_ext(&extension);
             let tuples = extractor.extract_text(&paths);
-            index_docs(&tuples, &index, &schema)?;
+            index_docs(&tuples, &tools.index, &tools.schema)?;
         }
     });
     Ok(())
