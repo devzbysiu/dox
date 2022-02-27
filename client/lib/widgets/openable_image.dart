@@ -17,7 +17,7 @@ class OpenableImage extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) => _HeroPhotoViewRouteWrapper(
-                imageProvider: _imgProvider(),
+                imageProvider: NetworkImage(url.toString()),
                 backgroundDecoration: BoxDecoration(color: onPrimary(context)),
               ),
             ),
@@ -31,40 +31,16 @@ class OpenableImage extends StatelessWidget {
               color: Color.fromRGBO(242, 242, 246, 1),
             ),
             padding: const EdgeInsets.all(20),
-            child: _img(),
+            child: Image.network(
+              url.toString(),
+              width: 350.0,
+              loadingBuilder: (_, child, chunk) =>
+              chunk != null ? const Text("loading") : child,
+            ),
           ),
         ),
       ),
     );
-  }
-
-  ImageProvider _imgProvider() {
-    switch (filetype(url)) {
-      case Filetype.image:
-        return NetworkImage(url.toString());
-      case Filetype.pdf:
-        return const AssetImage('assets/pdf-icon.webp');
-      default:
-        // NOTE: this shouldn't happen as files are filtered earlier
-        throw Exception('filetype "${filetype(url)}" is not supported');
-    }
-  }
-
-  Image _img() {
-    switch (filetype(url)) {
-      case Filetype.image:
-        return Image.network(
-          url.toString(),
-          width: 350.0,
-          loadingBuilder: (_, child, chunk) =>
-              chunk != null ? const Text("loading") : child,
-        );
-      case Filetype.pdf:
-        return Image.asset('assets/pdf-icon.webp', width: 350.0);
-      default:
-        // NOTE: this shouldn't happen as files are filtered earlier
-        throw Exception('filetype "${filetype(url)}" is not supported');
-    }
   }
 }
 
