@@ -51,13 +51,13 @@ fn launch() -> Rocket<Build> {
 
 fn setup(cfg: Config) -> Result<Repo> {
     debug!("setting up with config: {:?}", cfg);
-    let doc_rx = spawn_watching_dir(&cfg)?;
+    let doc_rx = spawn_watching_thread(&cfg);
     let repo_tools = mk_idx_and_schema(&cfg.index_dir)?;
-    spawn_indexing_thread(cfg, doc_rx, repo_tools.clone())?;
+    spawn_indexing_thread(cfg, doc_rx, repo_tools.clone());
     Ok(Repo::new(repo_tools))
 }
 
-fn spawn_watching_dir(cfg: &Config) -> Result<Receiver<Vec<PathBuf>>> {
+fn spawn_watching_thread(cfg: &Config) -> Receiver<Vec<PathBuf>> {
     let (doc_tx, doc_rx) = cooldown_buffer(cfg.cooldown_time);
     let watched_dir = cfg.watched_dir.clone();
     thread::spawn(move || -> Result<()> {
@@ -72,10 +72,10 @@ fn spawn_watching_dir(cfg: &Config) -> Result<Receiver<Vec<PathBuf>>> {
             }
         }
     });
-    Ok(doc_rx)
+    doc_rx
 }
 
-fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoTools) -> Result<()> {
+fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoTools) {
     thread::spawn(move || -> Result<()> {
         loop {
             let paths = rx.recv()?;
@@ -89,5 +89,4 @@ fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoToo
             index_docs(&tuples, &tools.index, &tools.schema)?;
         }
     });
-    Ok(())
 }
