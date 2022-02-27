@@ -2,24 +2,19 @@
 
 use crate::cfg::Config;
 use crate::extractor::ExtractorFactory;
-use crate::helpers::{DirEntryExt, PathExt};
-use crate::index::{index_docs, mk_idx_and_schema, Repo, SearchResults};
+use crate::helpers::PathExt;
+use crate::index::{index_docs, mk_idx_and_schema, Repo};
 use crate::preprocessor::PreprocessorFactory;
 use crate::result::Result;
+use crate::server::{all_documents, receive_document, search};
 use crate::user_input::handle_config;
 
 use cooldown_buffer::cooldown_buffer;
-use index::SearchEntry;
 use log::{debug, error, warn};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::fs::FileServer;
-use rocket::http::Status;
-use rocket::serde::json::Json;
-use rocket::serde::Deserialize;
-use rocket::{get, launch, post, routes, Build, Rocket, State};
+use rocket::{launch, routes, Build, Rocket};
 use std::env;
-use std::fs::File;
-use std::io::prelude::*;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
@@ -31,6 +26,7 @@ mod index;
 mod preprocessor;
 mod prompt;
 mod result;
+mod server;
 mod thumbnail;
 mod user_input;
 
@@ -85,37 +81,4 @@ fn setup(cfg: Config) -> Result<Repo> {
         }
     });
     Ok(Repo::new(index, schema))
-}
-
-#[get("/search?<q>")]
-fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>> {
-    Ok(Json(repo.search(q)?))
-}
-
-#[get("/documents/all")]
-fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>> {
-    debug!("listing files from '{}':", cfg.thumbnails_dir.display());
-    let mut documents = Vec::new();
-    for file in cfg.thumbnails_dir.read_dir()? {
-        let file = file?;
-        let filename = file.filename();
-        debug!("\t- {}", filename);
-        documents.push(SearchEntry::new(filename));
-    }
-    Ok(Json(SearchResults::new(documents)))
-}
-
-#[derive(Deserialize)]
-struct Document {
-    filename: String,
-    body: String,
-}
-
-#[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
-#[post("/document/upload", data = "<doc>")]
-fn receive_document(doc: Json<Document>, cfg: &State<Config>) -> Result<Status> {
-    debug!("receiving document: {}", doc.filename);
-    let mut document = File::create(cfg.watched_dir.join(&doc.filename))?;
-    document.write_all(&base64::decode(&doc.body)?)?;
-    Ok(Status::Created)
 }
