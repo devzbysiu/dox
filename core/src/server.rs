@@ -16,8 +16,8 @@ pub fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>> {
     Ok(Json(repo.search(q)?))
 }
 
-#[get("/documents/all")]
-pub fn all_documents(cfg: &State<Config>) -> Result<Json<SearchResults>> {
+#[get("/thumbnails/all")]
+pub fn all_thumbnails(cfg: &State<Config>) -> Result<Json<SearchResults>> {
     debug!("listing files from '{}':", cfg.thumbnails_dir.display());
     let mut documents = Vec::new();
     for file in cfg.thumbnails_dir.read_dir()? {

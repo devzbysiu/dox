@@ -12,11 +12,11 @@ class Urls {
   }
 
   Uri allDocuments() {
-    return Uri.parse('${_config.baseUrl}/documents/all');
+    return Uri.parse('${_config.baseUrl}/thumbnails/all');
   }
 
   Uri document(String filename) {
-    return Uri.parse('${_config.baseUrl}/document/$filename');
+    return Uri.parse('${_config.baseUrl}/thumbnail/$filename');
   }
 
   Uri upload() {

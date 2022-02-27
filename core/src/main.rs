@@ -6,7 +6,7 @@ use crate::helpers::PathExt;
 use crate::index::{index_docs, mk_idx_and_schema, Repo};
 use crate::preprocessor::PreprocessorFactory;
 use crate::result::Result;
-use crate::server::{all_documents, receive_document, search};
+use crate::server::{all_thumbnails, receive_document, search};
 use crate::user_input::handle_config;
 
 use cooldown_buffer::cooldown_buffer;
@@ -45,8 +45,8 @@ fn launch() -> Rocket<Build> {
     let repo = setup(config).expect("failed to setup indexer");
     debug!("starting server...");
     rocket::build()
-        .mount("/", routes![search, all_documents, receive_document])
-        .mount("/document", FileServer::from(&cfg.thumbnails_dir))
+        .mount("/", routes![search, all_thumbnails, receive_document])
+        .mount("/thumbnail", FileServer::from(&cfg.thumbnails_dir))
         .manage(repo)
         .manage(cfg)
 }
