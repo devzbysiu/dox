@@ -1,4 +1,3 @@
-import 'package:dox/utilities/filetype.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
@@ -16,9 +15,8 @@ class OpenableImage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => _HeroPhotoViewRouteWrapper(
+              builder: (context) => _ImageViewer(
                 imageProvider: NetworkImage(url.toString()),
-                backgroundDecoration: BoxDecoration(color: onPrimary(context)),
               ),
             ),
           );
@@ -35,7 +33,7 @@ class OpenableImage extends StatelessWidget {
               url.toString(),
               width: 350.0,
               loadingBuilder: (_, child, chunk) =>
-              chunk != null ? const Text("loading") : child,
+                  chunk != null ? const Text("loading") : child,
             ),
           ),
         ),
@@ -44,14 +42,9 @@ class OpenableImage extends StatelessWidget {
   }
 }
 
-class _HeroPhotoViewRouteWrapper extends StatelessWidget {
-  final ImageProvider imageProvider;
-  final BoxDecoration? backgroundDecoration;
-
-  const _HeroPhotoViewRouteWrapper({
+abstract class _HeroDocumentViewRouteWrapper extends StatelessWidget {
+  const _HeroDocumentViewRouteWrapper({
     Key? key,
-    required this.imageProvider,
-    this.backgroundDecoration,
   }) : super(key: key);
 
   @override
@@ -60,10 +53,23 @@ class _HeroPhotoViewRouteWrapper extends StatelessWidget {
       constraints: BoxConstraints.expand(
         height: MediaQuery.of(context).size.height,
       ),
-      child: PhotoView(
-        imageProvider: imageProvider,
-        backgroundDecoration: backgroundDecoration,
-      ),
+      child: viewer(context),
+    );
+  }
+
+  Widget viewer(BuildContext context);
+}
+
+class _ImageViewer extends _HeroDocumentViewRouteWrapper {
+  final ImageProvider imageProvider;
+
+  const _ImageViewer({required this.imageProvider});
+
+  @override
+  Widget viewer(BuildContext context) {
+    return PhotoView(
+      imageProvider: imageProvider,
+      backgroundDecoration: BoxDecoration(color: onPrimary(context)),
     );
   }
 }
