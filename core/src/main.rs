@@ -15,9 +15,13 @@ use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
+use std::path::PathBuf;
 use std::sync::mpsc::channel;
+use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::Duration;
+use tantivy::schema::Schema;
+use tantivy::Index;
 
 mod cfg;
 mod extractor;
@@ -49,6 +53,14 @@ fn launch() -> Rocket<Build> {
 
 fn setup(cfg: Config) -> Result<Repo> {
     debug!("setting up with config: {:?}", cfg);
+    let doc_rx = spawn_watching_dir(&cfg)?;
+    let (index, schema) = mk_idx_and_schema(&cfg.index_dir)?;
+    let (thread_index, thread_schema) = (index.clone(), schema.clone());
+    spawn_indexing_thread(cfg, doc_rx, thread_index, thread_schema)?;
+    Ok(Repo::new(index, schema))
+}
+
+fn spawn_watching_dir(cfg: &Config) -> Result<Receiver<Vec<PathBuf>>> {
     let (doc_tx, doc_rx) = cooldown_buffer(cfg.cooldown_time);
     let watched_dir = cfg.watched_dir.clone();
     thread::spawn(move || -> Result<()> {
@@ -63,10 +75,15 @@ fn setup(cfg: Config) -> Result<Repo> {
             }
         }
     });
+    Ok(doc_rx)
+}
 
-    let (index, schema) = mk_idx_and_schema(&cfg.index_dir)?;
-
-    let (thread_idx, thread_schema) = (index.clone(), schema.clone());
+fn spawn_indexing_thread(
+    cfg: Config,
+    doc_rx: Receiver<Vec<PathBuf>>,
+    index: Index,
+    schema: Schema,
+) -> Result<()> {
     thread::spawn(move || -> Result<()> {
         loop {
             let paths = doc_rx.recv()?;
@@ -77,8 +94,8 @@ fn setup(cfg: Config) -> Result<Repo> {
             preprocessor.preprocess(&paths)?;
             let extractor = ExtractorFactory::from_ext(&extension);
             let tuples = extractor.extract_text(&paths);
-            index_docs(&tuples, &thread_idx, &thread_schema)?;
+            index_docs(&tuples, &index, &schema)?;
         }
     });
-    Ok(Repo::new(index, schema))
+    Ok(())
 }
