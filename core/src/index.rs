@@ -6,7 +6,6 @@ use core::fmt;
 use log::debug;
 use rocket::serde::Serialize;
 use std::fs::create_dir_all;
-use std::path::Path;
 use tantivy::collector::TopDocs;
 use tantivy::query::{Query, QueryParser};
 use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
