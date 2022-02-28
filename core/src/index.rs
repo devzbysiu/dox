@@ -1,3 +1,4 @@
+use crate::cfg::Config;
 use crate::extractor::FilenameToBody;
 use crate::result::{DoxErr, Result};
 
@@ -107,22 +108,21 @@ impl SearchEntry {
     }
 }
 
-pub fn mk_idx_and_schema<P: AsRef<Path>>(index_path: P) -> Result<RepoTools> {
-    let index_path = index_path.as_ref();
-    debug!("creating index under path: {}", index_path.display());
-    if index_path.exists() && index_path.is_file() {
+pub fn mk_idx_and_schema(cfg: &Config) -> Result<RepoTools> {
+    debug!("creating index under path: {}", cfg.index_dir.display());
+    if cfg.index_dir.exists() && cfg.index_dir.is_file() {
         return Err(DoxErr::InvalidIndexPath(format!(
             "It needs to be a directory: '{}'",
-            index_path.display()
+            cfg.index_dir.display()
         )));
     }
-    create_dir_all(index_path)?;
+    create_dir_all(&cfg.index_dir)?;
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field(&Fields::Filename.to_string(), TEXT | STORED);
     schema_builder.add_text_field(&Fields::Body.to_string(), TEXT);
     let schema = schema_builder.build();
     // FIXME: take care of a case when the index already exists
-    let index = Index::create_in_dir(index_path, schema.clone())?;
+    let index = Index::create_in_dir(&cfg.index_dir, schema.clone())?;
     Ok(RepoTools { index, schema })
 }
 

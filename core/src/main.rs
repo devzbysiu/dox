@@ -52,7 +52,7 @@ fn launch() -> Rocket<Build> {
 fn setup(cfg: Config) -> Result<Repo> {
     debug!("setting up with config: {:?}", cfg);
     let doc_rx = spawn_watching_thread(&cfg);
-    let repo_tools = mk_idx_and_schema(&cfg.index_dir)?;
+    let repo_tools = mk_idx_and_schema(&cfg)?;
     spawn_indexing_thread(cfg, doc_rx, repo_tools.clone());
     Ok(Repo::new(repo_tools))
 }
