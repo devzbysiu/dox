@@ -1,7 +1,7 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
 use crate::cfg::Config;
-use crate::extractor::ExtractorFactory;
+use crate::extractor::{Ext, ExtractorFactory};
 use crate::helpers::PathExt;
 use crate::index::{index_docs, mk_idx_and_schema, Repo, RepoTools};
 use crate::preprocessor::PreprocessorFactory;
@@ -80,14 +80,18 @@ fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoToo
         loop {
             let paths = rx.recv()?;
             debug!("new docs: {:?}", paths);
-            // NOTE: I'm assuming the batched paths are all the same filetype
-            let first_path = paths
-                .first()
-                .unwrap_or_else(|| panic!("no new paths received, this shouldn't happen"));
-            let extension = first_path.ext();
+            let extension = extension(&paths);
             PreprocessorFactory::from_ext(&extension, &cfg).preprocess(&paths)?;
             let tuples = ExtractorFactory::from_ext(&extension).extract_text(&paths);
             index_docs(&tuples, &tools.index, &tools.schema)?;
         }
     });
+}
+
+fn extension(paths: &[PathBuf]) -> Ext {
+    paths
+        // NOTE: I'm assuming the batched paths are all the same filetype
+        .first()
+        .unwrap_or_else(|| panic!("no new paths received, this shouldn't happen"))
+        .ext()
 }
