@@ -82,10 +82,8 @@ fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoToo
             debug!("new docs: {:?}", paths);
             // NOTE: I'm assuming the batched paths are all the same filetype
             let extension = paths[0].ext();
-            let preprocessor = PreprocessorFactory::from_ext(&extension, &cfg);
-            preprocessor.preprocess(&paths)?;
-            let extractor = ExtractorFactory::from_ext(&extension);
-            let tuples = extractor.extract_text(&paths);
+            PreprocessorFactory::from_ext(&extension, &cfg).preprocess(&paths)?;
+            let tuples = ExtractorFactory::from_ext(&extension).extract_text(&paths);
             index_docs(&tuples, &tools.index, &tools.schema)?;
         }
     });
