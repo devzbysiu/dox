@@ -3,7 +3,7 @@
 use crate::cfg::Config;
 use crate::extractor::{Ext, ExtractorFactory};
 use crate::helpers::PathExt;
-use crate::index::{index_docs, mk_idx_and_schema, Repo, RepoTools};
+use crate::indexer::{index_docs, mk_idx_and_schema, Repo, RepoTools};
 use crate::preprocessor::PreprocessorFactory;
 use crate::result::Result;
 use crate::server::{all_thumbnails, receive_document, search};
@@ -24,7 +24,7 @@ use std::time::Duration;
 mod cfg;
 mod extractor;
 mod helpers;
-mod index;
+mod indexer;
 mod preprocessor;
 mod prompt;
 mod result;

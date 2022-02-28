@@ -1,6 +1,6 @@
 use crate::cfg::Config;
 use crate::helpers::DirEntryExt;
-use crate::index::{Repo, SearchEntry, SearchResults};
+use crate::indexer::{Repo, SearchEntry, SearchResults};
 use crate::result::Result;
 
 use log::debug;
