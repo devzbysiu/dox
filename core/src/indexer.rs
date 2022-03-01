@@ -17,7 +17,7 @@ type TantivyResults = Vec<(f32, DocAddress)>;
 enum Fields {
     Filename,
     Body,
-    Extension,
+    Thumbnail,
 }
 
 impl fmt::Display for Fields {
@@ -25,7 +25,7 @@ impl fmt::Display for Fields {
         match self {
             Fields::Filename => write!(f, "filename"),
             Fields::Body => write!(f, "body"),
-            Fields::Extension => write!(f, "extension"),
+            Fields::Thumbnail => write!(f, "thumbnail"),
         }
     }
 }
@@ -79,7 +79,8 @@ impl Repo {
         for (_score, doc_address) in docs {
             let retrieved_doc = searcher.doc(doc_address)?;
             let filenames = retrieved_doc.get_all(self.field(&Fields::Filename));
-            results.extend(to_search_entries(filenames));
+            let thumbnails = retrieved_doc.get_all(self.field(&Fields::Thumbnail));
+            results.extend(to_search_entries(filenames, thumbnails));
         }
         Ok(SearchResults::new(results))
     }
@@ -92,12 +93,29 @@ impl Repo {
     }
 }
 
-fn to_search_entries<'a, I: Iterator<Item = &'a Value>>(filenames: I) -> Vec<SearchEntry> {
+fn to_search_entries<'a, V: Iterator<Item = &'a Value>>(
+    filenames: V,
+    thumbnails: V,
+) -> Vec<SearchEntry> {
     filenames
-        .filter_map(Value::text)
-        .map(ToString::to_string)
+        .zip(thumbnails)
+        .map(to_text)
         .map(SearchEntry::new)
         .collect::<Vec<SearchEntry>>()
+}
+
+// TODO: cleanup this
+fn to_text((filename, thumbnail): (&Value, &Value)) -> (String, String) {
+    (
+        filename
+            .text()
+            .unwrap_or_else(|| panic!("failed to extract text from filename"))
+            .to_string(),
+        thumbnail
+            .text()
+            .unwrap_or_else(|| panic!("failed to extract text from thumbnail"))
+            .to_string(),
+    )
 }
 
 #[derive(Debug, Serialize, Default)]
@@ -114,11 +132,15 @@ impl SearchResults {
 #[derive(Debug, Serialize, Default)]
 pub struct SearchEntry {
     filename: String,
+    thumbnail: String,
 }
 
 impl SearchEntry {
-    pub fn new(filename: String) -> Self {
-        Self { filename }
+    pub fn new((filename, thumbnail): (String, String)) -> Self {
+        Self {
+            filename,
+            thumbnail,
+        }
     }
 }
 
@@ -134,6 +156,7 @@ pub fn mk_idx_and_schema(cfg: &Config) -> Result<RepoTools> {
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field(&Fields::Filename.to_string(), TEXT | STORED);
     schema_builder.add_text_field(&Fields::Body.to_string(), TEXT);
+    schema_builder.add_text_field(&Fields::Thumbnail.to_string(), TEXT | STORED);
     let schema = schema_builder.build();
     // FIXME: take care of a case when the index already exists
     let index = Index::create_in_dir(&cfg.index_dir, schema.clone())?;
@@ -154,13 +177,13 @@ pub fn index_docs(tuples: &[DocDetails], index: &Index, schema: &Schema) -> Resu
     let mut index_writer = index.writer(50_000_000)?;
     let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
     let body = schema.get_field(&Fields::Body.to_string()).unwrap();
-    let extension = schema.get_field(&Fields::Extension.to_string()).unwrap();
+    let thumbnail = schema.get_field(&Fields::Thumbnail.to_string()).unwrap();
     for t in tuples {
         debug!("indexing {}", t.filename);
         index_writer.add_document(doc!(
                 filename => t.filename.clone(),
                 body => t.body.clone(),
-                extension => t.extension.clone(),
+                thumbnail => t.thumbnail.clone(),
         ));
         index_writer.commit()?;
     }

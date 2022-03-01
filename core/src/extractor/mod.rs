@@ -1,8 +1,7 @@
 use crate::extractor::image::Ocr;
 use crate::extractor::pdf::Pdf;
-use crate::helpers::PathExt;
+use crate::helpers::{PathExt, PathRefExt};
 
-use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
 pub mod image;
@@ -16,7 +15,7 @@ pub trait TextExtractor {
 pub struct DocDetails {
     pub filename: String,
     pub body: String,
-    pub extension: String,
+    pub thumbnail: String,
 }
 
 impl DocDetails {
@@ -30,11 +29,15 @@ impl DocDetails {
             .unwrap()
             .to_string();
         let body = body.into();
-        let extension = path.as_ref().ext().to_string();
+        // TODO: should DocDetails know about thumbnail?
+        let thumbnail = match path.as_ref().ext() {
+            Ext::Png | Ext::Jpg | Ext::Webp => path.filename(),
+            Ext::Pdf => format!("{}.png", path.filestem()),
+        };
         Self {
             filename,
             body,
-            extension,
+            thumbnail,
         }
     }
 }
@@ -70,17 +73,6 @@ impl<S: Into<String>> From<S> for Ext {
             "pdf" => Self::Pdf,
             _ => panic!("failed to create extension from '{}'", ext),
         }
-    }
-}
-
-impl Display for Ext {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self {
-            Self::Png => "png",
-            Self::Jpg => "jpg",
-            Self::Webp => "webp",
-            Self::Pdf => "pdf",
-        })
     }
 }
 
