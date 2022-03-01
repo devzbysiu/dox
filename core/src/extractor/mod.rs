@@ -20,14 +20,7 @@ pub struct DocDetails {
 
 impl DocDetails {
     fn new<P: AsRef<Path>, S: Into<String>>(path: P, body: S) -> Self {
-        // TODO: use path extension to get filename
-        let filename = path
-            .as_ref()
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string();
+        let filename = path.filename();
         let body = body.into();
         // TODO: should DocDetails know about thumbnail?
         let thumbnail = match path.as_ref().ext() {
