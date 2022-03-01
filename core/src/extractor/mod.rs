@@ -1,6 +1,8 @@
 use crate::extractor::image::Ocr;
 use crate::extractor::pdf::Pdf;
+use crate::helpers::PathExt;
 
+use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
 pub mod image;
@@ -8,16 +10,18 @@ pub mod pdf;
 
 #[allow(clippy::module_name_repetitions)]
 pub trait TextExtractor {
-    fn extract_text(&self, path: &[PathBuf]) -> Vec<FilenameToBody>;
+    fn extract_text(&self, path: &[PathBuf]) -> Vec<DocDetails>;
 }
 
-pub struct FilenameToBody {
+pub struct DocDetails {
     pub filename: String,
     pub body: String,
+    pub extension: String,
 }
 
-impl FilenameToBody {
+impl DocDetails {
     fn new<P: AsRef<Path>, S: Into<String>>(path: P, body: S) -> Self {
+        // TODO: use path extension to get filename
         let filename = path
             .as_ref()
             .file_name()
@@ -26,7 +30,12 @@ impl FilenameToBody {
             .unwrap()
             .to_string();
         let body = body.into();
-        Self { filename, body }
+        let extension = path.as_ref().ext().to_string();
+        Self {
+            filename,
+            body,
+            extension,
+        }
     }
 }
 
@@ -43,6 +52,7 @@ impl ExtractorFactory {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum Ext {
     Png,
     Jpg,
@@ -60,6 +70,17 @@ impl<S: Into<String>> From<S> for Ext {
             "pdf" => Self::Pdf,
             _ => panic!("failed to create extension from '{}'", ext),
         }
+    }
+}
+
+impl Display for Ext {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Png => "png",
+            Self::Jpg => "jpg",
+            Self::Webp => "webp",
+            Self::Pdf => "pdf",
+        })
     }
 }
 

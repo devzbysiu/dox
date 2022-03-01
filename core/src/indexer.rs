@@ -1,5 +1,5 @@
 use crate::cfg::Config;
-use crate::extractor::FilenameToBody;
+use crate::extractor::DocDetails;
 use crate::result::{DoxErr, Result};
 
 use core::fmt;
@@ -17,6 +17,7 @@ type TantivyResults = Vec<(f32, DocAddress)>;
 enum Fields {
     Filename,
     Body,
+    Extension,
 }
 
 impl fmt::Display for Fields {
@@ -24,6 +25,7 @@ impl fmt::Display for Fields {
         match self {
             Fields::Filename => write!(f, "filename"),
             Fields::Body => write!(f, "body"),
+            Fields::Extension => write!(f, "extension"),
         }
     }
 }
@@ -145,16 +147,21 @@ pub struct RepoTools {
 }
 
 #[allow(clippy::module_name_repetitions)]
-pub fn index_docs(tuples: &[FilenameToBody], index: &Index, schema: &Schema) -> Result<()> {
+pub fn index_docs(tuples: &[DocDetails], index: &Index, schema: &Schema) -> Result<()> {
     debug!("indexing...");
     // NOTE: IndexWriter is already multithreaded and
     // cannot be shared between external threads
     let mut index_writer = index.writer(50_000_000)?;
     let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
     let body = schema.get_field(&Fields::Body.to_string()).unwrap();
+    let extension = schema.get_field(&Fields::Extension.to_string()).unwrap();
     for t in tuples {
         debug!("indexing {}", t.filename);
-        index_writer.add_document(doc!(filename => t.filename.clone(), body => t.body.clone()));
+        index_writer.add_document(doc!(
+                filename => t.filename.clone(),
+                body => t.body.clone(),
+                extension => t.extension.clone(),
+        ));
         index_writer.commit()?;
     }
     Ok(())
