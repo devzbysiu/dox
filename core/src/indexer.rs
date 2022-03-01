@@ -9,7 +9,9 @@ use std::fs::create_dir_all;
 use tantivy::collector::TopDocs;
 use tantivy::query::{AllQuery, Query, QueryParser};
 use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
-use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy, Searcher};
+use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy};
+
+type Searcher = LeasedItem<tantivy::Searcher>;
 
 enum Fields {
     Filename,
@@ -46,7 +48,7 @@ impl Repo {
         self.to_search_results(searcher, top_docs)
     }
 
-    fn create_searcher(&self) -> Result<LeasedItem<Searcher>> {
+    fn create_searcher(&self) -> Result<Searcher> {
         Ok(self
             .index
             .reader_builder()
@@ -71,7 +73,7 @@ impl Repo {
 
     fn to_search_results(
         &self,
-        searcher: LeasedItem<Searcher>,
+        searcher: Searcher,
         docs: Vec<(f32, DocAddress)>,
     ) -> Result<SearchResults> {
         let mut results = Vec::new();
