@@ -12,6 +12,7 @@ use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
 use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy};
 
 type Searcher = LeasedItem<tantivy::Searcher>;
+type TantivyResults = Vec<(f32, DocAddress)>;
 
 enum Fields {
     Filename,
@@ -71,11 +72,7 @@ impl Repo {
         self.schema.get_field(&field.to_string()).unwrap()
     }
 
-    fn to_search_results(
-        &self,
-        searcher: Searcher,
-        docs: Vec<(f32, DocAddress)>,
-    ) -> Result<SearchResults> {
+    fn to_search_results(&self, searcher: Searcher, docs: TantivyResults) -> Result<SearchResults> {
         let mut results = Vec::new();
         for (_score, doc_address) in docs {
             let retrieved_doc = searcher.doc(doc_address)?;
