@@ -1,6 +1,6 @@
 use crate::extractor::image::Ocr;
 use crate::extractor::pdf::Pdf;
-use crate::helpers::{PathExt, PathRefExt};
+use crate::helpers::PathRefExt;
 
 use std::path::{Path, PathBuf};
 
@@ -19,18 +19,11 @@ pub struct DocDetails {
 }
 
 impl DocDetails {
-    fn new<P: AsRef<Path>, S: Into<String>>(path: P, body: S) -> Self {
-        let filename = path.filename();
-        let body = body.into();
-        // TODO: should DocDetails know about thumbnail?
-        let thumbnail = match path.as_ref().ext() {
-            Ext::Png | Ext::Jpg | Ext::Webp => path.filename(),
-            Ext::Pdf => format!("{}.png", path.filestem()),
-        };
+    fn new<P: AsRef<Path>, S: Into<String>>(path: P, body: S, thumbnail: S) -> Self {
         Self {
-            filename,
-            body,
-            thumbnail,
+            filename: path.filename(),
+            body: body.into(),
+            thumbnail: thumbnail.into(),
         }
     }
 }

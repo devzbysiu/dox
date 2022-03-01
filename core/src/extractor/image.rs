@@ -1,4 +1,5 @@
 use crate::extractor::{DocDetails, TextExtractor};
+use crate::helpers::PathRefExt;
 use crate::result::Result;
 
 use leptess::LepTess;
@@ -26,5 +27,5 @@ fn do_ocr<P: AsRef<Path>>(path: P) -> Result<DocDetails> {
     // each time than sharing it between threads
     let mut lt = LepTess::new(None, "pol")?;
     lt.set_image(path.as_ref())?;
-    Ok(DocDetails::new(path, lt.get_utf8_text()?))
+    Ok(DocDetails::new(&path, lt.get_utf8_text()?, path.filename()))
 }

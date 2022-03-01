@@ -1,4 +1,5 @@
 use crate::extractor::{DocDetails, TextExtractor};
+use crate::helpers::PathRefExt;
 use crate::result::Result;
 
 use log::debug;
@@ -23,5 +24,9 @@ impl TextExtractor for Pdf {
 fn extract<P: AsRef<Path>>(path: P) -> Result<DocDetails> {
     let path = path.as_ref();
     debug!("extracting text from PDF on {}", path.display());
-    Ok(DocDetails::new(&path, extract_text(path)?))
+    Ok(DocDetails::new(path, extract_text(path)?, thumbnail(path)))
+}
+
+fn thumbnail<P: AsRef<Path>>(path: P) -> String {
+    format!("{}.png", path.filestem())
 }
