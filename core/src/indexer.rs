@@ -9,7 +9,7 @@ use std::fs::create_dir_all;
 use tantivy::collector::TopDocs;
 use tantivy::query::{AllQuery, Query, QueryParser};
 use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
-use tantivy::{doc, Index, LeasedItem, ReloadPolicy, Searcher};
+use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy, Searcher};
 
 enum Fields {
     Filename,
@@ -43,14 +43,7 @@ impl Repo {
         debug!("searching '{}'...", term);
         let searcher = self.create_searcher()?;
         let top_docs = searcher.search(&self.make_query(term)?, &TopDocs::with_limit(100))?;
-        let mut results = Vec::new();
-        for (_score, doc_address) in top_docs {
-            let retrieved_doc = searcher.doc(doc_address)?;
-            let filenames = retrieved_doc.get_all(self.field(&Fields::Filename));
-            results.extend(to_search_entries(filenames));
-        }
-        debug!("results: {:?}", results);
-        Ok(SearchResults::new(results))
+        self.to_search_results(searcher, top_docs)
     }
 
     fn create_searcher(&self) -> Result<LeasedItem<Searcher>> {
@@ -76,18 +69,25 @@ impl Repo {
         self.schema.get_field(&field.to_string()).unwrap()
     }
 
-    pub fn all_documents(&self) -> Result<SearchResults> {
-        debug!("fetching all documents...");
-        let searcher = self.create_searcher()?;
-        let top_docs = searcher.search(&AllQuery, &TopDocs::with_limit(100))?;
+    fn to_search_results(
+        &self,
+        searcher: LeasedItem<Searcher>,
+        docs: Vec<(f32, DocAddress)>,
+    ) -> Result<SearchResults> {
         let mut results = Vec::new();
-        for (_score, doc_address) in top_docs {
+        for (_score, doc_address) in docs {
             let retrieved_doc = searcher.doc(doc_address)?;
             let filenames = retrieved_doc.get_all(self.field(&Fields::Filename));
             results.extend(to_search_entries(filenames));
         }
-        debug!("results: {:?}", results);
         Ok(SearchResults::new(results))
+    }
+
+    pub fn all_documents(&self) -> Result<SearchResults> {
+        debug!("fetching all documents...");
+        let searcher = self.create_searcher()?;
+        let top_docs = searcher.search(&AllQuery, &TopDocs::with_limit(100))?;
+        self.to_search_results(searcher, top_docs)
     }
 }
 
