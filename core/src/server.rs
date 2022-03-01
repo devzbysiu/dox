@@ -1,6 +1,5 @@
 use crate::cfg::Config;
-use crate::helpers::DirEntryExt;
-use crate::indexer::{Repo, SearchEntry, SearchResults};
+use crate::indexer::{Repo, SearchResults};
 use crate::result::Result;
 
 use log::debug;
@@ -17,16 +16,8 @@ pub fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>> {
 }
 
 #[get("/thumbnails/all")]
-pub fn all_thumbnails(cfg: &State<Config>) -> Result<Json<SearchResults>> {
-    debug!("listing files from '{}':", cfg.thumbnails_dir.display());
-    let mut documents = Vec::new();
-    for file in cfg.thumbnails_dir.read_dir()? {
-        let file = file?;
-        let filename = file.filename();
-        debug!("\t- {}", filename);
-        documents.push(SearchEntry::new(filename));
-    }
-    Ok(Json(SearchResults::new(documents)))
+pub fn all_thumbnails(repo: &State<Repo>) -> Result<Json<SearchResults>> {
+    Ok(Json(repo.all_documents()?))
 }
 
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here

@@ -7,7 +7,7 @@ use log::debug;
 use rocket::serde::Serialize;
 use std::fs::create_dir_all;
 use tantivy::collector::TopDocs;
-use tantivy::query::{Query, QueryParser};
+use tantivy::query::{AllQuery, Query, QueryParser};
 use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
 use tantivy::{doc, Index, LeasedItem, ReloadPolicy, Searcher};
 
@@ -42,7 +42,7 @@ impl Repo {
         let term = term.into();
         debug!("searching '{}'...", term);
         let searcher = self.create_searcher()?;
-        let top_docs = searcher.search(&self.make_query(term)?, &TopDocs::with_limit(10))?;
+        let top_docs = searcher.search(&self.make_query(term)?, &TopDocs::with_limit(100))?;
         let mut results = Vec::new();
         for (_score, doc_address) in top_docs {
             let retrieved_doc = searcher.doc(doc_address)?;
@@ -74,6 +74,20 @@ impl Repo {
         // can unwrap because this field comes from an
         // enum and I'm using this enym to get the field
         self.schema.get_field(&field.to_string()).unwrap()
+    }
+
+    pub fn all_documents(&self) -> Result<SearchResults> {
+        debug!("fetching all documents...");
+        let searcher = self.create_searcher()?;
+        let top_docs = searcher.search(&AllQuery, &TopDocs::with_limit(100))?;
+        let mut results = Vec::new();
+        for (_score, doc_address) in top_docs {
+            let retrieved_doc = searcher.doc(doc_address)?;
+            let filenames = retrieved_doc.get_all(self.field(&Fields::Filename));
+            results.extend(to_search_entries(filenames));
+        }
+        debug!("results: {:?}", results);
+        Ok(SearchResults::new(results))
     }
 }
 
