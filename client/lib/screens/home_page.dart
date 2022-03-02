@@ -48,7 +48,7 @@ class HomePage extends StatelessWidget {
           child: SearchInput(onChanged: model.onQueryChanged),
         ),
         Expanded(
-          child: OpenableImageList(urls: model.docUrls),
+          child: OpenableImageList(urls: model.thumbnailUrls),
         ),
       ],
     );
