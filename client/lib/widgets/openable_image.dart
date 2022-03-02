@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 
 class OpenableImage extends StatelessWidget {
-  final Uri url;
+  final Uri docUrl;
 
-  const OpenableImage({Key? key, required this.url}) : super(key: key);
+  final Uri thumbnailUrl;
+
+  const OpenableImage(
+      {Key? key, required this.docUrl, required this.thumbnailUrl})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -16,13 +20,13 @@ class OpenableImage extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) => _ImageViewer(
-                imageProvider: NetworkImage(url.toString()),
+                imageProvider: NetworkImage(docUrl.toString()),
               ),
             ),
           );
         },
         child: Hero(
-          tag: url.toString(),
+          tag: thumbnailUrl.toString(),
           child: Container(
             decoration: const BoxDecoration(
               borderRadius: BorderRadius.all(Radius.circular(15)),
@@ -30,7 +34,7 @@ class OpenableImage extends StatelessWidget {
             ),
             padding: const EdgeInsets.all(20),
             child: Image.network(
-              url.toString(),
+              thumbnailUrl.toString(),
               width: 350.0,
               loadingBuilder: (_, child, chunk) =>
                   chunk != null ? const Text("loading") : child,
