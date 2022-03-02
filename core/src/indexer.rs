@@ -7,6 +7,7 @@ use log::debug;
 use rocket::serde::Serialize;
 use std::fs::create_dir_all;
 use tantivy::collector::TopDocs;
+use tantivy::directory::MmapDirectory;
 use tantivy::query::{AllQuery, Query, QueryParser};
 use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
 use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy};
@@ -158,8 +159,8 @@ pub fn mk_idx_and_schema(cfg: &Config) -> Result<RepoTools> {
     schema_builder.add_text_field(&Fields::Body.to_string(), TEXT);
     schema_builder.add_text_field(&Fields::Thumbnail.to_string(), TEXT | STORED);
     let schema = schema_builder.build();
-    // FIXME: take care of a case when the index already exists
-    let index = Index::create_in_dir(&cfg.index_dir, schema.clone())?;
+    let dir = MmapDirectory::open(&cfg.index_dir)?;
+    let index = Index::open_or_create(dir, schema.clone())?;
     Ok(RepoTools { index, schema })
 }
 

@@ -18,6 +18,9 @@ pub enum DoxErr {
     #[error("Failed to decode from base64: '{0}'")]
     Decode(#[from] base64::DecodeError),
 
+    #[error("Failed to read index directory: '{0}'")]
+    IndexDirectory(#[from] tantivy::directory::error::OpenDirectoryError),
+
     #[error("Invalid index path: '{0}'")]
     InvalidIndexPath(String),
 
