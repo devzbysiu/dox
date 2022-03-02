@@ -49,7 +49,7 @@ impl Repo {
         debug!("searching '{}'...", term);
         let searcher = self.create_searcher()?;
         let top_docs = searcher.search(&self.make_query(term)?, &TopDocs::with_limit(100))?;
-        self.to_search_results(searcher, top_docs)
+        self.to_search_results(&searcher, top_docs)
     }
 
     fn create_searcher(&self) -> Result<Searcher> {
@@ -75,7 +75,11 @@ impl Repo {
         self.schema.get_field(&field.to_string()).unwrap()
     }
 
-    fn to_search_results(&self, searcher: Searcher, docs: TantivyResults) -> Result<SearchResults> {
+    fn to_search_results(
+        &self,
+        searcher: &Searcher,
+        docs: TantivyResults,
+    ) -> Result<SearchResults> {
         let mut results = Vec::new();
         for (_score, doc_address) in docs {
             let retrieved_doc = searcher.doc(doc_address)?;
@@ -90,7 +94,7 @@ impl Repo {
         debug!("fetching all documents...");
         let searcher = self.create_searcher()?;
         let top_docs = searcher.search(&AllQuery, &TopDocs::with_limit(100))?;
-        self.to_search_results(searcher, top_docs)
+        self.to_search_results(&searcher, top_docs)
     }
 }
 
