@@ -71,7 +71,7 @@ impl Repo {
 
     fn field(&self, field: &Fields) -> Field {
         // can unwrap because this field comes from an
-        // enum and I'm using this enym to get the field
+        // enum and I'm using this enum to get the field
         self.schema.get_field(&field.to_string()).unwrap()
     }
 
