@@ -32,8 +32,13 @@ class Api {
   Future<List<Document>> _fetchDocs(Uri endpoint) async {
     final response = await http.get(endpoint);
     final body = json.decode(utf8.decode(response.bodyBytes));
-    final entries = body['entries'] as List;
-    return entries.map((e) => Document.fromJson(e)).toSet().toList();
+    var entries = body['entries'] as List;
+    entries = entries.map((e) {
+      e['filename'] = _toDocUrl(e['filename']);
+      e['thumbnail'] = _toThumbnailUrl(e['thumbnail']);
+      return e;
+    }).toList();
+    return entries.map((e) => Document(e)).toSet().toList();
   }
 
   Future<List<Document>> searchDocs(String query) async {
@@ -47,7 +52,11 @@ class Api {
     });
   }
 
-  Uri toDocUrl(String filename) {
+  Uri _toThumbnailUrl(String filename) {
+    return _urls.thumbnail(filename);
+  }
+
+  Uri _toDocUrl(String filename) {
     return _urls.document(filename);
   }
 }

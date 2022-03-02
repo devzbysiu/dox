@@ -45,6 +45,7 @@ fn launch() -> Rocket<Build> {
     rocket::build()
         .mount("/", routes![search, all_thumbnails, receive_document])
         .mount("/thumbnail", FileServer::from(&cfg.thumbnails_dir))
+        .mount("/document", FileServer::from(&cfg.watched_dir))
         .manage(repo)
         .manage(cfg)
 }

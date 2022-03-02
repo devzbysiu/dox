@@ -1,15 +1,12 @@
+import 'package:dox/models/document.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 
 class OpenableImage extends StatelessWidget {
-  final Uri docUrl;
+  final Document doc;
 
-  final Uri thumbnailUrl;
-
-  const OpenableImage(
-      {Key? key, required this.docUrl, required this.thumbnailUrl})
-      : super(key: key);
+  const OpenableImage({Key? key, required this.doc}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -20,13 +17,13 @@ class OpenableImage extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) => _ImageViewer(
-                imageProvider: NetworkImage(docUrl.toString()),
+                imageProvider: NetworkImage(doc.filename.toString()),
               ),
             ),
           );
         },
         child: Hero(
-          tag: thumbnailUrl.toString(),
+          tag: doc.thumbnail.toString(),
           child: Container(
             decoration: const BoxDecoration(
               borderRadius: BorderRadius.all(Radius.circular(15)),
@@ -34,7 +31,7 @@ class OpenableImage extends StatelessWidget {
             ),
             padding: const EdgeInsets.all(20),
             child: Image.network(
-              thumbnailUrl.toString(),
+              doc.thumbnail.toString(),
               width: 350.0,
               loadingBuilder: (_, child, chunk) =>
                   chunk != null ? const Text("loading") : child,
@@ -72,8 +69,10 @@ class _ImageViewer extends _HeroDocumentViewRouteWrapper {
   @override
   Widget viewer(BuildContext context) {
     return PhotoView(
-      imageProvider: imageProvider,
-      backgroundDecoration: BoxDecoration(color: onPrimary(context)),
-    );
+        imageProvider: imageProvider,
+        backgroundDecoration: BoxDecoration(color: onPrimary(context)),
+        // TODO: show something better than Placeholder
+        loadingBuilder: (context, chunk) =>
+            chunk != null ? const Text("loading") : const Placeholder());
   }
 }

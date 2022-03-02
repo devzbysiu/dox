@@ -45,7 +45,5 @@ class SearchModel extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  List<Uri> get thumbnailUrls {
-    return _suggestions.map((doc) => _api.toDocUrl(doc.thumbnail)).toList();
-  }
+  List<Document> get suggestions => _suggestions;
 }

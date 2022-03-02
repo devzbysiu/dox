@@ -1,13 +1,9 @@
 class Document {
-  final String filename;
-  final String thumbnail;
+  late final Uri filename;
+  late final Uri thumbnail;
 
-  const Document({required this.filename, required this.thumbnail});
-
-  factory Document.fromJson(Map<String, dynamic> map) {
-    return Document(
-      filename: map['filename'] ?? '',
-      thumbnail: map['thumbnail'] ?? '',
-    );
+  Document(Map<String, dynamic> map) {
+    filename = map['filename'];
+    thumbnail = map['thumbnail'];
   }
 }

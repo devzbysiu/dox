@@ -15,8 +15,12 @@ class Urls {
     return Uri.parse('${_config.baseUrl}/thumbnails/all');
   }
 
-  Uri document(String filename) {
+  Uri thumbnail(String filename) {
     return Uri.parse('${_config.baseUrl}/thumbnail/$filename');
+  }
+
+  Uri document(String filename) {
+    return Uri.parse('${_config.baseUrl}/document/$filename');
   }
 
   Uri upload() {
