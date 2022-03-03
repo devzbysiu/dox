@@ -23,7 +23,7 @@ class OpenableImageList extends StatelessWidget {
   Widget _buildImage(Document doc) {
     return Padding(
       padding: const EdgeInsets.all(15),
-      child: OpenableImage(doc: doc),
+      child: OpenableDocument(doc: doc),
     );
   }
 }

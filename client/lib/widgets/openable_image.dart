@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
-class OpenableImage extends StatelessWidget {
+class OpenableDocument extends StatelessWidget {
   final Document doc;
 
-  const OpenableImage({Key? key, required this.doc}) : super(key: key);
+  const OpenableDocument({Key? key, required this.doc}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
