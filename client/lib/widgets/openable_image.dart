@@ -50,13 +50,14 @@ class OpenableImage extends StatelessWidget {
       case Filetype.pdf:
         return const Placeholder();
       default:
+        // TODO: Add some default view
         throw Exception('Filetype not supported');
     }
   }
 }
 
-abstract class _HeroDocumentViewRouteWrapper extends StatelessWidget {
-  const _HeroDocumentViewRouteWrapper({
+abstract class _DocumentViewer extends StatelessWidget {
+  const _DocumentViewer({
     Key? key,
   }) : super(key: key);
 
@@ -73,7 +74,7 @@ abstract class _HeroDocumentViewRouteWrapper extends StatelessWidget {
   Widget viewer(BuildContext context);
 }
 
-class _ImageViewer extends _HeroDocumentViewRouteWrapper {
+class _ImageViewer extends _DocumentViewer {
   final ImageProvider imageProvider;
 
   const _ImageViewer({required this.imageProvider});
