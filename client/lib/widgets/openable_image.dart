@@ -1,4 +1,5 @@
 import 'package:dox/models/document.dart';
+import 'package:dox/utilities/filetype.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
@@ -16,9 +17,7 @@ class OpenableImage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => _ImageViewer(
-                imageProvider: NetworkImage(doc.filename.toString()),
-              ),
+              builder: (context) => _documentViewer(),
             ),
           );
         },
@@ -40,6 +39,19 @@ class OpenableImage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _documentViewer() {
+    switch (filetype(doc.filename)) {
+      case Filetype.image:
+        return _ImageViewer(
+          imageProvider: NetworkImage(doc.filename.toString()),
+        );
+      case Filetype.pdf:
+        return const Placeholder();
+      default:
+        throw Exception('Filetype not supported');
+    }
   }
 }
 
