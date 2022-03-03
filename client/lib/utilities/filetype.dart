@@ -4,12 +4,12 @@ enum Filetype { image, pdf, other }
 
 Filetype filetype(Uri url) {
   switch (path.extension(url.path)) {
-    case ".jpg":
-    case ".jpeg":
-    case ".webp":
-    case ".png":
+    case '.jpg':
+    case '.jpeg':
+    case '.webp':
+    case '.png':
       return Filetype.image;
-    case ".pdf":
+    case '.pdf':
       return Filetype.pdf;
     default:
       return Filetype.other;
