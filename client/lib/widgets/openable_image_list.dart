@@ -29,7 +29,7 @@ class OpenableImageList extends StatelessWidget {
 }
 
 bool _isSupportedFiletype(Document doc) {
-  final docType = filetype(doc.filename);
+  final docType = filetype(doc.fileUrl);
   return (docType == Filetype.image || docType == Filetype.pdf) &&
-      filetype(doc.thumbnail) == Filetype.image;
+      filetype(doc.thumbnailUrl) == Filetype.image;
 }

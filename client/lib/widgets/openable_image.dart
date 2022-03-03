@@ -22,7 +22,7 @@ class OpenableImage extends StatelessWidget {
           );
         },
         child: Hero(
-          tag: doc.thumbnail.toString(),
+          tag: doc.thumbnailUrl.toString(),
           child: Container(
             decoration: const BoxDecoration(
               borderRadius: BorderRadius.all(Radius.circular(15)),
@@ -30,7 +30,7 @@ class OpenableImage extends StatelessWidget {
             ),
             padding: const EdgeInsets.all(20),
             child: Image.network(
-              doc.thumbnail.toString(),
+              doc.thumbnailUrl.toString(),
               width: 350.0,
               loadingBuilder: (_, child, chunk) =>
                   chunk != null ? const Text("loading") : child,
@@ -42,10 +42,10 @@ class OpenableImage extends StatelessWidget {
   }
 
   Widget _documentViewer() {
-    switch (filetype(doc.filename)) {
+    switch (filetype(doc.fileUrl)) {
       case Filetype.image:
         return _ImageViewer(
-          imageProvider: NetworkImage(doc.filename.toString()),
+          imageProvider: NetworkImage(doc.fileUrl.toString()),
         );
       case Filetype.pdf:
         return const Placeholder();
