@@ -3,6 +3,7 @@ import 'package:dox/utilities/filetype.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class OpenableImage extends StatelessWidget {
   final Document doc;
@@ -48,7 +49,7 @@ class OpenableImage extends StatelessWidget {
           imageProvider: NetworkImage(doc.fileUrl.toString()),
         );
       case Filetype.pdf:
-        return const Placeholder();
+        return _PdfViewer(fileUrl: doc.fileUrl);
       default:
         // TODO: Add some default view
         throw Exception('Filetype not supported');
@@ -87,5 +88,16 @@ class _ImageViewer extends _DocumentViewer {
         // TODO: show something better than Placeholder
         loadingBuilder: (context, chunk) =>
             chunk != null ? const Text("loading") : const Placeholder());
+  }
+}
+
+class _PdfViewer extends _DocumentViewer {
+  final Uri fileUrl;
+
+  const _PdfViewer({required this.fileUrl});
+
+  @override
+  Widget viewer(BuildContext context) {
+    return SfPdfViewer.network(fileUrl.toString());
   }
 }
