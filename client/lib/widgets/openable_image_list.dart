@@ -1,5 +1,5 @@
 import 'package:dox/models/document.dart';
-import 'package:dox/widgets/openable_image.dart';
+import 'package:dox/widgets/openable_document.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:dox/utilities/filetype.dart';
 
