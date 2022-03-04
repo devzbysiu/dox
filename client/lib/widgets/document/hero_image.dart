@@ -1,10 +1,10 @@
 import 'package:dox/models/document.dart';
 import 'package:flutter/material.dart';
 
-class ImageHero extends StatelessWidget {
+class HeroImage extends StatelessWidget {
   final Document doc;
 
-  const ImageHero({Key? key, required this.doc}) : super(key: key);
+  const HeroImage({Key? key, required this.doc}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

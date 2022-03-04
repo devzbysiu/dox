@@ -1,8 +1,6 @@
 import 'package:dox/models/document.dart';
-import 'package:dox/utilities/filetype.dart';
-import 'package:dox/widgets/document/image_hero.dart';
-import 'package:dox/widgets/document/image_viewer.dart';
-import 'package:dox/widgets/document/pdf_viewer.dart';
+import 'package:dox/widgets/document/viewer_factory.dart';
+import 'package:dox/widgets/document/hero_image.dart';
 import 'package:flutter/material.dart';
 
 class OpenableDocument extends StatelessWidget {
@@ -18,26 +16,12 @@ class OpenableDocument extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => _documentViewer(),
+              builder: (_) => ViewerFactory.from(doc.fileUrl),
             ),
           );
         },
-        child: ImageHero(doc: doc),
+        child: HeroImage(doc: doc),
       ),
     );
-  }
-
-  Widget _documentViewer() {
-    switch (filetype(doc.fileUrl)) {
-      case Filetype.image:
-        return ImageViewer(
-          imageProvider: NetworkImage(doc.fileUrl.toString()),
-        );
-      case Filetype.pdf:
-        return PdfViewer(fileUrl: doc.fileUrl);
-      default:
-        // TODO: Add some default view
-        throw Exception('Filetype not supported');
-    }
   }
 }
