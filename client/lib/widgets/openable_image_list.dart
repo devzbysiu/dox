@@ -1,13 +1,16 @@
 import 'package:dox/models/document.dart';
+import 'package:dox/utilities/filetype.dart';
 import 'package:dox/widgets/document/openable_document.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:dox/utilities/filetype.dart';
 
 // ignore: must_be_immutable
 class OpenableImageList extends StatelessWidget {
   List<Document> docUrls = List.empty();
 
-  OpenableImageList({Key? key, required docUrls}) : super(key: key) {
+  OpenableImageList({
+    Key? key,
+    required docUrls,
+  }) : super(key: key) {
     this.docUrls = docUrls.where(_isSupportedFiletype).toList();
   }
 

@@ -6,7 +6,10 @@ import 'package:photo_view/photo_view.dart';
 class ImageViewer extends DocumentViewer {
   final ImageProvider imageProvider;
 
-  const ImageViewer({Key? key, required this.imageProvider}) : super(key: key);
+  const ImageViewer({
+    Key? key,
+    required this.imageProvider,
+  }) : super(key: key);
 
   @override
   Widget viewer(BuildContext context) {

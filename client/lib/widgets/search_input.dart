@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 class SearchInput extends StatefulWidget {
   final Function(String) onChanged;
 
-  const SearchInput({Key? key, required this.onChanged}) : super(key: key);
+  const SearchInput({
+    Key? key,
+    required this.onChanged,
+  }) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _SearchInputState();

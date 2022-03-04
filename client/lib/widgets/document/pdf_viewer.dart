@@ -5,7 +5,10 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 class PdfViewer extends DocumentViewer {
   final Uri fileUrl;
 
-  const PdfViewer({Key? key, required this.fileUrl}) : super(key: key);
+  const PdfViewer({
+    Key? key,
+    required this.fileUrl,
+  }) : super(key: key);
 
   @override
   Widget viewer(BuildContext context) {

@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 class HeroImage extends StatelessWidget {
   final Document doc;
 
-  const HeroImage({Key? key, required this.doc}) : super(key: key);
+  const HeroImage({
+    Key? key,
+    required this.doc,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -14,7 +14,11 @@ class ScanButton extends StatelessWidget {
 
   late final Function onScanned;
 
-  ScanButton(Api api, {Key? key, required this.onScanned}) : super(key: key) {
+  ScanButton(
+    Api api, {
+    Key? key,
+    required this.onScanned,
+  }) : super(key: key) {
     _api = api;
   }
 

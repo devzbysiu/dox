@@ -2,7 +2,9 @@ import 'package:dox/utilities/theme.dart';
 import 'package:flutter/material.dart';
 
 class ScrollableAppBar extends StatelessWidget {
-  const ScrollableAppBar({Key? key}) : super(key: key);
+  const ScrollableAppBar({
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
