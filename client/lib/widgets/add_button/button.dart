@@ -31,23 +31,13 @@ class ScanButton extends StatelessWidget {
       closedBackgroundColor: primary(context),
       openBackgroundColor: secondary(context),
       speedDialChildren: [
-        buildScanButton(context),
-        buildPdfButton(context),
+        _buildScanButton(context),
+        _buildPdfButton(context),
       ],
     );
   }
 
-  SpeedDialChild buildPdfButton(BuildContext context) {
-    return SpeedDialChild(
-        child: Icon(Icons.picture_as_pdf, color: onPrimary(context)),
-        foregroundColor: secondary(context),
-        backgroundColor: primary(context),
-        label: 'Pick PDF',
-        onPressed: () => _pickAndSendPdf(context),
-      );
-  }
-
-  SpeedDialChild buildScanButton(BuildContext context) {
+  SpeedDialChild _buildScanButton(BuildContext context) {
     return SpeedDialChild(
         child: Icon(Icons.camera_alt, color: onPrimary(context)),
         foregroundColor: secondary(context),
@@ -93,19 +83,6 @@ class ScanButton extends StatelessWidget {
     _showUploadSuccessful(context);
   }
 
-  void _pickAndSendPdf(BuildContext context) async {
-    final doc = await _pickPdf();
-    if (doc == null) return;
-    await _sendAndRefreshList(doc, context);
-  }
-
-  Future<File?> _pickPdf() async {
-    final result = await FilePicker.platform
-        .pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
-    if (result == null || result.files.single.path == null) return null;
-    return File(result.files.single.path!);
-  }
-
   void _showUploadFailed(BuildContext context) {
     MotionToast(
       title: const Text('Error'),
@@ -120,5 +97,28 @@ class ScanButton extends StatelessWidget {
       title: const Text('Success'),
       description: const Text('File uploaded successfully'),
     ).show(context);
+  }
+
+  SpeedDialChild _buildPdfButton(BuildContext context) {
+    return SpeedDialChild(
+        child: Icon(Icons.picture_as_pdf, color: onPrimary(context)),
+        foregroundColor: secondary(context),
+        backgroundColor: primary(context),
+        label: 'Pick PDF',
+        onPressed: () => _pickAndSendPdf(context),
+      );
+  }
+
+  void _pickAndSendPdf(BuildContext context) async {
+    final doc = await _pickPdf();
+    if (doc == null) return;
+    await _sendAndRefreshList(doc, context);
+  }
+
+  Future<File?> _pickPdf() async {
+    final result = await FilePicker.platform
+        .pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
+    if (result == null || result.files.single.path == null) return null;
+    return File(result.files.single.path!);
   }
 }
