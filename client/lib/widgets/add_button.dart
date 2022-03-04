@@ -39,12 +39,12 @@ class AddButton extends StatelessWidget {
 
   SpeedDialChild _buildScanButton(BuildContext context) {
     return SpeedDialChild(
-        child: Icon(Icons.camera_alt, color: onPrimary(context)),
-        foregroundColor: secondary(context),
-        backgroundColor: primary(context),
-        label: 'Scan document',
-        onPressed: () => _scanAndSendImage(context),
-      );
+      child: Icon(Icons.camera_alt, color: onPrimary(context)),
+      foregroundColor: secondary(context),
+      backgroundColor: primary(context),
+      label: 'Scan document',
+      onPressed: () => _scanAndSendImage(context),
+    );
   }
 
   Future<void> _scanAndSendImage(BuildContext context) async {
@@ -101,12 +101,12 @@ class AddButton extends StatelessWidget {
 
   SpeedDialChild _buildPdfButton(BuildContext context) {
     return SpeedDialChild(
-        child: Icon(Icons.picture_as_pdf, color: onPrimary(context)),
-        foregroundColor: secondary(context),
-        backgroundColor: primary(context),
-        label: 'Pick PDF',
-        onPressed: () => _pickAndSendPdf(context),
-      );
+      child: Icon(Icons.picture_as_pdf, color: onPrimary(context)),
+      foregroundColor: secondary(context),
+      backgroundColor: primary(context),
+      label: 'Pick PDF',
+      onPressed: () => _pickAndSendPdf(context),
+    );
   }
 
   void _pickAndSendPdf(BuildContext context) async {
