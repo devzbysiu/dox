@@ -1,5 +1,6 @@
 import 'package:dox/models/document.dart';
 import 'package:dox/utilities/filetype.dart';
+import 'package:dox/widgets/document/image_hero.dart';
 import 'package:dox/widgets/document/image_viewer.dart';
 import 'package:dox/widgets/document/pdf_viewer.dart';
 import 'package:flutter/material.dart';
@@ -21,22 +22,7 @@ class OpenableDocument extends StatelessWidget {
             ),
           );
         },
-        child: Hero(
-          tag: doc.thumbnailUrl.toString(),
-          child: Container(
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(15)),
-              color: Color.fromRGBO(242, 242, 246, 1),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Image.network(
-              doc.thumbnailUrl.toString(),
-              width: 350.0,
-              loadingBuilder: (_, child, chunk) =>
-                  chunk != null ? const Text("loading") : child,
-            ),
-          ),
-        ),
+        child: ImageHero(doc: doc),
       ),
     );
   }
