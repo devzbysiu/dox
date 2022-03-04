@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({
+    Key? key,
+  }) : super(key: key);
 
   @override
   _SplashScreenState createState() => _SplashScreenState();
