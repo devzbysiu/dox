@@ -9,12 +9,12 @@ import 'package:flutter/services.dart';
 import 'package:motion_toast/motion_toast.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 
-class ScanButton extends StatelessWidget {
+class AddButton extends StatelessWidget {
   late final Api _api;
 
   late final Function onScanned;
 
-  ScanButton(
+  AddButton(
     Api api, {
     Key? key,
     required this.onScanned,
