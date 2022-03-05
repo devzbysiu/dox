@@ -1,6 +1,6 @@
-import 'package:dox/utilities/exceptions.dart';
 import 'package:dox/utilities/filetype.dart';
 import 'package:dox/widgets/document/image_viewer.dart';
+import 'package:dox/widgets/document/incorrect_file_viewer.dart';
 import 'package:dox/widgets/document/pdf_viewer.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +17,7 @@ class ViewerFactory {
         return PdfViewer(fileUrl: uri);
       default:
         // TODO: Add some default view
-        throw FiletypeNotSupportedException(uri);
+        return const IncorrectFileViewer();
     }
   }
 }

@@ -37,3 +37,4 @@ flutter:
     - '.realdevice.env'
     - './assets/app-bar.webp'
     - './assets/splash-screen.json'
+    - './assets/incorrect-file.json'
