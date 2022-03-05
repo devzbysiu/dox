@@ -5,6 +5,11 @@ import 'package:dox/models/document.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:http/http.dart' as http;
 
+const filename = 'filename';
+const thumbnail = 'thumbnail';
+const fileUrl = 'fileUrl';
+const thumbnailUrl = 'thumbnailUrl';
+
 class Api {
   late final Urls _urls;
 
@@ -37,15 +42,15 @@ class Api {
 
   List<dynamic> _extendWithUrls(List<dynamic> entries) {
     return entries.map((e) {
-      e['fileUrl'] = _toDocUrl(e['filename']);
-      e['thumbnailUrl'] = _toThumbnailUrl(e['thumbnail']);
+      e[fileUrl] = _toDocUrl(e[filename]);
+      e[thumbnailUrl] = _toThumbnailUrl(e[thumbnail]);
       return e;
     }).toList();
   }
 
   List<Document> _toDocuments(List<dynamic> entries) {
     return entries
-        .map((e) => Document(e['fileUrl'], e['thumbnailUrl']))
+        .map((e) => Document(e[fileUrl], e[thumbnailUrl]))
         .toSet()
         .toList();
   }
