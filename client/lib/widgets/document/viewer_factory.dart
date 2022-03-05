@@ -1,6 +1,6 @@
+import 'package:dox/screens/incorrect_file.dart';
 import 'package:dox/utilities/filetype.dart';
 import 'package:dox/widgets/document/image_viewer.dart';
-import 'package:dox/widgets/document/incorrect_file_viewer.dart';
 import 'package:dox/widgets/document/pdf_viewer.dart';
 import 'package:flutter/material.dart';
 
@@ -16,8 +16,7 @@ class ViewerFactory {
       case Filetype.pdf:
         return PdfViewer(fileUrl: uri);
       default:
-        // TODO: Add some default view
-        return const IncorrectFileViewer();
+        return const IncorrectFileScreen();
     }
   }
 }
