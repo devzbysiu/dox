@@ -44,7 +44,10 @@ class Api {
   }
 
   List<Document> _toDocuments(List<dynamic> entries) {
-    return entries.map((e) => Document(e)).toSet().toList();
+    return entries
+        .map((e) => Document(e['fileUrl'], e['thumbnailUrl']))
+        .toSet()
+        .toList();
   }
 
   Future<List<Document>> searchDocs(String query) async {
