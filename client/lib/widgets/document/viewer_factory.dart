@@ -1,3 +1,4 @@
+import 'package:dox/utilities/exceptions.dart';
 import 'package:dox/utilities/filetype.dart';
 import 'package:dox/widgets/document/image_viewer.dart';
 import 'package:dox/widgets/document/pdf_viewer.dart';
@@ -16,7 +17,7 @@ class ViewerFactory {
         return PdfViewer(fileUrl: uri);
       default:
         // TODO: Add some default view
-        throw Exception('Filetype not supported');
+        throw FiletypeNotSupportedException(uri);
     }
   }
 }

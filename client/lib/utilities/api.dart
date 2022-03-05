@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dox/models/document.dart';
+import 'package:dox/utilities/exceptions.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -25,7 +26,7 @@ class Api {
   }
 
   factory Api() {
-    if (_instance == null) throw Exception('You need to initialize it first');
+    if (_instance == null) throw ApiNotInitializedException();
     return _instance!;
   }
 
