@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dox/models/document.dart';
 import 'package:dox/utilities/urls.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 const filename = 'filename';
@@ -60,7 +61,8 @@ class Api {
   }
 
   Future<http.Response> uploadDoc(File file) async {
-    return http.post(_urls.upload(), body: jsonEncode(_Doc(file)), headers: {
+    final jsonBody = await compute(toJson, {'file': file});
+    return http.post(_urls.upload(), body: jsonBody, headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     });
@@ -82,7 +84,6 @@ class _Doc {
 
   _Doc(File file) {
     _filename = _name(file);
-    // TODO: do I need to move it to isolate?
     _body = base64Encode(file.readAsBytesSync());
   }
 
@@ -93,4 +94,9 @@ class _Doc {
   Map<String, dynamic> toJson() {
     return {'filename': _filename, 'body': _body};
   }
+}
+
+Future<String> toJson(Map<String, dynamic> data) async {
+  final file = data['file'];
+  return jsonEncode(_Doc(file));
 }
