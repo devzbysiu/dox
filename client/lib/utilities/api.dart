@@ -10,9 +10,8 @@ class Api {
 
   static Api? _instance;
 
-  factory Api.init(Urls urls) {
+  static init(Urls urls) {
     _instance ??= Api._(urls);
-    return _instance!;
   }
 
   Api._(Urls urls) {
