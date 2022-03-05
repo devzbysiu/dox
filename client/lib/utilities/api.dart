@@ -32,12 +32,18 @@ class Api {
     final response = await http.get(endpoint);
     final body = json.decode(utf8.decode(response.bodyBytes));
     var entries = body['entries'] as List;
-    // TODO: cleanup this
-    entries = entries.map((e) {
+    return _toDocuments(_extendWithUrls(entries));
+  }
+
+  List<dynamic> _extendWithUrls(List<dynamic> entries) {
+    return entries.map((e) {
       e['fileUrl'] = _toDocUrl(e['filename']);
       e['thumbnailUrl'] = _toThumbnailUrl(e['thumbnail']);
       return e;
     }).toList();
+  }
+
+  List<Document> _toDocuments(List<dynamic> entries) {
     return entries.map((e) => Document(e)).toSet().toList();
   }
 
