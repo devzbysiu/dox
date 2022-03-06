@@ -20,7 +20,6 @@ class _IncorrectFileScreenState extends State<IncorrectFileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Lottie.asset(
-        // TODO: try to find better animation
         'assets/incorrect-file.json',
         height: MediaQuery.of(context).size.height * 1,
         animate: true,
