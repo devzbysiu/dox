@@ -8,6 +8,7 @@ class IncorrectFileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TODO: Add some error message?
     return Scaffold(
       body: Lottie.asset(
         'assets/incorrect-file.json',
