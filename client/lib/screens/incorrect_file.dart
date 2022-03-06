@@ -1,20 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
-class IncorrectFileScreen extends StatefulWidget {
+class IncorrectFileScreen extends StatelessWidget {
   const IncorrectFileScreen({
     Key? key,
   }) : super(key: key);
-
-  @override
-  _IncorrectFileScreenState createState() => _IncorrectFileScreenState();
-}
-
-class _IncorrectFileScreenState extends State<IncorrectFileScreen> {
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
