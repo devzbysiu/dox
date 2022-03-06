@@ -43,6 +43,10 @@ class SearchModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refresh() async {
+    clear();
+  }
+
   bool get isLoading => _isLoading;
 
   List<Document> get suggestions => _suggestions;

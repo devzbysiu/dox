@@ -21,14 +21,15 @@ class HomePage extends StatelessWidget {
         onTap: () => _hideKeyboard(),
         onVerticalDragDown: (_) => _hideKeyboard(),
         child: Consumer<SearchModel>(
-          builder: (context, model, _) => Scaffold(
-            backgroundColor: background(context),
-            body: NestedScrollView(
-              headerSliverBuilder: _scrollableAppBarBuilder,
-              body: _searchInput(model),
-            ),
-            floatingActionButton: AddButton(Api(), onScanned: model.clear),
-          ),
+          builder: (context, model, _) =>
+              Scaffold(
+                backgroundColor: background(context),
+                body: NestedScrollView(
+                  headerSliverBuilder: _scrollableAppBarBuilder,
+                  body: _searchInput(model),
+                ),
+                floatingActionButton: AddButton(Api(), onScanned: model.clear),
+              ),
         ),
       ),
     );
@@ -50,7 +51,12 @@ class HomePage extends StatelessWidget {
           child: SearchInput(onChanged: model.onQueryChanged),
         ),
         Expanded(
-          child: OpenableImageList(docUrls: model.suggestions),
+          child: RefreshIndicator(
+            child: OpenableImageList(docUrls: model.suggestions),
+            onRefresh: () async {
+              await Future.delayed(const Duration(seconds: 1), model.refresh);
+            },
+          ),
         ),
       ],
     );
