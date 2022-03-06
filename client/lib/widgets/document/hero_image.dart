@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dox/models/document.dart';
 import 'package:flutter/material.dart';
 
@@ -19,11 +20,10 @@ class HeroImage extends StatelessWidget {
           color: Color.fromRGBO(242, 242, 246, 1),
         ),
         padding: const EdgeInsets.all(20),
-        child: Image.network(
-          doc.thumbnailUrl.toString(),
-          width: 350.0,
-          loadingBuilder: (_, child, chunk) =>
-              chunk != null ? const Text("loading") : child,
+        child: CachedNetworkImage(
+          imageUrl: doc.thumbnailUrl.toString(),
+          placeholder: (context, url) => const CircularProgressIndicator(),
+          errorWidget: (context, url, error) => const Icon(Icons.error),
         ),
       ),
     );
