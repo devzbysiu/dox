@@ -52,7 +52,7 @@ class HomePage extends StatelessWidget {
         Expanded(
           child: RefreshIndicator(
             child: OpenableImageList(docUrls: model.suggestions),
-            onRefresh: () async => _refreshDocs(model),
+            onRefresh: () => _refreshDocs(model),
           ),
         ),
       ],
