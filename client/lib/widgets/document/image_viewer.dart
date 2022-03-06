@@ -14,10 +14,19 @@ class ImageViewer extends DocumentViewer {
   @override
   Widget viewer(BuildContext context) {
     return PhotoView(
-        imageProvider: imageProvider,
-        backgroundDecoration: BoxDecoration(color: onPrimary(context)),
-        // TODO: show something better than Placeholder
-        loadingBuilder: (context, chunk) =>
-            chunk != null ? const Text("loading") : const Placeholder());
+      imageProvider: imageProvider,
+      backgroundDecoration: BoxDecoration(color: onPrimary(context)),
+      loadingBuilder: (context, event) => Center(
+        child: SizedBox(
+          width: 20.0,
+          height: 20.0,
+          child: CircularProgressIndicator(
+            value: event == null
+                ? 0
+                : event.cumulativeBytesLoaded / event.expectedTotalBytes!,
+          ),
+        ),
+      ),
+    );
   }
 }
