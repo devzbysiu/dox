@@ -1,4 +1,4 @@
-import 'package:dox/models/search_model.dart';
+import 'package:dox/models/docs_model.dart';
 import 'package:dox/utilities/api.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:dox/widgets/app_bar.dart';
@@ -16,11 +16,11 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => SearchModel(Api()),
+      create: (_) => DocsModel(Api()),
       child: GestureDetector(
         onTap: () => _hideKeyboard(),
         onVerticalDragDown: (_) => _hideKeyboard(),
-        child: Consumer<SearchModel>(
+        child: Consumer<DocsModel>(
           builder: (context, model, _) => Scaffold(
             backgroundColor: background(context),
             body: NestedScrollView(
@@ -42,7 +42,7 @@ class HomePage extends StatelessWidget {
     return const [ScrollableAppBar()];
   }
 
-  Widget _searchInput(SearchModel model) {
+  Widget _searchInput(DocsModel model) {
     return Column(
       children: [
         Padding(
@@ -59,7 +59,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Future<void> _refreshDocs(SearchModel model) async {
+  Future<void> _refreshDocs(DocsModel model) async {
     await Future.delayed(const Duration(seconds: 1), model.refresh);
   }
 }

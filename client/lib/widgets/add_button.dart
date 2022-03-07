@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:document_scanner_flutter/document_scanner_flutter.dart';
-import 'package:dox/models/search_model.dart';
+import 'package:dox/models/docs_model.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -60,7 +60,7 @@ class AddButton extends StatelessWidget {
     try {
       await _uploadAndShowToast(doc, context);
       Future.delayed(const Duration(seconds: 2), () async {
-        await Provider.of<SearchModel>(context, listen: false).clear();
+        await Provider.of<DocsModel>(context, listen: false).clear();
       });
     } on Exception {
       _showUploadFailed(context);
@@ -68,7 +68,7 @@ class AddButton extends StatelessWidget {
   }
 
   Future<void> _uploadAndShowToast(File doc, BuildContext context) async {
-    if (await Provider.of<SearchModel>(context, listen: false).newDoc(doc)) {
+    if (await Provider.of<DocsModel>(context, listen: false).newDoc(doc)) {
       _showUploadSuccessful(context);
       return;
     }

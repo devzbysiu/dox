@@ -4,7 +4,7 @@ import 'package:dox/models/document.dart';
 import 'package:dox/utilities/api.dart';
 import 'package:flutter/material.dart';
 
-class SearchModel extends ChangeNotifier {
+class DocsModel extends ChangeNotifier {
   bool _isLoading = false;
 
   List<Document> _suggestions = List.empty();
@@ -13,7 +13,7 @@ class SearchModel extends ChangeNotifier {
 
   late final Api _api;
 
-  SearchModel(Api api) {
+  DocsModel(Api api) {
     _api = api;
     _api.fetchAllFiles().then((value) {
       _suggestions = value;
