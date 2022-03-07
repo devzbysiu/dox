@@ -40,13 +40,13 @@ class DocsModel extends ChangeNotifier {
         : await _api.searchDocs(query);
   }
 
-  Future<void> clear() async {
+  Future<void> reset() async {
     _suggestions = await _api.fetchAllFiles();
     notifyListeners();
   }
 
   Future<void> refresh() async {
-    clear();
+    reset();
   }
 
   Future<bool> newDoc(File doc) async {

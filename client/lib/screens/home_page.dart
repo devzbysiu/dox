@@ -29,7 +29,7 @@ class HomePage extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: SearchInput(onChanged: model.onQueryChanged),
+                    child: SearchInput(),
                   ),
                   Expanded(
                     child: RefreshIndicator(

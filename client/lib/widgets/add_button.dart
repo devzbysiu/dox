@@ -60,7 +60,7 @@ class AddButton extends StatelessWidget {
     try {
       await _uploadAndShowToast(doc, context);
       Future.delayed(const Duration(seconds: 2), () async {
-        await _docsModel(context).clear();
+        await _docsModel(context).reset();
       });
     } on Exception {
       _showUploadFailed(context);
