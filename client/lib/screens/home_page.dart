@@ -25,7 +25,20 @@ class HomePage extends StatelessWidget {
             backgroundColor: background(context),
             body: NestedScrollView(
               headerSliverBuilder: _scrollableAppBarBuilder,
-              body: _searchInput(model),
+              body: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: SearchInput(onChanged: model.onQueryChanged),
+                  ),
+                  Expanded(
+                    child: RefreshIndicator(
+                      child: OpenableImageList(docUrls: model.suggestions),
+                      onRefresh: () => _refreshDocs(model),
+                    ),
+                  ),
+                ],
+              ),
             ),
             floatingActionButton: const AddButton(),
           ),
@@ -40,23 +53,6 @@ class HomePage extends StatelessWidget {
 
   List<Widget> _scrollableAppBarBuilder(BuildContext _ctx, bool _) {
     return const [ScrollableAppBar()];
-  }
-
-  Widget _searchInput(DocsModel model) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: SearchInput(onChanged: model.onQueryChanged),
-        ),
-        Expanded(
-          child: RefreshIndicator(
-            child: OpenableImageList(docUrls: model.suggestions),
-            onRefresh: () => _refreshDocs(model),
-          ),
-        ),
-      ],
-    );
   }
 
   Future<void> _refreshDocs(DocsModel model) async {
