@@ -7,17 +7,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:motion_toast/motion_toast.dart';
+import 'package:provider/provider.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 
 class AddButton extends StatelessWidget {
-  late final SearchModel _searchModel;
-
-  AddButton(
-    SearchModel model, {
+  const AddButton({
     Key? key,
-  }) : super(key: key) {
-    _searchModel = model;
-  }
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +60,7 @@ class AddButton extends StatelessWidget {
     try {
       await _uploadAndShowToast(doc, context);
       Future.delayed(const Duration(seconds: 2), () async {
-        await _searchModel.clear();
+        await Provider.of<SearchModel>(context, listen: false).clear();
       });
     } on Exception {
       _showUploadFailed(context);
@@ -72,7 +68,7 @@ class AddButton extends StatelessWidget {
   }
 
   Future<void> _uploadAndShowToast(File doc, BuildContext context) async {
-    if (await _searchModel.newDoc(doc)) {
+    if (await Provider.of<SearchModel>(context, listen: false).newDoc(doc)) {
       _showUploadSuccessful(context);
       return;
     }
