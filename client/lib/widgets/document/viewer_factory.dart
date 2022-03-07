@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dox/screens/incorrect_file.dart';
 import 'package:dox/utilities/filetype.dart';
 import 'package:dox/widgets/document/image_viewer.dart';
@@ -11,7 +12,7 @@ class ViewerFactory {
     switch (filetype(uri)) {
       case Filetype.image:
         return ImageViewer(
-          imageProvider: NetworkImage(uri.toString()),
+          imageProvider: CachedNetworkImageProvider(uri.toString()),
         );
       case Filetype.pdf:
         return PdfViewer(fileUrl: uri);

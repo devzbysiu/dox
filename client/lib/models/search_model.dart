@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dox/models/document.dart';
 import 'package:dox/utilities/api.dart';
 import 'package:flutter/material.dart';
@@ -38,13 +40,21 @@ class SearchModel extends ChangeNotifier {
         : await _api.searchDocs(query);
   }
 
-  void clear() async {
+  Future<void> clear() async {
     _suggestions = await _api.fetchAllFiles();
     notifyListeners();
   }
 
   Future<void> refresh() async {
     clear();
+  }
+
+  Future<bool> newDoc(File doc) async {
+    final resp = await _api.uploadDoc(doc);
+    if (resp.statusCode != 201) {
+      return false;
+    }
+    return true;
   }
 
   bool get isLoading => _isLoading;

@@ -27,7 +27,7 @@ class HomePage extends StatelessWidget {
               headerSliverBuilder: _scrollableAppBarBuilder,
               body: _searchInput(model),
             ),
-            floatingActionButton: AddButton(Api(), onScanned: model.clear),
+            floatingActionButton: AddButton(model),
           ),
         ),
       ),

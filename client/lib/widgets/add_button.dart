@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:document_scanner_flutter/document_scanner_flutter.dart';
-import 'package:dox/utilities/api.dart';
+import 'package:dox/models/search_model.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -10,16 +10,13 @@ import 'package:motion_toast/motion_toast.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 
 class AddButton extends StatelessWidget {
-  late final Api _api;
-
-  late final Function onScanned;
+  late final SearchModel _searchModel;
 
   AddButton(
-    Api api, {
+    SearchModel model, {
     Key? key,
-    required this.onScanned,
   }) : super(key: key) {
-    _api = api;
+    _searchModel = model;
   }
 
   @override
@@ -66,8 +63,8 @@ class AddButton extends StatelessWidget {
   Future<void> _sendAndRefreshList(File doc, BuildContext context) async {
     try {
       await _uploadAndShowToast(doc, context);
-      Future.delayed(const Duration(seconds: 2), () {
-        onScanned();
+      Future.delayed(const Duration(seconds: 2), () async {
+        await _searchModel.clear();
       });
     } on Exception {
       _showUploadFailed(context);
@@ -75,12 +72,11 @@ class AddButton extends StatelessWidget {
   }
 
   Future<void> _uploadAndShowToast(File doc, BuildContext context) async {
-    final resp = await _api.uploadDoc(doc);
-    if (resp.statusCode != 201) {
-      _showUploadFailed(context);
+    if (await _searchModel.newDoc(doc)) {
+      _showUploadSuccessful(context);
       return;
     }
-    _showUploadSuccessful(context);
+    _showUploadFailed(context);
   }
 
   void _showUploadFailed(BuildContext context) {
