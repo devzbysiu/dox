@@ -1,25 +1,27 @@
+import 'package:dox/models/docs_model.dart';
 import 'package:dox/models/document.dart';
 import 'package:dox/utilities/filetype.dart';
 import 'package:dox/widgets/document/openable_document.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
 
 // ignore: must_be_immutable
 class OpenableImageList extends StatelessWidget {
-  List<Document> docUrls = List.empty();
-
-  OpenableImageList({
+  const OpenableImageList({
     Key? key,
-    required docUrls,
-  }) : super(key: key) {
-    this.docUrls = docUrls.where(_isSupportedFiletype).toList();
-  }
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ListView(children: _buildOpenableImages());
+    return Consumer<DocsModel>(
+      builder: (context, model, _) => ListView(
+        children: _buildOpenableImages(model),
+      ),
+    );
   }
 
-  List<Widget> _buildOpenableImages() {
+  List<Widget> _buildOpenableImages(DocsModel model) {
+    final docUrls = model.suggestions.where(_isSupportedFiletype).toList();
     return docUrls.map(_buildImage).toList();
   }
 

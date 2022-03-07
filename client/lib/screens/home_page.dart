@@ -27,13 +27,13 @@ class HomePage extends StatelessWidget {
               headerSliverBuilder: _scrollableAppBarBuilder,
               body: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
                     child: SearchInput(),
                   ),
                   Expanded(
                     child: RefreshIndicator(
-                      child: OpenableImageList(docUrls: model.suggestions),
+                      child: const OpenableImageList(),
                       onRefresh: () => _refreshDocs(model),
                     ),
                   ),
