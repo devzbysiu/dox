@@ -67,16 +67,16 @@ class AddButton extends StatelessWidget {
     }
   }
 
-  DocsModel _docsModel(BuildContext context) {
-    return Provider.of<DocsModel>(context, listen: false);
-  }
-
   Future<void> _uploadAndShowToast(File doc, BuildContext context) async {
     if (await _docsModel(context).newDoc(doc)) {
       _showUploadSuccessful(context);
       return;
     }
     _showUploadFailed(context);
+  }
+
+  DocsModel _docsModel(BuildContext context) {
+    return Provider.of<DocsModel>(context, listen: false);
   }
 
   void _showUploadFailed(BuildContext context) {

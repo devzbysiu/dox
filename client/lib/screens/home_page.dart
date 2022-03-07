@@ -1,9 +1,9 @@
 import 'package:dox/models/docs_model.dart';
 import 'package:dox/utilities/api.dart';
 import 'package:dox/utilities/theme.dart';
+import 'package:dox/widgets/add_button.dart';
 import 'package:dox/widgets/app_bar.dart';
 import 'package:dox/widgets/openable_image_list.dart';
-import 'package:dox/widgets/add_button.dart';
 import 'package:dox/widgets/search_input.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
