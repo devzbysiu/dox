@@ -29,7 +29,7 @@ pub fn receive_document(doc: Json<Document>, cfg: &State<Config>) -> Result<Stat
     Ok(Status::Created)
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Document {
     filename: String,
     body: String,

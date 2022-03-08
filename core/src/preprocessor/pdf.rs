@@ -7,6 +7,7 @@ use crate::thumbnail;
 
 use std::path::{Path, PathBuf};
 
+#[derive(Debug)]
 pub struct Pdf {
     thumbnails_dir: PathBuf,
 }

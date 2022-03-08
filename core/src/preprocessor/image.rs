@@ -5,6 +5,7 @@ use crate::result::Result;
 use log::debug;
 use std::path::PathBuf;
 
+#[derive(Debug)]
 pub struct Image {
     thumbnails_dir: PathBuf,
 }

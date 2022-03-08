@@ -12,6 +12,7 @@ pub trait TextExtractor {
     fn extract_text(&self, path: &[PathBuf]) -> Vec<DocDetails>;
 }
 
+#[derive(Debug)]
 pub struct DocDetails {
     pub filename: String,
     pub body: String,

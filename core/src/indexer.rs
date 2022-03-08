@@ -31,6 +31,7 @@ impl fmt::Display for Fields {
     }
 }
 
+#[derive(Debug)]
 pub struct Repo {
     index: Index,
     schema: Schema,
