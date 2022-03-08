@@ -21,7 +21,6 @@ pub struct PreprocessorFactory;
 impl PreprocessorFactory {
     pub fn from_ext(ext: &Ext, config: &Config) -> Box<dyn FilePreprocessor> {
         match ext {
-            // TODO: are those clones needed?
             Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Image::new(config.thumbnails_dir.clone())),
             Ext::Pdf => Box::new(Pdf::new(config.thumbnails_dir.clone())),
         }
