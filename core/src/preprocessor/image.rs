@@ -1,4 +1,4 @@
-use crate::helpers::PathBufExt;
+use crate::helpers::{PathBufExt, PathRefExt};
 use crate::preprocessor::FilePreprocessor;
 use crate::result::Result;
 
@@ -18,9 +18,8 @@ impl Image {
 impl FilePreprocessor for Image {
     fn preprocess(&self, paths: &[PathBuf]) -> Result<()> {
         for p in paths {
-            // TODO: take care of this unwrap
             debug!("moving {} to {}", p.display(), self.thumbnails_dir.str());
-            std::fs::copy(p, self.thumbnails_dir.join(p.file_name().unwrap())).unwrap();
+            std::fs::copy(p, self.thumbnails_dir.join(p.filename()))?;
         }
         Ok(())
     }
