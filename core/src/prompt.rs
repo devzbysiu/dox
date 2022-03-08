@@ -27,26 +27,22 @@ fn watched_dir_prompt() -> Result<PathBuf> {
 }
 
 fn path_suggester(input: &str) -> Vec<String> {
-    // TODO: think if this can be simplified
-    let input = if input.is_empty() { "/" } else { input };
-    let mut dir = fs::read_dir(input);
-    if dir.is_err() {
-        let parent = Path::new(input).parent();
-        if parent.is_none() {
-            return vec![];
-        }
-        dir = fs::read_dir(parent.unwrap()); // can unwrap, it's checked earlier
-        if dir.is_err() {
-            return vec![];
-        }
+    let path = Path::new(input);
+    if path.is_dir() {
+        return vec![input.to_string()];
     }
-    dir.unwrap() // can unwrap because it's checked above
+    let parent = path.parent();
+    if parent.is_none() {
+        return vec![];
+    }
+    let dir = fs::read_dir(parent.unwrap()); // can unwrap, it's checked earlier
+    dir.unwrap()
         .filter_map(std::result::Result::ok)
         .map(|entry| entry.path())
         .filter(|path| path.as_path().is_dir())
         .map(|path| path.as_path().string())
         .filter(|path| path.contains(input))
-        .collect::<Vec<String>>()
+        .collect()
 }
 
 fn thumbnails_dir_prompt(config: &Config) -> Result<PathBuf> {
