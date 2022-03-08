@@ -9,7 +9,6 @@ use std::path::Path;
 
 const FIRST: usize = 0;
 
-#[allow(unused)] // TODO: remove that
 pub fn generate<P: AsRef<Path>>(pdf_path: P, out_path: P) -> Result<()> {
     debug!("generating thumbnail for '{}'", pdf_path.as_ref().display());
     let page = first_page(&pdf_path)?;
