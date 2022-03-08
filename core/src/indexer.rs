@@ -105,18 +105,14 @@ fn to_search_entries<'a, V: Iterator<Item = &'a Value>>(
         .collect::<Vec<SearchEntry>>()
 }
 
-// TODO: cleanup this
 fn to_text((filename, thumbnail): (&Value, &Value)) -> (String, String) {
-    (
-        filename
-            .text()
-            .unwrap_or_else(|| panic!("failed to extract text from filename"))
-            .to_string(),
-        thumbnail
-            .text()
-            .unwrap_or_else(|| panic!("failed to extract text from thumbnail"))
-            .to_string(),
-    )
+    (extract_text(filename), extract_text(thumbnail))
+}
+
+fn extract_text(val: &Value) -> String {
+    val.text()
+        .unwrap_or_else(|| panic!("failed to extract text"))
+        .to_string()
 }
 
 #[derive(Debug, Serialize, Default)]
