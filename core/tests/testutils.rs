@@ -26,6 +26,7 @@ pub mod helpers {
     #[derive(Debug, Serialize)]
     pub struct Config {
         pub watched_dir: PathBuf,
+        pub thumbnails_dir: PathBuf,
         pub index_dir: PathBuf,
         pub cooldown_time: Duration,
     }
@@ -45,6 +46,11 @@ pub mod helpers {
 
     pub fn create_watched_dir() -> Result<TempDir> {
         debug!("creating watched directory");
+        Ok(tempfile::tempdir()?)
+    }
+
+    pub fn create_thumbnails_dir() -> Result<TempDir> {
+        debug!("creating thumbnails directory");
         Ok(tempfile::tempdir()?)
     }
 
