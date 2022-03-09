@@ -6,6 +6,7 @@ import 'package:dox/utilities/exceptions.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 const filename = 'filename';
 const thumbnail = 'thumbnail';
@@ -15,6 +16,8 @@ const thumbnailUrl = 'thumbnailUrl';
 class Api {
   late final Urls _urls;
 
+  late final IO.Socket _socket;
+
   static Api? _instance;
 
   static init(Urls urls) {
@@ -23,6 +26,7 @@ class Api {
 
   Api._(Urls urls) {
     _urls = urls;
+    _socket = IO.io(_urls.notifications());
   }
 
   factory Api() {
@@ -75,6 +79,10 @@ class Api {
 
   Uri _toDocUrl(String filename) {
     return _urls.document(filename);
+  }
+
+  void onNewImage(Function(dynamic) fn) {
+    _socket.on('event', fn);
   }
 }
 

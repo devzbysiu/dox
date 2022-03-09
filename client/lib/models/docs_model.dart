@@ -15,10 +15,15 @@ class DocsModel extends ChangeNotifier {
 
   DocsModel(Api api) {
     _api = api;
+    _api.onNewImage((_) => refresh());
     _api.fetchAllFiles().then((value) {
       _suggestions = value;
       notifyListeners();
     });
+  }
+
+  Future<void> refresh() async {
+    reset();
   }
 
   void onQueryChanged(String query) async {
@@ -43,10 +48,6 @@ class DocsModel extends ChangeNotifier {
   Future<void> reset() async {
     _suggestions = await _api.fetchAllFiles();
     notifyListeners();
-  }
-
-  Future<void> refresh() async {
-    reset();
   }
 
   Future<bool> newDoc(File doc) async {

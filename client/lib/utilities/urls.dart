@@ -26,4 +26,8 @@ class Urls {
   Uri upload() {
     return Uri.parse('${_config.baseUrl}/document/upload');
   }
+
+  Uri notifications() {
+    return Uri.parse('${_config.websocketUrl}/notifications');
+  }
 }
