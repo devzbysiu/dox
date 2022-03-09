@@ -99,7 +99,7 @@ fn extension(paths: &[PathBuf]) -> Ext {
         .ext()
 }
 
-fn notifications_channel() -> std::result::Result<Notifier, Box<dyn std::error::Error>> {
+fn notifications_channel() -> Result<Notifier> {
     let server = TcpListener::bind("0.0.0.0:8001")?;
     let stream = server.accept()?;
     let websocket = accept(stream.0)?;

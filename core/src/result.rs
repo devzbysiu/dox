@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use rocket::{http::Status, response::Responder};
 use thiserror::Error;
+use tungstenite::handshake::server::{NoCallback, ServerHandshake};
+use tungstenite::handshake::HandshakeError;
 
 // TODO: cleanup error messages and names
 #[derive(Debug, Error)]
@@ -71,6 +73,9 @@ pub enum DoxErr {
 
     #[error("Error while creating poppler document for PDF thumbnail: '{0}'")]
     Poppler(#[from] cairo::glib::error::Error),
+
+    #[error("Error while creating Websocket channel: '{0}'")]
+    Websocket(#[from] HandshakeError<ServerHandshake<std::net::TcpStream, NoCallback>>),
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;
