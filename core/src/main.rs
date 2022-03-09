@@ -102,9 +102,13 @@ fn extension(paths: &[PathBuf]) -> Ext {
 }
 
 fn notifications_channel() -> Result<NewDocsNotifier> {
+    debug!("creating notifications channel via websocket");
     let server = TcpListener::bind("0.0.0.0:8001")?;
+    debug!("waiting for a connection...");
     let stream = server.accept()?;
+    debug!("stream accepted");
     let websocket = accept(stream.0)?;
+    debug!("websocket ready");
     Ok(NewDocsNotifier::new(websocket))
 }
 
@@ -118,7 +122,9 @@ impl NewDocsNotifier {
     }
 
     fn notify(&mut self) -> Result<()> {
+        debug!("notifying about new docs...");
         self.websocket.write_message(Message::Text("".into()))?;
+        debug!("notified");
         Ok(())
     }
 }
