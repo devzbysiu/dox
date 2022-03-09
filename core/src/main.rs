@@ -22,7 +22,7 @@ use std::sync::mpsc::channel;
 use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::Duration;
-use tungstenite::{accept, WebSocket};
+use tungstenite::{accept, Message, WebSocket};
 
 mod cfg;
 mod extractor;
@@ -113,5 +113,10 @@ struct Notifier {
 impl Notifier {
     fn new(websocket: WebSocket<TcpStream>) -> Self {
         Self { websocket }
+    }
+
+    fn notify_new_image(&mut self) -> Result<()> {
+        self.websocket.write_message(Message::Text("".into()))?;
+        Ok(())
     }
 }

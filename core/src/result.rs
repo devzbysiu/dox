@@ -75,7 +75,10 @@ pub enum DoxErr {
     Poppler(#[from] cairo::glib::error::Error),
 
     #[error("Error while creating Websocket channel: '{0}'")]
-    Websocket(#[from] HandshakeError<ServerHandshake<std::net::TcpStream, NoCallback>>),
+    WebsocketConnection(#[from] HandshakeError<ServerHandshake<std::net::TcpStream, NoCallback>>),
+
+    #[error("Error while writing websocket message: '{0}'")]
+    Websocket(#[from] tungstenite::Error),
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;
