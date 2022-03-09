@@ -6,7 +6,7 @@ import 'package:dox/utilities/exceptions.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:web_socket_channel/io.dart';
 
 const filename = 'filename';
 const thumbnail = 'thumbnail';
@@ -16,7 +16,7 @@ const thumbnailUrl = 'thumbnailUrl';
 class Api {
   late final Urls _urls;
 
-  late final IO.Socket _socket;
+  late final IOWebSocketChannel _channel;
 
   static Api? _instance;
 
@@ -26,7 +26,7 @@ class Api {
 
   Api._(Urls urls) {
     _urls = urls;
-    _socket = IO.io(_urls.notifications());
+    _channel = IOWebSocketChannel.connect(_urls.notifications());
   }
 
   factory Api() {
@@ -82,7 +82,7 @@ class Api {
   }
 
   void onNewImage(Function(dynamic) fn) {
-    _socket.on('event', fn);
+    _channel.stream.listen(fn);
   }
 }
 

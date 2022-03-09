@@ -43,7 +43,7 @@ class AddButton extends StatelessWidget {
   Future<void> _scanAndSendImage(BuildContext context) async {
     final doc = await _scanImage(context);
     if (doc == null) return;
-    await _sendAndRefreshList(doc, context);
+    await _send(doc, context);
   }
 
   Future<File?> _scanImage(BuildContext context) async {
@@ -56,12 +56,9 @@ class AddButton extends StatelessWidget {
     return null;
   }
 
-  Future<void> _sendAndRefreshList(File doc, BuildContext context) async {
+  Future<void> _send(File doc, BuildContext context) async {
     try {
       await _uploadAndShowToast(doc, context);
-      Future.delayed(const Duration(seconds: 2), () async {
-        await _docsModel(context).reset();
-      });
     } on Exception {
       _showUploadFailed(context);
     }
@@ -108,7 +105,7 @@ class AddButton extends StatelessWidget {
   void _pickAndSendPdf(BuildContext context) async {
     final doc = await _pickPdf();
     if (doc == null) return;
-    await _sendAndRefreshList(doc, context);
+    await _send(doc, context);
   }
 
   Future<File?> _pickPdf() async {

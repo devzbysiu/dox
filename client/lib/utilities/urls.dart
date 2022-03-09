@@ -28,6 +28,6 @@ class Urls {
   }
 
   Uri notifications() {
-    return Uri.parse('${_config.websocketUrl}/notifications');
+    return Uri.parse(_config.websocketUrl);
   }
 }
