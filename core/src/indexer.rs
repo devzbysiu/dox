@@ -168,8 +168,10 @@ pub struct RepoTools {
 }
 
 #[allow(clippy::module_name_repetitions)]
-pub fn index_docs(tuples: &[DocDetails], index: &Index, schema: &Schema) -> Result<()> {
+pub fn index_docs(tuples: &[DocDetails], tools: &RepoTools) -> Result<()> {
     debug!("indexing...");
+    let index = &tools.index;
+    let schema = &tools.schema;
     // NOTE: IndexWriter is already multithreaded and
     // cannot be shared between external threads
     let mut index_writer = index.writer(50_000_000)?;

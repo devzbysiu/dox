@@ -87,7 +87,7 @@ fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoToo
             let extension = extension(&paths);
             PreprocessorFactory::from_ext(&extension, &cfg).preprocess(&paths)?;
             let tuples = ExtractorFactory::from_ext(&extension).extract_text(&paths);
-            indexer::index_docs(&tuples, &tools.index, &tools.schema)?;
+            indexer::index_docs(&tuples, &tools)?;
         }
     });
 }
@@ -99,23 +99,23 @@ fn extension(paths: &[PathBuf]) -> Ext {
         .ext()
 }
 
-fn notifications_channel() -> Result<Notifier> {
+fn notifications_channel() -> Result<NewImageNotifier> {
     let server = TcpListener::bind("0.0.0.0:8001")?;
     let stream = server.accept()?;
     let websocket = accept(stream.0)?;
-    Ok(Notifier::new(websocket))
+    Ok(NewImageNotifier::new(websocket))
 }
 
-struct Notifier {
+struct NewImageNotifier {
     websocket: WebSocket<TcpStream>,
 }
 
-impl Notifier {
+impl NewImageNotifier {
     fn new(websocket: WebSocket<TcpStream>) -> Self {
         Self { websocket }
     }
 
-    fn notify_new_image(&mut self) -> Result<()> {
+    fn notify(&mut self) -> Result<()> {
         self.websocket.write_message(Message::Text("".into()))?;
         Ok(())
     }
