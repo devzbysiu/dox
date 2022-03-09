@@ -45,6 +45,7 @@ pdf-extract = "0.6.3"
 inquire = "0.2.1"
 cairo-rs = { version = "0.14", features = ["png", "pdf"] }
 poppler = "0.3.1"
+tungstenite = "0.17.2"
 
 [dev-dependencies]
 tempfile = "3.3.0"

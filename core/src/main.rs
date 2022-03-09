@@ -15,11 +15,14 @@ use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
+use std::net::TcpListener;
+use std::net::TcpStream;
 use std::path::PathBuf;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::Duration;
+use tungstenite::{accept, WebSocket};
 
 mod cfg;
 mod extractor;
@@ -94,4 +97,21 @@ fn extension(paths: &[PathBuf]) -> Ext {
         .first() // NOTE: I'm assuming the batched paths are all the same filetype
         .unwrap_or_else(|| panic!("no new paths received, this shouldn't happen"))
         .ext()
+}
+
+fn notifications_channel() -> std::result::Result<Notifier, Box<dyn std::error::Error>> {
+    let server = TcpListener::bind("0.0.0.0:8001")?;
+    let stream = server.accept()?;
+    let websocket = accept(stream.0)?;
+    Ok(Notifier::new(websocket))
+}
+
+struct Notifier {
+    websocket: WebSocket<TcpStream>,
+}
+
+impl Notifier {
+    fn new(websocket: WebSocket<TcpStream>) -> Self {
+        Self { websocket }
+    }
 }
