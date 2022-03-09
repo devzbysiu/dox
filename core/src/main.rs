@@ -81,6 +81,7 @@ fn spawn_watching_thread(cfg: &Config) -> Receiver<Vec<PathBuf>> {
 
 fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoTools) {
     thread::spawn(move || -> Result<()> {
+        let mut new_docs_notifier = notifications_channel()?;
         loop {
             let paths = rx.recv()?;
             debug!("new docs: {:?}", paths);
@@ -88,6 +89,7 @@ fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoToo
             PreprocessorFactory::from_ext(&extension, &cfg).preprocess(&paths)?;
             let tuples = ExtractorFactory::from_ext(&extension).extract_text(&paths);
             indexer::index_docs(&tuples, &tools)?;
+            new_docs_notifier.notify()?;
         }
     });
 }
@@ -99,18 +101,18 @@ fn extension(paths: &[PathBuf]) -> Ext {
         .ext()
 }
 
-fn notifications_channel() -> Result<NewImageNotifier> {
+fn notifications_channel() -> Result<NewDocsNotifier> {
     let server = TcpListener::bind("0.0.0.0:8001")?;
     let stream = server.accept()?;
     let websocket = accept(stream.0)?;
-    Ok(NewImageNotifier::new(websocket))
+    Ok(NewDocsNotifier::new(websocket))
 }
 
-struct NewImageNotifier {
+struct NewDocsNotifier {
     websocket: WebSocket<TcpStream>,
 }
 
-impl NewImageNotifier {
+impl NewDocsNotifier {
     fn new(websocket: WebSocket<TcpStream>) -> Self {
         Self { websocket }
     }
