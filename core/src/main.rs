@@ -11,23 +11,22 @@ use crate::user_input::handle_config;
 
 use cooldown_buffer::cooldown_buffer;
 use log::{debug, error, warn};
+use notifier::notifier;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
-use std::net::TcpListener;
-use std::net::TcpStream;
 use std::path::PathBuf;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::Duration;
-use tungstenite::{accept, Message, WebSocket};
 
 mod cfg;
 mod extractor;
 mod helpers;
 mod indexer;
+mod notifier;
 mod preprocessor;
 mod prompt;
 mod result;
@@ -81,7 +80,7 @@ fn spawn_watching_thread(cfg: &Config) -> Receiver<Vec<PathBuf>> {
 
 fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoTools) {
     thread::spawn(move || -> Result<()> {
-        let mut new_docs_notifier = notifications_channel()?;
+        let mut notifier = notifier()?;
         loop {
             let paths = rx.recv()?;
             debug!("new docs: {:?}", paths);
@@ -89,7 +88,7 @@ fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoToo
             PreprocessorFactory::from_ext(&extension, &cfg).preprocess(&paths)?;
             let tuples = ExtractorFactory::from_ext(&extension).extract_text(&paths);
             indexer::index_docs(&tuples, &tools)?;
-            new_docs_notifier.notify()?;
+            notifier.notify()?;
         }
     });
 }
@@ -99,32 +98,4 @@ fn extension(paths: &[PathBuf]) -> Ext {
         .first() // NOTE: I'm assuming the batched paths are all the same filetype
         .unwrap_or_else(|| panic!("no new paths received, this shouldn't happen"))
         .ext()
-}
-
-fn notifications_channel() -> Result<NewDocsNotifier> {
-    debug!("creating notifications channel via websocket");
-    let server = TcpListener::bind("0.0.0.0:8001")?;
-    debug!("waiting for a connection...");
-    let stream = server.accept()?;
-    debug!("stream accepted");
-    let websocket = accept(stream.0)?;
-    debug!("websocket ready");
-    Ok(NewDocsNotifier::new(websocket))
-}
-
-struct NewDocsNotifier {
-    websocket: WebSocket<TcpStream>,
-}
-
-impl NewDocsNotifier {
-    fn new(websocket: WebSocket<TcpStream>) -> Self {
-        Self { websocket }
-    }
-
-    fn notify(&mut self) -> Result<()> {
-        debug!("notifying about new docs...");
-        self.websocket.write_message(Message::Text("".into()))?;
-        debug!("notified");
-        Ok(())
-    }
 }
