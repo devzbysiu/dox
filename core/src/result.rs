@@ -79,6 +79,9 @@ pub enum DoxErr {
 
     #[error("Error while writing websocket message: '{0}'")]
     Websocket(#[from] tungstenite::Error),
+
+    #[error("Error while notifying about new docs: '{0}'")]
+    Notifier(#[from] std::sync::mpsc::SendError<()>),
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;

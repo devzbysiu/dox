@@ -2,23 +2,26 @@ use crate::result::Result;
 
 use std::net::{TcpListener, TcpStream};
 use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::{Arc, Mutex};
 use std::thread;
 use tungstenite::{accept, Message, WebSocket};
 
 use log::debug;
 
-pub fn notifier() -> Result<Notifier> {
-    let (notifiers, notifier) = Notifiers::new();
+pub fn new_doc_notifier() -> Result<Notifier> {
+    let (tx, rx) = channel();
+    let (mut sockets, notifier) = Sockets::new(tx);
     debug!("creating notifications channel via websocket");
     let server = TcpListener::bind("0.0.0.0:8001")?;
     debug!("waiting for a connection...");
-    thread::spawn(|| -> Result<()> {
+    sockets.start_listening(rx);
+    thread::spawn(move || -> Result<()> {
         for stream in server.incoming() {
             let stream = stream?;
             debug!("stream accepted");
             let websocket = accept(stream)?;
             debug!("websocket ready");
-            notifiers.add(NewDocsNotifier::new(websocket));
+            sockets.add(Socket::new(websocket));
         }
         Ok(())
     });
@@ -26,33 +29,35 @@ pub fn notifier() -> Result<Notifier> {
     Ok(notifier)
 }
 
-struct Notifiers {
-    all: Vec<NewDocsNotifier>,
-    rx: Receiver<()>,
+struct Sockets {
+    all: Arc<Mutex<Vec<Socket>>>,
 }
 
-impl Notifiers {
-    fn new() -> (Self, Notifier) {
-        let (tx, rx) = channel();
+impl Sockets {
+    fn new(tx: Sender<()>) -> (Self, Notifier) {
         (
             Self {
-                all: Vec::new(),
-                rx,
+                all: Arc::new(Mutex::new(Vec::new())),
             },
             Notifier::new(tx),
         )
     }
 
-    fn add(&mut self, notifier: NewDocsNotifier) {
-        self.all.push(notifier);
+    fn add(&mut self, notifier: Socket) {
+        self.all.lock().expect("poisoned mutex").push(notifier);
     }
 
-    fn start_listening(self) {
-        let rx = self.rx;
+    pub fn start_listening(&self, rx: Receiver<()>) {
+        let all = self.all.clone();
         thread::spawn(move || -> Result<()> {
             loop {
                 let _ = rx.recv()?;
-                self.all.iter_mut().map(NewDocsNotifier::notify);
+                let _ = all
+                    .lock()
+                    .expect("poisoned mutex")
+                    .iter_mut()
+                    .map(Socket::notify)
+                    .collect::<Vec<_>>();
             }
         });
     }
@@ -67,17 +72,17 @@ impl Notifier {
         Self { tx }
     }
 
-    pub fn notify(&self) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    pub fn notify(&self) -> Result<()> {
         self.tx.send(())?;
         Ok(())
     }
 }
 
-struct NewDocsNotifier {
+struct Socket {
     websocket: WebSocket<TcpStream>,
 }
 
-impl NewDocsNotifier {
+impl Socket {
     fn new(websocket: WebSocket<TcpStream>) -> Self {
         Self { websocket }
     }

@@ -11,7 +11,7 @@ use crate::user_input::handle_config;
 
 use cooldown_buffer::cooldown_buffer;
 use log::{debug, error, warn};
-use notifier::notifier;
+use notifier::new_doc_notifier;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
@@ -80,7 +80,7 @@ fn spawn_watching_thread(cfg: &Config) -> Receiver<Vec<PathBuf>> {
 
 fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoTools) {
     thread::spawn(move || -> Result<()> {
-        let mut notifier = notifier()?;
+        let new_doc_notifier = new_doc_notifier()?;
         loop {
             let paths = rx.recv()?;
             debug!("new docs: {:?}", paths);
@@ -88,7 +88,7 @@ fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoToo
             PreprocessorFactory::from_ext(&extension, &cfg).preprocess(&paths)?;
             let tuples = ExtractorFactory::from_ext(&extension).extract_text(&paths);
             indexer::index_docs(&tuples, &tools)?;
-            notifier.notify()?;
+            new_doc_notifier.notify()?;
         }
     });
 }
