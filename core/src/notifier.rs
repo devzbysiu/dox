@@ -11,29 +11,43 @@ use log::debug;
 pub fn new_doc_notifier() -> Result<Notifier> {
     debug!("creating new doc notifier");
     let (tx, rx) = channel();
-    let (mut sockets, notifier) = Sockets::new(tx);
-    let server = TcpListener::bind("0.0.0.0:8001")?;
-    sockets.start_listening(rx);
-    thread::spawn(move || -> Result<()> {
-        debug!("waiting for a connection...");
-        for stream in server.incoming() {
-            let stream = stream?;
-            debug!("\tconnection accepted");
-            let websocket = accept(stream)?;
-            debug!("\twebsocket ready");
-            sockets.add(Socket::new(websocket));
-        }
-        Ok(())
-    });
-
+    let (sockets_list, notifier) = NotifiableSockets::new(tx);
+    sockets_list.await_notifications(rx);
+    ConnHandler::new()?.push_new_conns(sockets_list);
     Ok(notifier)
 }
 
-struct Sockets {
+struct ConnHandler {
+    listener: TcpListener,
+}
+
+impl ConnHandler {
+    fn new() -> Result<Self> {
+        Ok(Self {
+            listener: TcpListener::bind("0.0.0.0:8001")?,
+        })
+    }
+
+    fn push_new_conns(self, mut sockets: NotifiableSockets) {
+        thread::spawn(move || -> Result<()> {
+            debug!("waiting for a connection...");
+            for stream in self.listener.incoming() {
+                let stream = stream?;
+                debug!("\tconnection accepted");
+                let websocket = accept(stream)?;
+                debug!("\twebsocket ready");
+                sockets.add(Socket::new(websocket));
+            }
+            Ok(())
+        });
+    }
+}
+
+struct NotifiableSockets {
     all: Arc<Mutex<Vec<Socket>>>, // TODO: handle case when socket is disconnected
 }
 
-impl Sockets {
+impl NotifiableSockets {
     fn new(tx: Sender<()>) -> (Self, Notifier) {
         (
             Self {
@@ -48,7 +62,7 @@ impl Sockets {
         self.all.lock().expect("poisoned mutex").push(notifier);
     }
 
-    pub fn start_listening(&self, rx: Receiver<()>) {
+    fn await_notifications(&self, rx: Receiver<()>) {
         let all = self.all.clone();
         thread::spawn(move || -> Result<()> {
             loop {
