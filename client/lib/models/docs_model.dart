@@ -13,9 +13,13 @@ class DocsModel extends ChangeNotifier {
 
   late final Api _api;
 
+  bool _isConnected = false;
+
   DocsModel(Api api) {
     _api = api;
     _api.onNewImage((_) => refresh());
+    // _api.onConnected(toggleConnected);
+    // _api.onDisconnected(toggleConnected);
     _api.fetchAllFiles().then((value) {
       _suggestions = value;
       notifyListeners();
@@ -61,4 +65,10 @@ class DocsModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   List<Document> get suggestions => _suggestions;
+
+  bool get isConnected => _isConnected;
+
+  toggleConnected() {
+    _isConnected ^= _isConnected;
+  }
 }

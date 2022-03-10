@@ -84,6 +84,14 @@ class Api {
   void onNewImage(Function(dynamic) fn) {
     _channel.stream.listen(fn);
   }
+
+  void onConnected(Function() fn) {
+    fn();
+  }
+
+  void onDisconnected(Function() fn) {
+    fn();
+  }
 }
 
 class _Doc {
