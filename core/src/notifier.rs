@@ -9,18 +9,18 @@ use tungstenite::{accept, Message, WebSocket};
 use log::debug;
 
 pub fn new_doc_notifier() -> Result<Notifier> {
+    debug!("creating new doc notifier");
     let (tx, rx) = channel();
     let (mut sockets, notifier) = Sockets::new(tx);
-    debug!("creating notifications channel via websocket");
     let server = TcpListener::bind("0.0.0.0:8001")?;
-    debug!("waiting for a connection...");
     sockets.start_listening(rx);
     thread::spawn(move || -> Result<()> {
+        debug!("waiting for a connection...");
         for stream in server.incoming() {
             let stream = stream?;
-            debug!("stream accepted");
+            debug!("\tconnection accepted");
             let websocket = accept(stream)?;
-            debug!("websocket ready");
+            debug!("\twebsocket ready");
             sockets.add(Socket::new(websocket));
         }
         Ok(())
@@ -30,7 +30,7 @@ pub fn new_doc_notifier() -> Result<Notifier> {
 }
 
 struct Sockets {
-    all: Arc<Mutex<Vec<Socket>>>,
+    all: Arc<Mutex<Vec<Socket>>>, // TODO: handle case when socket is disconnected
 }
 
 impl Sockets {
@@ -44,6 +44,7 @@ impl Sockets {
     }
 
     fn add(&mut self, notifier: Socket) {
+        debug!("adding socket");
         self.all.lock().expect("poisoned mutex").push(notifier);
     }
 
@@ -73,6 +74,7 @@ impl Notifier {
     }
 
     pub fn notify(&self) -> Result<()> {
+        debug!("notifying all listeners");
         self.tx.send(())?;
         Ok(())
     }
