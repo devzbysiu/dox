@@ -36,7 +36,9 @@ impl ConnHandler {
                 debug!("\tconnection accepted");
                 let websocket = accept(stream)?;
                 debug!("\twebsocket ready");
-                sockets.add(Socket::new(websocket));
+                let mut socket = Socket::new(websocket);
+                socket.inform_connected()?;
+                sockets.add(socket);
             }
             Ok(())
         });
@@ -71,7 +73,7 @@ impl NotifiableSockets {
                     .lock()
                     .expect("poisoned mutex")
                     .iter_mut()
-                    .map(Socket::notify)
+                    .map(Socket::notify_new_docs)
                     .collect::<Vec<_>>();
             }
         });
@@ -103,7 +105,15 @@ impl Socket {
         Self { websocket }
     }
 
-    fn notify(&mut self) -> Result<()> {
+    fn inform_connected(&mut self) -> Result<()> {
+        debug!("notifying about connection established...");
+        self.websocket
+            .write_message(Message::Text("connected".into()))?;
+        debug!("notified");
+        Ok(())
+    }
+
+    fn notify_new_docs(&mut self) -> Result<()> {
         debug!("notifying about new docs...");
         self.websocket
             .write_message(Message::Text("new-doc".into()))?;

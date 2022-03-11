@@ -86,7 +86,23 @@ class Api {
     onDone = Function,
     onConnected = Function,
   }) {
-    _channel.stream.listen(onNewDoc, onDone: onDone);
+    _channel.stream.listen(
+        (data) => _onData(data, onNewDoc: onNewDoc, onConnected: onConnected),
+        onDone: onDone);
+  }
+
+  void _onData(String data, {onNewDoc = Function, onConnected = Function}) {
+    switch (data) {
+      case 'new-doc':
+        onNewDoc();
+        break;
+      case 'connected':
+        onConnected();
+        break;
+      default:
+        // not supported
+        break;
+    }
   }
 }
 
