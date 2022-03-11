@@ -81,16 +81,9 @@ class Api {
     return _urls.document(filename);
   }
 
-  void onNewData(Function(dynamic) fn) {
-    _channel.stream.listen(fn);
-  }
-
-  void onConnected(Function() fn) {
-    fn();
-  }
-
-  void onDisconnected(Function() fn) {
-    fn();
+  void onNewData(
+      {onNewDoc = Function, onDone = Function, onConnected = Function}) {
+    _channel.stream.listen(onNewDoc, onDone: onDone);
   }
 }
 

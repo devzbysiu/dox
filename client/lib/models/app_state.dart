@@ -13,24 +13,11 @@ class AppState extends ChangeNotifier {
 
   late final Api _api;
 
-  bool isConnected = false;
+  bool _isConnected = false;
 
   AppState(Api api) {
     _api = api;
-    _api.onNewData((data) {
-      switch (data) {
-        case "new-doc":
-          refresh();
-          break;
-        case "ping":
-          isConnected = true;
-          break;
-        default:
-          // not supported data
-          break;
-      }
-
-    });
+    _api.onNewData(onNewDoc: refresh, onDone: _notifyDisconnected, onConnected: _notifyConnected);
     _api.fetchAllFiles().then((value) {
       _suggestions = value;
       notifyListeners();
@@ -76,4 +63,16 @@ class AppState extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   List<Document> get suggestions => _suggestions;
+
+  bool get isConnected => _isConnected;
+
+  void _notifyDisconnected() {
+    _isConnected = false;
+    notifyListeners();
+  }
+
+  void _notifyConnected() {
+    _isConnected = true;
+    notifyListeners();
+  }
 }
