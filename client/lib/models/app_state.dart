@@ -4,7 +4,7 @@ import 'package:dox/models/document.dart';
 import 'package:dox/utilities/api.dart';
 import 'package:flutter/material.dart';
 
-class State extends ChangeNotifier {
+class AppState extends ChangeNotifier {
   bool _isLoading = false;
 
   List<Document> _suggestions = List.empty();
@@ -15,7 +15,7 @@ class State extends ChangeNotifier {
 
   bool _isConnected = false;
 
-  State(Api api) {
+  AppState(Api api) {
     _api = api;
     _api.onNewImage((_) => refresh());
     // _api.onConnected(toggleConnected);

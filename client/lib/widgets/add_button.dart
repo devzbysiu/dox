@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:document_scanner_flutter/document_scanner_flutter.dart';
-import 'package:dox/models/docs_model.dart';
+import 'package:dox/models/app_state.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -72,8 +72,8 @@ class AddButton extends StatelessWidget {
     _showUploadFailed(context);
   }
 
-  State _docsModel(BuildContext context) {
-    return Provider.of<State>(context, listen: false);
+  AppState _docsModel(BuildContext context) {
+    return Provider.of<AppState>(context, listen: false);
   }
 
   void _showUploadFailed(BuildContext context) {
