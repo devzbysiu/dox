@@ -11,16 +11,17 @@ use std::path::PathBuf;
 pub fn handle_config(path_override: Option<String>) -> Result<Config> {
     debug!("handling config with {:?}", path_override);
     let config_path = path_override.map_or(config_path(), PathBuf::from);
-    if config_path.exists() {
+    let cfg = if config_path.exists() {
         debug!("loading config from '{}'", config_path.str());
-        cfg::read_config(config_path)
+        cfg::read_config(config_path)?
     } else {
         debug!("config path '{}' doesn't exist", config_path.str());
         let cfg = config_from_user()?;
-        prepare_directories(&cfg)?;
         cfg::store(config_path, &cfg)?;
-        Ok(cfg)
-    }
+        cfg
+    };
+    prepare_directories(&cfg)?;
+    Ok(cfg)
 }
 
 pub fn config_from_user() -> Result<Config> {
