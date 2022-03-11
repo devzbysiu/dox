@@ -105,7 +105,8 @@ impl Socket {
 
     fn notify(&mut self) -> Result<()> {
         debug!("notifying about new docs...");
-        self.websocket.write_message(Message::Text("".into()))?;
+        self.websocket
+            .write_message(Message::Text("new-doc".into()))?;
         debug!("notified");
         Ok(())
     }

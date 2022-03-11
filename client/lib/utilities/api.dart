@@ -81,7 +81,7 @@ class Api {
     return _urls.document(filename);
   }
 
-  void onNewImage(Function(dynamic) fn) {
+  void onNewData(Function(dynamic) fn) {
     _channel.stream.listen(fn);
   }
 
