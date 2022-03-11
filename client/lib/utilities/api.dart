@@ -81,8 +81,11 @@ class Api {
     return _urls.document(filename);
   }
 
-  void onNewData(
-      {onNewDoc = Function, onDone = Function, onConnected = Function}) {
+  void onNewData({
+    onNewDoc = Function,
+    onDone = Function,
+    onConnected = Function,
+  }) {
     _channel.stream.listen(onNewDoc, onDone: onDone);
   }
 }
