@@ -21,7 +21,7 @@ class _SearchInputState extends State<SearchInput> {
       borderRadius: const BorderRadius.all(Radius.circular(15)),
       elevation: 18,
       shadowColor: onBackground(context),
-      child: Consumer<DocsModel>(
+      child: Consumer<State>(
         builder: (context, model, _) => TextField(
           controller: _controller,
           onChanged: model.onQueryChanged,
@@ -31,7 +31,7 @@ class _SearchInputState extends State<SearchInput> {
     );
   }
 
-  InputDecoration _inputDecoration(BuildContext context, DocsModel model) {
+  InputDecoration _inputDecoration(BuildContext context, State model) {
     return InputDecoration(
       filled: true,
       fillColor: onPrimary(context),
@@ -47,7 +47,7 @@ class _SearchInputState extends State<SearchInput> {
     );
   }
 
-  void _clear(DocsModel model) async {
+  void _clear(State model) async {
     _controller.clear();
     await model.reset();
     setState(() {});

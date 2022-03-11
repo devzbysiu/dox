@@ -72,8 +72,8 @@ class AddButton extends StatelessWidget {
     _showUploadFailed(context);
   }
 
-  DocsModel _docsModel(BuildContext context) {
-    return Provider.of<DocsModel>(context, listen: false);
+  State _docsModel(BuildContext context) {
+    return Provider.of<State>(context, listen: false);
   }
 
   void _showUploadFailed(BuildContext context) {

@@ -16,11 +16,11 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => DocsModel(Api()),
+      create: (_) => State(Api()),
       child: GestureDetector(
         onTap: () => _hideKeyboard(),
         onVerticalDragDown: (_) => _hideKeyboard(),
-        child: Consumer<DocsModel>(
+        child: Consumer<State>(
           builder: (context, model, _) => Scaffold(
             backgroundColor: background(context),
             body: NestedScrollView(
@@ -55,7 +55,7 @@ class HomePage extends StatelessWidget {
     return const [ScrollableAppBar()];
   }
 
-  Future<void> _refreshDocs(DocsModel model) async {
+  Future<void> _refreshDocs(State model) async {
     await Future.delayed(const Duration(seconds: 1), model.refresh);
   }
 }

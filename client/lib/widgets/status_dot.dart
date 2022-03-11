@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 class StatusDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Consumer<DocsModel>(
+    return Consumer<State>(
       builder: (context, model, _) => Container(
         width: 15,
         height: 15,
@@ -21,7 +21,7 @@ class StatusDot extends StatelessWidget {
     );
   }
 
-  List<Color> _colors(DocsModel model) {
+  List<Color> _colors(State model) {
     return model.isConnected
         ? [Colors.green[300]!, Colors.yellow[400]!]
         : [Colors.blueGrey, Colors.blueGrey];

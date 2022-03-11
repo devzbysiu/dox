@@ -13,14 +13,14 @@ class OpenableImageList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<DocsModel>(
+    return Consumer<State>(
       builder: (context, model, _) => ListView(
         children: _buildOpenableImages(model),
       ),
     );
   }
 
-  List<Widget> _buildOpenableImages(DocsModel model) {
+  List<Widget> _buildOpenableImages(State model) {
     final docUrls = model.suggestions.where(_isSupportedFiletype).toList();
     return docUrls.map(_buildImage).toList();
   }
