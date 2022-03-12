@@ -1,3 +1,4 @@
+import 'package:dox/models/connection_state.dart';
 import 'package:dox/models/docs_state.dart';
 import 'package:dox/utilities/api.dart';
 import 'package:dox/utilities/theme.dart';
@@ -15,8 +16,11 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => DocsState(Api()),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<DocsState>(create: (_) => DocsState(Api())),
+        ChangeNotifierProvider<ConnState>(create: (_) => ConnState(Api()))
+      ],
       child: GestureDetector(
         onTap: () => _hideKeyboard(),
         onVerticalDragDown: (_) => _hideKeyboard(),

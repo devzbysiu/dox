@@ -1,12 +1,12 @@
 import 'package:dox/utilities/api.dart';
 import 'package:flutter/material.dart';
 
-class AppState extends ChangeNotifier {
+class ConnState extends ChangeNotifier {
   late final Api _api;
 
   bool _isConnected = false;
 
-  AppState(Api api) {
+  ConnState(Api api) {
     _api = api;
     _api.onNewData(
       onDone: _notifyDisconnected,
