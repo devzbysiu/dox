@@ -4,7 +4,7 @@ import 'package:dox/models/document.dart';
 import 'package:dox/utilities/api.dart';
 import 'package:flutter/material.dart';
 
-class AppState extends ChangeNotifier {
+class DocsState extends ChangeNotifier {
   bool _isLoading = false;
 
   List<Document> _suggestions = List.empty();
@@ -15,7 +15,7 @@ class AppState extends ChangeNotifier {
 
   bool _isConnected = false;
 
-  AppState(Api api) {
+  DocsState(Api api) {
     _api = api;
     _api.onNewData(
       onNewDoc: refresh,

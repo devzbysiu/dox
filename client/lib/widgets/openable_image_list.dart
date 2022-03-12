@@ -1,4 +1,4 @@
-import 'package:dox/models/app_state.dart';
+import 'package:dox/models/docs_state.dart';
 import 'package:dox/models/document.dart';
 import 'package:dox/utilities/filetype.dart';
 import 'package:dox/widgets/document/openable_document.dart';
@@ -13,14 +13,14 @@ class OpenableImageList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppState>(
+    return Consumer<DocsState>(
       builder: (context, model, _) => ListView(
         children: _buildOpenableImages(model),
       ),
     );
   }
 
-  List<Widget> _buildOpenableImages(AppState model) {
+  List<Widget> _buildOpenableImages(DocsState model) {
     final docUrls = model.suggestions.where(_isSupportedFiletype).toList();
     return docUrls.map(_buildImage).toList();
   }

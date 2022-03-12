@@ -1,4 +1,4 @@
-import 'package:dox/models/app_state.dart';
+import 'package:dox/models/docs_state.dart';
 import 'package:dox/utilities/api.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:dox/widgets/add_button.dart';
@@ -16,11 +16,11 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AppState(Api()),
+      create: (_) => DocsState(Api()),
       child: GestureDetector(
         onTap: () => _hideKeyboard(),
         onVerticalDragDown: (_) => _hideKeyboard(),
-        child: Consumer<AppState>(
+        child: Consumer<DocsState>(
           builder: (context, model, _) => Scaffold(
             backgroundColor: background(context),
             body: NestedScrollView(
@@ -55,7 +55,7 @@ class HomePage extends StatelessWidget {
     return const [ScrollableAppBar()];
   }
 
-  Future<void> _refreshDocs(AppState model) async {
+  Future<void> _refreshDocs(DocsState model) async {
     await Future.delayed(const Duration(seconds: 1), model.refresh);
   }
 }

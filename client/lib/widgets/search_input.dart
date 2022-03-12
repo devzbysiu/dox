@@ -1,4 +1,4 @@
-import 'package:dox/models/app_state.dart';
+import 'package:dox/models/docs_state.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +21,7 @@ class _SearchInputState extends State<SearchInput> {
       borderRadius: const BorderRadius.all(Radius.circular(15)),
       elevation: 18,
       shadowColor: onBackground(context),
-      child: Consumer<AppState>(
+      child: Consumer<DocsState>(
         builder: (context, model, _) => TextField(
           controller: _controller,
           onChanged: model.onQueryChanged,
@@ -31,7 +31,7 @@ class _SearchInputState extends State<SearchInput> {
     );
   }
 
-  InputDecoration _inputDecoration(BuildContext context, AppState model) {
+  InputDecoration _inputDecoration(BuildContext context, DocsState model) {
     return InputDecoration(
       filled: true,
       fillColor: onPrimary(context),
@@ -47,7 +47,7 @@ class _SearchInputState extends State<SearchInput> {
     );
   }
 
-  void _clear(AppState model) async {
+  void _clear(DocsState model) async {
     _controller.clear();
     await model.reset();
     setState(() {});
