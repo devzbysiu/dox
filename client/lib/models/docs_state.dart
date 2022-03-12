@@ -17,11 +17,7 @@ class DocsState extends ChangeNotifier {
 
   DocsState(Api api) {
     _api = api;
-    _api.onNewData(
-      onNewDoc: refresh,
-      onDone: _notifyDisconnected,
-      onConnected: _notifyConnected,
-    );
+    _api.onNewDoc(refresh);
     _api.fetchAllFiles().then((value) {
       _suggestions = value;
       notifyListeners();

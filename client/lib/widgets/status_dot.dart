@@ -1,3 +1,4 @@
+import 'package:dox/models/connection_state.dart';
 import 'package:dox/models/docs_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -7,7 +8,7 @@ class StatusDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<DocsState>(
+    return Consumer<ConnState>(
       builder: (context, model, _) => Container(
         width: 15,
         height: 15,
@@ -23,7 +24,7 @@ class StatusDot extends StatelessWidget {
     );
   }
 
-  List<Color> _colors(DocsState model) {
+  List<Color> _colors(ConnState model) {
     return model.isConnected
         ? [Colors.green[300]!, Colors.yellow[400]!]
         : [Colors.blueGrey, Colors.blueGrey];

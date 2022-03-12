@@ -8,10 +8,8 @@ class ConnState extends ChangeNotifier {
 
   ConnState(Api api) {
     _api = api;
-    _api.onNewData(
-      onDone: _notifyDisconnected,
-      onConnected: _notifyConnected,
-    );
+    _api.onConnected(_notifyConnected);
+    _api.onDone(_notifyDisconnected);
   }
 
   bool get isConnected => _isConnected;

@@ -13,10 +13,12 @@ const thumbnail = 'thumbnail';
 const fileUrl = 'fileUrl';
 const thumbnailUrl = 'thumbnailUrl';
 
+typedef VoidFunction = void Function()?;
+
 class Api {
   late final Urls _urls;
 
-  late final IOWebSocketChannel _channel;
+  late final Stream _stream;
 
   static Api? _instance;
 
@@ -26,7 +28,9 @@ class Api {
 
   Api._(Urls urls) {
     _urls = urls;
-    _channel = IOWebSocketChannel.connect(_urls.notifications());
+    _stream = IOWebSocketChannel.connect(_urls.notifications())
+        .stream
+        .asBroadcastStream();
   }
 
   factory Api() {
@@ -81,28 +85,24 @@ class Api {
     return _urls.document(filename);
   }
 
-  void onNewData({
-    onNewDoc = Function,
-    onDone = Function,
-    onConnected = Function,
-  }) {
-    _channel.stream.listen(
-        (data) => _onData(data, onNewDoc: onNewDoc, onConnected: onConnected),
-        onDone: onDone);
+  void onNewDoc(Function onNewDoc) {
+    _stream.listen((data) {
+      if (data == "new-doc") {
+        onNewDoc();
+      }
+    });
   }
 
-  void _onData(String data, {onNewDoc = Function, onConnected = Function}) {
-    switch (data) {
-      case 'new-doc':
-        onNewDoc();
-        break;
-      case 'connected':
+  void onConnected(Function onConnected) {
+    _stream.listen((data) {
+      if (data == "connected") {
         onConnected();
-        break;
-      default:
-        // not supported
-        break;
-    }
+      }
+    });
+  }
+
+  void onDone(VoidFunction onDone) {
+    _stream.listen((_) {}, onDone: onDone);
   }
 }
 
