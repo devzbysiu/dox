@@ -9,7 +9,7 @@ class ScrollableAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      title: StatusDot(),
+      title: const StatusDot(),
       expandedHeight: 220.0,
       flexibleSpace: FlexibleSpaceBar(
         background: Image.asset('assets/app-bar.webp', fit: BoxFit.cover),
