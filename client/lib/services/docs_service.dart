@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dox/models/document.dart';
+import 'package:dox/utilities/events_stream.dart';
 import 'package:dox/utilities/exceptions.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:flutter/foundation.dart';
@@ -22,15 +23,13 @@ class DocsService {
 
   static DocsService? _instance;
 
-  static init(Urls urls) {
-    _instance ??= DocsService._(urls);
+  static init(Urls urls, EventsStream stream) {
+    _instance ??= DocsService._(urls, stream);
   }
 
-  DocsService._(Urls urls) {
+  DocsService._(Urls urls, EventsStream stream) {
     _urls = urls;
-    _stream = IOWebSocketChannel.connect(_urls.notifications())
-        .stream
-        .asBroadcastStream();
+    _stream = stream.stream; // TODO: Improve this repetition
   }
 
   factory DocsService() {
@@ -91,18 +90,6 @@ class DocsService {
         onNewDoc();
       }
     });
-  }
-
-  void onConnected(Function onConnected) {
-    _stream.listen((data) {
-      if (data == "connected") {
-        onConnected();
-      }
-    });
-  }
-
-  void onDone(VoidFunction onDone) {
-    _stream.listen((_) {}, onDone: onDone);
   }
 }
 

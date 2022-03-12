@@ -1,18 +1,16 @@
-import 'package:dox/services/docs_service.dart';
+import 'package:dox/services/connection_service.dart';
 import 'package:flutter/material.dart';
 
 class ConnState extends ChangeNotifier {
-  late final DocsService _api;
+  late final ConnService _connService;
 
   bool _isConnected = false;
 
-  ConnState(DocsService api) {
-    _api = api;
-    _api.onConnected(_notifyConnected);
-    _api.onDone(_notifyDisconnected);
+  ConnState(ConnService connService) {
+    _connService = connService;
+    _connService.onConnected(_notifyConnected);
+    _connService.onDone(_notifyDisconnected);
   }
-
-  bool get isConnected => _isConnected;
 
   void _notifyDisconnected() {
     _isConnected = false;
@@ -23,4 +21,6 @@ class ConnState extends ChangeNotifier {
     _isConnected = true;
     notifyListeners();
   }
+
+  bool get isConnected => _isConnected;
 }

@@ -1,6 +1,8 @@
 import 'package:dox/screens/splash_screen.dart';
+import 'package:dox/services/connection_service.dart';
 import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/config.dart';
+import 'package:dox/utilities/events_stream.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +19,10 @@ class MyApp extends StatelessWidget {
     Config config, {
     Key? key,
   }) : super(key: key) {
-    DocsService.init(Urls(config));
+    final urls = Urls(config);
+    final eventsStream = EventsStream(urls.notifications());
+    DocsService.init(urls, eventsStream);
+    ConnService.init(eventsStream);
   }
 
   @override

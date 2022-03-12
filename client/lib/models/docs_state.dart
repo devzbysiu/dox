@@ -11,14 +11,12 @@ class DocsState extends ChangeNotifier {
 
   String _query = '';
 
-  late final DocsService _api;
+  late final DocsService _docsService;
 
-  bool _isConnected = false;
-
-  DocsState(DocsService api) {
-    _api = api;
-    _api.onNewDoc(refresh);
-    _api.fetchAllFiles().then((value) {
+  DocsState(DocsService docsService) {
+    _docsService = docsService;
+    _docsService.onNewDoc(refresh);
+    _docsService.fetchAllFiles().then((value) {
       _suggestions = value;
       notifyListeners();
     });
@@ -43,17 +41,17 @@ class DocsState extends ChangeNotifier {
 
   Future<List<Document>> _giveSuggestions(String query) async {
     return query.isEmpty
-        ? await _api.fetchAllFiles()
-        : await _api.searchDocs(query);
+        ? await _docsService.fetchAllFiles()
+        : await _docsService.searchDocs(query);
   }
 
   Future<void> reset() async {
-    _suggestions = await _api.fetchAllFiles();
+    _suggestions = await _docsService.fetchAllFiles();
     notifyListeners();
   }
 
   Future<bool> newDoc(File doc) async {
-    final resp = await _api.uploadDoc(doc);
+    final resp = await _docsService.uploadDoc(doc);
     if (resp.statusCode != 201) {
       return false;
     }
@@ -63,16 +61,4 @@ class DocsState extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   List<Document> get suggestions => _suggestions;
-
-  bool get isConnected => _isConnected;
-
-  void _notifyDisconnected() {
-    _isConnected = false;
-    notifyListeners();
-  }
-
-  void _notifyConnected() {
-    _isConnected = true;
-    notifyListeners();
-  }
 }
