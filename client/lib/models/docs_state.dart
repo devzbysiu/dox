@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dox/models/document.dart';
-import 'package:dox/utilities/api.dart';
+import 'package:dox/services/docs_service.dart';
 import 'package:flutter/material.dart';
 
 class DocsState extends ChangeNotifier {
@@ -11,11 +11,11 @@ class DocsState extends ChangeNotifier {
 
   String _query = '';
 
-  late final Api _api;
+  late final DocsService _api;
 
   bool _isConnected = false;
 
-  DocsState(Api api) {
+  DocsState(DocsService api) {
     _api = api;
     _api.onNewDoc(refresh);
     _api.fetchAllFiles().then((value) {

@@ -1,12 +1,12 @@
-import 'package:dox/utilities/api.dart';
+import 'package:dox/services/docs_service.dart';
 import 'package:flutter/material.dart';
 
 class ConnState extends ChangeNotifier {
-  late final Api _api;
+  late final DocsService _api;
 
   bool _isConnected = false;
 
-  ConnState(Api api) {
+  ConnState(DocsService api) {
     _api = api;
     _api.onConnected(_notifyConnected);
     _api.onDone(_notifyDisconnected);

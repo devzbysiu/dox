@@ -15,25 +15,25 @@ const thumbnailUrl = 'thumbnailUrl';
 
 typedef VoidFunction = void Function()?;
 
-class Api {
+class DocsService {
   late final Urls _urls;
 
   late final Stream _stream;
 
-  static Api? _instance;
+  static DocsService? _instance;
 
   static init(Urls urls) {
-    _instance ??= Api._(urls);
+    _instance ??= DocsService._(urls);
   }
 
-  Api._(Urls urls) {
+  DocsService._(Urls urls) {
     _urls = urls;
     _stream = IOWebSocketChannel.connect(_urls.notifications())
         .stream
         .asBroadcastStream();
   }
 
-  factory Api() {
+  factory DocsService() {
     if (_instance == null) throw ApiNotInitializedException();
     return _instance!;
   }

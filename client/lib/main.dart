@@ -1,5 +1,5 @@
 import 'package:dox/screens/splash_screen.dart';
-import 'package:dox/utilities/api.dart';
+import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/config.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:dox/utilities/urls.dart';
@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
     Config config, {
     Key? key,
   }) : super(key: key) {
-    Api.init(Urls(config));
+    DocsService.init(Urls(config));
   }
 
   @override
