@@ -1,10 +1,12 @@
 import 'package:dox/utilities/config.dart';
+import 'package:dox/utilities/log.dart';
 import 'package:dox/utilities/service_locator.dart';
 
-class Urls {
+class Urls with Log {
   late final Config _config;
 
   Urls({Config? config}) {
+    log.fine('initializing Config');
     _config = config ?? getIt<Config>();
   }
 

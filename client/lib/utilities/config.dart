@@ -1,6 +1,7 @@
+import 'package:dox/utilities/log.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-class Config {
+class Config with Log {
   static Config? _singleton;
 
   late final String _coreBaseUrl;
@@ -19,6 +20,9 @@ class Config {
   }
 
   Config._(String baseUrl, String websocketUrl) {
+    log.fine('initializing config');
+    log.fine('\tbaseUrl: "$baseUrl"');
+    log.fine('\twebsocketUrl: "$websocketUrl"');
     _coreBaseUrl = baseUrl;
     _coreWebSocketUrl = websocketUrl;
   }

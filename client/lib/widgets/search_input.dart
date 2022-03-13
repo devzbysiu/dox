@@ -1,4 +1,5 @@
 import 'package:dox/models/docs_state.dart';
+import 'package:dox/utilities/log.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -12,7 +13,7 @@ class SearchInput extends StatefulWidget {
   State<StatefulWidget> createState() => _SearchInputState();
 }
 
-class _SearchInputState extends State<SearchInput> {
+class _SearchInputState extends State<SearchInput> with Log {
   final TextEditingController _controller = TextEditingController();
 
   @override
@@ -48,6 +49,7 @@ class _SearchInputState extends State<SearchInput> {
   }
 
   void _clear(DocsState model) async {
+    log.fine('clearing input');
     _controller.clear();
     await model.reset();
     setState(() {});

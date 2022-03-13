@@ -1,6 +1,6 @@
 class Document {
-  late final Uri fileUrl;
-  late final Uri thumbnailUrl;
+  final Uri fileUrl;
+  final Uri thumbnailUrl;
 
-  Document(this.fileUrl, this.thumbnailUrl);
+  const Document(this.fileUrl, this.thumbnailUrl);
 }

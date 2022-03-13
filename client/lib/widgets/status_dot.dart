@@ -1,9 +1,9 @@
 import 'package:dox/models/connection_state.dart';
-import 'package:dox/models/docs_state.dart';
+import 'package:dox/utilities/log.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class StatusDot extends StatelessWidget {
+class StatusDot extends StatelessWidget with Log {
   const StatusDot({Key? key}) : super(key: key);
 
   @override
@@ -25,7 +25,9 @@ class StatusDot extends StatelessWidget {
   }
 
   List<Color> _colors(ConnState model) {
-    return model.isConnected
+    final isConnected = model.isConnected;
+    log.fine('showing status color for: "isConnected == $isConnected"');
+    return isConnected
         ? [Colors.green[300]!, Colors.yellow[400]!]
         : [Colors.blueGrey, Colors.blueGrey];
   }

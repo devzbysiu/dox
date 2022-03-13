@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dox/models/document.dart';
 import 'package:dox/utilities/events_stream.dart';
+import 'package:dox/utilities/log.dart';
 import 'package:dox/utilities/service_locator.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:flutter/foundation.dart';
@@ -13,7 +14,7 @@ const thumbnail = 'thumbnail';
 const fileUrl = 'fileUrl';
 const thumbnailUrl = 'thumbnailUrl';
 
-class DocsService {
+class DocsService with Log {
   late final Urls _urls;
 
   late final Stream _stream;
@@ -22,24 +23,31 @@ class DocsService {
     Urls? urls,
     EventsStream? eventsStream,
   }) {
+    log.fine('initializing DocsService');
     _urls = urls ?? getIt<Urls>();
     final stream = eventsStream ?? getIt<EventsStream>();
     _stream = stream.stream; // TODO: Improve this repetition
   }
 
   Future<List<Document>> fetchAllFiles() async {
+    log.fine('fetching all files');
     return await _fetchDocs(_urls.allDocuments());
   }
 
   // TODO: think about pagination (or something similar)
   Future<List<Document>> _fetchDocs(Uri endpoint) async {
+    log.fine('calling endpoint: "$endpoint"');
     final response = await http.get(endpoint);
+    log.fine('got response code: ${response.statusCode}');
+    log.fine('decoding to json');
     final body = json.decode(utf8.decode(response.bodyBytes));
     var entries = body['entries'] as List;
+    log.fine('mapping to documents');
     return _toDocuments(_extendWithUrls(entries));
   }
 
   List<dynamic> _extendWithUrls(List<dynamic> entries) {
+    log.fine('extending with URLs');
     return entries.map((e) {
       e[fileUrl] = _toDocUrl(e[filename]);
       e[thumbnailUrl] = _toThumbnailUrl(e[thumbnail]);
@@ -48,6 +56,7 @@ class DocsService {
   }
 
   List<Document> _toDocuments(List<dynamic> entries) {
+    log.fine('creating documents from entries');
     return entries
         .map((e) => Document(e[fileUrl], e[thumbnailUrl]))
         .toSet()
@@ -55,10 +64,12 @@ class DocsService {
   }
 
   Future<List<Document>> searchDocs(String query) async {
+    log.fine('searching docs using query: "$query"');
     return _fetchDocs(_urls.search(query));
   }
 
   Future<http.Response> uploadDoc(File file) async {
+    log.fine('uploading doc using file: "${file.path}"');
     final jsonBody = await compute(toJson, {'file': file});
     return http.post(_urls.upload(), body: jsonBody, headers: {
       'Content-Type': 'application/json',
@@ -75,8 +86,11 @@ class DocsService {
   }
 
   void onNewDoc(Function onNewDoc) {
+    log.fine('setting onNewDoc handler');
     _stream.listen((data) {
+      log.fine('received data: $data');
       if (data == "new-doc") {
+        log.fine('new doc event received, calling handler');
         onNewDoc();
       }
     });
