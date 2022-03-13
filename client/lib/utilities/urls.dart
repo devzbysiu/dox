@@ -1,10 +1,13 @@
 import 'package:dox/utilities/config.dart';
+import 'package:get_it/get_it.dart';
+
+final getIt = GetIt.instance;
 
 class Urls {
   late final Config _config;
 
-  Urls(config) {
-    _config = config;
+  Urls({Config? config}) {
+    _config = config ?? getIt.get<Config>();
   }
 
   Uri search(String query) {

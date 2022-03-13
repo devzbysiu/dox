@@ -1,7 +1,5 @@
 import 'package:dox/models/connection_state.dart';
 import 'package:dox/models/docs_state.dart';
-import 'package:dox/services/connection_service.dart';
-import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:dox/widgets/add_button.dart';
 import 'package:dox/widgets/app_bar.dart';
@@ -19,12 +17,8 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<DocsState>(
-          create: (_) => DocsState(DocsService()),
-        ),
-        ChangeNotifierProvider<ConnState>(
-          create: (_) => ConnState(ConnService()),
-        ),
+        ChangeNotifierProvider<DocsState>(create: (_) => DocsState()),
+        ChangeNotifierProvider<ConnState>(create: (_) => ConnState()),
       ],
       child: GestureDetector(
         onTap: () => _hideKeyboard(),

@@ -3,38 +3,30 @@ import 'dart:io';
 
 import 'package:dox/models/document.dart';
 import 'package:dox/utilities/events_stream.dart';
-import 'package:dox/utilities/exceptions.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
-import 'package:web_socket_channel/io.dart';
 
 const filename = 'filename';
 const thumbnail = 'thumbnail';
 const fileUrl = 'fileUrl';
 const thumbnailUrl = 'thumbnailUrl';
 
-typedef VoidFunction = void Function()?;
+final getIt = GetIt.instance;
 
 class DocsService {
   late final Urls _urls;
 
   late final Stream _stream;
 
-  static DocsService? _instance;
-
-  static init(Urls urls, EventsStream stream) {
-    _instance ??= DocsService._(urls, stream);
-  }
-
-  DocsService._(Urls urls, EventsStream stream) {
-    _urls = urls;
+  DocsService({
+    Urls? urls,
+    EventsStream? eventsStream,
+  }) {
+    _urls = urls ?? getIt<Urls>();
+    final stream = eventsStream ?? getIt.get<EventsStream>();
     _stream = stream.stream; // TODO: Improve this repetition
-  }
-
-  factory DocsService() {
-    if (_instance == null) throw ApiNotInitializedException();
-    return _instance!;
   }
 
   Future<List<Document>> fetchAllFiles() async {

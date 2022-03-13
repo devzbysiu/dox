@@ -1,29 +1,23 @@
 import 'package:dox/utilities/events_stream.dart';
-import 'package:dox/utilities/exceptions.dart';
+import 'package:get_it/get_it.dart';
+
+typedef VoidFunction = void Function()?;
 
 const filename = 'filename';
 const thumbnail = 'thumbnail';
 const fileUrl = 'fileUrl';
 const thumbnailUrl = 'thumbnailUrl';
 
-typedef VoidFunction = void Function()?;
+final getIt = GetIt.instance;
 
 class ConnService {
   late final Stream _stream;
 
-  static ConnService? _instance;
-
-  static init(EventsStream stream) {
-    _instance ??= ConnService._(stream);
-  }
-
-  ConnService._(EventsStream stream) {
+  ConnService({
+    EventsStream? eventsStream,
+  }) {
+    final stream = eventsStream ?? getIt.get<EventsStream>();
     _stream = stream.stream; // TODO: improve this repetition
-  }
-
-  factory ConnService() {
-    if (_instance == null) throw ApiNotInitializedException();
-    return _instance!;
   }
 
   void onNewDoc(Function onNewDoc) {
