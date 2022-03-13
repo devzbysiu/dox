@@ -2,10 +2,8 @@ import 'dart:io';
 
 import 'package:dox/models/document.dart';
 import 'package:dox/services/docs_service.dart';
+import 'package:dox/utilities/service_locator.dart';
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
-
-final getIt = GetIt.instance;
 
 class DocsState extends ChangeNotifier {
   bool _isLoading = false;
@@ -19,7 +17,7 @@ class DocsState extends ChangeNotifier {
   DocsState({
     DocsService? docsService,
   }) {
-    _docsService = docsService ?? getIt.get<DocsService>();
+    _docsService = docsService ?? getIt<DocsService>();
     _docsService.onNewDoc(refresh);
     _docsService.fetchAllFiles().then((value) {
       _suggestions = value;

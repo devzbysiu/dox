@@ -3,17 +3,15 @@ import 'dart:io';
 
 import 'package:dox/models/document.dart';
 import 'package:dox/utilities/events_stream.dart';
+import 'package:dox/utilities/service_locator.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 
 const filename = 'filename';
 const thumbnail = 'thumbnail';
 const fileUrl = 'fileUrl';
 const thumbnailUrl = 'thumbnailUrl';
-
-final getIt = GetIt.instance;
 
 class DocsService {
   late final Urls _urls;
@@ -25,7 +23,7 @@ class DocsService {
     EventsStream? eventsStream,
   }) {
     _urls = urls ?? getIt<Urls>();
-    final stream = eventsStream ?? getIt.get<EventsStream>();
+    final stream = eventsStream ?? getIt<EventsStream>();
     _stream = stream.stream; // TODO: Improve this repetition
   }
 

@@ -1,13 +1,11 @@
 import 'package:dox/utilities/config.dart';
-import 'package:get_it/get_it.dart';
-
-final getIt = GetIt.instance;
+import 'package:dox/utilities/service_locator.dart';
 
 class Urls {
   late final Config _config;
 
   Urls({Config? config}) {
-    _config = config ?? getIt.get<Config>();
+    _config = config ?? getIt<Config>();
   }
 
   Uri search(String query) {

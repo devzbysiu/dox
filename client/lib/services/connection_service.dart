@@ -1,5 +1,5 @@
 import 'package:dox/utilities/events_stream.dart';
-import 'package:get_it/get_it.dart';
+import 'package:dox/utilities/service_locator.dart';
 
 typedef VoidFunction = void Function()?;
 
@@ -8,15 +8,13 @@ const thumbnail = 'thumbnail';
 const fileUrl = 'fileUrl';
 const thumbnailUrl = 'thumbnailUrl';
 
-final getIt = GetIt.instance;
-
 class ConnService {
   late final Stream _stream;
 
   ConnService({
     EventsStream? eventsStream,
   }) {
-    final stream = eventsStream ?? getIt.get<EventsStream>();
+    final stream = eventsStream ?? getIt<EventsStream>();
     _stream = stream.stream; // TODO: improve this repetition
   }
 
