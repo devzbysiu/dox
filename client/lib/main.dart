@@ -9,4 +9,3 @@ void main() async {
   await setupServices();
   runApp(const Dox());
 }
-
