@@ -39,6 +39,11 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'master'
+      - run: |
+          # setup env files
+          # TODO: fix <ip-addr>
+          echo "BASE_URL=http://<ip-addr>:8000" >> {.simulator.env,.realdevice.env}
+          echo "WEBSOCKET_URL=ws://192.168.16.247:8001" >> {.simulator.env,.realdevice.env}
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter format . --set-exit-if-changed
