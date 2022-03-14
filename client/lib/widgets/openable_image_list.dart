@@ -24,9 +24,8 @@ class OpenableImageList extends StatelessWidget {
 
   bool _isSupportedFiletype(Document doc) {
     final docType = filetype(doc.fileUrl);
-    // TODO: write extension for this
-    return (docType == Filetype.image || docType == Filetype.pdf) &&
-        filetype(doc.thumbnailUrl) == Filetype.image;
+    final thumbnailType = filetype(doc.thumbnailUrl);
+    return (docType.isImage || docType.isPdf) && thumbnailType.isImage;
   }
 
   Widget _buildOpenableDocument(Document doc) {

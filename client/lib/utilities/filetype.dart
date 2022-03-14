@@ -15,3 +15,8 @@ Filetype filetype(Uri url) {
       return Filetype.other;
   }
 }
+
+extension FiletypeExt on Filetype {
+  bool get isImage => this == Filetype.image;
+  bool get isPdf => this == Filetype.pdf;
+}
