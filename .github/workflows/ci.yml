@@ -30,7 +30,9 @@ jobs:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build_client:
-    name: flutter
+    defaults:
+      run:
+        working-directory: ./client
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
