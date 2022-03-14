@@ -18,21 +18,20 @@ class _SearchInputState extends State<SearchInput> with Log {
 
   @override
   Widget build(BuildContext context) {
+    final onChanged = context.read<DocsState>().onQueryChanged;
     return Material(
       borderRadius: const BorderRadius.all(Radius.circular(15)),
       elevation: 18,
       shadowColor: onBackground(context),
-      child: Consumer<DocsState>(
-        builder: (context, model, _) => TextField(
-          controller: _controller,
-          onChanged: model.onQueryChanged,
-          decoration: _inputDecoration(context, model),
-        ),
+      child: TextField(
+        controller: _controller,
+        onChanged: onChanged,
+        decoration: _inputDecoration(context),
       ),
     );
   }
 
-  InputDecoration _inputDecoration(BuildContext context, DocsState model) {
+  InputDecoration _inputDecoration(BuildContext context) {
     return InputDecoration(
       filled: true,
       fillColor: onPrimary(context),
@@ -40,7 +39,7 @@ class _SearchInputState extends State<SearchInput> with Log {
       prefixIcon: const Icon(Icons.search),
       suffixIcon: IconButton(
         icon: const Icon(Icons.clear),
-        onPressed: () => _clear(model),
+        onPressed: () => _clear(context),
       ),
       focusedBorder: _border(),
       enabledBorder: _border(),
@@ -48,10 +47,10 @@ class _SearchInputState extends State<SearchInput> with Log {
     );
   }
 
-  void _clear(DocsState model) async {
+  void _clear(BuildContext context) async {
     log.fine('clearing input');
     _controller.clear();
-    await model.reset();
+    await context.read<DocsState>().reset();
     setState(() {});
   }
 

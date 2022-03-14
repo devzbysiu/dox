@@ -8,24 +8,22 @@ class StatusDot extends StatelessWidget with Log {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ConnState>(
-      builder: (context, model, _) => Container(
-        width: 15,
-        height: 15,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: _colors(model),
-          ),
+    return Container(
+      width: 15,
+      height: 15,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: _colors(context),
         ),
       ),
     );
   }
 
-  List<Color> _colors(ConnState model) {
-    final isConnected = model.isConnected;
+  List<Color> _colors(BuildContext context) {
+    final isConnected = context.select((ConnState state) => state.isConnected);
     log.fine('showing status color for: "isConnected == $isConnected"');
     return isConnected
         ? [Colors.green[300]!, Colors.yellow[400]!]

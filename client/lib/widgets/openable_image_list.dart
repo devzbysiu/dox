@@ -13,28 +13,26 @@ class OpenableImageList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<DocsState>(
-      builder: (context, model, _) => ListView(
-        children: _buildOpenableImages(model),
-      ),
-    );
+    final suggestions = context.select((DocsState docs) => docs.suggestions);
+    return ListView(children: _buildOpenableDocuments(suggestions));
   }
 
-  List<Widget> _buildOpenableImages(DocsState model) {
-    final docUrls = model.suggestions.where(_isSupportedFiletype).toList();
-    return docUrls.map(_buildImage).toList();
+  List<Widget> _buildOpenableDocuments(List<Document> suggestions) {
+    final docUrls = suggestions.where(_isSupportedFiletype).toList();
+    return docUrls.map(_buildOpenableDocument).toList();
   }
 
-  Widget _buildImage(Document doc) {
+  bool _isSupportedFiletype(Document doc) {
+    final docType = filetype(doc.fileUrl);
+    // TODO: write extension for this
+    return (docType == Filetype.image || docType == Filetype.pdf) &&
+        filetype(doc.thumbnailUrl) == Filetype.image;
+  }
+
+  Widget _buildOpenableDocument(Document doc) {
     return Padding(
       padding: const EdgeInsets.all(15),
       child: OpenableDocument(doc: doc),
     );
   }
-}
-
-bool _isSupportedFiletype(Document doc) {
-  final docType = filetype(doc.fileUrl);
-  return (docType == Filetype.image || docType == Filetype.pdf) &&
-      filetype(doc.thumbnailUrl) == Filetype.image;
 }

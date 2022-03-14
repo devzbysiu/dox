@@ -23,28 +23,26 @@ class HomePage extends StatelessWidget {
       child: GestureDetector(
         onTap: () => _hideKeyboard(),
         onVerticalDragDown: (_) => _hideKeyboard(),
-        child: Consumer<DocsState>(
-          builder: (context, model, _) => Scaffold(
-            backgroundColor: background(context),
-            body: NestedScrollView(
-              headerSliverBuilder: _scrollableAppBarBuilder,
-              body: Column(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: SearchInput(),
+        child: Scaffold(
+          backgroundColor: background(context),
+          body: NestedScrollView(
+            headerSliverBuilder: _scrollableAppBarBuilder,
+            body: Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: SearchInput(),
+                ),
+                Expanded(
+                  child: RefreshIndicator(
+                    child: const OpenableImageList(),
+                    onRefresh: () => _refreshDocs(context),
                   ),
-                  Expanded(
-                    child: RefreshIndicator(
-                      child: const OpenableImageList(),
-                      onRefresh: () => _refreshDocs(model),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            floatingActionButton: const AddButton(),
           ),
+          floatingActionButton: AddButton(),
         ),
       ),
     );
@@ -58,7 +56,8 @@ class HomePage extends StatelessWidget {
     return const [ScrollableAppBar()];
   }
 
-  Future<void> _refreshDocs(DocsState model) async {
-    await Future.delayed(const Duration(seconds: 1), model.refresh);
+  Future<void> _refreshDocs(BuildContext context) async {
+    final state = context.read<DocsState>();
+    await Future.delayed(const Duration(seconds: 1), state.refresh);
   }
 }
