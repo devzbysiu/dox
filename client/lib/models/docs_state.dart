@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dox/models/document.dart';
 import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/log.dart';
@@ -58,17 +56,6 @@ class DocsState extends ChangeNotifier with Log {
     log.fine('resetting to showing all docs');
     _suggestions = await _docsService.fetchAllFiles();
     notifyListeners();
-  }
-
-  Future<bool> newDoc(File doc) async {
-    log.fine('adding new doc');
-    final resp = await _docsService.uploadDoc(doc);
-    if (resp.statusCode != 201) {
-      log.warning('failed to send new doc: ${resp.statusCode} -> ${resp.body}');
-      return false;
-    }
-    log.fine('new doc sent');
-    return true;
   }
 
   bool get isLoading => _isLoading;

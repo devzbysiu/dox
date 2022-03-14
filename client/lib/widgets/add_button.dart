@@ -1,20 +1,25 @@
 import 'dart:io';
 
 import 'package:document_scanner_flutter/document_scanner_flutter.dart';
-import 'package:dox/models/docs_state.dart';
+import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/log.dart';
+import 'package:dox/utilities/service_locator.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:motion_toast/motion_toast.dart';
-import 'package:provider/provider.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 
 class AddButton extends StatelessWidget with Log {
-  const AddButton({
+  late final DocsService _docsService;
+
+  AddButton({
     Key? key,
-  }) : super(key: key);
+    DocsService? docsService,
+  }) : super(key: key) {
+    _docsService = docsService ?? getIt<DocsService>();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,17 +75,14 @@ class AddButton extends StatelessWidget with Log {
 
   Future<void> _uploadAndShowToast(File doc, BuildContext context) async {
     log.fine('uploading file: "${doc.path}"');
-    if (await _docsModel(context).newDoc(doc)) {
+    final res = await _docsService.uploadDoc(doc);
+    if (res.statusCode == 201) {
       log.fine('uploaded successfully');
       _showUploadSuccessful(context);
       return;
     }
     log.warning('upload failed');
     _showUploadFailed(context);
-  }
-
-  DocsState _docsModel(BuildContext context) {
-    return Provider.of<DocsState>(context, listen: false);
   }
 
   void _showUploadFailed(BuildContext context) {
