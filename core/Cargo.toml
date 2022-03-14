@@ -19,7 +19,7 @@ version = "0.1.0"
 authors = ["Bartosz Zbytniewski <bartosz.zbytniewski.dev@gmail.com>"]
 edition = "2018"
 description = ""
-repository = "https://github.com/{[username]}/dox"
+repository = "https://github.com/devzbysiu/dox"
 license = "MIT/Apache-2.0"
 readme = "README.md"
 keywords = []
@@ -30,7 +30,7 @@ documentation = ""
 [dependencies]
 log = "0.4.11"
 pretty_env_logger = "0.4.0"
-cooldown-buffer = { path = "../../cooldown-buffer" }
+cooldown-buffer = { git = "https://github.com/devzbysiu/cooldown-buffer" }
 notify = "4.0.17"
 rayon = "1.5.1"
 leptess = "0.13.2"

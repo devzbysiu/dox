@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  build_core:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repo
@@ -28,3 +28,16 @@ jobs:
       run: cargo make --profile ci all
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  build_client:
+    name: flutter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter format . --set-exit-if-changed
+      - run: flutter test
