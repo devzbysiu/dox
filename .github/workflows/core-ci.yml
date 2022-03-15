@@ -40,3 +40,4 @@ jobs:
       run: cargo make --profile ci all
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        RUST_LOG: debug
