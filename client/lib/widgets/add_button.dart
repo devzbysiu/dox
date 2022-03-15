@@ -5,8 +5,8 @@ import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/log.dart';
 import 'package:dox/utilities/service_locator.dart';
 import 'package:dox/utilities/theme.dart';
+import 'package:dox/utilities/toasts.dart';
 import 'package:flutter/material.dart';
-import 'package:motion_toast/motion_toast.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 
 class AddButton extends StatelessWidget with Log {
@@ -60,7 +60,7 @@ class AddButton extends StatelessWidget with Log {
       log.fine('sending file');
       await _uploadAndShowToast(doc, context);
     } on Exception {
-      _showUploadFailed(context);
+      context.showFailureToast('Failed to upload file');
     }
   }
 
@@ -69,29 +69,11 @@ class AddButton extends StatelessWidget with Log {
     final res = await _docsService.uploadDoc(doc);
     if (res.statusCode == 201) {
       log.fine('uploaded successfully');
-      _showUploadSuccessful(context);
+      context.showSuccessToast('File uploaded successfully');
       return;
     }
     log.warning('upload failed');
-    _showUploadFailed(context);
-  }
-
-  void _showUploadSuccessful(BuildContext context) {
-    log.fine('showing success toast');
-    MotionToast.success(
-      title: const Text('Success'),
-      description: const Text('File uploaded successfully'),
-    ).show(context);
-  }
-
-  void _showUploadFailed(BuildContext context) {
-    log.fine('showing failure toast');
-    MotionToast(
-      title: const Text('Error'),
-      description: const Text('Failed to upload file'),
-      icon: Icons.error,
-      primaryColor: context.primary,
-    ).show(context);
+    context.showFailureToast('Failed to upload file');
   }
 
   SpeedDialChild _buildPdfButton(BuildContext context) {
