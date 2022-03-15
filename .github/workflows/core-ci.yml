@@ -19,6 +19,7 @@ jobs:
   build_core:
     runs-on: ubuntu-latest
     steps:
+    - run: sudo apt install libleptonica-dev libtesseract-dev clang
     - name: Checkout Repo
       uses: actions/checkout@v2
 
