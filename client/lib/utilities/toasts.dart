@@ -10,7 +10,6 @@ extension BuildContextExt on BuildContext {
     ).show(this);
   }
 
-
   void showFailureToast(String description) {
     MotionToast(
       title: const Text('Error'),

@@ -18,7 +18,6 @@ extension UriExt on Uri {
   }
 }
 
-
 extension FiletypeExt on Filetype {
   bool get isImage => this == Filetype.image;
   bool get isPdf => this == Filetype.pdf;

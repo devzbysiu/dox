@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - "core/**"
+      - ".github/workflows/core-ci.yml"
+  pull_request:
+    branches: [ master ]
+    paths:
+      - "core/**"
+      - ".github/workflows/core-ci.yml"
+
+env:
+  ENV: realdevice
+
+jobs:
+  build_core:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v2
+
+    - uses: Swatinem/rust-cache@v1
+      with:
+        working-directory: ./core
+
+    - name: Run cargo-make
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+    - uses: davidB/rust-cargo-make@v1
+    - name: Run tests
+      working-directory: ./core
+      run: cargo make --profile ci all
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
