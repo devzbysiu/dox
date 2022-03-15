@@ -1,6 +1,5 @@
 import 'package:dox/models/docs_state.dart';
 import 'package:dox/models/document.dart';
-import 'package:dox/utilities/filetype.dart';
 import 'package:dox/widgets/document/openable_document.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -18,14 +17,8 @@ class OpenableImageList extends StatelessWidget {
   }
 
   List<Widget> _buildOpenableDocuments(List<Document> suggestions) {
-    final docUrls = suggestions.where(_isSupportedFiletype).toList();
+    final docUrls = suggestions.where((d) => d.isSupported()).toList();
     return docUrls.map(_buildOpenableDocument).toList();
-  }
-
-  bool _isSupportedFiletype(Document doc) {
-    final docType = filetype(doc.fileUrl);
-    final thumbnailType = filetype(doc.thumbnailUrl);
-    return (docType.isImage || docType.isPdf) && thumbnailType.isImage;
   }
 
   Widget _buildOpenableDocument(Document doc) {
