@@ -9,11 +9,11 @@ class ConnService with Log {
   late final Stream _stream;
 
   ConnService({
-    EventsStream? eventsStream,
+    Events? ev,
   }) {
     log.fine('initializing ConnService');
-    final stream = eventsStream ?? getIt<EventsStream>();
-    _stream = stream.stream; // TODO: improve this repetition
+    final events = ev ?? getIt<Events>();
+    _stream = events.stream;
   }
 
   void onConnected(OnConnected onConnected) {

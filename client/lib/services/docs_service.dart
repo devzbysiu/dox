@@ -21,12 +21,12 @@ class DocsService with Log {
 
   DocsService({
     Urls? urls,
-    EventsStream? eventsStream,
+    Events? ev,
   }) {
     log.fine('initializing DocsService');
     _urls = urls ?? getIt<Urls>();
-    final stream = eventsStream ?? getIt<EventsStream>();
-    _stream = stream.stream; // TODO: Improve this repetition
+    final events = ev ?? getIt<Events>();
+    _stream = events.stream;
   }
 
   Future<List<Document>> fetchAllFiles() async {

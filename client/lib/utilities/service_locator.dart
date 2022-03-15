@@ -10,7 +10,7 @@ final getIt = GetIt.instance;
 Future<void> setupServices() async {
   getIt.registerSingleton<Config>(await Config.init());
   getIt.registerSingleton<Urls>(Urls());
-  getIt.registerSingleton<EventsStream>(EventsStream());
+  getIt.registerSingleton<Events>(Events());
   getIt.registerSingleton<DocsService>(DocsService());
   getIt.registerSingleton<ConnService>(ConnService());
 }
