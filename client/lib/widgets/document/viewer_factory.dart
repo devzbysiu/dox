@@ -9,7 +9,7 @@ class ViewerFactory {
   ViewerFactory._();
 
   static Widget from(Uri uri) {
-    switch (filetype(uri)) {
+    switch (uri.filetype()) {
       case Filetype.image:
         return ImageViewer(
           imageProvider: CachedNetworkImageProvider(uri.toString()),
