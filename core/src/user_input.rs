@@ -73,9 +73,9 @@ fn check_watched_dir(config: &Config) -> Result<()> {
 }
 
 fn check_index_dir(config: &Config) -> Result<()> {
-    if config.index_dir.exists() {
+    if config.index_dir.exists() && !config.index_dir.is_dir() {
         return Err(DoxErr::InvalidIndexPath(format!(
-            "The path is already taken: '{}'",
+            "It needs to be a directory: '{}'",
             config.index_dir.str()
         )));
     }
