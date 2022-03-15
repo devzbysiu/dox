@@ -8,6 +8,7 @@ use tungstenite::{accept, Message, WebSocket};
 
 use log::debug;
 
+#[allow(clippy::module_name_repetitions)]
 pub fn new_doc_notifier() -> Result<Notifier> {
     debug!("creating new doc notifier");
     let (tx, rx) = channel();
@@ -68,8 +69,8 @@ impl NotifiableSockets {
         let all = self.all.clone();
         thread::spawn(move || -> Result<()> {
             loop {
-                let _ = rx.recv()?;
-                let _ = all
+                rx.recv()?;
+                let _errors = all // TODO: take care of that
                     .lock()
                     .expect("poisoned mutex")
                     .iter_mut()

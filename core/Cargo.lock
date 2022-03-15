@@ -333,6 +333,7 @@ dependencies = [
 [[package]]
 name = "cooldown-buffer"
 version = "0.1.0"
+source = "git+https://github.com/devzbysiu/cooldown-buffer#9a2022eb640f9a7879d9aff29b0b38e808fce4ae"
 dependencies = [
  "doc-comment",
  "thiserror",
