@@ -97,7 +97,7 @@ pub mod helpers {
             fs::copy(from, &watched_dir.join(file.file_name()))?;
         }
         debug!("done");
-        thread::sleep(Duration::from_secs(60));
+        thread::sleep(Duration::from_secs(30));
         Ok(())
     }
 }
