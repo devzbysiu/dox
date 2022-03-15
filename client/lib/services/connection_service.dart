@@ -2,12 +2,8 @@ import 'package:dox/utilities/events_stream.dart';
 import 'package:dox/utilities/log.dart';
 import 'package:dox/utilities/service_locator.dart';
 
-typedef VoidFunction = void Function()?;
-
-const filename = 'filename';
-const thumbnail = 'thumbnail';
-const fileUrl = 'fileUrl';
-const thumbnailUrl = 'thumbnailUrl';
+typedef OnConnected = void Function();
+typedef OnDone = void Function()?;
 
 class ConnService with Log {
   late final Stream _stream;
@@ -20,7 +16,7 @@ class ConnService with Log {
     _stream = stream.stream; // TODO: improve this repetition
   }
 
-  void onConnected(Function onConnected) {
+  void onConnected(OnConnected onConnected) {
     log.fine('setting onConnected handler');
     _stream.listen((data) {
       if (data == "connected") {
@@ -30,7 +26,7 @@ class ConnService with Log {
     });
   }
 
-  void onDone(VoidFunction onDone) {
+  void onDone(OnDone onDone) {
     log.fine('setting onDone handler');
     _stream.listen((_) {}, onDone: onDone);
   }
