@@ -88,16 +88,12 @@ pub mod helpers {
 
     pub fn cp_docs<P: AsRef<Path>>(watched_dir: P) -> Result<()> {
         debug!("copying docs to watched dir...");
-        let docs_dir = Path::new("./res");
         let watched_dir = watched_dir.as_ref();
-        for file in fs::read_dir(docs_dir)? {
-            let file = file?;
-            let from = file.path();
-            debug!("\tfrom {} to {}", from.display(), watched_dir.display());
-            fs::copy(from, &watched_dir.join(file.file_name()))?;
-        }
+        let from = Path::new("./res/doc1.png");
+        debug!("\tfrom {} to {}", from.display(), watched_dir.display());
+        fs::copy(from, &watched_dir.join("doc1.png"))?; // TODO: it should be just one file
         debug!("done");
-        thread::sleep(Duration::from_secs(30));
+        thread::sleep(Duration::from_secs(15));
         Ok(())
     }
 }
