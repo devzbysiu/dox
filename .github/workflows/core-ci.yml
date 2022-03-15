@@ -1,4 +1,4 @@
-name: ci
+name: core-ci
 
 on:
   push:
@@ -19,8 +19,9 @@ jobs:
   build_core:
     runs-on: ubuntu-latest
     steps:
-    - run: sudo apt install  libpoppler-glib-dev
+    - run: sudo apt install libpoppler-glib-dev
     - run: sudo apt install libleptonica-dev libtesseract-dev clang
+    - run: sudo apt install tesseract-ocr-pol
     - name: Checkout Repo
       uses: actions/checkout@v2
 
