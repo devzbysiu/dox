@@ -12,22 +12,10 @@ ThemeData theme() {
   );
 }
 
-Color primary(BuildContext context) {
-  return Theme.of(context).colorScheme.primary;
-}
-
-Color secondary(BuildContext context) {
-  return Theme.of(context).colorScheme.secondary;
-}
-
-Color onPrimary(BuildContext context) {
-  return Theme.of(context).colorScheme.onPrimary;
-}
-
-Color background(BuildContext context) {
-  return Theme.of(context).colorScheme.background;
-}
-
-Color onBackground(BuildContext context) {
-  return Theme.of(context).colorScheme.onBackground;
+extension BuildContextExt on BuildContext {
+  Color get primary => Theme.of(this).colorScheme.primary;
+  Color get secondary => Theme.of(this).colorScheme.secondary;
+  Color get onPrimary => Theme.of(this).colorScheme.onPrimary;
+  Color get background => Theme.of(this).colorScheme.background;
+  Color get onBackground => Theme.of(this).colorScheme.onBackground;
 }

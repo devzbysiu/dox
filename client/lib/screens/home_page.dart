@@ -24,7 +24,7 @@ class HomePage extends StatelessWidget {
         onTap: () => _hideKeyboard(),
         onVerticalDragDown: (_) => _hideKeyboard(),
         child: Scaffold(
-          backgroundColor: background(context),
+          backgroundColor: context.background,
           body: NestedScrollView(
             headerSliverBuilder: _scrollableAppBarBuilder,
             body: Column(

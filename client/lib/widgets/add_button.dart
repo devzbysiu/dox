@@ -25,10 +25,10 @@ class AddButton extends StatelessWidget with Log {
   Widget build(BuildContext context) {
     return SpeedDial(
       child: const Icon(Icons.add),
-      closedForegroundColor: onPrimary(context),
-      openForegroundColor: onPrimary(context),
-      closedBackgroundColor: primary(context),
-      openBackgroundColor: secondary(context),
+      closedForegroundColor: context.onPrimary,
+      openForegroundColor: context.onPrimary,
+      closedBackgroundColor: context.primary,
+      openBackgroundColor: context.secondary,
       speedDialChildren: [
         _buildScanButton(context),
         _buildPdfButton(context),
@@ -38,9 +38,9 @@ class AddButton extends StatelessWidget with Log {
 
   SpeedDialChild _buildScanButton(BuildContext context) {
     return SpeedDialChild(
-      child: Icon(Icons.camera_alt, color: onPrimary(context)),
-      foregroundColor: secondary(context),
-      backgroundColor: primary(context),
+      child: Icon(Icons.camera_alt, color: context.onPrimary),
+      foregroundColor: context.secondary,
+      backgroundColor: context.primary,
       label: 'Scan document',
       onPressed: () => _scanAndSendImage(context),
     );
@@ -91,7 +91,7 @@ class AddButton extends StatelessWidget with Log {
       title: const Text('Error'),
       description: const Text('Failed to upload file'),
       icon: Icons.error,
-      primaryColor: primary(context),
+      primaryColor: context.primary,
     ).show(context);
   }
 
@@ -105,9 +105,9 @@ class AddButton extends StatelessWidget with Log {
 
   SpeedDialChild _buildPdfButton(BuildContext context) {
     return SpeedDialChild(
-      child: Icon(Icons.picture_as_pdf, color: onPrimary(context)),
-      foregroundColor: secondary(context),
-      backgroundColor: primary(context),
+      child: Icon(Icons.picture_as_pdf, color: context.onPrimary),
+      foregroundColor: context.secondary,
+      backgroundColor: context.primary,
       label: 'Pick PDF',
       onPressed: () => _pickAndSendPdf(context),
     );

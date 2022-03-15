@@ -15,7 +15,7 @@ class ImageViewer extends DocumentViewer {
   Widget viewer(BuildContext context) {
     return PhotoView(
       imageProvider: imageProvider,
-      backgroundDecoration: BoxDecoration(color: onPrimary(context)),
+      backgroundDecoration: BoxDecoration(color: context.onPrimary),
       loadingBuilder: (context, event) => Center(
         child: SizedBox(
           width: 20.0,

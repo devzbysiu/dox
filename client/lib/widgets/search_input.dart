@@ -22,7 +22,7 @@ class _SearchInputState extends State<SearchInput> with Log {
     return Material(
       borderRadius: const BorderRadius.all(Radius.circular(15)),
       elevation: 18,
-      shadowColor: onBackground(context),
+      shadowColor: context.onBackground,
       child: TextField(
         controller: _controller,
         onChanged: onChanged,
@@ -34,7 +34,7 @@ class _SearchInputState extends State<SearchInput> with Log {
   InputDecoration _inputDecoration(BuildContext context) {
     return InputDecoration(
       filled: true,
-      fillColor: onPrimary(context),
+      fillColor: context.onPrimary,
       hintText: "Search",
       prefixIcon: const Icon(Icons.search),
       suffixIcon: IconButton(
