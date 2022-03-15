@@ -1,24 +1,26 @@
 import 'dart:io';
 
-import 'package:document_scanner_flutter/document_scanner_flutter.dart';
+import 'package:dox/services/doc_scan_service.dart';
 import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/log.dart';
 import 'package:dox/utilities/service_locator.dart';
 import 'package:dox/utilities/theme.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:motion_toast/motion_toast.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 
 class AddButton extends StatelessWidget with Log {
   late final DocsService _docsService;
 
+  late final DocScanService _scanService;
+
   AddButton({
     Key? key,
     DocsService? docsService,
+    DocScanService? docScanService,
   }) : super(key: key) {
     _docsService = docsService ?? getIt<DocsService>();
+    _scanService = docScanService ?? getIt<DocScanService>();
   }
 
   @override
@@ -48,20 +50,9 @@ class AddButton extends StatelessWidget with Log {
 
   Future<void> _scanAndSendImage(BuildContext context) async {
     log.fine('scanning and sending an image');
-    final doc = await _scanImage(context);
+    final doc = await _scanService.scanImage(context);
     if (doc == null) return;
     await _send(doc, context);
-  }
-
-  Future<File?> _scanImage(BuildContext context) async {
-    try {
-      log.fine('launching DocumentScannerFlutter');
-      return await DocumentScannerFlutter.launch(context);
-    } on PlatformException {
-      log.warning('failed to get document path or operation cancelled');
-    }
-    log.fine('document not scanned, returning null');
-    return null;
   }
 
   Future<void> _send(File doc, BuildContext context) async {
@@ -85,6 +76,14 @@ class AddButton extends StatelessWidget with Log {
     _showUploadFailed(context);
   }
 
+  void _showUploadSuccessful(BuildContext context) {
+    log.fine('showing success toast');
+    MotionToast.success(
+      title: const Text('Success'),
+      description: const Text('File uploaded successfully'),
+    ).show(context);
+  }
+
   void _showUploadFailed(BuildContext context) {
     log.fine('showing failure toast');
     MotionToast(
@@ -92,14 +91,6 @@ class AddButton extends StatelessWidget with Log {
       description: const Text('Failed to upload file'),
       icon: Icons.error,
       primaryColor: context.primary,
-    ).show(context);
-  }
-
-  void _showUploadSuccessful(BuildContext context) {
-    log.fine('showing success toast');
-    MotionToast.success(
-      title: const Text('Success'),
-      description: const Text('File uploaded successfully'),
     ).show(context);
   }
 
@@ -115,18 +106,8 @@ class AddButton extends StatelessWidget with Log {
 
   void _pickAndSendPdf(BuildContext context) async {
     log.fine('picking and sending PDF');
-    final doc = await _pickPdf();
+    final doc = await _scanService.pickPdf();
     if (doc == null) return;
     await _send(doc, context);
-  }
-
-  Future<File?> _pickPdf() async {
-    log.fine('picking PDF');
-    final result = await FilePicker.platform
-        .pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
-    if (result == null || result.files.single.path == null) return null;
-    final path = result.files.single.path!;
-    log.fine('picked file: "$path"');
-    return File(path);
   }
 }

@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class StatusDot extends StatelessWidget with Log {
-  const StatusDot({Key? key}) : super(key: key);
+  const StatusDot({
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
