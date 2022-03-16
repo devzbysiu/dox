@@ -22,6 +22,7 @@ void main() {
 
 MultiProvider _wrapper({
   required child,
+  Config? cfg,
   Urls? urls,
   Events? ev,
   DocsService? docs,
@@ -29,7 +30,8 @@ MultiProvider _wrapper({
   ConnService? conn,
   ConnState? connSt,
 }) {
-  final urlsProvider = urls ?? Urls(config: _ConfigMock());
+  final config = cfg ?? _ConfigMock();
+  final urlsProvider = urls ?? Urls(config: config);
   final events = ev ?? Events(urlsProvider: urlsProvider);
   final docsService = docs ?? DocsService(urls: urlsProvider, ev: events);
   final connService = conn ?? ConnService(ev: events);
