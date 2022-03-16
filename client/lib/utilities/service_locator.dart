@@ -9,7 +9,7 @@ import 'package:get_it/get_it.dart';
 final getIt = GetIt.instance;
 
 Future<void> setupServices() async {
-  getIt.registerSingleton<Config>(await Config.init());
+  getIt.registerSingleton<Config>(await ConfigImpl.init());
   getIt.registerSingleton<Urls>(Urls());
   getIt.registerSingleton<Events>(Events());
   getIt.registerSingleton<DocsService>(DocsService());
