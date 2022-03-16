@@ -15,10 +15,16 @@ final getIt = GetIt.instance;
 
 void main() {
   testWidgets("StatusDot initially displays gray dot", (tester) async {
-    await tester.pumpWidget(_wrapper(child: const StatusDot()));
+    // given
+    const statusDot = StatusDot();
+
+    // when
+    await tester.pumpWidget(_wrapper(child: statusDot));
     final Container container = tester.firstWidget(find.byType(Container));
     final boxDecoration = container.decoration as BoxDecoration;
     final gradient = boxDecoration.gradient as LinearGradient;
+
+    // then
     expect(gradient.colors, equals([Colors.blueGrey, Colors.blueGrey]));
   });
 }
