@@ -6,7 +6,6 @@ import 'package:dox/utilities/config.dart';
 import 'package:dox/utilities/events_stream.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:dox/widgets/status_dot.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -15,32 +14,37 @@ final getIt = GetIt.instance;
 
 void main() {
   testWidgets("StatusDot initially displays gray dot", (tester) async {
-    final urls = Urls(config: _ConfigMock());
-    final ev = Events(urlsProvider: urls);
-
-    await tester.pumpWidget(MultiProvider(
-      providers: [
-        ChangeNotifierProvider<DocsState>(
-          create: (_) => DocsState(
-            docsService: DocsService(
-              urls: urls,
-              ev: ev,
-            ),
-          ),
-        ),
-        ChangeNotifierProvider<ConnState>(
-          create: (_) => ConnState(
-            connService: ConnService(
-              ev: ev,
-            ),
-          ),
-        ),
-      ],
-      child: const StatusDot(),
-    ));
+    await tester.pumpWidget(_wrapper(child: const StatusDot()));
     // final LinearGradient dot = tester.firstWidget(find.byType(LinearGradient));
     // expect(dot.colors, equals([Colors.blueGrey, Colors.blueGrey]));
   });
+}
+
+MultiProvider _wrapper({
+  required child,
+  Urls? urls,
+  Events? ev,
+  DocsService? docs,
+  DocsState? docsSt,
+  ConnService? conn,
+  ConnState? connSt,
+}) {
+  final urlsProvider = urls ?? Urls(config: _ConfigMock());
+  final events = ev ?? Events(urlsProvider: urlsProvider);
+  final docsService = docs ?? DocsService(urls: urlsProvider, ev: events);
+  final connService = conn ?? ConnService(ev: events);
+
+  return MultiProvider(
+    providers: [
+      ChangeNotifierProvider<DocsState>(
+        create: (_) => DocsState(docsService: docsService),
+      ),
+      ChangeNotifierProvider<ConnState>(
+        create: (_) => ConnState(connService: connService),
+      ),
+    ],
+    child: child,
+  );
 }
 
 class _ConfigMock extends Config {
