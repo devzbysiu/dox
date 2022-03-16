@@ -6,6 +6,7 @@ import 'package:dox/utilities/config.dart';
 import 'package:dox/utilities/events_stream.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:dox/widgets/status_dot.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -15,8 +16,9 @@ final getIt = GetIt.instance;
 void main() {
   testWidgets("StatusDot initially displays gray dot", (tester) async {
     await tester.pumpWidget(_wrapper(child: const StatusDot()));
-    // final LinearGradient dot = tester.firstWidget(find.byType(LinearGradient));
-    // expect(dot.colors, equals([Colors.blueGrey, Colors.blueGrey]));
+    final colors = (((tester.firstWidget(find.byType(Container)) as Container).decoration
+    as BoxDecoration).gradient as LinearGradient).colors;
+    expect(colors, equals([Colors.blueGrey, Colors.blueGrey]));
   });
 }
 
