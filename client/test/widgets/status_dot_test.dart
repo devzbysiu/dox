@@ -25,27 +25,24 @@ void main() {
     expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
   });
 
-  // testWidgets("StatusDot changes color when connected", (tester) async {
-  //   // given
-  //   final connState = _ConnStateMock();
-  //   const statusDot = StatusDot();
-  //
-  //   // when
-  //   await tester.pumpWidget(_wrapper(child: statusDot, connSt: connState));
-  //   Container container = tester.firstWidget(find.byType(Container));
-  //   var boxDecoration = container.decoration as BoxDecoration;
-  //   var gradient = boxDecoration.gradient as LinearGradient;
-  //   expect(gradient.colors, equals([Colors.blueGrey, Colors.blueGrey]));
-  //
-  //   connState.isConnected = true;
-  //   await tester.pump();
-  //
-  //   // then
-  //   container = tester.firstWidget(find.byType(Container));
-  //   boxDecoration = container.decoration as BoxDecoration;
-  //   gradient = boxDecoration.gradient as LinearGradient;
-  //   expect(gradient.colors, equals([Colors.green[300]!, Colors.yellow[400]!]));
-  // });
+  testWidgets("StatusDot changes color when connected", (tester) async {
+    // given
+    final connState = _ConnStateMock();
+    const statusDot = StatusDot();
+
+    // when
+    await tester.pumpWidget(_wrapper(child: statusDot, connSt: connState));
+    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
+
+    connState.isConnected = true;
+    await tester.pump();
+
+    // then
+    expect(
+      statusDot.color(tester),
+      equals([Colors.green[300]!, Colors.yellow[400]!]),
+    );
+  });
 }
 
 MultiProvider _wrapper({
