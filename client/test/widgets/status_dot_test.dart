@@ -19,7 +19,7 @@ void main() {
     const statusDot = StatusDot();
 
     // when
-    await tester.pumpWidget(_wrapper(child: statusDot));
+    await tester.pumpWidget(_wrapper(widget: statusDot));
 
     // then
     expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
@@ -31,7 +31,7 @@ void main() {
     const statusDot = StatusDot();
 
     // when
-    await tester.pumpWidget(_wrapper(child: statusDot, connSt: connState));
+    await tester.pumpWidget(_wrapper(widget: statusDot, connSt: connState));
     expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
 
     connState.isConnected = true;
@@ -46,7 +46,7 @@ void main() {
 }
 
 MultiProvider _wrapper({
-  required child,
+  required widget,
   Config? cfg,
   Urls? urls,
   Events? ev,
@@ -68,7 +68,7 @@ MultiProvider _wrapper({
       ChangeNotifierProvider<DocsState>(create: docsState),
       ChangeNotifierProvider<ConnState>(create: connState),
     ],
-    child: child,
+    child: widget,
   );
 }
 
