@@ -28,27 +28,27 @@ void main() {
     expect(gradient.colors, equals([Colors.blueGrey, Colors.blueGrey]));
   });
 
-//   testWidgets("StatusDot changes color when connected", (tester) async {
-//     // given
-//     final connState = _ConnStateMock();
-//     const statusDot = StatusDot();
-//
-//     // when
-//     await tester.pumpWidget(_wrapper(child: statusDot, connSt: connState));
-//     Container container = tester.firstWidget(find.byType(Container));
-//     var boxDecoration = container.decoration as BoxDecoration;
-//     var gradient = boxDecoration.gradient as LinearGradient;
-//     expect(gradient.colors, equals([Colors.blueGrey, Colors.blueGrey]));
-//
-//     connState.isConnected = true;
-//     await tester.pump();
-//
-//     // then
-//     container = tester.firstWidget(find.byType(Container));
-//     boxDecoration = container.decoration as BoxDecoration;
-//     gradient = boxDecoration.gradient as LinearGradient;
-//     expect(gradient.colors, equals([Colors.green[300]!, Colors.yellow[400]!]));
-//   });
+  // testWidgets("StatusDot changes color when connected", (tester) async {
+  //   // given
+  //   final connState = _ConnStateMock();
+  //   const statusDot = StatusDot();
+  //
+  //   // when
+  //   await tester.pumpWidget(_wrapper(child: statusDot, connSt: connState));
+  //   Container container = tester.firstWidget(find.byType(Container));
+  //   var boxDecoration = container.decoration as BoxDecoration;
+  //   var gradient = boxDecoration.gradient as LinearGradient;
+  //   expect(gradient.colors, equals([Colors.blueGrey, Colors.blueGrey]));
+  //
+  //   connState.isConnected = true;
+  //   await tester.pump();
+  //
+  //   // then
+  //   container = tester.firstWidget(find.byType(Container));
+  //   boxDecoration = container.decoration as BoxDecoration;
+  //   gradient = boxDecoration.gradient as LinearGradient;
+  //   expect(gradient.colors, equals([Colors.green[300]!, Colors.yellow[400]!]));
+  // });
 }
 
 MultiProvider _wrapper({
@@ -66,13 +66,13 @@ MultiProvider _wrapper({
   final events = ev ?? Events(urlsProvider: urlsProvider);
   final docsService = docs ?? DocsService(urls: urlsProvider, ev: events);
   final connService = conn ?? ConnService(ev: events);
-  // final docsState = docsSt ?? DocsState(docsService: docsService);
-  final connState = connSt ?? ConnStateImpl(connService: connService);
+  DocsState docsState(_) => docsSt ?? DocsState(docsService: docsService);
+  ConnState connState(_) => connSt ?? ConnStateImpl(connService: connService);
 
   return MultiProvider(
     providers: [
-      ChangeNotifierProvider<DocsState>(create: (_) => DocsState(docsService: docsService)),
-      ChangeNotifierProvider<ConnState>(create: (_) => connState),
+      ChangeNotifierProvider<DocsState>(create: docsState),
+      ChangeNotifierProvider<ConnState>(create: connState),
     ],
     child: child,
   );
