@@ -27,6 +27,28 @@ void main() {
     final gradient = boxDecoration.gradient as LinearGradient;
     expect(gradient.colors, equals([Colors.blueGrey, Colors.blueGrey]));
   });
+
+//   testWidgets("StatusDot changes color when connected", (tester) async {
+//     // given
+//     final connState = _ConnStateMock();
+//     const statusDot = StatusDot();
+//
+//     // when
+//     await tester.pumpWidget(_wrapper(child: statusDot, connSt: connState));
+//     Container container = tester.firstWidget(find.byType(Container));
+//     var boxDecoration = container.decoration as BoxDecoration;
+//     var gradient = boxDecoration.gradient as LinearGradient;
+//     expect(gradient.colors, equals([Colors.blueGrey, Colors.blueGrey]));
+//
+//     connState.isConnected = true;
+//     await tester.pump();
+//
+//     // then
+//     container = tester.firstWidget(find.byType(Container));
+//     boxDecoration = container.decoration as BoxDecoration;
+//     gradient = boxDecoration.gradient as LinearGradient;
+//     expect(gradient.colors, equals([Colors.green[300]!, Colors.yellow[400]!]));
+//   });
 }
 
 MultiProvider _wrapper({
@@ -44,24 +66,34 @@ MultiProvider _wrapper({
   final events = ev ?? Events(urlsProvider: urlsProvider);
   final docsService = docs ?? DocsService(urls: urlsProvider, ev: events);
   final connService = conn ?? ConnService(ev: events);
+  // final docsState = docsSt ?? DocsState(docsService: docsService);
+  final connState = connSt ?? ConnStateImpl(connService: connService);
 
   return MultiProvider(
     providers: [
-      ChangeNotifierProvider<DocsState>(
-        create: (_) => DocsState(docsService: docsService),
-      ),
-      ChangeNotifierProvider<ConnState>(
-        create: (_) => ConnState(connService: connService),
-      ),
+      ChangeNotifierProvider<DocsState>(create: (_) => DocsState(docsService: docsService)),
+      ChangeNotifierProvider<ConnState>(create: (_) => connState),
     ],
     child: child,
   );
 }
 
-class _ConfigMock extends Config {
+class _ConfigMock implements Config {
   @override
   String get baseUrl => 'http://192.168.16.247:8000';
 
   @override
   String get websocketUrl => 'ws://192.168.16.247:8001';
+}
+
+class _ConnStateMock extends ChangeNotifier implements ConnState {
+  bool _isConnected = false;
+
+  @override
+  bool get isConnected => false;
+
+  set isConnected(val) {
+    _isConnected = val;
+    notifyListeners();
+  }
 }

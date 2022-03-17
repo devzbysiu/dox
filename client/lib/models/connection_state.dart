@@ -3,12 +3,16 @@ import 'package:dox/utilities/log.dart';
 import 'package:dox/utilities/service_locator.dart';
 import 'package:flutter/material.dart';
 
-class ConnState extends ChangeNotifier with Log {
+abstract class ConnState implements ChangeNotifier {
+  bool get isConnected;
+}
+
+class ConnStateImpl extends ChangeNotifier with Log implements ConnState {
   late final ConnService _connService;
 
   bool _isConnected = false;
 
-  ConnState({
+  ConnStateImpl({
     ConnService? connService,
   }) {
     log.fine('initializing ConnState');
@@ -29,5 +33,6 @@ class ConnState extends ChangeNotifier with Log {
     notifyListeners();
   }
 
+  @override
   bool get isConnected => _isConnected;
 }

@@ -6,7 +6,7 @@ abstract class Config {
   String get websocketUrl;
 }
 
-class ConfigImpl extends Config with Log {
+class ConfigImpl with Log implements Config {
   static Config? _singleton;
 
   late final String _coreBaseUrl;

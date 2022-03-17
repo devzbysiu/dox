@@ -18,7 +18,7 @@ class HomePage extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<DocsState>(create: (_) => DocsState()),
-        ChangeNotifierProvider<ConnState>(create: (_) => ConnState()),
+        ChangeNotifierProvider<ConnState>(create: (_) => ConnStateImpl()),
       ],
       child: GestureDetector(
         onTap: () => _hideKeyboard(),
