@@ -22,10 +22,7 @@ void main() {
     await tester.pumpWidget(_wrapper(child: statusDot));
 
     // then
-    final Container container = tester.firstWidget(find.byType(Container));
-    final boxDecoration = container.decoration as BoxDecoration;
-    final gradient = boxDecoration.gradient as LinearGradient;
-    expect(gradient.colors, equals([Colors.blueGrey, Colors.blueGrey]));
+    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
   });
 
   // testWidgets("StatusDot changes color when connected", (tester) async {
@@ -95,5 +92,14 @@ class _ConnStateMock extends ChangeNotifier implements ConnState {
   set isConnected(val) {
     _isConnected = val;
     notifyListeners();
+  }
+}
+
+extension StatusDotExt on StatusDot {
+  List<Color> color(WidgetTester tester) {
+    final Container container = tester.firstWidget(find.byType(Container));
+    final boxDecoration = container.decoration as BoxDecoration;
+    final gradient = boxDecoration.gradient as LinearGradient;
+    return gradient.colors;
   }
 }
