@@ -27,7 +27,7 @@ void main() {
 
   testWidgets("StatusDot changes color when connected", (tester) async {
     // given
-    final connState = _ConnStateMock();
+    final connState = ConnStateMock();
     const statusDot = StatusDot();
 
     // when
@@ -80,7 +80,7 @@ class _ConfigMock implements Config {
   String get websocketUrl => 'ws://192.168.16.247:8001';
 }
 
-class _ConnStateMock extends ChangeNotifier implements ConnState {
+class ConnStateMock extends ChangeNotifier implements ConnState {
   bool _isConnected = false;
 
   @override
