@@ -84,7 +84,7 @@ class _ConnStateMock extends ChangeNotifier implements ConnState {
   bool _isConnected = false;
 
   @override
-  bool get isConnected => false;
+  bool get isConnected => _isConnected;
 
   set isConnected(val) {
     _isConnected = val;
