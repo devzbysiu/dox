@@ -34,4 +34,27 @@ void main() {
       equals([Colors.green[300]!, Colors.yellow[400]!]),
     );
   });
+
+  testWidgets('StatusDot changes color when disconnected', (tester) async {
+    // given
+    final connState = ConnStateMock();
+    const statusDot = StatusDot();
+
+    await tester.pumpWidget(wrapper(widget: statusDot, connSt: connState));
+    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
+
+    connState.isConnected = true;
+    await tester.pump();
+    expect(
+      statusDot.color(tester),
+      equals([Colors.green[300]!, Colors.yellow[400]!]),
+    );
+
+    // when
+    connState.isConnected = false;
+    await tester.pump();
+
+    // then
+    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
+  });
 }
