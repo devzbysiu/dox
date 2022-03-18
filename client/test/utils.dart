@@ -16,7 +16,7 @@ MultiProvider wrapper({
   Urls? urls,
   Events? ev,
   DocsService? docs,
-  DocsState? docsSt,
+  DocsStateImpl? docsSt,
   ConnService? conn,
   ConnState? connSt,
 }) {
@@ -25,12 +25,12 @@ MultiProvider wrapper({
   final events = ev ?? Events(urlsProvider: urlsProvider);
   final docsService = docs ?? DocsService(urls: urlsProvider, ev: events);
   final connService = conn ?? ConnService(ev: events);
-  DocsState docsState(_) => docsSt ?? DocsState(docsService: docsService);
+  DocsStateImpl docsState(_) => docsSt ?? DocsStateImpl(docsService: docsService);
   ConnState connState(_) => connSt ?? ConnStateImpl(connService: connService);
 
   return MultiProvider(
     providers: [
-      ChangeNotifierProvider<DocsState>(create: docsState),
+      ChangeNotifierProvider<DocsStateImpl>(create: docsState),
       ChangeNotifierProvider<ConnState>(create: connState),
     ],
     child: widget,

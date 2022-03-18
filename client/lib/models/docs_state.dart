@@ -4,7 +4,12 @@ import 'package:dox/utilities/log.dart';
 import 'package:dox/utilities/service_locator.dart';
 import 'package:flutter/material.dart';
 
-class DocsState extends ChangeNotifier with Log {
+abstract class DocsState extends ChangeNotifier {
+  bool get isLoading;
+  List<Document> get suggestions;
+}
+
+class DocsStateImpl extends ChangeNotifier with Log implements DocsState {
   bool _isLoading = false;
 
   List<Document> _suggestions = List.empty();
@@ -13,7 +18,7 @@ class DocsState extends ChangeNotifier with Log {
 
   late final DocsService _docsService;
 
-  DocsState({
+  DocsStateImpl({
     DocsService? docsService,
   }) {
     log.fine('initializing DocsState');

@@ -12,7 +12,7 @@ class OpenableImageList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final suggestions = context.select((DocsState docs) => docs.suggestions);
+    final suggestions = context.select((DocsStateImpl docs) => docs.suggestions);
     return ListView(children: _buildOpenableDocuments(suggestions));
   }
 

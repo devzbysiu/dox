@@ -18,7 +18,7 @@ class _SearchInputState extends State<SearchInput> with Log {
 
   @override
   Widget build(BuildContext context) {
-    final onChanged = context.read<DocsState>().onQueryChanged;
+    final onChanged = context.read<DocsStateImpl>().onQueryChanged;
     return Material(
       borderRadius: const BorderRadius.all(Radius.circular(15)),
       elevation: 18,
@@ -50,7 +50,7 @@ class _SearchInputState extends State<SearchInput> with Log {
   void _clear(BuildContext context) async {
     log.fine('clearing input');
     _controller.clear();
-    await context.read<DocsState>().reset();
+    await context.read<DocsStateImpl>().reset();
     setState(() {});
   }
 
