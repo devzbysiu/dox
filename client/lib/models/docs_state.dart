@@ -9,6 +9,7 @@ abstract class DocsState extends ChangeNotifier {
   List<Document> get suggestions;
   Future<void> onQueryChanged(String query);
   Future<void> refresh();
+  Future<void> reset();
 }
 
 class DocsStateImpl extends ChangeNotifier with Log implements DocsState {
@@ -61,6 +62,7 @@ class DocsStateImpl extends ChangeNotifier with Log implements DocsState {
         : await _docsService.searchDocs(query);
   }
 
+  @override
   Future<void> reset() async {
     log.fine('resetting to showing all docs');
     _suggestions = await _docsService.fetchAllFiles();

@@ -50,7 +50,7 @@ class _SearchInputState extends State<SearchInput> with Log {
   void _clear(BuildContext context) async {
     log.fine('clearing input');
     _controller.clear();
-    await context.read<DocsStateImpl>().reset();
+    await context.read<DocsState>().reset();
     setState(() {});
   }
 

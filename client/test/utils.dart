@@ -64,13 +64,21 @@ class DocsStateMock extends ChangeNotifier implements DocsState {
 
   List<Document> docs;
 
-  DocsStateMock({this.loading = false, this.docs = const []});
+  bool resetCalled;
+
+  DocsStateMock({
+    this.loading = false,
+    this.docs = const [],
+    this.resetCalled = false,
+  });
 
   @override
   bool get isLoading => loading;
 
   @override
   List<Document> get suggestions => docs;
+
+  bool get wasResetCalled => resetCalled;
 
   @override
   Future<void> onQueryChanged(String query) {
@@ -80,6 +88,12 @@ class DocsStateMock extends ChangeNotifier implements DocsState {
   @override
   Future<void> refresh() {
     return Future.delayed(const Duration(microseconds: 250));
+  }
+
+  @override
+  Future<void> reset() {
+    resetCalled = true;
+    return Future.delayed(Duration.zero);
   }
 }
 
@@ -99,12 +113,8 @@ extension SearchInputExt on SearchInput {
     return decoration.hintText!;
   }
 
-  IconButton clearButton(WidgetTester tester) {
-    return tester.firstWidget(find.byType(IconButton));
-  }
-
   IconData icon(WidgetTester tester) {
-    final button = clearButton(tester);
+    final IconButton button = tester.firstWidget(find.byType(IconButton));
     final icon = button.icon as Icon;
     return icon.icon!;
   }
