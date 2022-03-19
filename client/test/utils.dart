@@ -63,7 +63,7 @@ class DocsStateMock extends ChangeNotifier implements DocsState {
 
   List<Document> docs;
 
-  DocsStateMock({this.loading = false, this.docs = const []})
+  DocsStateMock({this.loading = false, this.docs = const []});
 
   @override
   bool get isLoading => loading;
