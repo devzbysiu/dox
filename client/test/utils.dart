@@ -6,6 +6,7 @@ import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/config.dart';
 import 'package:dox/utilities/events_stream.dart';
 import 'package:dox/utilities/urls.dart';
+import 'package:dox/widgets/search_input.dart';
 import 'package:dox/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -88,5 +89,13 @@ extension StatusDotExt on StatusDot {
     final boxDecoration = container.decoration as BoxDecoration;
     final gradient = boxDecoration.gradient as LinearGradient;
     return gradient.colors;
+  }
+}
+
+extension SearchInputExt on SearchInput {
+  String hintText(WidgetTester tester) {
+    final TextField input = tester.firstWidget(find.byType(TextField));
+    final decoration = input.decoration as InputDecoration;
+    return decoration.hintText!;
   }
 }
