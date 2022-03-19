@@ -1,5 +1,6 @@
 import 'package:dox/models/connection_state.dart';
 import 'package:dox/models/docs_state.dart';
+import 'package:dox/models/document.dart';
 import 'package:dox/services/connection_service.dart';
 import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/config.dart';
@@ -55,6 +56,20 @@ class ConnStateMock extends ChangeNotifier implements ConnState {
     _isConnected = val;
     notifyListeners();
   }
+}
+
+class DocsStateMock extends ChangeNotifier implements DocsState {
+  bool loading;
+
+  List<Document> docs;
+
+  DocsStateMock({this.loading = false, this.docs = const []})
+
+  @override
+  bool get isLoading => loading;
+
+  @override
+  List<Document> get suggestions => docs;
 }
 
 extension StatusDotExt on StatusDot {
