@@ -98,4 +98,8 @@ extension SearchInputExt on SearchInput {
     final decoration = input.decoration as InputDecoration;
     return decoration.hintText!;
   }
+
+  IconButton clearButton(WidgetTester tester) {
+    return tester.firstWidget(find.byType(IconButton));
+  }
 }

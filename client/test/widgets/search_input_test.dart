@@ -15,4 +15,16 @@ void main() {
     // then
     expect(searchInput.hintText(tester), equals('Search'));
   });
+
+  testWidgets('SearchInput has a clear button', (tester) async {
+    // given
+    final docsState = DocsStateMock();
+    const searchInput = SearchInput();
+
+    // when
+    await tester.pumpWidget(wrapper(widget: searchInput, docsSt: docsState));
+
+    // then
+    expect(searchInput.clearButton(tester), isNotNull);
+  });
 }
