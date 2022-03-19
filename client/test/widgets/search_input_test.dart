@@ -1,4 +1,5 @@
 import 'package:dox/widgets/search_input.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../utils.dart';
@@ -26,5 +27,6 @@ void main() {
 
     // then
     expect(searchInput.clearButton(tester), isNotNull);
+    expect(searchInput.icon(tester), equals(Icons.clear));
   });
 }

@@ -102,4 +102,10 @@ extension SearchInputExt on SearchInput {
   IconButton clearButton(WidgetTester tester) {
     return tester.firstWidget(find.byType(IconButton));
   }
+
+  IconData icon(WidgetTester tester) {
+    final button = clearButton(tester);
+    final icon = button.icon as Icon;
+    return icon.icon!;
+  }
 }
