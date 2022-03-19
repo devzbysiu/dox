@@ -18,7 +18,7 @@ class _SearchInputState extends State<SearchInput> with Log {
 
   @override
   Widget build(BuildContext context) {
-    final onChanged = context.read<DocsStateImpl>().onQueryChanged;
+    final onChanged = context.read<DocsState>().onQueryChanged;
     return Material(
       borderRadius: const BorderRadius.all(Radius.circular(15)),
       elevation: 18,
@@ -35,7 +35,7 @@ class _SearchInputState extends State<SearchInput> with Log {
     return InputDecoration(
       filled: true,
       fillColor: context.onPrimary,
-      hintText: "Search",
+      hintText: 'Search',
       prefixIcon: const Icon(Icons.search),
       suffixIcon: IconButton(
         icon: const Icon(Icons.clear),

@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 abstract class DocsState extends ChangeNotifier {
   bool get isLoading;
   List<Document> get suggestions;
+  Future<void> onQueryChanged(String query);
+  Future<void> refresh();
 }
 
 class DocsStateImpl extends ChangeNotifier with Log implements DocsState {
@@ -31,12 +33,14 @@ class DocsStateImpl extends ChangeNotifier with Log implements DocsState {
     });
   }
 
+  @override
   Future<void> refresh() async {
     log.fine('refreshing');
     reset();
   }
 
-  void onQueryChanged(String query) async {
+  @override
+  Future<void> onQueryChanged(String query) async {
     if (query == _query) return;
     log.fine('new query: $query');
 
@@ -63,7 +67,9 @@ class DocsStateImpl extends ChangeNotifier with Log implements DocsState {
     notifyListeners();
   }
 
+  @override
   bool get isLoading => _isLoading;
 
+  @override
   List<Document> get suggestions => _suggestions;
 }

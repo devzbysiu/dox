@@ -34,7 +34,7 @@ MultiProvider wrapper({
       ChangeNotifierProvider<DocsState>(create: docsState),
       ChangeNotifierProvider<ConnState>(create: connState),
     ],
-    child: widget,
+    child: MaterialApp(home: widget),
   );
 }
 
@@ -70,6 +70,16 @@ class DocsStateMock extends ChangeNotifier implements DocsState {
 
   @override
   List<Document> get suggestions => docs;
+
+  @override
+  Future<void> onQueryChanged(String query) {
+    return Future.delayed(const Duration(microseconds: 250));
+  }
+
+  @override
+  Future<void> refresh() {
+    return Future.delayed(const Duration(microseconds: 250));
+  }
 }
 
 extension StatusDotExt on StatusDot {
