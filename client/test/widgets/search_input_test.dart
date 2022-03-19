@@ -12,12 +12,16 @@ void main() {
 
     // when
     await tester.pumpWidget(wrapper(widget: searchInput, docsSt: docsState));
-    final TextField input = tester.firstWidget(find.byType(TextField));
-    final decoration = input.decoration as InputDecoration;
-    final hint = decoration.hintText;
 
     // then
-    // expect(searchInput.hintText(tester), equals('Search'));
-    expect(hint, equals('Search'));
+    expect(searchInput.hintText(tester), equals('Search'));
   });
+}
+
+extension SearchInputExt on SearchInput {
+  String hintText(WidgetTester tester) {
+    final TextField input = tester.firstWidget(find.byType(TextField));
+    final decoration = input.decoration as InputDecoration;
+    return decoration.hintText!;
+  }
 }
