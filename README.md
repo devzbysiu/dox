@@ -83,7 +83,7 @@ scanned files. It also allows scanning new documents using camera or just pick a
 2. Install it on your device.
 3. Run the app. On first run, it will show you settings page:
   - `dox address` - the address of the dox server
-  > :warn: **NOTE**: the dox server needs to be accessible to the client. If you are setting the core
+  > **NOTE**: the dox server needs to be accessible to the client. If you are setting the core
   on local machine, make sure that the phone is in the same network as the local machine.
 
 # <p id="license">License</p>
