@@ -53,9 +53,22 @@ void main() {
 
     // when
     await tester.tap(find.byType(IconButton));
-    await tester.pump();
 
     // then
     expect(find.text('Search phrase'), findsNothing);
+  });
+
+  testWidgets('onQueryChanged is called after changing input', (tester) async {
+    // given
+    final docsState = DocsStateMock();
+    const searchInput = SearchInput();
+    await tester.pumpWidget(wrapper(widget: searchInput, docsSt: docsState));
+    expect(docsState.wasOnQueryChangedCalled, isFalse);
+
+    // when
+    await tester.enterText(find.byType(TextField), 'Search phrase');
+
+    // then
+    expect(docsState.wasOnQueryChangedCalled, isTrue);
   });
 }
