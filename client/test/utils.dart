@@ -66,10 +66,13 @@ class DocsStateMock extends ChangeNotifier implements DocsState {
 
   bool resetCalled;
 
+  bool onQueryChangedCalled;
+
   DocsStateMock({
     this.loading = false,
     this.docs = const [],
     this.resetCalled = false,
+    this.onQueryChangedCalled = false,
   });
 
   @override
@@ -80,9 +83,11 @@ class DocsStateMock extends ChangeNotifier implements DocsState {
 
   bool get wasResetCalled => resetCalled;
 
+  bool get wasOnQueryChangedCalled => onQueryChangedCalled;
+
   @override
-  Future<void> onQueryChanged(String query) {
-    return Future.delayed(const Duration(microseconds: 250));
+  Future<void> onQueryChanged(String query) async {
+    onQueryChangedCalled = true;
   }
 
   @override

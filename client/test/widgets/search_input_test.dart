@@ -42,4 +42,20 @@ void main() {
     // then
     expect(docsState.wasResetCalled, isTrue);
   });
+
+  testWidgets('After tap on clear button, SearchInput clears', (tester) async {
+    // given
+    final docsState = DocsStateMock();
+    const searchInput = SearchInput();
+    await tester.pumpWidget(wrapper(widget: searchInput, docsSt: docsState));
+    await tester.enterText(find.byType(TextField), 'Search phrase');
+    expect(find.text('Search phrase'), findsOneWidget);
+
+    // when
+    await tester.tap(find.byType(IconButton));
+    await tester.pump();
+
+    // then
+    expect(find.text('Search phrase'), findsNothing);
+  });
 }
