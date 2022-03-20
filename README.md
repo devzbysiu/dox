@@ -52,7 +52,7 @@
 # <p id="about">About</p>
 
 One of the most frustrating activities I had to do from time to time is to search through a pile
-of documents to find the one you are looking for. Wouldn't be better to just open an app and type
+of documents to find the one I'm looking for. Wouldn't be better to just open an app and type
 keywords in the search bar?
 
 That's what this project is for. TLDR: you install a [core](./core) on your PC. Through the
