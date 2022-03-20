@@ -4,12 +4,12 @@ import 'package:dox/widgets/document/viewer_factory.dart';
 import 'package:flutter/material.dart';
 
 class OpenableDocument extends StatelessWidget {
-  final Document doc;
-
   const OpenableDocument({
     Key? key,
     required this.doc,
   }) : super(key: key);
+
+  final Document doc;
 
   @override
   Widget build(BuildContext context) {

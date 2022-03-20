@@ -10,10 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 
 class AddButton extends StatelessWidget with Log {
-  late final DocsService _docsService;
-
-  late final DocScanService _scanService;
-
   AddButton({
     Key? key,
     DocsService? docsService,
@@ -22,6 +18,10 @@ class AddButton extends StatelessWidget with Log {
     _docsService = docsService ?? getIt<DocsService>();
     _scanService = docScanService ?? getIt<DocScanService>();
   }
+
+  late final DocsService _docsService;
+
+  late final DocScanService _scanService;
 
   @override
   Widget build(BuildContext context) {

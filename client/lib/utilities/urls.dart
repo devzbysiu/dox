@@ -3,12 +3,12 @@ import 'package:dox/utilities/log.dart';
 import 'package:dox/utilities/service_locator.dart';
 
 class Urls with Log {
-  late final Config _config;
-
   Urls({Config? config}) {
     log.fine('initializing Config');
     _config = config ?? getIt<Config>();
   }
+
+  late final Config _config;
 
   Uri search(String query) {
     return Uri.parse('${_config.baseUrl}/search?q=$query');

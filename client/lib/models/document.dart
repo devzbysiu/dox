@@ -1,11 +1,11 @@
 import 'package:dox/utilities/filetype.dart';
 
 class Document {
+  const Document(this.fileUrl, this.thumbnailUrl);
+
   final Uri fileUrl;
 
   final Uri thumbnailUrl;
-
-  const Document(this.fileUrl, this.thumbnailUrl);
 
   bool isSupported() {
     final docType = fileUrl.filetype();

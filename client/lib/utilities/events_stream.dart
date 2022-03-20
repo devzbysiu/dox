@@ -4,8 +4,6 @@ import 'package:dox/utilities/urls.dart';
 import 'package:web_socket_channel/io.dart';
 
 class Events with Log {
-  late final Stream _stream;
-
   Events({
     Urls? urlsProvider,
   }) {
@@ -15,6 +13,8 @@ class Events with Log {
         .stream
         .asBroadcastStream();
   }
+
+  late final Stream _stream;
 
   Stream get stream => _stream;
 }

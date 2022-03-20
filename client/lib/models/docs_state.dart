@@ -13,14 +13,6 @@ abstract class DocsState extends ChangeNotifier {
 }
 
 class DocsStateImpl extends ChangeNotifier with Log implements DocsState {
-  bool _isLoading = false;
-
-  List<Document> _suggestions = List.empty();
-
-  String _query = '';
-
-  late final DocsService _docsService;
-
   DocsStateImpl({
     DocsService? docsService,
   }) {
@@ -33,6 +25,20 @@ class DocsStateImpl extends ChangeNotifier with Log implements DocsState {
       notifyListeners();
     });
   }
+
+  bool _isLoading = false;
+
+  List<Document> _suggestions = List.empty();
+
+  String _query = '';
+
+  late final DocsService _docsService;
+
+  @override
+  bool get isLoading => _isLoading;
+
+  @override
+  List<Document> get suggestions => _suggestions;
 
   @override
   Future<void> refresh() async {
@@ -68,10 +74,4 @@ class DocsStateImpl extends ChangeNotifier with Log implements DocsState {
     _suggestions = await _docsService.fetchAllFiles();
     notifyListeners();
   }
-
-  @override
-  bool get isLoading => _isLoading;
-
-  @override
-  List<Document> get suggestions => _suggestions;
 }

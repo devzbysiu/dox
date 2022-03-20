@@ -6,8 +6,6 @@ typedef OnConnected = void Function();
 typedef OnDone = void Function()?;
 
 class ConnService with Log {
-  late final Stream _stream;
-
   ConnService({
     Events? ev,
   }) {
@@ -15,6 +13,8 @@ class ConnService with Log {
     final events = ev ?? getIt<Events>();
     _stream = events.stream;
   }
+
+  late final Stream _stream;
 
   void onConnected(OnConnected onConnected) {
     log.fine('setting onConnected handler');

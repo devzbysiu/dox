@@ -7,12 +7,6 @@ abstract class Config {
 }
 
 class ConfigImpl with Log implements Config {
-  static Config? _singleton;
-
-  late final String _coreBaseUrl;
-
-  late final String _coreWebSocketUrl;
-
   static Future<Config> init() async {
     const env = String.fromEnvironment('ENV', defaultValue: 'simulator');
     _singleton ??= await ConfigImpl._fromEnv(env);
@@ -31,6 +25,12 @@ class ConfigImpl with Log implements Config {
     _coreBaseUrl = baseUrl;
     _coreWebSocketUrl = websocketUrl;
   }
+
+  static Config? _singleton;
+
+  late final String _coreBaseUrl;
+
+  late final String _coreWebSocketUrl;
 
   @override
   String get baseUrl => _coreBaseUrl;

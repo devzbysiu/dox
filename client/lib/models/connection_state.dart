@@ -8,10 +8,6 @@ abstract class ConnState implements ChangeNotifier {
 }
 
 class ConnStateImpl extends ChangeNotifier with Log implements ConnState {
-  late final ConnService _connService;
-
-  bool _isConnected = false;
-
   ConnStateImpl({
     ConnService? connService,
   }) {
@@ -20,6 +16,13 @@ class ConnStateImpl extends ChangeNotifier with Log implements ConnState {
     _connService.onConnected(_notifyConnected);
     _connService.onDone(_notifyDisconnected);
   }
+
+  late final ConnService _connService;
+
+  bool _isConnected = false;
+
+  @override
+  bool get isConnected => _isConnected;
 
   void _notifyDisconnected() {
     log.fine('core disconnected, notifying');
@@ -32,7 +35,4 @@ class ConnStateImpl extends ChangeNotifier with Log implements ConnState {
     _isConnected = true;
     notifyListeners();
   }
-
-  @override
-  bool get isConnected => _isConnected;
 }

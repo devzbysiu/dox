@@ -15,10 +15,6 @@ const fileUrl = 'fileUrl';
 const thumbnailUrl = 'thumbnailUrl';
 
 class DocsService with Log {
-  late final Urls _urls;
-
-  late final Stream _stream;
-
   DocsService({
     Urls? urls,
     Events? ev,
@@ -28,6 +24,10 @@ class DocsService with Log {
     final events = ev ?? getIt<Events>();
     _stream = events.stream;
   }
+
+  late final Urls _urls;
+
+  late final Stream _stream;
 
   Future<List<Document>> fetchAllFiles() async {
     log.fine('fetching all files');
@@ -98,14 +98,14 @@ class DocsService with Log {
 }
 
 class _Doc {
-  late final String _filename;
-
-  late final String _body;
-
   _Doc(File file) {
     _filename = _name(file);
     _body = base64Encode(file.readAsBytesSync());
   }
+
+  late final String _filename;
+
+  late final String _body;
 
   String _name(File file) {
     return file.path.split('/').last;
