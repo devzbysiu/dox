@@ -38,8 +38,6 @@ void main() {
 
     // when
     await tester.tap(find.byType(IconButton));
-    // just 'pump()' is not enough because Future.delayed in the mock
-    await tester.pumpAndSettle();
 
     // then
     expect(docsState.wasResetCalled, isTrue);

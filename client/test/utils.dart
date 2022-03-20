@@ -91,9 +91,8 @@ class DocsStateMock extends ChangeNotifier implements DocsState {
   }
 
   @override
-  Future<void> reset() {
+  Future<void> reset() async {
     resetCalled = true;
-    return Future.delayed(Duration.zero);
   }
 }
 
