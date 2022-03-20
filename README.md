@@ -79,6 +79,7 @@ scanned files. It also allows scanning new documents using camera or just pick a
    to point the client to the `dox` server
 
 ## Client
+--- TODO ---
 1. Go to [releases](https://github.com/devzbysiu/dox/releases) page and download APK file.
 2. Install it on your device.
 3. Run the app. On first run, it will show you settings page:
