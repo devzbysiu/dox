@@ -43,7 +43,7 @@ base64 = "0.13.0"
 thiserror = "1.0.30"
 pdf-extract = "0.6.3"
 inquire = "0.2.1"
-cairo-rs = { version = "0.14", features = ["png", "pdf"] }
+cairo-rs = { version = "0.15.10", features = ["png", "pdf"] }
 poppler = "0.3.1"
 tungstenite = "0.17.2"
 
