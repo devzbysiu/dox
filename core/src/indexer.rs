@@ -111,7 +111,7 @@ fn to_text((filename, thumbnail): (&Value, &Value)) -> (String, String) {
 }
 
 fn extract_text(val: &Value) -> String {
-    val.text()
+    val.as_text()
         .unwrap_or_else(|| panic!("failed to extract text"))
         .to_string()
 }
@@ -184,7 +184,7 @@ pub fn index_docs(tuples: &[DocDetails], tools: &RepoTools) -> Result<()> {
                 filename => t.filename.clone(),
                 body => t.body.clone(),
                 thumbnail => t.thumbnail.clone(),
-        ));
+        ))?;
         index_writer.commit()?;
     }
     Ok(())
