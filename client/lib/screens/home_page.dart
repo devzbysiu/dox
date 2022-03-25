@@ -17,7 +17,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<DocsStateImpl>(create: (_) => DocsStateImpl()),
+        ChangeNotifierProvider<DocsState>(create: (_) => DocsStateImpl()),
         ChangeNotifierProvider<ConnState>(create: (_) => ConnStateImpl()),
       ],
       child: GestureDetector(
@@ -57,7 +57,7 @@ class HomePage extends StatelessWidget {
   }
 
   Future<void> _refreshDocs(BuildContext context) async {
-    final state = context.read<DocsStateImpl>();
+    final state = context.read<DocsState>();
     await Future.delayed(const Duration(seconds: 1), state.refresh);
   }
 }
