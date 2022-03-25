@@ -8,9 +8,9 @@ use rocket::serde::Serialize;
 use std::fs::create_dir_all;
 use tantivy::collector::TopDocs;
 use tantivy::directory::MmapDirectory;
-use tantivy::query::{AllQuery, Query, QueryParser};
+use tantivy::query::{AllQuery, FuzzyTermQuery, Query};
 use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
-use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy};
+use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy, Term};
 
 type Searcher = LeasedItem<tantivy::Searcher>;
 type TantivyDocs = Vec<(f32, DocAddress)>;
@@ -49,7 +49,7 @@ impl Repo {
         let term = term.into();
         debug!("searching '{}'...", term);
         let searcher = self.create_searcher()?;
-        let top_docs = searcher.search(&self.make_query(term)?, &TopDocs::with_limit(100))?;
+        let top_docs = searcher.search(&self.make_query(term), &TopDocs::with_limit(100))?;
         self.to_search_results(&searcher, top_docs)
     }
 
@@ -62,12 +62,9 @@ impl Repo {
             .searcher())
     }
 
-    fn make_query<S: Into<String>>(&self, term: S) -> Result<Box<dyn Query>> {
-        let parser = QueryParser::for_index(
-            &self.index,
-            vec![self.field(&Fields::Filename), self.field(&Fields::Body)],
-        );
-        Ok(parser.parse_query(&term.into())?)
+    fn make_query<S: Into<String>>(&self, term: S) -> Box<dyn Query> {
+        let term = Term::from_field_text(self.field(&Fields::Body), &term.into());
+        Box::new(FuzzyTermQuery::new(term, 2, true))
     }
 
     fn field(&self, field: &Fields) -> Field {
