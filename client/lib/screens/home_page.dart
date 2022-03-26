@@ -20,7 +20,7 @@ class HomePage extends StatelessWidget {
         ChangeNotifierProvider<DocsState>(create: (_) => DocsStateImpl()),
         ChangeNotifierProvider<ConnState>(create: (_) => ConnStateImpl()),
       ],
-      child: Scaffold(
+      builder: (context, _) => Scaffold(
         backgroundColor: context.background,
         body: NestedScrollView(
           headerSliverBuilder: _scrollableAppBarBuilder,
