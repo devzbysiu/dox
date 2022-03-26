@@ -20,36 +20,28 @@ class HomePage extends StatelessWidget {
         ChangeNotifierProvider<DocsState>(create: (_) => DocsStateImpl()),
         ChangeNotifierProvider<ConnState>(create: (_) => ConnStateImpl()),
       ],
-      child: GestureDetector(
-        onTap: () => _hideKeyboard(),
-        onVerticalDragDown: (_) => _hideKeyboard(),
-        child: Scaffold(
-          backgroundColor: context.background,
-          body: NestedScrollView(
-            headerSliverBuilder: _scrollableAppBarBuilder,
-            body: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: SearchInput(),
+      child: Scaffold(
+        backgroundColor: context.background,
+        body: NestedScrollView(
+          headerSliverBuilder: _scrollableAppBarBuilder,
+          body: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: SearchInput(),
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  child: const OpenableImageList(),
+                  onRefresh: () => _refreshDocs(context),
                 ),
-                Expanded(
-                  child: RefreshIndicator(
-                    child: const OpenableImageList(),
-                    onRefresh: () => _refreshDocs(context),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          floatingActionButton: AddButton(),
         ),
+        floatingActionButton: AddButton(),
       ),
     );
-  }
-
-  void _hideKeyboard() {
-    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   List<Widget> _scrollableAppBarBuilder(BuildContext _ctx, bool _) {

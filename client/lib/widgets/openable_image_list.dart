@@ -13,7 +13,10 @@ class OpenableImageList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final suggestions = context.select((DocsState docs) => docs.suggestions);
-    return ListView(children: _buildOpenableDocuments(suggestions));
+    return ListView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      children: _buildOpenableDocuments(suggestions),
+    );
   }
 
   List<Widget> _buildOpenableDocuments(List<Document> suggestions) {
