@@ -89,7 +89,7 @@ class DocsService with Log {
     log.fine('setting onNewDoc handler');
     _stream.listen((data) {
       log.fine('received data: $data');
-      if (data == "new-doc") {
+      if (data == 'new-doc') {
         log.fine('new doc event received, calling handler');
         onNewDoc();
       }

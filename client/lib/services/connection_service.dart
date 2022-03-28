@@ -19,7 +19,7 @@ class ConnService with Log {
   void onConnected(OnConnected onConnected) {
     log.fine('setting onConnected handler');
     _stream.listen((data) {
-      if (data == "connected") {
+      if (data == 'connected') {
         log.fine('connected event received, calling handler');
         onConnected();
       }

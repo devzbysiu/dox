@@ -13,7 +13,7 @@ void main() {
     extToFiletype.forEach((input, expected) {
       test('Uri to $input file returns correct filetype', () {
         // given
-        final uri = Uri.parse("http://some-address.com/file.$input");
+        final uri = Uri.parse('http://some-address.com/file.$input');
 
         // when
         final filetype = uri.filetype();
@@ -35,7 +35,7 @@ void main() {
     extToFiletype.forEach((input, expected) {
       test('Uri to $input file returns Filetype.other', () {
         // given
-        final uri = Uri.parse("http://some-address.com/file.$input");
+        final uri = Uri.parse('http://some-address.com/file.$input');
 
         // when
         final filetype = uri.filetype();
