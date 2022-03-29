@@ -146,7 +146,7 @@ String _allDocumentsList() => '''{
 }
 ''';
 
-Future<Uint8List> _placeholderImage() async {
+Future<String> _placeholderImage() async {
   final res = await http.get(Uri.parse('https://via.placeholder.com/320'));
-  return res.bodyBytes;
+  return res.body;
 }
