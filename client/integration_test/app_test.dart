@@ -25,22 +25,21 @@ class EventsMock implements Events {
   Stream get stream => const Stream.empty();
 }
 
+late final MockWebServer _server;
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
+  setUp(() async {
+    _server = MockWebServer();
+    await _server.start();
+    app.configOverride = MockConfig(_server.url, _server.url);
+    app.eventsOverride = EventsMock();
+  });
+
   testWidgets('initially there are no documents displayed', (tester) async {
     // given
-    final server = MockWebServer();
-    await server.start();
-    server.enqueue(body: '''
-    {
-      "entries": []
-    }
-    ''');
-
-    app.configOverride = MockConfig(server.url, server.url);
-    app.eventsOverride = EventsMock();
-
+    _server.enqueue(body: _emptyDocumentsList());
     app.main();
     await tester.pumpAndSettle();
 
@@ -48,3 +47,5 @@ void main() {
     expect(find.byType(OpenableDocument), findsNothing);
   });
 }
+
+String _emptyDocumentsList() => '{ "entries": []}';
