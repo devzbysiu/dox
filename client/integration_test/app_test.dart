@@ -2,6 +2,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dox/main.dart' as app;
+import 'package:dox/services/connection_service.dart';
+import 'package:dox/services/doc_scan_service.dart';
+import 'package:dox/services/docs_service.dart';
+import 'package:dox/utilities/service_locator.dart';
+import 'package:dox/utilities/urls.dart';
 import 'package:http/http.dart' as http;
 import 'package:dox/utilities/config.dart';
 import 'package:dox/utilities/events_stream.dart';
@@ -34,16 +39,25 @@ late final MockWebServer _server;
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(() async {
+  setUpAll(() async {
     _server = MockWebServer();
     await _server.start();
     app.configOverride = MockConfig(_server.url, _server.url);
     app.eventsOverride = EventsMock();
   });
 
+  tearDown(() async {
+    getIt.unregister<Config>();
+    getIt.unregister<Urls>();
+    getIt.unregister<Events>();
+    getIt.unregister<DocsService>();
+    getIt.unregister<ConnService>();
+    getIt.unregister<DocScanService>();
+  });
+
   testWidgets('initially there are no documents displayed', (tester) async {
     // given
-    _server.enqueue(body: _emptyDocumentsList());
+    _server.serveEmptyDocumentsList();
     app.main();
     await tester.pumpAndSettle();
 
@@ -53,57 +67,38 @@ void main() {
 
   testWidgets('all in-stage documents are displayed', (tester) async {
     // given
-    _server.enqueue(
-      headers: {"Content-Type": "application/json"},
-      body: _allDocumentsList(),
-    );
-
-    _server.enqueue(
-      headers: {"Content-Type": "image/png"},
-      body: await _placeholderImage(),
-    );
-
-    _server.enqueue(
-      headers: {"Content-Type": "image/jpeg"},
-      body: await _placeholderImage(),
-    );
-
-    _server.enqueue(
-      headers: {"Content-Type": "image/jpeg"},
-      body: await _placeholderImage(),
-    );
-
-    _server.enqueue(
-      headers: {"Content-Type": "image/webp"},
-      body: await _placeholderImage(),
-    );
-
-    _server.enqueue(
-      headers: {"Content-Type": "image/jpeg"},
-      body: await _placeholderImage(),
-    );
-
-    _server.enqueue(
-      headers: {"Content-Type": "image/jpeg"},
-      body: await _placeholderImage(),
-    );
-
-    _server.enqueue(
-      headers: {"Content-Type": "image/jpeg"},
-      body: await _placeholderImage(),
-    );
-
-    _server.enqueue(
-      headers: {"Content-Type": "image/jpeg"},
-      body: await _placeholderImage(),
-    );
-
+    _server
+      ..serveAllDocumentsList()
+      ..servePlaceholderImages(8);
     app.main();
     await tester.pumpAndSettle();
 
     // then
     expect(find.byType(OpenableDocument), findsWidgets);
   });
+}
+
+extension MockWebServerExt on MockWebServer {
+  void serveEmptyDocumentsList() {
+    enqueue(body: _emptyDocumentsList());
+  }
+
+  void serveAllDocumentsList() {
+    enqueue(
+      headers: {"Content-Type": "application/json"},
+      body: _allDocumentsList(),
+    );
+  }
+
+  void servePlaceholderImages(int n) async {
+    var body = await _placeholderImage();
+    for (var i = 0; i < n; i++) {
+      enqueue(
+        headers: {"Content-Type": "image/png"},
+        body: body,
+      );
+    }
+  }
 }
 
 String _emptyDocumentsList() => '{ "entries": []}';
