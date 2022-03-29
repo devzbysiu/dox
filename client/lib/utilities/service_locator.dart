@@ -8,10 +8,13 @@ import 'package:get_it/get_it.dart';
 
 final getIt = GetIt.instance;
 
-Future<void> setupServices() async {
-  getIt.registerSingleton<Config>(await ConfigImpl.init());
+Future<void> setupServices({
+  Config? configOverride,
+  Events? eventsOverride,
+}) async {
+  getIt.registerSingleton<Config>(configOverride ?? await ConfigImpl.init());
   getIt.registerSingleton<Urls>(Urls());
-  getIt.registerSingleton<Events>(Events());
+  getIt.registerSingleton<Events>(eventsOverride ?? EventsImpl());
   getIt.registerSingleton<DocsService>(DocsService());
   getIt.registerSingleton<ConnService>(ConnService());
   getIt.registerSingleton<DocScanService>(const DocScanService());

@@ -24,7 +24,7 @@ MultiProvider wrapper({
 }) {
   final config = cfg ?? ConfigMock();
   final urlsProvider = urls ?? Urls(config: config);
-  final events = ev ?? Events(urlsProvider: urlsProvider);
+  final events = ev ?? EventsImpl(urlsProvider: urlsProvider);
   final docsService = docs ?? DocsService(urls: urlsProvider, ev: events);
   final connService = conn ?? ConnService(ev: events);
   DocsState docsState(_) => docsSt ?? DocsStateImpl(docsService: docsService);
