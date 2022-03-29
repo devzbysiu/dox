@@ -147,8 +147,4 @@ String _allDocumentsList() => '''{
 
 Uint8List _readFileByte(String filePath) {
   return Uint8List.fromList(List.of([1, 2, 3]));
-  // Uri uri = Uri.parse(filePath);
-  // File file = File.fromUri(uri);
-  // Uint8List? bytes;
-  // return file.readAsBytesSync();
 }
