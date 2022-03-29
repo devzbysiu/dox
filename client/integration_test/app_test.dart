@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dox/main.dart' as app;
+import 'package:http/http.dart' as http;
 import 'package:dox/utilities/config.dart';
 import 'package:dox/utilities/events_stream.dart';
 import 'package:dox/widgets/document/openable_document.dart';
@@ -59,42 +60,42 @@ void main() {
 
     _server.enqueue(
       headers: {"Content-Type": "image/png"},
-      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc1.png"),
+      body: await _placeholderImage(),
     );
 
     _server.enqueue(
       headers: {"Content-Type": "image/jpeg"},
-      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc2.jpg"),
+      body: await _placeholderImage(),
     );
 
     _server.enqueue(
       headers: {"Content-Type": "image/jpeg"},
-      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc3.jpg"),
+      body: await _placeholderImage(),
     );
 
     _server.enqueue(
       headers: {"Content-Type": "image/webp"},
-      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc4.webp"),
+      body: await _placeholderImage(),
     );
 
     _server.enqueue(
       headers: {"Content-Type": "image/jpeg"},
-      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc5.jpg"),
+      body: await _placeholderImage(),
     );
 
     _server.enqueue(
       headers: {"Content-Type": "image/jpeg"},
-      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc6.jpg"),
+      body: await _placeholderImage(),
     );
 
     _server.enqueue(
       headers: {"Content-Type": "image/jpeg"},
-      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc7.jpg"),
+      body: await _placeholderImage(),
     );
 
     _server.enqueue(
       headers: {"Content-Type": "image/jpeg"},
-      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc8.jpg"),
+      body: await _placeholderImage(),
     );
 
     app.main();
@@ -145,6 +146,7 @@ String _allDocumentsList() => '''{
 }
 ''';
 
-Uint8List _readFileByte(String filePath) {
-  return Uint8List.fromList(List.of([1, 2, 3]));
+Future<Uint8List> _placeholderImage() async {
+  final res = await http.get(Uri.parse('https://via.placeholder.com/320'));
+  return res.bodyBytes;
 }
