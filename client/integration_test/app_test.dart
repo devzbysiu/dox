@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:dox/main.dart' as app;
 import 'package:dox/utilities/config.dart';
 import 'package:dox/utilities/events_stream.dart';
@@ -46,6 +49,106 @@ void main() {
     // then
     expect(find.byType(OpenableDocument), findsNothing);
   });
+
+  testWidgets('all in-stage documents are displayed', (tester) async {
+    // given
+    _server.enqueue(
+      headers: {"Content-Type": "application/json"},
+      body: _allDocumentsList(),
+    );
+
+    _server.enqueue(
+      headers: {"Content-Type": "image/png"},
+      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc1.png"),
+    );
+
+    _server.enqueue(
+      headers: {"Content-Type": "image/jpeg"},
+      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc2.jpg"),
+    );
+
+    _server.enqueue(
+      headers: {"Content-Type": "image/jpeg"},
+      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc3.jpg"),
+    );
+
+    _server.enqueue(
+      headers: {"Content-Type": "image/webp"},
+      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc4.webp"),
+    );
+
+    _server.enqueue(
+      headers: {"Content-Type": "image/jpeg"},
+      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc5.jpg"),
+    );
+
+    _server.enqueue(
+      headers: {"Content-Type": "image/jpeg"},
+      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc6.jpg"),
+    );
+
+    _server.enqueue(
+      headers: {"Content-Type": "image/jpeg"},
+      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc7.jpg"),
+    );
+
+    _server.enqueue(
+      headers: {"Content-Type": "image/jpeg"},
+      body: _readFileByte("/home/zbyniu/Projects/dox/core/res/doc8.jpg"),
+    );
+
+    app.main();
+    await tester.pumpAndSettle();
+
+    // then
+    expect(find.byType(OpenableDocument), findsNWidgets(6));
+  });
 }
 
 String _emptyDocumentsList() => '{ "entries": []}';
+
+String _allDocumentsList() => '''{
+  "entries": [
+    {
+      "filename": "doc8.jpg",
+      "thumbnail": "doc8.jpg"
+    },
+    {
+      "filename": "doc5.jpg",
+      "thumbnail": "doc5.jpg"
+    },
+    {
+      "filename": "doc3.jpg",
+      "thumbnail": "doc3.jpg"
+    },
+    {
+      "filename": "doc1.png",
+      "thumbnail": "doc1.png"
+    },
+    {
+      "filename": "doc7.jpg",
+      "thumbnail": "doc7.jpg"
+    },
+    {
+      "filename": "doc2.jpg",
+      "thumbnail": "doc2.jpg"
+    },
+    {
+      "filename": "doc6.jpg",
+      "thumbnail": "doc6.jpg"
+    },
+    {
+      "filename": "doc4.webp",
+      "thumbnail": "doc4.webp"
+    }
+  ]
+}
+''';
+
+Uint8List _readFileByte(String filePath) {
+  return Uint8List.fromList(List.of([1, 2, 3]));
+  // Uri uri = Uri.parse(filePath);
+  // File file = File.fromUri(uri);
+  // Uint8List? bytes;
+  // return file.readAsBytesSync();
+}
