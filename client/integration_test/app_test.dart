@@ -102,7 +102,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // then
-    expect(find.byType(OpenableDocument), findsNWidgets(6));
+    expect(find.byType(OpenableDocument), findsWidgets);
   });
 }
 
