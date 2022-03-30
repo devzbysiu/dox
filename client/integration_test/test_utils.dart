@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dox/services/connection_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:dox/services/doc_scan_service.dart';
@@ -8,6 +10,7 @@ import 'package:dox/utilities/service_locator.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:mock_web_server/mock_web_server.dart';
 import 'package:dox/main.dart' as app;
+import 'package:stream_channel/stream_channel.dart';
 
 class MockConfig implements Config {
   MockConfig(this.base, this.websocket);
@@ -23,16 +26,48 @@ class MockConfig implements Config {
   String get websocketUrl => websocket;
 }
 
-class EventsMock implements Events {
+class EmptyEventsStub implements Events {
   @override
   Stream get stream => const Stream.empty();
+}
+
+class EventsMock implements Events {
+  EventsMock() {
+    _streamController = StreamController();
+    _sinkController = StreamController();
+    final channel = StreamChannel(_streamController.stream, _sinkController.sink);
+    _stream = channel.stream.asBroadcastStream();
+  }
+
+  late final StreamController _streamController;
+
+  late final StreamController _sinkController;
+
+  late final Stream _stream;
+
+  void sendEvent(Event event) {
+    _streamController.add(event.string());
+  }
+
+  @override
+  Stream get stream => _stream;
+}
+
+enum Event {
+  connected
+}
+
+extension EventExt on Event {
+  String string() {
+    return name.toString().split('.').last;
+  }
 }
 
 Future<MockWebServer> mockDoxService() async {
   final server = MockWebServer();
   await server.start();
   app.configOverride = MockConfig(server.url, server.url);
-  app.eventsOverride = EventsMock();
+  app.eventsOverride = EmptyEventsStub();
   return server;
 }
 

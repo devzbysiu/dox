@@ -60,4 +60,25 @@ void main() {
     // then
     expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
   });
+
+  testWidgets('StatusDot changes to green when connected', (tester) async {
+    // given
+    _server.serveEmptyDocumentsList(); // not important
+    final eventsMock = EventsMock();
+    app.eventsOverride = eventsMock;
+    app.main();
+    await tester.pumpAndSettle();
+    final StatusDot statusDot = tester.firstWidget(find.byType(StatusDot));
+    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
+
+    // when
+    eventsMock.sendEvent(Event.connected);
+    await tester.pumpAndSettle();
+
+    // then
+    expect(
+      statusDot.color(tester),
+      equals([Colors.green[300]!, Colors.yellow[400]!]),
+    );
+  });
 }
