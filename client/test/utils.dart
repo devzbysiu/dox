@@ -123,3 +123,11 @@ extension SearchInputExt on SearchInput {
     return icon.icon!;
   }
 }
+
+List<Color> connectedColor() {
+  return [Colors.green[300]!, Colors.yellow[400]!];
+}
+
+List<Color> disconnectedColor() {
+  return [Colors.blueGrey, Colors.blueGrey];
+}

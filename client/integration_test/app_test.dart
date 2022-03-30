@@ -1,7 +1,6 @@
 import 'package:dox/main.dart' as app;
 import 'package:dox/widgets/document/openable_document.dart';
 import 'package:dox/widgets/status_dot.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -57,7 +56,7 @@ void main() {
     final StatusDot statusDot = tester.firstWidget(find.byType(StatusDot));
 
     // then
-    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
+    expect(statusDot.color(tester), equals(disconnectedColor()));
   });
 
   testWidgets('StatusDot changes to green when connected', (tester) async {
@@ -66,17 +65,14 @@ void main() {
     app.main();
     await tester.pumpAndSettle();
     final StatusDot statusDot = tester.firstWidget(find.byType(StatusDot));
-    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
+    expect(statusDot.color(tester), equals(disconnectedColor()));
 
     // when
     _doxMock.events.cause(Event.connected);
     await tester.pumpAndSettle();
 
     // then
-    expect(
-      statusDot.color(tester),
-      equals([Colors.green[300]!, Colors.yellow[400]!]),
-    );
+    expect(statusDot.color(tester), equals(connectedColor()));
   });
 
   testWidgets('StatusDot changes to grey when disconnected', (tester) async {
@@ -87,16 +83,13 @@ void main() {
     await tester.pumpAndSettle();
 
     final StatusDot statusDot = tester.firstWidget(find.byType(StatusDot));
-    expect(
-      statusDot.color(tester),
-      equals([Colors.green[300]!, Colors.yellow[400]!]),
-    );
+    expect(statusDot.color(tester), equals(connectedColor()));
 
     // when
     _doxMock.events.cause(Event.disconnected);
     await tester.pumpAndSettle();
 
     // then
-    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
+    expect(statusDot.color(tester), equals(disconnectedColor()));
   });
 }

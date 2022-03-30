@@ -13,7 +13,7 @@ void main() {
     await tester.pumpWidget(wrapper(widget: statusDot));
 
     // then
-    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
+    expect(statusDot.color(tester), equals(disconnectedColor()));
   });
 
   testWidgets('StatusDot changes color when connected', (tester) async {
@@ -23,16 +23,13 @@ void main() {
 
     // when
     await tester.pumpWidget(wrapper(widget: statusDot, connSt: connState));
-    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
+    expect(statusDot.color(tester), equals(disconnectedColor()));
 
     connState.isConnected = true;
     await tester.pump();
 
     // then
-    expect(
-      statusDot.color(tester),
-      equals([Colors.green[300]!, Colors.yellow[400]!]),
-    );
+    expect(statusDot.color(tester), equals(connectedColor()));
   });
 
   testWidgets('StatusDot changes color when disconnected', (tester) async {
@@ -41,20 +38,17 @@ void main() {
     const statusDot = StatusDot();
 
     await tester.pumpWidget(wrapper(widget: statusDot, connSt: connState));
-    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
+    expect(statusDot.color(tester), equals(disconnectedColor()));
 
     connState.isConnected = true;
     await tester.pump();
-    expect(
-      statusDot.color(tester),
-      equals([Colors.green[300]!, Colors.yellow[400]!]),
-    );
+    expect(statusDot.color(tester), equals(connectedColor()));
 
     // when
     connState.isConnected = false;
     await tester.pump();
 
     // then
-    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
+    expect(statusDot.color(tester), equals(disconnectedColor()));
   });
 }
