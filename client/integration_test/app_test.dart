@@ -78,4 +78,25 @@ void main() {
       equals([Colors.green[300]!, Colors.yellow[400]!]),
     );
   });
+
+  testWidgets('StatusDot changes to grey when disconnected', (tester) async {
+    // given
+    _doxMock.serveEmptyDocumentsList(); // not important
+    app.main();
+    _doxMock.events.cause(Event.connected);
+    await tester.pumpAndSettle();
+
+    final StatusDot statusDot = tester.firstWidget(find.byType(StatusDot));
+    expect(
+      statusDot.color(tester),
+      equals([Colors.green[300]!, Colors.yellow[400]!]),
+    );
+
+    // when
+    _doxMock.events.cause(Event.disconnected);
+    await tester.pumpAndSettle();
+
+    // then
+    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
+  });
 }

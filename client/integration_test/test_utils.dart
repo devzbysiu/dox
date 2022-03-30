@@ -42,6 +42,10 @@ class EventsMock implements Events {
   late final Stream _stream;
 
   void cause(Event event) {
+    if (event == Event.disconnected) {
+      _streamController.close();
+      return;
+    }
     _streamController.add(event.string());
   }
 
@@ -49,7 +53,7 @@ class EventsMock implements Events {
   Stream get stream => _stream;
 }
 
-enum Event { connected }
+enum Event { connected, disconnected }
 
 extension EventExt on Event {
   String string() {
