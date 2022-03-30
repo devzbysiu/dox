@@ -1,9 +1,12 @@
 import 'package:dox/main.dart' as app;
 import 'package:dox/widgets/document/openable_document.dart';
+import 'package:dox/widgets/status_dot.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mock_web_server/mock_web_server.dart';
 
+import '../test/utils.dart';
 import 'test_utils.dart';
 
 late final MockWebServer _server;
@@ -43,5 +46,18 @@ void main() {
 
     // then
     expect(find.byType(OpenableDocument), findsWidgets);
+  });
+
+  testWidgets('the StatusDot is gray when no connection', (tester) async {
+    // given
+    _server.serveEmptyDocumentsList(); // not important
+
+    // when
+    app.main();
+    await tester.pumpAndSettle();
+    final StatusDot statusDot = tester.firstWidget(find.byType(StatusDot));
+
+    // then
+    expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
   });
 }
