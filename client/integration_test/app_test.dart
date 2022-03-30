@@ -22,6 +22,8 @@ void main() {
   testWidgets('initially there are no documents displayed', (tester) async {
     // given
     _server.serveEmptyDocumentsList();
+
+    // when
     app.main();
     await tester.pumpAndSettle();
 
@@ -34,6 +36,8 @@ void main() {
     _server
       ..serveAllDocumentsList()
       ..servePlaceholderImages(8);
+
+    // when
     app.main();
     await tester.pumpAndSettle();
 
