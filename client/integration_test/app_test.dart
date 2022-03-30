@@ -9,13 +9,13 @@ import 'package:mock_web_server/mock_web_server.dart';
 import '../test/utils.dart';
 import 'test_utils.dart';
 
-late final MockWebServer _server;
+late final DoxMock _doxMock;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    _server = await mockDoxService();
+    _doxMock = await DoxMock.init();
   });
 
   tearDown(() {
@@ -24,7 +24,7 @@ void main() {
 
   testWidgets('initially there are no documents displayed', (tester) async {
     // given
-    _server.serveEmptyDocumentsList();
+    _doxMock.serveEmptyDocumentsList();
 
     // when
     app.main();
@@ -36,7 +36,7 @@ void main() {
 
   testWidgets('all in-stage documents are displayed', (tester) async {
     // given
-    _server
+    _doxMock
       ..serveAllDocumentsList()
       ..servePlaceholderImages(8);
 
@@ -50,7 +50,7 @@ void main() {
 
   testWidgets('the StatusDot is gray when no connection', (tester) async {
     // given
-    _server.serveEmptyDocumentsList(); // not important
+    _doxMock.serveEmptyDocumentsList(); // not important
 
     // when
     app.main();
@@ -63,7 +63,7 @@ void main() {
 
   testWidgets('StatusDot changes to green when connected', (tester) async {
     // given
-    _server.serveEmptyDocumentsList(); // not important
+    _doxMock.serveEmptyDocumentsList(); // not important
     final eventsMock = EventsMock();
     app.eventsOverride = eventsMock;
     app.main();

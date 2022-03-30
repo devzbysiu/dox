@@ -63,12 +63,41 @@ extension EventExt on Event {
   }
 }
 
-Future<MockWebServer> mockDoxService() async {
-  final server = MockWebServer();
-  await server.start();
-  app.configOverride = MockConfig(server.url, server.url);
-  app.eventsOverride = EmptyEventsStub();
-  return server;
+class DoxMock {
+  static Future<DoxMock> init() async {
+    final server = MockWebServer();
+    await server.start();
+    app.configOverride = MockConfig(server.url, server.url);
+    app.eventsOverride = EmptyEventsStub();
+    return DoxMock._(server);
+  }
+
+  DoxMock._(MockWebServer server) {
+    _server = server;
+  }
+
+  late final MockWebServer _server;
+
+  void serveEmptyDocumentsList() {
+    _server.enqueue(body: _emptyDocumentsList());
+  }
+
+  void serveAllDocumentsList() {
+    _server.enqueue(
+      headers: {"Content-Type": "application/json"},
+      body: _allDocumentsList(),
+    );
+  }
+
+  void servePlaceholderImages(int n) async {
+    var body = await _placeholderImage();
+    for (var i = 0; i < n; i++) {
+      _server.enqueue(
+        headers: {"Content-Type": "image/png"},
+        body: body,
+      );
+    }
+  }
 }
 
 void unregisterServices() {
@@ -78,29 +107,6 @@ void unregisterServices() {
   getIt.unregister<DocsService>();
   getIt.unregister<ConnService>();
   getIt.unregister<DocScanService>();
-}
-
-extension MockWebServerExt on MockWebServer {
-  void serveEmptyDocumentsList() {
-    enqueue(body: _emptyDocumentsList());
-  }
-
-  void serveAllDocumentsList() {
-    enqueue(
-      headers: {"Content-Type": "application/json"},
-      body: _allDocumentsList(),
-    );
-  }
-
-  void servePlaceholderImages(int n) async {
-    var body = await _placeholderImage();
-    for (var i = 0; i < n; i++) {
-      enqueue(
-        headers: {"Content-Type": "image/png"},
-        body: body,
-      );
-    }
-  }
 }
 
 String _emptyDocumentsList() => '{ "entries": []}';
