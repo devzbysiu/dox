@@ -4,7 +4,6 @@ import 'package:dox/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:mock_web_server/mock_web_server.dart';
 
 import '../test/utils.dart';
 import 'test_utils.dart';
@@ -64,15 +63,13 @@ void main() {
   testWidgets('StatusDot changes to green when connected', (tester) async {
     // given
     _doxMock.serveEmptyDocumentsList(); // not important
-    final eventsMock = EventsMock();
-    app.eventsOverride = eventsMock;
     app.main();
     await tester.pumpAndSettle();
     final StatusDot statusDot = tester.firstWidget(find.byType(StatusDot));
     expect(statusDot.color(tester), equals([Colors.blueGrey, Colors.blueGrey]));
 
     // when
-    eventsMock.sendEvent(Event.connected);
+    _doxMock.events.cause(Event.connected);
     await tester.pumpAndSettle();
 
     // then
