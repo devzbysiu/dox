@@ -2,7 +2,7 @@ use anyhow::Result;
 use std::time::Duration;
 use testutils::helpers::{
     config_path, cp_docs, create_cfg_file, create_index_dir, create_thumbnails_dir,
-    create_watched_dir, make_search, spawn_dox, Config, SearchEntry,
+    create_watched_dir, ls, make_search, spawn_dox, Config, SearchEntry,
 };
 
 mod testutils;
@@ -29,9 +29,13 @@ fn it_allows_to_search_through_api() -> Result<()> {
     assert!(search.entries.is_empty()); // initial search returns no results
 
     // when
+    // TODO: test should add documents via API
     cp_docs(watched_dir.path())?; // then we copy documents and indexing starts
 
     // then
+    let thumbnails = ls(thumbnails_dir)?;
+    assert_eq!(thumbnails, vec!["doc1.png"]);
+
     let results = make_search("ale")?;
 
     let mut entries = results.entries;

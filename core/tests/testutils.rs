@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 pub mod helpers {
-    use anyhow::Result;
+    use anyhow::{bail, Result};
     use log::debug;
     use rocket::serde::{Deserialize, Serialize};
     use std::fs;
@@ -95,5 +95,19 @@ pub mod helpers {
         debug!("done");
         thread::sleep(Duration::from_secs(15));
         Ok(())
+    }
+
+    pub fn ls<P: AsRef<Path>>(dir: P) -> Result<Vec<String>> {
+        let dir = dir.as_ref();
+        if !dir.is_dir() {
+            bail!("I can list only directories");
+        }
+        let mut result = Vec::new();
+        for path in dir.read_dir()? {
+            let path = path?;
+            result.push(path.file_name().to_str().unwrap().to_string());
+        }
+        result.sort();
+        Ok(result)
     }
 }
