@@ -124,7 +124,7 @@ impl SearchResults {
     }
 }
 
-#[derive(Debug, Serialize, Default, PartialEq, Eq)]
+#[derive(Debug, Serialize, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SearchEntry {
     filename: String,
     thumbnail: String,
@@ -207,20 +207,30 @@ mod test {
             cooldown_time: Duration::from_secs(1),
         };
         let repo_tools = mk_idx_and_schema(&real_config)?;
-        let tuples_to_index = vec![DocDetails::new("filename", "body", "thumbnail")];
+        let tuples_to_index = vec![
+            DocDetails::new("filename1", "body1", "thumbnail1"),
+            DocDetails::new("filename2", "body2", "thumbnail2"),
+            DocDetails::new("filename3", "body3", "thumbnail3"),
+            DocDetails::new("filename4", "body4", "thumbnail4"),
+            DocDetails::new("filename5", "body5", "thumbnail5"),
+        ];
 
         // when
         index_docs(&tuples_to_index, &repo_tools)?;
         let repo = Repo::new(repo_tools);
-        let all_docs = repo.all_documents()?;
+        let mut all_docs = repo.all_documents()?;
+        all_docs.entries.sort();
 
         // then
         assert_eq!(
             all_docs,
-            SearchResults::new(vec![SearchEntry::new((
-                "filename".into(),
-                "thumbnail".into()
-            ))])
+            SearchResults::new(vec![
+                SearchEntry::new(("filename1".into(), "thumbnail1".into())),
+                SearchEntry::new(("filename2".into(), "thumbnail2".into())),
+                SearchEntry::new(("filename3".into(), "thumbnail3".into())),
+                SearchEntry::new(("filename4".into(), "thumbnail4".into())),
+                SearchEntry::new(("filename5".into(), "thumbnail5".into())),
+            ])
         );
 
         Ok(())
