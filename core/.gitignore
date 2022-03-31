@@ -3,3 +3,4 @@ target
 .blinc
 .development.env
 helpers
+tarpaulin-report.html
