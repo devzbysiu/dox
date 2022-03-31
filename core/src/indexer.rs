@@ -207,11 +207,7 @@ mod test {
             cooldown_time: Duration::from_secs(1),
         };
         let repo_tools = mk_idx_and_schema(&real_config)?;
-        let tuples_to_index = vec![DocDetails {
-            filename: "filename".into(),
-            body: "body".into(),
-            thumbnail: "thumbnail".into(),
-        }];
+        let tuples_to_index = vec![DocDetails::new("filename", "body", "thumbnail")];
 
         // when
         index_docs(&tuples_to_index, &repo_tools)?;

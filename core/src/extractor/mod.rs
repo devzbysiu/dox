@@ -20,7 +20,7 @@ pub struct DocDetails {
 }
 
 impl DocDetails {
-    fn new<P: AsRef<Path>, S: Into<String>>(path: P, body: S, thumbnail: S) -> Self {
+    pub fn new<P: AsRef<Path>, S: Into<String>>(path: P, body: S, thumbnail: S) -> Self {
         Self {
             filename: path.filename(),
             body: body.into(),
