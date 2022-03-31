@@ -113,7 +113,7 @@ fn as_text(val: &Value) -> String {
         .to_string()
 }
 
-#[derive(Debug, Serialize, Default)]
+#[derive(Debug, Serialize, Default, PartialEq, Eq)]
 pub struct SearchResults {
     entries: Vec<SearchEntry>,
 }
@@ -124,7 +124,7 @@ impl SearchResults {
     }
 }
 
-#[derive(Debug, Serialize, Default)]
+#[derive(Debug, Serialize, Default, PartialEq, Eq)]
 pub struct SearchEntry {
     filename: String,
     thumbnail: String,
@@ -185,4 +185,48 @@ pub fn index_docs(tuples: &[DocDetails], tools: &RepoTools) -> Result<()> {
         index_writer.commit()?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use anyhow::Result;
+    use std::time::Duration;
+    use testutils::{create_index_dir, create_thumbnails_dir, create_watched_dir};
+
+    #[test]
+    fn test_index_docs() -> Result<()> {
+        // given
+        let index_dir = create_index_dir()?;
+        let watched_dir = create_watched_dir()?;
+        let thumbnails_dir = create_thumbnails_dir()?;
+        let real_config = Config {
+            watched_dir: watched_dir.path().to_path_buf(),
+            thumbnails_dir: thumbnails_dir.path().to_path_buf(),
+            index_dir: index_dir.path().to_path_buf(),
+            cooldown_time: Duration::from_secs(1),
+        };
+        let repo_tools = mk_idx_and_schema(&real_config)?;
+        let tuples_to_index = vec![DocDetails {
+            filename: "filename".into(),
+            body: "body".into(),
+            thumbnail: "thumbnail".into(),
+        }];
+
+        // when
+        index_docs(&tuples_to_index, &repo_tools)?;
+        let repo = Repo::new(repo_tools);
+        let all_docs = repo.all_documents()?;
+
+        // then
+        assert_eq!(
+            all_docs,
+            SearchResults::new(vec![SearchEntry::new((
+                "filename".into(),
+                "thumbnail".into()
+            ))])
+        );
+
+        Ok(())
+    }
 }
