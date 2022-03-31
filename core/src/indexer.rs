@@ -218,6 +218,8 @@ mod test {
         // when
         index_docs(&tuples_to_index, &repo_tools)?;
         let repo = Repo::new(repo_tools);
+        // TODO: this test should check only indexing but it's also
+        // searching via all_documents
         let mut all_docs = repo.all_documents()?;
         all_docs.entries.sort();
 
@@ -231,6 +233,44 @@ mod test {
                 SearchEntry::new(("filename4".into(), "thumbnail4".into())),
                 SearchEntry::new(("filename5".into(), "thumbnail5".into())),
             ])
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_search() -> Result<()> {
+        // given
+        let index_dir = create_index_dir()?;
+        let watched_dir = create_watched_dir()?;
+        let thumbnails_dir = create_thumbnails_dir()?;
+        let real_config = Config {
+            watched_dir: watched_dir.path().to_path_buf(),
+            thumbnails_dir: thumbnails_dir.path().to_path_buf(),
+            index_dir: index_dir.path().to_path_buf(),
+            cooldown_time: Duration::from_secs(1),
+        };
+        let repo_tools = mk_idx_and_schema(&real_config)?;
+        let tuples_to_index = vec![
+            DocDetails::new("filename1", "some document body", "thumbnail1"),
+            DocDetails::new("filename2", "another text here", "thumbnail2"),
+            DocDetails::new("filename3", "important information", "thumbnail3"),
+            DocDetails::new("filename4", "this is not so important", "thumbnail4"),
+            DocDetails::new("filename5", "and this is last line", "thumbnail5"),
+        ];
+
+        // when
+        index_docs(&tuples_to_index, &repo_tools)?;
+        let repo = Repo::new(repo_tools);
+        let all_docs = repo.search("line")?;
+
+        // then
+        assert_eq!(
+            all_docs,
+            SearchResults::new(vec![SearchEntry::new((
+                "filename5".into(),
+                "thumbnail5".into()
+            )),])
         );
 
         Ok(())
