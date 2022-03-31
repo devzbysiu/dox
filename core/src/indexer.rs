@@ -104,10 +104,10 @@ fn to_search_entries<'a, V: Iterator<Item = &'a Value>>(
 }
 
 fn to_text((filename, thumbnail): (&Value, &Value)) -> (String, String) {
-    (extract_text(filename), extract_text(thumbnail))
+    (as_text(filename), as_text(thumbnail))
 }
 
-fn extract_text(val: &Value) -> String {
+fn as_text(val: &Value) -> String {
     val.as_text()
         .unwrap_or_else(|| panic!("failed to extract text"))
         .to_string()
