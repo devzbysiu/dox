@@ -106,4 +106,14 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    #[should_panic(expected = "failed to create extension from 'txt'")]
+    fn test_ext_for_not_supported_extensions() {
+        // given
+        let path = Path::new("/not-supported/extension.txt");
+
+        // then
+        let _ = path.ext(); // should panic
+    }
 }
