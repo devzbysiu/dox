@@ -60,3 +60,31 @@ impl<T: AsRef<Path>> PathRefExt for T {
             .to_string()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use anyhow::Result;
+    use std::{
+        fs::{read_dir, File},
+        io::Write,
+    };
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_filename_in_dir_entry_ext() -> Result<()> {
+        // given
+        let tmp_dir = tempdir()?;
+        let mut f = File::create(tmp_dir.path().join("test-file"))?;
+        f.write_all(b"test")?;
+
+        // when
+        let entry = read_dir(&tmp_dir)?.next().unwrap()?;
+        let filename = entry.file_name().to_str().unwrap().to_string();
+
+        // then
+        assert_eq!(filename, entry.filename());
+
+        Ok(())
+    }
+}
