@@ -271,4 +271,36 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn test_search_with_fuzziness() -> Result<()> {
+        // given
+        let config = setup_dirs_and_config()?;
+        let repo_tools = mk_idx_and_schema(&config)?;
+        let tuples_to_index = vec![
+            DocDetails::new("filename1", "some document body", "thumbnail1"),
+            DocDetails::new("filename2", "another text here", "thumbnail2"),
+            DocDetails::new("filename3", "this is unique word: 9fZX", "thumbnail3"),
+        ];
+
+        // when
+        index_docs(&tuples_to_index, &repo_tools)?;
+        let repo = Repo::new(repo_tools);
+        // NOTE: it's not the same word as above, two letters of fuzziness is fine
+        let first_results = repo.search("9fAB")?;
+        // NOTE: three letters is too much
+        let second_results = repo.search("9ABC")?;
+
+        // then
+        assert_eq!(
+            first_results,
+            SearchResults::new(vec![SearchEntry::new((
+                "filename3".into(),
+                "thumbnail3".into()
+            )),])
+        );
+        assert!(second_results.entries.is_empty(),);
+
+        Ok(())
+    }
 }
