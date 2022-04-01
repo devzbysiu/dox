@@ -42,7 +42,7 @@ impl ExtractorFactory {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ext {
     Png,
     Jpg,

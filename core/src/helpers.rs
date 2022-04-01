@@ -65,18 +65,14 @@ impl<T: AsRef<Path>> PathRefExt for T {
 mod test {
     use super::*;
     use anyhow::Result;
-    use std::{
-        fs::{read_dir, File},
-        io::Write,
-    };
+    use std::fs::{read_dir, File};
     use tempfile::tempdir;
 
     #[test]
     fn test_filename_in_dir_entry_ext() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
-        let mut f = File::create(tmp_dir.path().join("test-file"))?;
-        f.write_all(b"test")?;
+        File::create(tmp_dir.path().join("test-file"))?;
 
         // when
         let entry = read_dir(&tmp_dir)?.next().unwrap()?;
@@ -84,6 +80,29 @@ mod test {
 
         // then
         assert_eq!(filename, entry.filename());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_ext_for_supported_extensions() -> Result<()> {
+        // given
+        let test_cases = vec![
+            ("png", Ext::Png),
+            ("jpg", Ext::Jpg),
+            ("jpeg", Ext::Jpg),
+            ("webp", Ext::Webp),
+            ("pdf", Ext::Pdf),
+        ];
+
+        for test_case in test_cases {
+            // when
+            let path = format!("/some-path/here.{}", test_case.0);
+            let path = Path::new(&path);
+
+            // then
+            assert_eq!(path.ext(), test_case.1);
+        }
 
         Ok(())
     }
