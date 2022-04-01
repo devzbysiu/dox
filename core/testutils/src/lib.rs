@@ -37,17 +37,17 @@ impl Drop for DoxProcess {
     }
 }
 
-pub fn create_index_dir() -> Result<TempDir> {
+pub fn index_dir_path() -> Result<TempDir> {
     debug!("creating index directory");
     Ok(tempfile::tempdir()?)
 }
 
-pub fn create_watched_dir() -> Result<TempDir> {
+pub fn watched_dir_path() -> Result<TempDir> {
     debug!("creating watched directory");
     Ok(tempfile::tempdir()?)
 }
 
-pub fn create_thumbnails_dir() -> Result<TempDir> {
+pub fn thumbnails_dir_path() -> Result<TempDir> {
     debug!("creating thumbnails directory");
     Ok(tempfile::tempdir()?)
 }

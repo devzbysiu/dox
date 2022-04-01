@@ -193,12 +193,12 @@ mod test {
     use anyhow::Result;
     use std::fs::File;
     use std::time::Duration;
-    use testutils::{create_index_dir, create_thumbnails_dir, create_watched_dir};
+    use testutils::{index_dir_path, thumbnails_dir_path, watched_dir_path};
 
     #[test]
     fn test_mk_index_and_schema_when_index_dir_is_taken_by_file() -> Result<()> {
         // given
-        let config = setup_dirs_and_config()?;
+        let config = create_config()?;
         File::create(&config.index_dir)?;
 
         // when
@@ -218,7 +218,7 @@ mod test {
     #[test]
     fn test_index_docs() -> Result<()> {
         // given
-        let config = setup_dirs_and_config()?;
+        let config = create_config()?;
         let repo_tools = mk_idx_and_schema(&config)?;
         let tuples_to_index = vec![
             DocDetails::new("filename1", "body1", "thumbnail1"),
@@ -251,10 +251,12 @@ mod test {
         Ok(())
     }
 
-    fn setup_dirs_and_config() -> Result<Config> {
-        let index_dir = create_index_dir()?;
-        let watched_dir = create_watched_dir()?;
-        let thumbnails_dir = create_thumbnails_dir()?;
+    fn create_config() -> Result<Config> {
+        // NOTE: TempDir is removed on the end of this fn call,
+        // but paths are randomized so it's still useful
+        let index_dir = index_dir_path()?;
+        let watched_dir = watched_dir_path()?;
+        let thumbnails_dir = thumbnails_dir_path()?;
         Ok(Config {
             watched_dir: watched_dir.path().to_path_buf(),
             thumbnails_dir: thumbnails_dir.path().to_path_buf(),
@@ -266,7 +268,7 @@ mod test {
     #[test]
     fn test_search() -> Result<()> {
         // given
-        let config = setup_dirs_and_config()?;
+        let config = create_config()?;
         let repo_tools = mk_idx_and_schema(&config)?;
         let tuples_to_index = vec![
             DocDetails::new("filename1", "some document body", "thumbnail1"),
@@ -296,7 +298,7 @@ mod test {
     #[test]
     fn test_search_with_fuzziness() -> Result<()> {
         // given
-        let config = setup_dirs_and_config()?;
+        let config = create_config()?;
         let repo_tools = mk_idx_and_schema(&config)?;
         let tuples_to_index = vec![
             DocDetails::new("filename1", "some document body", "thumbnail1"),

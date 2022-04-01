@@ -1,17 +1,17 @@
 use anyhow::Result;
 use std::time::Duration;
 use testutils::{
-    config_path, cp_docs, create_cfg_file, create_index_dir, create_thumbnails_dir,
-    create_watched_dir, ls, make_search, spawn_dox, TestConfig, SearchEntry,
+    config_path, cp_docs, create_cfg_file, index_dir_path, thumbnails_dir_path,
+    watched_dir_path, ls, make_search, spawn_dox, TestConfig, SearchEntry,
 };
 
 #[test]
 fn it_allows_to_search_through_api() -> Result<()> {
     pretty_env_logger::init();
     // given
-    let index_dir = create_index_dir()?;
-    let watched_dir = create_watched_dir()?;
-    let thumbnails_dir = create_thumbnails_dir()?;
+    let index_dir = index_dir_path()?;
+    let watched_dir = watched_dir_path()?;
+    let thumbnails_dir = thumbnails_dir_path()?;
     let config_dir = create_cfg_file(&TestConfig {
         watched_dir: watched_dir.path().to_path_buf(),
         thumbnails_dir: thumbnails_dir.path().to_path_buf(),
