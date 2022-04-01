@@ -191,8 +191,29 @@ pub fn index_docs(tuples: &[DocDetails], tools: &RepoTools) -> Result<()> {
 mod test {
     use super::*;
     use anyhow::Result;
+    use std::fs::File;
     use std::time::Duration;
     use testutils::{create_index_dir, create_thumbnails_dir, create_watched_dir};
+
+    #[test]
+    fn test_mk_index_and_schema_when_index_dir_is_taken_by_file() -> Result<()> {
+        // given
+        let config = setup_dirs_and_config()?;
+        File::create(&config.index_dir)?;
+
+        // when
+        let result = mk_idx_and_schema(&config);
+
+        // then
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            format!(
+                "Invalid index path: 'It needs to be a directory: '{}''",
+                config.index_dir.display()
+            )
+        );
+        Ok(())
+    }
 
     #[test]
     fn test_index_docs() -> Result<()> {
