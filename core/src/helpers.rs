@@ -85,7 +85,7 @@ mod test {
     }
 
     #[test]
-    fn test_ext_for_supported_extensions() -> Result<()> {
+    fn test_ext_for_supported_extensions() {
         // given
         let test_cases = vec![
             ("png", Ext::Png),
@@ -103,8 +103,6 @@ mod test {
             // then
             assert_eq!(path.ext(), test_case.1);
         }
-
-        Ok(())
     }
 
     #[test]
