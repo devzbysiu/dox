@@ -116,17 +116,15 @@ mod test {
     }
 
     #[test]
-    fn test_string_in_path_ext() -> Result<()> {
+    fn test_string_in_path_ext() {
         // given
-        let path = Path::new("/not-supported/extension.txt");
+        let path = Path::new("/some-path/here");
 
         // when
         let string = path.string();
 
         // then
         assert_eq!(path.to_string_lossy().to_string(), string);
-
-        Ok(())
     }
 
     #[test]
