@@ -130,4 +130,18 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn test_str_in_path_buf_ext() -> Result<()> {
+        // given
+        let path = PathBuf::from("/not-supported/extension.txt");
+
+        // when
+        let result = path.str();
+
+        // then
+        assert_eq!(path.to_str().unwrap(), result);
+
+        Ok(())
+    }
 }
