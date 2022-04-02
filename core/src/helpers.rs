@@ -155,4 +155,19 @@ mod test {
             filestem
         );
     }
+
+    #[test]
+    fn test_filename_in_path_ref_ext() {
+        // given
+        let path = PathBuf::from("/some-path/here");
+
+        // when
+        let filename = path.filename();
+
+        // then
+        assert_eq!(
+            path.file_name().unwrap().to_string_lossy().to_string(),
+            filename
+        );
+    }
 }
