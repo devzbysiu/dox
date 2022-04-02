@@ -142,4 +142,19 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn test_filestem_in_path_ref_ext() {
+        // given
+        let path = PathBuf::from("/some-path/here");
+
+        // when
+        let filestem = path.filestem();
+
+        // then
+        assert_eq!(
+            path.file_stem().unwrap().to_string_lossy().to_string(),
+            filestem
+        );
+    }
 }
