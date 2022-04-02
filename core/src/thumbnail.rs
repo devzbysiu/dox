@@ -41,3 +41,27 @@ fn paint_background_and_scale(page: &PopplerPage) -> Result<ImageSurface> {
     page.render(&ctxt);
     Ok(surface)
 }
+
+#[cfg(test)]
+mod test {
+    use tempfile::tempdir;
+
+    use super::*;
+
+    #[test]
+    fn test_generate() -> Result<()> {
+        // given
+        let pdf_path = Path::new("res/example_pdf.pdf");
+        let tmp_dir = tempdir()?;
+        let out_path = tmp_dir.path().join("output.png");
+        assert!(!out_path.exists());
+
+        // when
+        generate(pdf_path, &out_path)?;
+
+        // then
+        assert!(out_path.exists());
+
+        Ok(())
+    }
+}
