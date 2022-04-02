@@ -60,6 +60,7 @@ mod test {
         generate(pdf_path, &out_path)?;
 
         // then
+        // TODO: check also the thumbnail itself
         assert!(out_path.exists());
 
         Ok(())
