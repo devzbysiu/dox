@@ -29,3 +29,22 @@ fn do_ocr<P: AsRef<Path>>(path: P) -> Result<DocDetails> {
     lt.set_image(path.as_ref())?;
     Ok(DocDetails::new(&path, lt.get_utf8_text()?, path.filename()))
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_extract_text() {
+        // given
+        let ocr = Ocr;
+        let paths = vec![PathBuf::from("res/doc1.png")];
+
+        // when
+        let result = ocr.extract_text(&paths);
+
+        // then
+        let doc_details = result.get(0).unwrap();
+        assert!(doc_details.body.contains("W odpowiedzi na pismo"));
+    }
+}
