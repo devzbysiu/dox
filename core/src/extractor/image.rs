@@ -46,6 +46,7 @@ mod test {
         // then
         let doc_details = result.get(0).unwrap();
         assert!(doc_details.body.contains("W odpowiedzi na pismo"));
+        assert_eq!(doc_details.filename, "doc1.png");
         assert_eq!(doc_details.thumbnail, "doc1.png");
     }
 }
