@@ -38,15 +38,22 @@ mod test {
     fn test_extract_text() {
         // given
         let ocr = Ocr;
-        let paths = vec![PathBuf::from("res/doc1.png")];
+        let paths = vec![PathBuf::from("res/doc1.png"), PathBuf::from("res/doc3.jpg")];
 
         // when
-        let result = ocr.extract_text(&paths);
+        let mut result = ocr.extract_text(&paths);
+        result.sort();
 
         // then
-        let doc_details = result.get(0).unwrap();
-        assert!(doc_details.body.contains("W odpowiedzi na pismo"));
-        assert_eq!(doc_details.filename, "doc1.png");
-        assert_eq!(doc_details.thumbnail, "doc1.png");
+        let first_doc_details = result.get(0).unwrap();
+        let second_doc_details = result.get(1).unwrap();
+
+        assert!(first_doc_details.body.contains("W odpowiedzi na pismo"));
+        assert_eq!(first_doc_details.filename, "doc1.png");
+        assert_eq!(first_doc_details.thumbnail, "doc1.png");
+
+        assert!(second_doc_details.body.contains("Szanowny Panie"));
+        assert_eq!(second_doc_details.filename, "doc3.jpg");
+        assert_eq!(second_doc_details.thumbnail, "doc3.jpg");
     }
 }
