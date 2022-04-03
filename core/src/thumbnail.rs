@@ -51,7 +51,7 @@ mod test {
     #[test]
     fn test_generate() -> Result<()> {
         // given
-        let pdf_path = Path::new("res/example_pdf.pdf");
+        let pdf_path = Path::new("res/doc1.pdf");
         let tmp_dir = tempdir()?;
         let out_path = tmp_dir.path().join("output.png");
         assert!(!out_path.exists());
