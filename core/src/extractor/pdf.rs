@@ -58,19 +58,19 @@ mod test {
         assert_eq!(second_doc_details.thumbnail, "doc2.png");
     }
 
-    // #[test]
-    // fn test_extract_text_with_non_existing_paths() {
-    //     // given
-    //     let ocr = Ocr;
-    //     let paths = vec![
-    //         PathBuf::from("not/existing-1"),
-    //         PathBuf::from("not/existing-2"),
-    //     ];
+    #[test]
+    fn test_extract_text_with_non_existing_paths() {
+        // given
+        let pdf = Pdf;
+        let paths = vec![
+            PathBuf::from("not/existing-1"),
+            PathBuf::from("not/existing-2"),
+        ];
 
-    //     // when
-    //     let result = ocr.extract_text(&paths);
+        // when
+        let result = pdf.extract_text(&paths);
 
-    //     // then
-    //     assert!(result.is_empty());
-    // }
+        // then
+        assert!(result.is_empty());
+    }
 }
