@@ -56,4 +56,20 @@ mod test {
         assert_eq!(second_doc_details.filename, "doc3.jpg");
         assert_eq!(second_doc_details.thumbnail, "doc3.jpg");
     }
+
+    #[test]
+    fn test_extract_text_with_non_existing_paths() {
+        // given
+        let ocr = Ocr;
+        let paths = vec![
+            PathBuf::from("not/existing-1"),
+            PathBuf::from("not/existing-2"),
+        ];
+
+        // when
+        let result = ocr.extract_text(&paths);
+
+        // then
+        assert!(result.is_empty());
+    }
 }
