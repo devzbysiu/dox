@@ -91,19 +91,20 @@ mod test {
     fn test_read_config() -> Result<()> {
         // given
         let tmp_cfg = tempdir()?;
-        let config_content = r#"
-watched_dir = "/home/zbyniu/Tests/notify"
-thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
-index_dir = "/home/zbyniu/.local/share/dox/index"
-
-[cooldown_time]
-secs = 1
-nanos = 0
-            "#;
         let cfg_path = tmp_cfg.path().join("dox.toml");
-        let mut cfg_file = File::create(&cfg_path)?;
-        cfg_file.write_all(config_content.as_bytes())?;
-        let cfg = Config {
+        create_config(
+            &cfg_path,
+            r#"
+            watched_dir = "/home/zbyniu/Tests/notify"
+            thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
+            index_dir = "/home/zbyniu/.local/share/dox/index"
+
+            [cooldown_time]
+            secs = 1
+            nanos = 0
+            "#,
+        )?;
+        let expected = Config {
             watched_dir: PathBuf::from("/home/zbyniu/Tests/notify"),
             thumbnails_dir: PathBuf::from("/home/zbyniu/.local/share/dox/thumbnails"),
             index_dir: PathBuf::from("/home/zbyniu/.local/share/dox/index"),
@@ -114,8 +115,15 @@ nanos = 0
         let read_cfg = read_config(cfg_path)?;
 
         // then
-        assert_eq!(cfg, read_cfg);
+        assert_eq!(expected, read_cfg);
 
+        Ok(())
+    }
+
+    fn create_config<S: Into<String>, A: AsRef<Path>>(path: A, content: S) -> Result<()> {
+        let path = path.as_ref();
+        let mut cfg_file = File::create(&path)?;
+        cfg_file.write_all(content.into().as_bytes())?;
         Ok(())
     }
 
@@ -124,17 +132,19 @@ nanos = 0
     fn test_read_config_when_missing_watched_dir() {
         // given
         let tmp_cfg = tempdir().unwrap();
-        let config_content = r#"
-thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
-index_dir = "/home/zbyniu/.local/share/dox/index"
-
-[cooldown_time]
-secs = 1
-nanos = 0
-            "#;
         let cfg_path = tmp_cfg.path().join("dox.toml");
-        let mut cfg_file = File::create(&cfg_path).unwrap();
-        cfg_file.write_all(config_content.as_bytes()).unwrap();
+        create_config(
+            &cfg_path,
+            r#"
+            thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
+            index_dir = "/home/zbyniu/.local/share/dox/index"
+
+            [cooldown_time]
+            secs = 1
+            nanos = 0
+            "#,
+        )
+        .unwrap();
 
         // then
         read_config(cfg_path).unwrap(); // should panic
