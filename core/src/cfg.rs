@@ -8,7 +8,7 @@ use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
 pub struct Config {
     pub watched_dir: PathBuf,
     pub thumbnails_dir: PathBuf,
@@ -60,4 +60,28 @@ pub fn store<P: AsRef<Path>>(path: P, cfg: &Config) -> Result<()> {
     let mut file = File::create(path)?;
     file.write_all(toml::to_string(cfg)?.as_bytes())?;
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_defatult_config() -> Result<()> {
+        // given
+        let cfg = Config {
+            watched_dir: PathBuf::from(""),
+            thumbnails_dir: dirs::data_dir().unwrap().join("dox/thumbnails"),
+            index_dir: dirs::data_dir().unwrap().join("dox/index"),
+            cooldown_time: Duration::from_secs(60),
+        };
+
+        // when
+        let default_cfg = Config::default();
+
+        // then
+        assert_eq!(cfg, default_cfg);
+
+        Ok(())
+    }
 }
