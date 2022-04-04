@@ -230,7 +230,7 @@ mod test {
             cooldown_time: Duration::from_secs(60),
         };
 
-        // then
+        // when
         store(&cfg_path, &cfg)?;
 
         // then
@@ -247,5 +247,16 @@ nanos = 0
         );
 
         Ok(())
+    }
+
+    #[test]
+    #[should_panic(expected = "Can't use '/' as a configuration path")]
+    fn test_store_config_with_root_as_path() {
+        // given
+        let cfg_path = PathBuf::from("/");
+        let cfg = Config::default();
+
+        // then
+        store(&cfg_path, &cfg).unwrap();
     }
 }
