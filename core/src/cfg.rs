@@ -64,6 +64,8 @@ pub fn store<P: AsRef<Path>>(path: P, cfg: &Config) -> Result<()> {
 
 #[cfg(test)]
 mod test {
+    use std::fs::read_to_string;
+
     use tempfile::tempdir;
 
     use super::*;
@@ -214,5 +216,36 @@ mod test {
 
         // then
         read_config(cfg_path).unwrap(); // should panic
+    }
+
+    #[test]
+    fn test_store_config() -> Result<()> {
+        // given
+        let tmp_cfg = tempdir().unwrap();
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        let cfg = Config {
+            watched_dir: PathBuf::from("/watched_dir"),
+            thumbnails_dir: PathBuf::from("/thumbnails_dir"),
+            index_dir: PathBuf::from("/index_dir"),
+            cooldown_time: Duration::from_secs(60),
+        };
+
+        // then
+        store(&cfg_path, &cfg)?;
+
+        // then
+        assert_eq!(
+            read_to_string(&cfg_path)?,
+            r#"watched_dir = "/watched_dir"
+thumbnails_dir = "/thumbnails_dir"
+index_dir = "/index_dir"
+
+[cooldown_time]
+secs = 60
+nanos = 0
+"#
+        );
+
+        Ok(())
     }
 }
