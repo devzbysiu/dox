@@ -149,4 +149,70 @@ mod test {
         // then
         read_config(cfg_path).unwrap(); // should panic
     }
+
+    #[test]
+    #[should_panic(expected = "missing field `thumbnails_dir`")]
+    fn test_read_config_when_missing_thumbnails_dir() {
+        // given
+        let tmp_cfg = tempdir().unwrap();
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        create_config(
+            &cfg_path,
+            r#"
+            watched_dir = "/home/zbyniu/Tests/notify"
+            index_dir = "/home/zbyniu/.local/share/dox/index"
+
+            [cooldown_time]
+            secs = 1
+            nanos = 0
+            "#,
+        )
+        .unwrap();
+
+        // then
+        read_config(cfg_path).unwrap(); // should panic
+    }
+
+    #[test]
+    #[should_panic(expected = "missing field `index_dir`")]
+    fn test_read_config_when_missing_index_dir() {
+        // given
+        let tmp_cfg = tempdir().unwrap();
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        create_config(
+            &cfg_path,
+            r#"
+            watched_dir = "/home/zbyniu/Tests/notify"
+            thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
+
+            [cooldown_time]
+            secs = 1
+            nanos = 0
+            "#,
+        )
+        .unwrap();
+
+        // then
+        read_config(cfg_path).unwrap(); // should panic
+    }
+
+    #[test]
+    #[should_panic(expected = "missing field `cooldown_time`")]
+    fn test_read_config_when_missing_cooldown_time() {
+        // given
+        let tmp_cfg = tempdir().unwrap();
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        create_config(
+            &cfg_path,
+            r#"
+            watched_dir = "/home/zbyniu/Tests/notify"
+            thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
+            index_dir = "/home/zbyniu/.local/share/dox/index"
+            "#,
+        )
+        .unwrap();
+
+        // then
+        read_config(cfg_path).unwrap(); // should panic
+    }
 }
