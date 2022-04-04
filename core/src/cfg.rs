@@ -118,4 +118,25 @@ nanos = 0
 
         Ok(())
     }
+
+    #[test]
+    #[should_panic(expected = "missing field `watched_dir`")]
+    fn test_read_config_when_missing_watched_dir() {
+        // given
+        let tmp_cfg = tempdir().unwrap();
+        let config_content = r#"
+thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
+index_dir = "/home/zbyniu/.local/share/dox/index"
+
+[cooldown_time]
+secs = 1
+nanos = 0
+            "#;
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        let mut cfg_file = File::create(&cfg_path).unwrap();
+        cfg_file.write_all(config_content.as_bytes()).unwrap();
+
+        // then
+        read_config(cfg_path).unwrap(); // should panic
+    }
 }
