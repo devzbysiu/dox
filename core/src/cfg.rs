@@ -64,10 +64,12 @@ pub fn store<P: AsRef<Path>>(path: P, cfg: &Config) -> Result<()> {
 
 #[cfg(test)]
 mod test {
+    use tempfile::tempdir;
+
     use super::*;
 
     #[test]
-    fn test_defatult_config() -> Result<()> {
+    fn test_default_config() -> Result<()> {
         // given
         let cfg = Config {
             watched_dir: PathBuf::from(""),
@@ -81,6 +83,38 @@ mod test {
 
         // then
         assert_eq!(cfg, default_cfg);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_read_config() -> Result<()> {
+        // given
+        let tmp_cfg = tempdir()?;
+        let config_content = r#"
+watched_dir = "/home/zbyniu/Tests/notify"
+thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
+index_dir = "/home/zbyniu/.local/share/dox/index"
+
+[cooldown_time]
+secs = 1
+nanos = 0
+            "#;
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        let mut cfg_file = File::create(&cfg_path)?;
+        cfg_file.write_all(config_content.as_bytes())?;
+        let cfg = Config {
+            watched_dir: PathBuf::from("/home/zbyniu/Tests/notify"),
+            thumbnails_dir: PathBuf::from("/home/zbyniu/.local/share/dox/thumbnails"),
+            index_dir: PathBuf::from("/home/zbyniu/.local/share/dox/index"),
+            cooldown_time: Duration::from_secs(1),
+        };
+
+        // when
+        let read_cfg = read_config(cfg_path)?;
+
+        // then
+        assert_eq!(cfg, read_cfg);
 
         Ok(())
     }
