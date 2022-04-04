@@ -219,6 +219,18 @@ mod test {
     }
 
     #[test]
+    fn test_config_path() {
+        // given
+        let path = dirs::config_dir().unwrap().join("dox/dox.toml");
+
+        // when
+        let cfg_path = config_path();
+
+        // then
+        assert_eq!(cfg_path, path);
+    }
+
+    #[test]
     fn test_store_config() -> Result<()> {
         // given
         let tmp_cfg = tempdir().unwrap();
