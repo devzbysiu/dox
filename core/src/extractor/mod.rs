@@ -70,21 +70,30 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_extractor_factory() {
+    fn test_extractor_factory_with_corrent_file() {
         // given
-        let ext = Ext::Pdf;
+        let test_cases = vec![
+            (Ext::Png, "res/doc1.png", "W dalszym ciągu uważamy"),
+            (Ext::Jpg, "res/doc3.jpg", "Szanowny Panie"),
+            (Ext::Webp, "res/doc4.webp", "Trybunału Konstytucyjnego"),
+            (Ext::Pdf, "res/doc1.pdf", "Jak zainstalować scaner"),
+        ];
 
-        // when
-        let extractor = ExtractorFactory::from_ext(&ext);
-        let docs = extractor.extract_text(&[PathBuf::from("res/doc1.pdf")]);
-        let doc = &docs[0];
+        for test_case in test_cases {
+            let ext = test_case.0;
 
-        // then
-        assert!(doc.body.contains("Jak zainstalować scaner"));
+            // when
+            let extractor = ExtractorFactory::from_ext(&ext);
+            let docs = extractor.extract_text(&[PathBuf::from(test_case.1)]);
+            let doc = &docs[0];
+
+            // then
+            assert!(doc.body.contains(test_case.2));
+        }
     }
 
     #[test]
-    fn test_extractor_factory_with_incorrect_file() {
+    fn test_extractor_factory_with_wrong_file() {
         // given
         let ext = Ext::Pdf;
 
