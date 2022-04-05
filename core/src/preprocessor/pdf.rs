@@ -58,4 +58,16 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    #[should_panic(expected = "PDF document is damaged")]
+    fn test_preprocess_for_wrong_files() {
+        // given
+        let tmp_dir = tempdir().unwrap();
+        let preprocessor = Pdf::new(tmp_dir.path().to_path_buf());
+        let paths = &[PathBuf::from("res/doc8.jpg")];
+
+        // then
+        preprocessor.preprocess(paths).unwrap(); // should panic
+    }
 }
