@@ -31,3 +31,31 @@ impl FilePreprocessor for Pdf {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use tempfile::tempdir;
+
+    use crate::helpers::DirEntryExt;
+
+    use super::*;
+
+    #[test]
+    fn test_preprocess_for_correct_files() -> Result<()> {
+        // given
+        let tmp_dir = tempdir()?;
+        let preprocessor = Pdf::new(tmp_dir.path().to_path_buf());
+        let paths = &[PathBuf::from("res/doc1.pdf")];
+        let is_empty = tmp_dir.path().read_dir()?.next().is_none();
+        assert!(is_empty);
+
+        // when
+        preprocessor.preprocess(paths)?;
+        let file = tmp_dir.path().read_dir()?.next().unwrap()?.filename();
+
+        // then
+        assert_eq!(file, "doc1.png");
+
+        Ok(())
+    }
+}
