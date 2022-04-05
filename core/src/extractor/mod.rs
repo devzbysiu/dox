@@ -82,4 +82,17 @@ mod test {
         // then
         assert!(doc.body.contains("Jak zainstalować scaner"));
     }
+
+    #[test]
+    fn test_extractor_factory_with_incorrect_file() {
+        // given
+        let ext = Ext::Pdf;
+
+        // when
+        let extractor = ExtractorFactory::from_ext(&ext);
+        let docs = extractor.extract_text(&[PathBuf::from("res/doc1.png")]);
+
+        // then
+        assert!(docs.is_empty());
+    }
 }
