@@ -64,3 +64,22 @@ impl<S: Into<String>> From<S> for Ext {
 }
 
 pub type Extractor = Box<dyn TextExtractor>;
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_extractor_factory() {
+        // given
+        let ext = Ext::Pdf;
+
+        // when
+        let extractor = ExtractorFactory::from_ext(&ext);
+        let docs = extractor.extract_text(&[PathBuf::from("res/doc1.pdf")]);
+        let doc = &docs[0];
+
+        // then
+        assert!(doc.body.contains("Jak zainstalować scaner"));
+    }
+}
