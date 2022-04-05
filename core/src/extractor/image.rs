@@ -45,8 +45,8 @@ mod test {
         result.sort();
 
         // then
-        let first_doc_details = result.get(0).unwrap();
-        let second_doc_details = result.get(1).unwrap();
+        let first_doc_details = &result[0];
+        let second_doc_details = &result[1];
 
         assert!(first_doc_details.body.contains("W odpowiedzi na pismo"));
         assert_eq!(first_doc_details.filename, "doc1.png");
