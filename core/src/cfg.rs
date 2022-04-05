@@ -71,7 +71,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_default_config() -> Result<()> {
+    fn test_default_config() {
         // given
         let cfg = Config {
             watched_dir: PathBuf::from(""),
@@ -85,8 +85,6 @@ mod test {
 
         // then
         assert_eq!(cfg, default_cfg);
-
-        Ok(())
     }
 
     #[test]
