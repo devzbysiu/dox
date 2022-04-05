@@ -13,7 +13,8 @@ pub struct Pdf {
 }
 
 impl Pdf {
-    pub fn new(thumbnails_dir: PathBuf) -> Self {
+    pub fn new<P: AsRef<Path>>(thumbnails_dir: P) -> Self {
+        let thumbnails_dir = thumbnails_dir.as_ref().to_path_buf();
         Self { thumbnails_dir }
     }
 
@@ -41,10 +42,10 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_preprocess_for_correct_files() -> Result<()> {
+    fn test_preprocess_with_correct_files() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
-        let preprocessor = Pdf::new(tmp_dir.path().to_path_buf());
+        let preprocessor = Pdf::new(&tmp_dir);
         let paths = &[PathBuf::from("res/doc1.pdf")];
         let is_empty = tmp_dir.path().read_dir()?.next().is_none();
         assert!(is_empty);
@@ -61,10 +62,10 @@ mod test {
 
     #[test]
     #[should_panic(expected = "PDF document is damaged")]
-    fn test_preprocess_for_wrong_files() {
+    fn test_preprocess_with_wrong_files() {
         // given
         let tmp_dir = tempdir().unwrap();
-        let preprocessor = Pdf::new(tmp_dir.path().to_path_buf());
+        let preprocessor = Pdf::new(tmp_dir);
         let paths = &[PathBuf::from("res/doc8.jpg")];
 
         // then
