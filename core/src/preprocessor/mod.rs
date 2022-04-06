@@ -1,5 +1,5 @@
 use crate::cfg::Config;
-use crate::extractor::Ext;
+use crate::extension::Ext;
 use crate::preprocessor::image::Image;
 use crate::preprocessor::pdf::Pdf;
 use crate::result::Result;

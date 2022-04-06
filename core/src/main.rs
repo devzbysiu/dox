@@ -1,7 +1,8 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
 use crate::cfg::Config;
-use crate::extractor::{Ext, ExtractorFactory};
+use crate::extension::Ext;
+use crate::extractor::ExtractorFactory;
 use crate::helpers::PathExt;
 use crate::indexer::{Repo, RepoTools};
 use crate::preprocessor::PreprocessorFactory;
@@ -23,6 +24,7 @@ use std::thread;
 use std::time::Duration;
 
 mod cfg;
+mod extension;
 mod extractor;
 mod helpers;
 mod indexer;

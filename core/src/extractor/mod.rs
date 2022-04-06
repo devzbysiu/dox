@@ -1,3 +1,4 @@
+use crate::extension::Ext;
 use crate::extractor::image::Ocr;
 use crate::extractor::pdf::Pdf;
 use crate::helpers::PathRefExt;
@@ -38,27 +39,6 @@ impl ExtractorFactory {
         match ext {
             Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Ocr),
             Ext::Pdf => Box::new(Pdf),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Ext {
-    Png,
-    Jpg,
-    Webp,
-    Pdf,
-}
-
-impl<S: Into<String>> From<S> for Ext {
-    fn from(ext: S) -> Self {
-        let ext = ext.into();
-        match ext.as_ref() {
-            "png" => Self::Png,
-            "jpg" | "jpeg" => Self::Jpg,
-            "webp" => Self::Webp,
-            "pdf" => Self::Pdf,
-            _ => panic!("failed to create extension from '{}'", ext),
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::extractor::Ext;
+use crate::extension::Ext;
 
 use std::fs::DirEntry;
 use std::path::{Path, PathBuf};
