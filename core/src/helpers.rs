@@ -1,4 +1,5 @@
 use crate::extension::Ext;
+use crate::result::Result;
 
 use std::fs::DirEntry;
 use std::path::{Path, PathBuf};
@@ -41,6 +42,7 @@ impl PathBufExt for PathBuf {
 pub trait PathRefExt {
     fn filestem(&self) -> String;
     fn filename(&self) -> String;
+    fn first_filename(&self) -> Result<String>;
 }
 
 impl<T: AsRef<Path>> PathRefExt for T {
@@ -58,6 +60,10 @@ impl<T: AsRef<Path>> PathRefExt for T {
             .unwrap_or_else(|| panic!("path '{}' does not have a filename", path.display()))
             .to_string_lossy()
             .to_string()
+    }
+
+    fn first_filename(&self) -> Result<String> {
+        Ok(self.as_ref().read_dir()?.next().unwrap()?.filename())
     }
 }
 

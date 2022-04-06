@@ -68,7 +68,7 @@ mod test {
         // and error should be thrown (and this should be consistent with Pdf preprocessor)
         // when
         preprocessor.preprocess(paths)?;
-        let file = tmp_dir.path().read_dir()?.next().unwrap()?.filename();
+        let file = tmp_dir.path().first_filename()?;
 
         // then
         assert_eq!(file, "doc1.pdf");

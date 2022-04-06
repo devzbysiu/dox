@@ -33,7 +33,7 @@ pub type Preprocessor = Box<dyn FilePreprocessor>;
 mod test {
     use tempfile::tempdir;
 
-    use crate::helpers::DirEntryExt;
+    use crate::helpers::PathRefExt;
 
     use super::*;
     use std::time::Duration;
@@ -63,12 +63,7 @@ mod test {
             extractor.preprocess(&[PathBuf::from(test_case.1)])?;
 
             // then
-            let filename = config
-                .thumbnails_dir
-                .read_dir()?
-                .next()
-                .unwrap()?
-                .filename();
+            let filename = config.thumbnails_dir.first_filename()?;
             assert_eq!(filename, test_case.2);
         }
 
