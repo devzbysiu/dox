@@ -3,7 +3,7 @@
 use crate::cfg::Config;
 use crate::extension::Ext;
 use crate::extractor::ExtractorFactory;
-use crate::helpers::PathExt;
+use crate::helpers::PathRefExt;
 use crate::indexer::{Repo, RepoTools};
 use crate::preprocessor::PreprocessorFactory;
 use crate::result::Result;

@@ -2,7 +2,7 @@ use crate::extension::Ext;
 use crate::result::Result;
 
 use std::fs::DirEntry;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 pub trait DirEntryExt {
     fn filename(&self) -> String;
@@ -14,38 +14,28 @@ impl DirEntryExt for DirEntry {
     }
 }
 
-pub trait PathExt {
-    fn ext(&self) -> Ext;
-    fn string(&self) -> String;
-}
-
-impl PathExt for Path {
-    fn ext(&self) -> Ext {
-        Ext::from(self.extension().unwrap().to_str().unwrap())
-    }
-
-    fn string(&self) -> String {
-        self.to_string_lossy().to_string()
-    }
-}
-
-pub trait PathBufExt {
-    fn str(&self) -> &str;
-}
-
-impl PathBufExt for PathBuf {
-    fn str(&self) -> &str {
-        self.to_str().expect("path is not utf8")
-    }
-}
-
 pub trait PathRefExt {
+    fn ext(&self) -> Ext;
+    fn str(&self) -> &str;
+    fn string(&self) -> String;
     fn filestem(&self) -> String;
     fn filename(&self) -> String;
     fn first_filename(&self) -> Result<String>;
 }
 
 impl<T: AsRef<Path>> PathRefExt for T {
+    fn ext(&self) -> Ext {
+        Ext::from(self.as_ref().extension().unwrap().to_str().unwrap())
+    }
+
+    fn str(&self) -> &str {
+        self.as_ref().to_str().expect("path is not utf8")
+    }
+
+    fn string(&self) -> String {
+        self.as_ref().to_string_lossy().to_string()
+    }
+
     fn filestem(&self) -> String {
         let path = self.as_ref();
         path.file_stem()
@@ -72,6 +62,7 @@ mod test {
     use super::*;
     use anyhow::Result;
     use std::fs::{read_dir, File};
+    use std::path::PathBuf;
     use tempfile::tempdir;
 
     #[test]
@@ -122,7 +113,7 @@ mod test {
     }
 
     #[test]
-    fn test_string_in_path_ext() {
+    fn test_string_in_path_ref_ext() {
         // given
         let path = Path::new("/some-path/here");
 
@@ -134,7 +125,7 @@ mod test {
     }
 
     #[test]
-    fn test_str_in_path_buf_ext() {
+    fn test_str_in_path_ref_ext() {
         // given
         let path = PathBuf::from("/some-path/here");
 

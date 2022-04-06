@@ -1,4 +1,4 @@
-use crate::helpers::PathExt;
+use crate::helpers::PathRefExt;
 use crate::result::Result;
 
 use cairo::{Context, Format, ImageSurface};

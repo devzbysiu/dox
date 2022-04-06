@@ -1,4 +1,4 @@
-use crate::helpers::{PathBufExt, PathRefExt};
+use crate::helpers::PathRefExt;
 use crate::preprocessor::FilePreprocessor;
 use crate::result::Result;
 

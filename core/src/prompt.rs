@@ -1,5 +1,5 @@
 use crate::cfg::Config;
-use crate::helpers::{PathBufExt, PathExt};
+use crate::helpers::PathRefExt;
 use crate::result::Result;
 
 use inquire::{required, CustomType, Text};
