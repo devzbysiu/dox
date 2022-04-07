@@ -71,7 +71,7 @@ mod test {
         // when
         let mut resp: LocalResponse = client.get("/thumbnails/all").dispatch();
         let mut buffer = [0; 14];
-        resp.read(&mut buffer)?;
+        resp.read_exact(&mut buffer)?;
         let body = String::from_utf8(buffer.to_vec())?;
 
         // then
@@ -102,7 +102,7 @@ mod test {
         // when
         let mut resp: LocalResponse = client.get("/thumbnails/all").dispatch();
         let mut buffer = [0; 60];
-        resp.read(&mut buffer)?;
+        resp.read_exact(&mut buffer)?;
         let body = String::from_utf8(buffer.to_vec())?;
 
         // then
