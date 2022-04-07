@@ -3,6 +3,7 @@
 use anyhow::{bail, Result};
 use log::debug;
 use rocket::serde::{Deserialize, Serialize};
+use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -107,4 +108,9 @@ pub fn ls<P: AsRef<Path>>(dir: P) -> Result<Vec<String>> {
     }
     result.sort();
     Ok(result)
+}
+
+pub fn override_config_path<P: AsRef<Path>>(override_path: P) {
+    let override_path = override_path.as_ref();
+    env::set_var("DOX_CONFIG_PATH", override_path.display().to_string());
 }
