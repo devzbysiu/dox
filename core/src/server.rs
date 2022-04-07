@@ -37,8 +37,11 @@ pub struct Document {
 
 #[cfg(test)]
 mod test {
-    use rocket::{http::Status, local::blocking::Client};
-    use std::time::Duration;
+    use rocket::{
+        http::Status,
+        local::blocking::{Client, LocalResponse},
+    };
+    use std::{io::Read, time::Duration};
 
     use testutils::{
         create_cfg_file, index_dir_path, override_config_path, thumbnails_dir_path,
@@ -49,7 +52,7 @@ mod test {
     use anyhow::Result;
 
     #[test]
-    fn test_search_endpoint() -> Result<()> {
+    fn test_all_thumbnails_endpoint() -> Result<()> {
         // given
         let index_dir = index_dir_path()?;
         let watched_dir = watched_dir_path()?;
@@ -64,10 +67,14 @@ mod test {
         let client = Client::tracked(launch())?;
 
         // when
-        let resp = client.get("/thumbnails/all").dispatch();
+        let mut resp: LocalResponse = client.get("/thumbnails/all").dispatch();
+        let mut buffer = [0; 14];
+        resp.read(&mut buffer)?;
+        let body = String::from_utf8(buffer.to_vec())?;
 
         // then
         assert_eq!(resp.status(), Status::Ok);
+        assert_eq!(body, r#"{"entries":[]}"#);
 
         Ok(())
     }
