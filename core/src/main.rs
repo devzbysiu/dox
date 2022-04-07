@@ -37,10 +37,10 @@ mod thumbnail;
 mod user_input;
 
 #[launch]
-fn launch() -> Rocket<Build> {
+pub fn launch() -> Rocket<Build> {
     pretty_env_logger::init();
 
-    let path_override = env::args().nth(1);
+    let path_override = env::var("DOX_CONFIG_PATH").ok().or(env::args().nth(1));
     let cfg = handle_config(path_override).expect("failed to get config");
 
     let config = cfg.clone();
