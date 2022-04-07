@@ -41,10 +41,11 @@ mod test {
         http::Status,
         local::blocking::{Client, LocalResponse},
     };
+    use serial_test::serial;
     use std::{io::Read, time::Duration};
 
     use testutils::{
-        create_cfg_file, index_dir_path, override_config_path, thumbnails_dir_path,
+        cp_docs, create_cfg_file, index_dir_path, override_config_path, thumbnails_dir_path,
         watched_dir_path, TestConfig,
     };
 
@@ -52,6 +53,7 @@ mod test {
     use anyhow::Result;
 
     #[test]
+    #[serial]
     fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
         // given
         let index_dir = index_dir_path()?;
@@ -75,6 +77,39 @@ mod test {
         // then
         assert_eq!(resp.status(), Status::Ok);
         assert_eq!(body, r#"{"entries":[]}"#);
+
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn test_all_thumbnails_endpoint_indexed_docs() -> Result<()> {
+        // given
+        let index_dir = index_dir_path()?;
+        let watched_dir = watched_dir_path()?;
+        let thumbnails_dir = thumbnails_dir_path()?;
+        let config = create_cfg_file(&TestConfig {
+            watched_dir: watched_dir.path().to_path_buf(),
+            thumbnails_dir: thumbnails_dir.path().to_path_buf(),
+            index_dir: index_dir.path().to_path_buf(),
+            cooldown_time: Duration::from_secs(1),
+        })?;
+        override_config_path(&config.path().join("dox.toml"));
+        let client = Client::tracked(launch())?;
+        cp_docs(watched_dir.path())?;
+
+        // when
+        let mut resp: LocalResponse = client.get("/thumbnails/all").dispatch();
+        let mut buffer = [0; 60];
+        resp.read(&mut buffer)?;
+        let body = String::from_utf8(buffer.to_vec())?;
+
+        // then
+        assert_eq!(resp.status(), Status::Ok);
+        assert_eq!(
+            body,
+            r#"{"entries":[{"filename":"doc1.png","thumbnail":"doc1.png"}]}"#
+        );
 
         Ok(())
     }
