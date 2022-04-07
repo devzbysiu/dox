@@ -52,7 +52,7 @@ mod test {
     use anyhow::Result;
 
     #[test]
-    fn test_all_thumbnails_endpoint() -> Result<()> {
+    fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
         // given
         let index_dir = index_dir_path()?;
         let watched_dir = watched_dir_path()?;
