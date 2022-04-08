@@ -13,8 +13,11 @@ pub fn new_doc_notifier() -> Result<Notifier> {
     debug!("creating new doc notifier");
     let (tx, rx) = channel();
     let (sockets_list, notifier) = NotifiableSockets::new(tx);
+    debug!("before awaiting notifications");
     sockets_list.await_notifications(rx);
+    debug!("creating new connection handler");
     ConnHandler::new()?.push_new_conns(sockets_list);
+    debug!("returning notifier");
     Ok(notifier)
 }
 
@@ -24,9 +27,17 @@ struct ConnHandler {
 
 impl ConnHandler {
     fn new() -> Result<Self> {
-        Ok(Self {
-            listener: TcpListener::bind("0.0.0.0:8001")?,
-        })
+        debug!("in connhandler constructor");
+        // TODO: DOX_WEBSOCKET_ADDR should be passed by config and overwritten in
+        // main - see DOX_CONFIG_PATH
+        let addr = std::env::var("DOX_WEBSOCKET_ADDR")
+            .ok()
+            .unwrap_or("0.0.0.0:8001".to_string());
+        let handler = Self {
+            listener: TcpListener::bind(addr)?,
+        };
+        debug!("in connhandler constructor");
+        Ok(handler)
     }
 
     fn push_new_conns(self, mut sockets: NotifiableSockets) {
@@ -66,6 +77,7 @@ impl NotifiableSockets {
     }
 
     fn await_notifications(&self, rx: Receiver<()>) {
+        debug!("awaiting notifications");
         let all = self.all.clone();
         thread::spawn(move || -> Result<()> {
             loop {

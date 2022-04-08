@@ -114,3 +114,8 @@ pub fn override_config_path<P: AsRef<Path>>(override_path: P) {
     let override_path = override_path.as_ref();
     env::set_var("DOX_CONFIG_PATH", override_path.display().to_string());
 }
+
+pub fn override_websocket_addr<S: Into<String>>(override_addr: S) {
+    let addr = override_addr.into();
+    env::set_var("DOX_WEBSOCKET_ADDR", addr);
+}
