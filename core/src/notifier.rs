@@ -1,3 +1,4 @@
+use crate::cfg::Config;
 use crate::result::Result;
 
 use std::net::{TcpListener, TcpStream};
@@ -9,12 +10,12 @@ use tungstenite::{accept, Message, WebSocket};
 use log::debug;
 
 #[allow(clippy::module_name_repetitions)]
-pub fn new_doc_notifier() -> Result<Notifier> {
+pub fn new_doc_notifier(cfg: &Config) -> Result<Notifier> {
     debug!("creating new doc notifier");
     let (tx, rx) = channel();
     let (sockets_list, notifier) = NotifiableSockets::new(tx);
     sockets_list.await_notifications(rx);
-    ConnHandler::new()?.push_new_conns(sockets_list);
+    ConnHandler::new(cfg)?.push_new_conns(sockets_list);
     Ok(notifier)
 }
 
@@ -23,14 +24,9 @@ struct ConnHandler {
 }
 
 impl ConnHandler {
-    fn new() -> Result<Self> {
-        // TODO: DOX_WEBSOCKET_ADDR should be passed by config and overwritten in
-        // main - see DOX_CONFIG_PATH
-        let addr = std::env::var("DOX_WEBSOCKET_ADDR")
-            .ok()
-            .unwrap_or("0.0.0.0:8001".to_string());
+    fn new(cfg: &Config) -> Result<Self> {
         Ok(Self {
-            listener: TcpListener::bind(addr)?,
+            listener: TcpListener::bind(&cfg.notifications_addr)?,
         })
     }
 

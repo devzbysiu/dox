@@ -14,6 +14,7 @@ pub fn show() -> Result<Config> {
         thumbnails_dir: thumbnails_dir_prompt(&config)?,
         index_dir: index_dir_prompt(&config)?,
         cooldown_time: cooldown_time_prompt(&config)?,
+        notifications_addr: notifications_addr_prompt()?,
     })
 }
 
@@ -69,4 +70,10 @@ fn cooldown_time_prompt(config: &Config) -> Result<Duration> {
             .with_default((config.cooldown_time.as_secs(), &|secs| format!("{}", secs)))
             .prompt()?,
     ))
+}
+
+fn notifications_addr_prompt() -> Result<String> {
+    Ok(Text::new("IP address of notifications:")
+        .with_default("0.0.0.0:8001")
+        .prompt()?)
 }

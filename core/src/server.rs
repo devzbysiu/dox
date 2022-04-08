@@ -44,8 +44,8 @@ mod test {
     use std::{io::Read, time::Duration};
 
     use testutils::{
-        cp_docs, create_cfg_file, index_dir_path, override_config_path, override_websocket_addr,
-        thumbnails_dir_path, watched_dir_path, TestConfig,
+        cp_docs, create_cfg_file, index_dir_path, override_config_path, thumbnails_dir_path,
+        watched_dir_path, TestConfig,
     };
 
     use crate::launch;
@@ -61,10 +61,10 @@ mod test {
             watched_dir: watched_dir.path().to_path_buf(),
             thumbnails_dir: thumbnails_dir.path().to_path_buf(),
             index_dir: index_dir.path().to_path_buf(),
+            notifications_addr: "0.0.0.0:8001".into(),
             cooldown_time: Duration::from_secs(1),
         })?;
         override_config_path(&config.path().join("dox.toml"));
-        override_websocket_addr("0.0.0.0:8001");
         let client = Client::tracked(launch())?;
 
         // when
@@ -90,10 +90,10 @@ mod test {
             watched_dir: watched_dir.path().to_path_buf(),
             thumbnails_dir: thumbnails_dir.path().to_path_buf(),
             index_dir: index_dir.path().to_path_buf(),
+            notifications_addr: "0.0.0.0:8002".into(),
             cooldown_time: Duration::from_secs(1),
         })?;
         override_config_path(&config.path().join("dox.toml"));
-        override_websocket_addr("0.0.0.0:8002");
         let client = Client::tracked(launch())?;
         cp_docs(watched_dir.path())?;
 

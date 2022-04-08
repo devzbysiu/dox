@@ -89,7 +89,7 @@ fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoToo
     debug!("spawning indexing thread");
     thread::spawn(move || -> Result<()> {
         debug!("indexing thread spawned");
-        let new_doc_notifier = new_doc_notifier()?;
+        let new_doc_notifier = new_doc_notifier(&cfg)?;
         loop {
             let paths = rx.recv()?;
             debug!("new docs: {:?}", paths);

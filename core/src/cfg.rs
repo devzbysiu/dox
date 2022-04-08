@@ -13,6 +13,7 @@ pub struct Config {
     pub watched_dir: PathBuf,
     pub thumbnails_dir: PathBuf,
     pub index_dir: PathBuf,
+    pub notifications_addr: String, // TODO: move this to Ipv4Addr?
     pub cooldown_time: Duration,
 }
 
@@ -23,6 +24,7 @@ impl Default for Config {
             thumbnails_dir: thumbnails_dir_default(),
             index_dir: index_dir_default(),
             cooldown_time: Duration::from_secs(60),
+            notifications_addr: "0.0.0.0:8001".into(),
         }
     }
 }
@@ -78,6 +80,7 @@ mod test {
             thumbnails_dir: dirs::data_dir().unwrap().join("dox/thumbnails"),
             index_dir: dirs::data_dir().unwrap().join("dox/index"),
             cooldown_time: Duration::from_secs(60),
+            notifications_addr: "0.0.0.0:8001".into(),
         };
 
         // when
@@ -98,6 +101,7 @@ mod test {
             watched_dir = "/home/zbyniu/Tests/notify"
             thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
             index_dir = "/home/zbyniu/.local/share/dox/index"
+            notifications_addr = "0.0.0.0:8001"
 
             [cooldown_time]
             secs = 1
@@ -109,6 +113,7 @@ mod test {
             thumbnails_dir: PathBuf::from("/home/zbyniu/.local/share/dox/thumbnails"),
             index_dir: PathBuf::from("/home/zbyniu/.local/share/dox/index"),
             cooldown_time: Duration::from_secs(1),
+            notifications_addr: "0.0.0.0:8001".into(),
         };
 
         // when
@@ -138,6 +143,7 @@ mod test {
             r#"
             thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
             index_dir = "/home/zbyniu/.local/share/dox/index"
+            notifications_addr = "0.0.0.0:8001"
 
             [cooldown_time]
             secs = 1
@@ -161,6 +167,7 @@ mod test {
             r#"
             watched_dir = "/home/zbyniu/Tests/notify"
             index_dir = "/home/zbyniu/.local/share/dox/index"
+            notifications_addr = "0.0.0.0:8001"
 
             [cooldown_time]
             secs = 1
@@ -184,6 +191,31 @@ mod test {
             r#"
             watched_dir = "/home/zbyniu/Tests/notify"
             thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
+            notifications_addr = "0.0.0.0:8001"
+
+            [cooldown_time]
+            secs = 1
+            nanos = 0
+            "#,
+        )
+        .unwrap();
+
+        // then
+        read_config(cfg_path).unwrap(); // should panic
+    }
+
+    #[test]
+    #[should_panic(expected = "missing field `notifications_addr`")]
+    fn test_read_config_when_missing_notifications_addr() {
+        // given
+        let tmp_cfg = tempdir().unwrap();
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        create_config(
+            &cfg_path,
+            r#"
+            watched_dir = "/home/zbyniu/Tests/notify"
+            thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
+            index_dir = "/home/zbyniu/.local/share/dox/index"
 
             [cooldown_time]
             secs = 1
@@ -208,6 +240,7 @@ mod test {
             watched_dir = "/home/zbyniu/Tests/notify"
             thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
             index_dir = "/home/zbyniu/.local/share/dox/index"
+            notifications_addr = "0.0.0.0:8001"
             "#,
         )
         .unwrap();
@@ -238,6 +271,7 @@ mod test {
             thumbnails_dir: PathBuf::from("/thumbnails_dir"),
             index_dir: PathBuf::from("/index_dir"),
             cooldown_time: Duration::from_secs(60),
+            notifications_addr: "0.0.0.0:8001".into(),
         };
 
         // when
@@ -249,6 +283,7 @@ mod test {
             r#"watched_dir = "/watched_dir"
 thumbnails_dir = "/thumbnails_dir"
 index_dir = "/index_dir"
+notifications_addr = "0.0.0.0:8001"
 
 [cooldown_time]
 secs = 60

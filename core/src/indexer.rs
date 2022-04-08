@@ -262,6 +262,7 @@ mod test {
             thumbnails_dir: thumbnails_dir.path().to_path_buf(),
             index_dir: index_dir.path().to_path_buf(),
             cooldown_time: Duration::from_secs(1),
+            notifications_addr: "0.0.0.0:8001".into(),
         })
     }
 
