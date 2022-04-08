@@ -44,10 +44,6 @@ pub fn launch() -> Rocket<Build> {
     let path_override = env::var("DOX_CONFIG_PATH")
         .ok()
         .or_else(|| env::args().nth(1));
-    debug!(
-        "starting with config path: '{}'",
-        path_override.clone().unwrap()
-    );
     let cfg = handle_config(path_override).expect("failed to get config");
 
     let config = cfg.clone();
@@ -80,10 +76,7 @@ fn spawn_watching_thread(cfg: &Config) -> Receiver<Vec<PathBuf>> {
         watcher.watch(watched_dir, RecursiveMode::Recursive)?;
         loop {
             match rx.recv() {
-                Ok(DebouncedEvent::Create(path)) => {
-                    debug!("received: '{}' passing along...", path.display());
-                    doc_tx.send(path)?;
-                }
+                Ok(DebouncedEvent::Create(path)) => doc_tx.send(path)?,
                 Ok(e) => warn!("this FS event is not supported: {:?}", e),
                 Err(e) => error!("watch error: {:?}", e),
             }
@@ -98,7 +91,6 @@ fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoToo
         debug!("indexing thread spawned");
         let new_doc_notifier = new_doc_notifier()?;
         loop {
-            debug!("spawning indexing loop.. waiting for paths");
             let paths = rx.recv()?;
             debug!("new docs: {:?}", paths);
             let extension = extension(&paths);

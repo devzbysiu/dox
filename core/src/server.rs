@@ -37,12 +37,10 @@ pub struct Document {
 
 #[cfg(test)]
 mod test {
-    use log::debug;
     use rocket::{
         http::Status,
         local::blocking::{Client, LocalResponse},
     };
-    use serial_test::serial;
     use std::{io::Read, time::Duration};
 
     use testutils::{
@@ -54,11 +52,8 @@ mod test {
     use anyhow::Result;
 
     #[test]
-    #[serial]
     fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
-        let _ = pretty_env_logger::try_init();
         // given
-        // std::thread::sleep(Duration::from_secs(10));
         let index_dir = index_dir_path()?;
         let watched_dir = watched_dir_path()?;
         let thumbnails_dir = thumbnails_dir_path()?;
@@ -71,10 +66,6 @@ mod test {
         override_config_path(&config.path().join("dox.toml"));
         override_websocket_addr("0.0.0.0:8001");
         let client = Client::tracked(launch())?;
-        debug!(
-            "################################                     does watched dir exist?: {}",
-            watched_dir.path().exists()
-        );
 
         // when
         let mut resp: LocalResponse = client.get("/thumbnails/all").dispatch();
@@ -86,17 +77,12 @@ mod test {
         assert_eq!(resp.status(), Status::Ok);
         assert_eq!(body, r#"{"entries":[]}"#);
 
-        debug!("$$$$$$$$$$$$$$$$$$$$                     finishing test 1");
         Ok(())
     }
 
     #[test]
-    #[serial]
-    // #[ignore = "failing for some reason"]
     fn test_all_thumbnails_endpoint_with_indexed_docs() -> Result<()> {
-        let _ = pretty_env_logger::try_init();
         // given
-        // std::thread::sleep(Duration::from_secs(10));
         let index_dir = index_dir_path()?;
         let watched_dir = watched_dir_path()?;
         let thumbnails_dir = thumbnails_dir_path()?;
@@ -110,10 +96,6 @@ mod test {
         override_websocket_addr("0.0.0.0:8002");
         let client = Client::tracked(launch())?;
         cp_docs(watched_dir.path())?;
-        debug!(
-            "################################                     does watched dir exist?: {}",
-            watched_dir.path().exists()
-        );
 
         // when
         let mut resp: LocalResponse = client.get("/thumbnails/all").dispatch();
@@ -128,7 +110,6 @@ mod test {
             r#"{"entries":[{"filename":"doc1.png","thumbnail":"doc1.png"}]}"#
         );
 
-        debug!("$$$$$$$$$$$$$$$$$$$$                     finishing test 2");
         Ok(())
     }
 }
