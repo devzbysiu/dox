@@ -43,7 +43,7 @@ mod test {
     };
     use std::io::Read;
 
-    use testutils::{cp_docs, create_cfg_file, override_config_path, TestConfig};
+    use testutils::{cp_docs, create_test_env};
 
     use crate::launch;
     use anyhow::Result;
@@ -51,9 +51,7 @@ mod test {
     #[test]
     fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
         // given
-        let config = TestConfig::new()?;
-        let config_dir = create_cfg_file(&config)?;
-        override_config_path(&config_dir.path().join("dox.toml"));
+        let _env = create_test_env()?;
         let client = Client::tracked(launch())?;
 
         // when
@@ -72,9 +70,7 @@ mod test {
     #[test]
     fn test_all_thumbnails_endpoint_with_indexed_docs() -> Result<()> {
         // given
-        let config = TestConfig::new()?;
-        let config_dir = create_cfg_file(&config)?;
-        override_config_path(&config_dir.path().join("dox.toml"));
+        let (config, _config_dir) = create_test_env()?;
         let client = Client::tracked(launch())?;
         cp_docs(config.watched_dir_path())?;
 

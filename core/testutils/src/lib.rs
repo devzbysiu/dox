@@ -26,6 +26,13 @@ pub struct SearchEntry {
     pub filename: String,
 }
 
+pub fn create_test_env() -> Result<(TestConfig, TempDir)> {
+    let config = TestConfig::new()?;
+    let config_dir = create_cfg_file(&config)?;
+    override_config_path(&config_dir.path().join("dox.toml"));
+    Ok((config, config_dir))
+}
+
 #[derive(Debug)]
 pub struct TestConfig {
     watched_dir: TempDir,
@@ -52,10 +59,6 @@ impl TestConfig {
 
     pub fn thumbnails_dir_path(&self) -> PathBuf {
         self.thumbnails_dir.path().to_path_buf()
-    }
-
-    pub fn index_dir_path(&self) -> PathBuf {
-        self.index_dir.path().to_path_buf()
     }
 }
 
