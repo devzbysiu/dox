@@ -6,6 +6,7 @@ use rocket::serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
 use std::io::Write;
+use std::net::SocketAddrV4;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
 use std::thread;
@@ -27,7 +28,7 @@ pub struct TestConfig {
     pub watched_dir: PathBuf,
     pub thumbnails_dir: PathBuf,
     pub index_dir: PathBuf,
-    pub notifications_addr: String,
+    pub notifications_addr: SocketAddrV4,
     pub cooldown_time: Duration,
 }
 

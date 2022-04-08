@@ -57,7 +57,7 @@ mod test {
                 index_dir: PathBuf::from("not-important"),
                 thumbnails_dir: thumbnails_dir.path().to_path_buf(),
                 cooldown_time: Duration::from_secs(1),
-                notifications_addr: "0.0.0.0:8001".into(),
+                notifications_addr: "0.0.0.0:8001".parse()?,
             };
             // when
             let extractor = PreprocessorFactory::from_ext(&ext, &config);

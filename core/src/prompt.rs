@@ -4,6 +4,7 @@ use crate::result::Result;
 
 use inquire::{required, CustomType, Text};
 use std::fs;
+use std::net::SocketAddrV4;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -72,8 +73,9 @@ fn cooldown_time_prompt(config: &Config) -> Result<Duration> {
     ))
 }
 
-fn notifications_addr_prompt() -> Result<String> {
+fn notifications_addr_prompt() -> Result<SocketAddrV4> {
     Ok(Text::new("IP address of notifications:")
         .with_default("0.0.0.0:8001")
-        .prompt()?)
+        .prompt()?
+        .parse()?)
 }

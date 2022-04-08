@@ -82,6 +82,9 @@ pub enum DoxErr {
 
     #[error("Error while notifying about new docs: '{0}'")]
     Notifier(#[from] std::sync::mpsc::SendError<()>),
+
+    #[error("Error while parsing to SocketAddrV4: '{0}'")]
+    NotificationSocket(#[from] std::net::AddrParseError),
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;

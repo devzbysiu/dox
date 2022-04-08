@@ -61,7 +61,7 @@ mod test {
             watched_dir: watched_dir.path().to_path_buf(),
             thumbnails_dir: thumbnails_dir.path().to_path_buf(),
             index_dir: index_dir.path().to_path_buf(),
-            notifications_addr: "0.0.0.0:8001".into(),
+            notifications_addr: "0.0.0.0:8001".parse()?,
             cooldown_time: Duration::from_secs(1),
         })?;
         override_config_path(&config.path().join("dox.toml"));
@@ -90,7 +90,7 @@ mod test {
             watched_dir: watched_dir.path().to_path_buf(),
             thumbnails_dir: thumbnails_dir.path().to_path_buf(),
             index_dir: index_dir.path().to_path_buf(),
-            notifications_addr: "0.0.0.0:8002".into(),
+            notifications_addr: "0.0.0.0:8002".parse()?,
             cooldown_time: Duration::from_secs(1),
         })?;
         override_config_path(&config.path().join("dox.toml"));

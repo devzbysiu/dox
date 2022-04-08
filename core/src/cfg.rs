@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::create_dir_all;
 use std::fs::{read_to_string, File};
 use std::io::prelude::*;
+use std::net::SocketAddrV4;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -13,7 +14,7 @@ pub struct Config {
     pub watched_dir: PathBuf,
     pub thumbnails_dir: PathBuf,
     pub index_dir: PathBuf,
-    pub notifications_addr: String, // TODO: move this to Ipv4Addr?
+    pub notifications_addr: SocketAddrV4,
     pub cooldown_time: Duration,
 }
 
@@ -24,7 +25,7 @@ impl Default for Config {
             thumbnails_dir: thumbnails_dir_default(),
             index_dir: index_dir_default(),
             cooldown_time: Duration::from_secs(60),
-            notifications_addr: "0.0.0.0:8001".into(),
+            notifications_addr: "0.0.0.0:8001".parse().unwrap(),
         }
     }
 }
@@ -68,19 +69,20 @@ pub fn store<P: AsRef<Path>>(path: P, cfg: &Config) -> Result<()> {
 mod test {
     use std::fs::read_to_string;
 
+    use anyhow::Result;
     use tempfile::tempdir;
 
     use super::*;
 
     #[test]
-    fn test_default_config() {
+    fn test_default_config() -> Result<()> {
         // given
         let cfg = Config {
             watched_dir: PathBuf::from(""),
             thumbnails_dir: dirs::data_dir().unwrap().join("dox/thumbnails"),
             index_dir: dirs::data_dir().unwrap().join("dox/index"),
             cooldown_time: Duration::from_secs(60),
-            notifications_addr: "0.0.0.0:8001".into(),
+            notifications_addr: "0.0.0.0:8001".parse()?,
         };
 
         // when
@@ -88,6 +90,8 @@ mod test {
 
         // then
         assert_eq!(cfg, default_cfg);
+
+        Ok(())
     }
 
     #[test]
@@ -113,7 +117,7 @@ mod test {
             thumbnails_dir: PathBuf::from("/home/zbyniu/.local/share/dox/thumbnails"),
             index_dir: PathBuf::from("/home/zbyniu/.local/share/dox/index"),
             cooldown_time: Duration::from_secs(1),
-            notifications_addr: "0.0.0.0:8001".into(),
+            notifications_addr: "0.0.0.0:8001".parse()?,
         };
 
         // when
@@ -271,7 +275,7 @@ mod test {
             thumbnails_dir: PathBuf::from("/thumbnails_dir"),
             index_dir: PathBuf::from("/index_dir"),
             cooldown_time: Duration::from_secs(60),
-            notifications_addr: "0.0.0.0:8001".into(),
+            notifications_addr: "0.0.0.0:8001".parse()?,
         };
 
         // when
