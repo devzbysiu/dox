@@ -37,13 +37,9 @@ pub struct Document {
 
 #[cfg(test)]
 mod test {
-    use rocket::{
-        http::Status,
-        local::blocking::{Client, LocalResponse},
-    };
-    use std::io::Read;
+    use rocket::{http::Status, local::blocking::Client};
 
-    use testutils::{cp_docs, create_test_env};
+    use testutils::{cp_docs, create_test_env, LocalResponseExt};
 
     use crate::launch;
     use anyhow::Result;
@@ -55,10 +51,8 @@ mod test {
         let client = Client::tracked(launch())?;
 
         // when
-        let mut resp: LocalResponse = client.get("/thumbnails/all").dispatch();
-        let mut buffer = [0; 14];
-        resp.read_exact(&mut buffer)?;
-        let body = String::from_utf8(buffer.to_vec())?;
+        let mut resp = client.get("/thumbnails/all").dispatch();
+        let body = resp.read_body::<14>()?;
 
         // then
         assert_eq!(resp.status(), Status::Ok);
@@ -68,6 +62,7 @@ mod test {
     }
 
     #[test]
+    // TODO: this is still failing from time to time
     fn test_all_thumbnails_endpoint_with_indexed_docs() -> Result<()> {
         // given
         let (config, _config_dir) = create_test_env()?;
@@ -75,10 +70,8 @@ mod test {
         cp_docs(config.watched_dir_path())?;
 
         // when
-        let mut resp: LocalResponse = client.get("/thumbnails/all").dispatch();
-        let mut buffer = [0; 60];
-        resp.read_exact(&mut buffer)?;
-        let body = String::from_utf8(buffer.to_vec())?;
+        let mut resp = client.get("/thumbnails/all").dispatch();
+        let body = resp.read_body::<60>()?;
 
         // then
         assert_eq!(resp.status(), Status::Ok);

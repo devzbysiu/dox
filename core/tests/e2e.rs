@@ -1,14 +1,11 @@
 use anyhow::Result;
-use testutils::{
-    config_path, cp_docs, create_cfg_file, ls, make_search, spawn_dox, SearchEntry, TestConfig,
-};
+use testutils::{config_path, cp_docs, create_test_env, ls, make_search, spawn_dox, SearchEntry};
 
 #[test]
 fn it_allows_to_search_through_api() -> Result<()> {
     pretty_env_logger::init();
     // given
-    let config = TestConfig::new()?;
-    let config_dir = create_cfg_file(&config)?;
+    let (config, config_dir) = create_test_env()?;
 
     // NOTE: Drop trait causes this `_dox_process` to be killed on drop (even when the test fails)
     let _dox_process = spawn_dox(config_path(&config_dir))?;
