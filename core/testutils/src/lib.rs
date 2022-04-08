@@ -4,6 +4,8 @@ use anyhow::{bail, Result};
 use log::debug;
 use rand::Rng;
 use rocket::serde::{Deserialize, Serialize};
+use serde::ser::SerializeStruct;
+use serde::Serializer;
 use std::env;
 use std::fs;
 use std::io::Write;
@@ -24,13 +26,52 @@ pub struct SearchEntry {
     pub filename: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct TestConfig {
-    pub watched_dir: PathBuf,
-    pub thumbnails_dir: PathBuf,
-    pub index_dir: PathBuf,
-    pub notifications_addr: SocketAddrV4,
-    pub cooldown_time: Duration,
+    watched_dir: TempDir,
+    thumbnails_dir: TempDir,
+    index_dir: TempDir,
+    notifications_addr: SocketAddrV4,
+    cooldown_time: Duration,
+}
+
+impl TestConfig {
+    pub fn new() -> Result<Self> {
+        Ok(Self {
+            watched_dir: watched_dir_path()?,
+            thumbnails_dir: thumbnails_dir_path()?,
+            index_dir: index_dir_path()?,
+            notifications_addr: random_addr(),
+            cooldown_time: Duration::from_secs(1),
+        })
+    }
+
+    pub fn watched_dir_path(&self) -> PathBuf {
+        self.watched_dir.path().to_path_buf()
+    }
+
+    pub fn thumbnails_dir_path(&self) -> PathBuf {
+        self.thumbnails_dir.path().to_path_buf()
+    }
+
+    pub fn index_dir_path(&self) -> PathBuf {
+        self.index_dir.path().to_path_buf()
+    }
+}
+
+impl Serialize for TestConfig {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("TestConfig", 5)?;
+        state.serialize_field("watched_dir", self.watched_dir.path())?;
+        state.serialize_field("thumbnails_dir", self.thumbnails_dir.path())?;
+        state.serialize_field("index_dir", self.index_dir.path())?;
+        state.serialize_field("notifications_addr", &self.notifications_addr)?;
+        state.serialize_field("cooldown_time", &self.cooldown_time)?;
+        state.end()
+    }
 }
 
 pub struct DoxProcess(Child);

@@ -41,12 +41,9 @@ mod test {
         http::Status,
         local::blocking::{Client, LocalResponse},
     };
-    use std::{io::Read, time::Duration};
+    use std::io::Read;
 
-    use testutils::{
-        cp_docs, create_cfg_file, index_dir_path, override_config_path, random_addr,
-        thumbnails_dir_path, watched_dir_path, TestConfig,
-    };
+    use testutils::{cp_docs, create_cfg_file, override_config_path, TestConfig};
 
     use crate::launch;
     use anyhow::Result;
@@ -54,17 +51,9 @@ mod test {
     #[test]
     fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
         // given
-        let index_dir = index_dir_path()?;
-        let watched_dir = watched_dir_path()?;
-        let thumbnails_dir = thumbnails_dir_path()?;
-        let config = create_cfg_file(&TestConfig {
-            watched_dir: watched_dir.path().to_path_buf(),
-            thumbnails_dir: thumbnails_dir.path().to_path_buf(),
-            index_dir: index_dir.path().to_path_buf(),
-            notifications_addr: random_addr(),
-            cooldown_time: Duration::from_secs(1),
-        })?;
-        override_config_path(&config.path().join("dox.toml"));
+        let config = TestConfig::new()?;
+        let config_dir = create_cfg_file(&config)?;
+        override_config_path(&config_dir.path().join("dox.toml"));
         let client = Client::tracked(launch())?;
 
         // when
@@ -83,19 +72,11 @@ mod test {
     #[test]
     fn test_all_thumbnails_endpoint_with_indexed_docs() -> Result<()> {
         // given
-        let index_dir = index_dir_path()?;
-        let watched_dir = watched_dir_path()?;
-        let thumbnails_dir = thumbnails_dir_path()?;
-        let config = create_cfg_file(&TestConfig {
-            watched_dir: watched_dir.path().to_path_buf(),
-            thumbnails_dir: thumbnails_dir.path().to_path_buf(),
-            index_dir: index_dir.path().to_path_buf(),
-            notifications_addr: random_addr(),
-            cooldown_time: Duration::from_secs(1),
-        })?;
-        override_config_path(&config.path().join("dox.toml"));
+        let config = TestConfig::new()?;
+        let config_dir = create_cfg_file(&config)?;
+        override_config_path(&config_dir.path().join("dox.toml"));
         let client = Client::tracked(launch())?;
-        cp_docs(watched_dir.path())?;
+        cp_docs(config.watched_dir_path())?;
 
         // when
         let mut resp: LocalResponse = client.get("/thumbnails/all").dispatch();
