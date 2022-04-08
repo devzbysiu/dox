@@ -2,6 +2,7 @@
 
 use anyhow::{bail, Result};
 use log::debug;
+use rand::Rng;
 use rocket::serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
@@ -115,4 +116,10 @@ pub fn ls<P: AsRef<Path>>(dir: P) -> Result<Vec<String>> {
 pub fn override_config_path<P: AsRef<Path>>(override_path: P) {
     let override_path = override_path.as_ref();
     env::set_var("DOX_CONFIG_PATH", override_path.display().to_string());
+}
+
+pub fn random_addr() -> SocketAddrV4 {
+    let mut rng = rand::thread_rng();
+    let port = rng.gen_range(8000..9000);
+    format!("0.0.0.0:{}", port).parse().unwrap()
 }
