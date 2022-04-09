@@ -50,7 +50,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_extractor_factory_with_corrent_file() {
+    fn test_extractor_factory_with_correct_file() {
         // given
         let test_cases = vec![
             (Ext::Png, "res/doc1.png", "W dalszym ciągu uważamy"),
