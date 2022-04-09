@@ -41,9 +41,11 @@ mod test {
 
     use anyhow::Result;
     use rocket::{http::Status, local::blocking::Client};
+    use serial_test::serial;
     use testutils::{cp_docs, create_test_env, LocalResponseExt};
 
     #[test]
+    #[serial]
     fn test_search_endpoint_with_empty_index() -> Result<()> {
         // given
         let _env = create_test_env()?;
@@ -61,6 +63,7 @@ mod test {
     }
 
     #[test]
+    #[serial]
     fn test_search_endpoint_with_indexed_docs() -> Result<()> {
         // given
         let (config, _config_dir) = create_test_env()?;
@@ -82,6 +85,7 @@ mod test {
     }
 
     #[test]
+    #[serial]
     fn test_search_endpoint_with_wrong_query() -> Result<()> {
         // given
         let (config, _config_dir) = create_test_env()?;
@@ -100,6 +104,7 @@ mod test {
     }
 
     #[test]
+    #[serial]
     fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
         // given
         let _env = create_test_env()?;
@@ -117,6 +122,7 @@ mod test {
     }
 
     #[test]
+    #[serial]
     // TODO: this is still failing from time to time
     fn test_all_thumbnails_endpoint_with_indexed_docs() -> Result<()> {
         // given

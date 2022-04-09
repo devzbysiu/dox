@@ -52,3 +52,4 @@ tempfile = "3.3.0"
 ureq = { version = "2.4.0", features = ["json"] }
 anyhow = "1.0.52"
 testutils = { path = "testutils" }
+serial_test = "0.6.0"
