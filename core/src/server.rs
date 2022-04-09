@@ -82,6 +82,24 @@ mod test {
     }
 
     #[test]
+    fn test_search_endpoint_with_wrong_query() -> Result<()> {
+        // given
+        let (config, _config_dir) = create_test_env()?;
+        let client = Client::tracked(launch())?;
+        cp_docs(config.watched_dir_path())?;
+
+        // when
+        let mut resp = client.get("/search?q=not-existing-query").dispatch();
+        let body = resp.read_body::<14>()?;
+
+        // then
+        assert_eq!(resp.status(), Status::Ok);
+        assert_eq!(body, r#"{"entries":[]}"#);
+
+        Ok(())
+    }
+
+    #[test]
     fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
         // given
         let _env = create_test_env()?;
