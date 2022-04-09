@@ -123,7 +123,6 @@ mod test {
 
     #[test]
     #[serial]
-    // TODO: this is still failing from time to time
     fn test_all_thumbnails_endpoint_with_indexed_docs() -> Result<()> {
         // given
         let (config, _config_dir) = create_test_env()?;
