@@ -106,6 +106,7 @@ mod test {
 
     #[test]
     #[serial]
+    // TODO: this is still failing (or other, random indexing tests)
     fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
         // given
         let _env = create_test_env()?;
