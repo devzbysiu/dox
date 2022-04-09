@@ -37,12 +37,28 @@ pub struct Document {
 
 #[cfg(test)]
 mod test {
-    use rocket::{http::Status, local::blocking::Client};
+    use crate::launch;
 
+    use anyhow::Result;
+    use rocket::{http::Status, local::blocking::Client};
     use testutils::{cp_docs, create_test_env, LocalResponseExt};
 
-    use crate::launch;
-    use anyhow::Result;
+    #[test]
+    fn test_search_endpoint_with_empty_index() -> Result<()> {
+        // given
+        let _env = create_test_env()?;
+        let client = Client::tracked(launch())?;
+
+        // when
+        let mut resp = client.get("/search?q=not-important").dispatch();
+        let body = resp.read_body::<14>()?;
+
+        // then
+        assert_eq!(resp.status(), Status::Ok);
+        assert_eq!(body, r#"{"entries":[]}"#);
+
+        Ok(())
+    }
 
     #[test]
     fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
