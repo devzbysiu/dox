@@ -68,6 +68,7 @@ mod test {
         // given
         let (config, _config_dir) = create_test_env()?;
         let client = Client::tracked(launch())?;
+        std::thread::sleep(std::time::Duration::from_secs(15));
         cp_docs(config.watched_dir_path())?;
 
         // when
@@ -127,6 +128,7 @@ mod test {
         // given
         let (config, _config_dir) = create_test_env()?;
         let client = Client::tracked(launch())?;
+        std::thread::sleep(std::time::Duration::from_secs(15));
         cp_docs(config.watched_dir_path())?;
 
         // when
