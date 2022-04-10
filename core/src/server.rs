@@ -42,9 +42,8 @@ mod test {
     use anyhow::Result;
     use rocket::{http::Status, local::blocking::Client};
     use serial_test::serial;
-    use std::fs::File;
-    use std::io::prelude::*;
-    use std::path::Path;
+    use std::thread;
+    use std::time::Duration;
     use testutils::{cp_docs, create_test_env, to_base64, LocalResponseExt};
 
     #[test]
@@ -74,7 +73,7 @@ mod test {
         // given
         let (config, _config_dir) = create_test_env()?;
         let client = Client::tracked(launch())?;
-        std::thread::sleep(std::time::Duration::from_secs(5));
+        thread::sleep(Duration::from_secs(5));
         cp_docs(config.watched_dir_path())?;
 
         // when
@@ -97,6 +96,7 @@ mod test {
         // given
         let (config, _config_dir) = create_test_env()?;
         let client = Client::tracked(launch())?;
+        thread::sleep(Duration::from_secs(5));
         cp_docs(config.watched_dir_path())?;
 
         // when
@@ -134,6 +134,7 @@ mod test {
         // given
         let (config, _config_dir) = create_test_env()?;
         let client = Client::tracked(launch())?;
+        thread::sleep(Duration::from_secs(5));
         cp_docs(config.watched_dir_path())?;
 
         // when
