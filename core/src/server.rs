@@ -65,6 +65,9 @@ mod test {
         Ok(())
     }
 
+    // TODO: when there are multiple active tests which require indexing,
+    // then at least one test is failing - but only in cargo make, in cargo test
+    // everything is working correctly
     #[test]
     #[serial]
     fn test_search_endpoint_with_indexed_docs() -> Result<()> {
