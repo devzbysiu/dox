@@ -71,7 +71,7 @@ mod test {
         // given
         let (config, _config_dir) = create_test_env()?;
         let client = Client::tracked(launch())?;
-        // std::thread::sleep(std::time::Duration::from_secs(15));
+        std::thread::sleep(std::time::Duration::from_secs(5));
         cp_docs(config.watched_dir_path())?;
 
         // when
@@ -155,10 +155,12 @@ mod test {
         // given
         let _env = create_test_env()?;
         let client = Client::tracked(launch())?;
+
         let mut resp = client.get("/search?q=Parlamentarny").dispatch();
         let body = resp.read_body::<14>()?;
         assert_eq!(resp.status(), Status::Ok);
         assert_eq!(body, r#"{"entries":[]}"#);
+
         let mut file = File::open("res/doc1.png")?;
         let mut buff = Vec::new();
         file.read_to_end(&mut buff)?;
