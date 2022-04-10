@@ -2681,6 +2681,7 @@ name = "testutils"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64",
  "log",
  "pretty_env_logger",
  "rand",

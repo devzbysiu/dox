@@ -45,7 +45,7 @@ mod test {
     use std::fs::File;
     use std::io::prelude::*;
     use std::path::Path;
-    use testutils::{cp_docs, create_test_env, LocalResponseExt};
+    use testutils::{cp_docs, create_test_env, to_base64, LocalResponseExt};
 
     #[test]
     #[serial]
@@ -185,12 +185,5 @@ mod test {
         );
 
         Ok(())
-    }
-
-    fn to_base64<P: AsRef<Path>>(path: P) -> Result<String> {
-        let mut file = File::open(path)?;
-        let mut buff = Vec::new();
-        file.read_to_end(&mut buff)?;
-        Ok(base64::encode(&buff))
     }
 }

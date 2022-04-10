@@ -8,7 +8,7 @@ use rocket::serde::{Deserialize, Serialize};
 use serde::ser::SerializeStruct;
 use serde::Serializer;
 use std::env;
-use std::fs;
+use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::net::SocketAddrV4;
 use std::path::{Path, PathBuf};
@@ -179,4 +179,11 @@ impl LocalResponseExt for LocalResponse<'_> {
         self.read_exact(&mut buffer)?;
         Ok(String::from_utf8(buffer.to_vec())?)
     }
+}
+
+pub fn to_base64<P: AsRef<Path>>(path: P) -> Result<String> {
+    let mut file = File::open(path)?;
+    let mut buff = Vec::new();
+    file.read_to_end(&mut buff)?;
+    Ok(base64::encode(&buff))
 }
