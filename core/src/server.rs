@@ -37,8 +37,6 @@ pub struct Document {
 
 #[cfg(test)]
 mod test {
-    use std::fs::read_to_string;
-
     use crate::launch;
 
     use anyhow::Result;
@@ -155,7 +153,7 @@ mod test {
     #[serial]
     fn test_receive_document_endpoint() -> Result<()> {
         // given
-        let (config, _config_dir) = create_test_env()?;
+        let _env = create_test_env()?;
         let client = Client::tracked(launch())?;
         let mut resp = client.get("/search?q=Parlamentarny").dispatch();
         let body = resp.read_body::<14>()?;
@@ -174,6 +172,8 @@ mod test {
                 encoded_file
             ))
             .dispatch();
+        assert_eq!(resp.status(), Status::Created);
+
         std::thread::sleep(std::time::Duration::from_secs(15)); // allow to index docs
 
         let mut resp = client.get("/search?q=Parlamentarny").dispatch();
