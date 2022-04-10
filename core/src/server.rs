@@ -44,6 +44,7 @@ mod test {
     use serial_test::serial;
     use std::fs::File;
     use std::io::prelude::*;
+    use std::path::Path;
     use testutils::{cp_docs, create_test_env, LocalResponseExt};
 
     #[test]
@@ -161,17 +162,12 @@ mod test {
         assert_eq!(resp.status(), Status::Ok);
         assert_eq!(body, r#"{"entries":[]}"#);
 
-        let mut file = File::open("res/doc1.png")?;
-        let mut buff = Vec::new();
-        file.read_to_end(&mut buff)?;
-        let encoded_file = base64::encode(&buff);
-
         // when
         let resp = client
             .post("/document/upload")
             .body(format!(
                 r#"{{ "filename": "doc1.png", "body": "{}" }}"#,
-                encoded_file
+                to_base64("res/doc1.png")?
             ))
             .dispatch();
         assert_eq!(resp.status(), Status::Created);
@@ -189,5 +185,12 @@ mod test {
         );
 
         Ok(())
+    }
+
+    fn to_base64<P: AsRef<Path>>(path: P) -> Result<String> {
+        let mut file = File::open(path)?;
+        let mut buff = Vec::new();
+        file.read_to_end(&mut buff)?;
+        Ok(base64::encode(&buff))
     }
 }
