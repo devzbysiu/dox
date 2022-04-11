@@ -168,7 +168,7 @@ pub struct RepoTools {
     pub schema: Schema,
 }
 
-#[instrument]
+#[instrument(skip(tuples))]
 #[allow(clippy::module_name_repetitions)]
 pub fn index_docs(tuples: &[DocDetails], tools: &RepoTools) -> Result<()> {
     debug!("indexing...");

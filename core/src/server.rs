@@ -22,7 +22,7 @@ pub fn all_thumbnails(repo: &State<Repo>) -> Result<Json<SearchResults>> {
     Ok(Json(repo.all_documents()?))
 }
 
-#[instrument]
+#[instrument(skip(doc))]
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[post("/document/upload", data = "<doc>")]
 pub fn receive_document(doc: Json<Document>, cfg: &State<Config>) -> Result<Status> {
