@@ -46,7 +46,7 @@ impl Repo {
         }
     }
 
-    #[instrument]
+    #[instrument(skip(self))]
     pub fn search<S: Into<String> + Debug>(&self, term: S) -> Result<SearchResults> {
         let term = term.into();
         debug!("searching '{}'...", term);
@@ -86,7 +86,7 @@ impl Repo {
         Ok(SearchResults::new(results))
     }
 
-    #[instrument]
+    #[instrument(skip(self))]
     pub fn all_documents(&self) -> Result<SearchResults> {
         debug!("fetching all documents...");
         let searcher = self.create_searcher()?;
