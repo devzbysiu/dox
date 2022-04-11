@@ -176,7 +176,7 @@ mod test {
             .dispatch();
         assert_eq!(resp.status(), Status::Created);
 
-        std::thread::sleep(std::time::Duration::from_secs(15)); // allow to index docs
+        thread::sleep(Duration::from_secs(15)); // allow to index docs
 
         let mut resp = client.get("/search?q=Parlamentarny").dispatch();
         let body = resp.read_body::<60>()?;
