@@ -2,8 +2,8 @@ use crate::helpers::PathRefExt;
 use crate::preprocessor::FilePreprocessor;
 use crate::result::Result;
 
-use tracing::debug;
 use std::path::{Path, PathBuf};
+use tracing::{debug, instrument};
 
 #[derive(Debug)]
 pub struct Image {
@@ -18,6 +18,7 @@ impl Image {
 }
 
 impl FilePreprocessor for Image {
+    #[instrument]
     fn preprocess(&self, paths: &[PathBuf]) -> Result<()> {
         for p in paths {
             debug!("moving {} to {}", p.display(), self.thumbnails_dir.str());

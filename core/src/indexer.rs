@@ -3,14 +3,15 @@ use crate::extractor::DocDetails;
 use crate::result::{DoxErr, Result};
 
 use core::fmt;
-use tracing::debug;
 use rocket::serde::Serialize;
+use std::fmt::Debug;
 use std::fs::create_dir_all;
 use tantivy::collector::TopDocs;
 use tantivy::directory::MmapDirectory;
 use tantivy::query::{AllQuery, FuzzyTermQuery, Query};
 use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
 use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy, Term};
+use tracing::{debug, instrument};
 
 type Searcher = LeasedItem<tantivy::Searcher>;
 type TantivyDocs = Vec<(f32, DocAddress)>;
@@ -45,7 +46,8 @@ impl Repo {
         }
     }
 
-    pub fn search<S: Into<String>>(&self, term: S) -> Result<SearchResults> {
+    #[instrument]
+    pub fn search<S: Into<String> + Debug>(&self, term: S) -> Result<SearchResults> {
         let term = term.into();
         debug!("searching '{}'...", term);
         let searcher = self.create_searcher()?;
@@ -84,6 +86,7 @@ impl Repo {
         Ok(SearchResults::new(results))
     }
 
+    #[instrument]
     pub fn all_documents(&self) -> Result<SearchResults> {
         debug!("fetching all documents...");
         let searcher = self.create_searcher()?;
@@ -139,6 +142,7 @@ impl SearchEntry {
     }
 }
 
+#[instrument]
 pub fn mk_idx_and_schema(cfg: &Config) -> Result<RepoTools> {
     debug!("creating index under path: {}", cfg.index_dir.display());
     if cfg.index_dir.exists() && cfg.index_dir.is_file() {
@@ -164,6 +168,7 @@ pub struct RepoTools {
     pub schema: Schema,
 }
 
+#[instrument]
 #[allow(clippy::module_name_repetitions)]
 pub fn index_docs(tuples: &[DocDetails], tools: &RepoTools) -> Result<()> {
     debug!("indexing...");

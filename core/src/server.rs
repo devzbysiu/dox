@@ -2,24 +2,27 @@ use crate::cfg::Config;
 use crate::indexer::{Repo, SearchResults};
 use crate::result::Result;
 
-use tracing::debug;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, post, State};
 use std::fs::File;
 use std::io::prelude::*;
+use tracing::{debug, instrument};
 
+#[instrument]
 #[get("/search?<q>")]
 pub fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>> {
     Ok(Json(repo.search(q)?))
 }
 
+#[instrument]
 #[get("/thumbnails/all")]
 pub fn all_thumbnails(repo: &State<Repo>) -> Result<Json<SearchResults>> {
     Ok(Json(repo.all_documents()?))
 }
 
+#[instrument]
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[post("/document/upload", data = "<doc>")]
 pub fn receive_document(doc: Json<Document>, cfg: &State<Config>) -> Result<Status> {

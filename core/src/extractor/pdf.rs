@@ -2,15 +2,16 @@ use crate::extractor::{DocDetails, TextExtractor};
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 
-use tracing::debug;
 use pdf_extract::extract_text;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::path::{Path, PathBuf};
+use tracing::{debug, instrument};
 
 #[derive(Debug, Default)]
 pub struct Pdf;
 
 impl TextExtractor for Pdf {
+    #[instrument]
     fn extract_text(&self, paths: &[PathBuf]) -> Vec<DocDetails> {
         debug!("extracting text from pdf...");
         paths

@@ -2,14 +2,15 @@ use crate::helpers::PathRefExt;
 use crate::result::Result;
 
 use cairo::{Context, Format, ImageSurface};
-use tracing::debug;
 use poppler::{PopplerDocument, PopplerPage};
-use std::fs::File;
 use std::path::Path;
+use std::{fmt::Debug, fs::File};
+use tracing::{debug, instrument};
 
 const FIRST: usize = 0;
 
-pub fn generate<P: AsRef<Path>>(pdf_path: P, out_path: P) -> Result<()> {
+#[instrument]
+pub fn generate<P: AsRef<Path> + Debug>(pdf_path: P, out_path: P) -> Result<()> {
     debug!("generating thumbnail for '{}'", pdf_path.as_ref().display());
     let page = first_page(&pdf_path)?;
     let surface = paint_background_and_scale(&page)?;

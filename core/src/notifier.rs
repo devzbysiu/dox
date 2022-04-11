@@ -7,8 +7,9 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use tungstenite::{accept, Message, WebSocket};
 
-use tracing::debug;
+use tracing::{debug, instrument};
 
+#[instrument]
 #[allow(clippy::module_name_repetitions)]
 pub fn new_doc_notifier(cfg: &Config) -> Result<Notifier> {
     debug!("creating new doc notifier");

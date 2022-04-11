@@ -3,14 +3,15 @@ use crate::helpers::PathRefExt;
 use crate::result::Result;
 
 use leptess::LepTess;
-use tracing::debug;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::path::{Path, PathBuf};
+use tracing::{debug, instrument};
 
 #[derive(Debug, Default)]
 pub struct Ocr;
 
 impl TextExtractor for Ocr {
+    #[instrument]
     fn extract_text(&self, paths: &[PathBuf]) -> Vec<DocDetails> {
         debug!("extracting text from image...");
         paths

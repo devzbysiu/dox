@@ -1,4 +1,4 @@
-use tracing::debug;
+use tracing::{debug, instrument};
 
 use crate::helpers::PathRefExt;
 use crate::preprocessor::FilePreprocessor;
@@ -24,6 +24,7 @@ impl Pdf {
 }
 
 impl FilePreprocessor for Pdf {
+    #[instrument]
     fn preprocess(&self, paths: &[PathBuf]) -> Result<()> {
         debug!("generating thumbnails for paths: {:?}", paths);
         for pdf_path in paths {
