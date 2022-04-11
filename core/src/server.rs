@@ -10,13 +10,13 @@ use std::fs::File;
 use std::io::prelude::*;
 use tracing::{debug, instrument};
 
-#[instrument]
+#[instrument(skip(repo))]
 #[get("/search?<q>")]
 pub fn search(q: String, repo: &State<Repo>) -> Result<Json<SearchResults>> {
     Ok(Json(repo.search(q)?))
 }
 
-#[instrument]
+#[instrument(skip(repo))]
 #[get("/thumbnails/all")]
 pub fn all_thumbnails(repo: &State<Repo>) -> Result<Json<SearchResults>> {
     Ok(Json(repo.all_documents()?))

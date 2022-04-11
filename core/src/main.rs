@@ -104,7 +104,7 @@ fn spawn_watching_thread(cfg: &Config) -> Receiver<Vec<PathBuf>> {
     doc_rx
 }
 
-#[instrument]
+#[instrument(skip(tools))]
 fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoTools) {
     debug!("spawning indexing thread");
     thread::spawn(move || -> Result<()> {
