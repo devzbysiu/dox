@@ -13,6 +13,7 @@ use crate::user_input::handle_config;
 use cooldown_buffer::cooldown_buffer;
 use notifier::new_doc_notifier;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
+use once_cell::sync::Lazy;
 use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
@@ -21,8 +22,11 @@ use std::sync::mpsc::channel;
 use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::Duration;
-use tracing::{debug, error, warn, Level};
-use tracing_subscriber::FmtSubscriber;
+use tracing::subscriber::set_global_default;
+use tracing::{debug, error, instrument, warn};
+use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
+use tracing_subscriber::registry::Registry;
+use tracing_subscriber::{layer::SubscriberExt, EnvFilter};
 
 mod cfg;
 mod extension;
@@ -37,18 +41,12 @@ mod server;
 mod thumbnail;
 mod user_input;
 
+static TRACING: Lazy<()> = Lazy::new(|| setup_global_subscriber());
+
 #[launch]
 #[must_use]
 pub fn launch() -> Rocket<Build> {
-    // a builder for `FmtSubscriber`.
-    let subscriber = FmtSubscriber::builder()
-        // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
-        // will be written to stdout.
-        .with_max_level(Level::TRACE)
-        // completes the builder.
-        .finish();
-
-    let _ = tracing::subscriber::set_global_default(subscriber);
+    let _guard = Lazy::force(&TRACING);
 
     let path_override = env::var("DOX_CONFIG_PATH")
         .ok()
@@ -66,6 +64,17 @@ pub fn launch() -> Rocket<Build> {
         .manage(cfg)
 }
 
+fn setup_global_subscriber() {
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+    let formatting_layer = BunyanFormattingLayer::new("dox".into(), std::io::stdout);
+    let subscriber = Registry::default()
+        .with(env_filter)
+        .with(JsonStorageLayer)
+        .with(formatting_layer);
+    set_global_default(subscriber).expect("Failed to set subscriber");
+}
+
+#[instrument]
 fn setup(cfg: Config) -> Result<Repo> {
     debug!("setting up with config: {:?}", cfg);
     let doc_rx = spawn_watching_thread(&cfg);
@@ -74,6 +83,7 @@ fn setup(cfg: Config) -> Result<Repo> {
     Ok(Repo::new(repo_tools))
 }
 
+#[instrument]
 fn spawn_watching_thread(cfg: &Config) -> Receiver<Vec<PathBuf>> {
     debug!("spawning watching thread");
     let (doc_tx, doc_rx) = cooldown_buffer(cfg.cooldown_time);
@@ -94,6 +104,7 @@ fn spawn_watching_thread(cfg: &Config) -> Receiver<Vec<PathBuf>> {
     doc_rx
 }
 
+#[instrument]
 fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoTools) {
     debug!("spawning indexing thread");
     thread::spawn(move || -> Result<()> {

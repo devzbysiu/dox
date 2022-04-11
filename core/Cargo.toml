@@ -29,7 +29,8 @@ documentation = ""
 
 [dependencies]
 tracing = { version = "0.1.33", features = ["log"] }
-tracing-subscriber = "0.2.0"
+tracing-subscriber = { version = "0.3.0", features = ["registry", "env-filter"] }
+tracing-bunyan-formatter = "0.3.2"
 cooldown-buffer = { git = "https://github.com/devzbysiu/cooldown-buffer" }
 notify = "4.0.17"
 rayon = "1.5.1"
@@ -46,6 +47,8 @@ inquire = "0.2.1"
 cairo-rs = { version = "0.15.10", features = ["png", "pdf"] }
 poppler = "0.3.1"
 tungstenite = "0.17.2"
+tracing-flame = "0.2.0"
+once_cell = "1.10.0"
 
 [dev-dependencies]
 tempfile = "3.3.0"
