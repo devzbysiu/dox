@@ -11,7 +11,6 @@ use crate::server::{all_thumbnails, receive_document, search};
 use crate::user_input::handle_config;
 
 use cooldown_buffer::cooldown_buffer;
-use log::{debug, error, warn};
 use notifier::new_doc_notifier;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use rocket::fs::FileServer;
@@ -22,6 +21,8 @@ use std::sync::mpsc::channel;
 use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::Duration;
+use tracing::{debug, error, warn, Level};
+use tracing_subscriber::FmtSubscriber;
 
 mod cfg;
 mod extension;
@@ -39,7 +40,15 @@ mod user_input;
 #[launch]
 #[must_use]
 pub fn launch() -> Rocket<Build> {
-    let _ = pretty_env_logger::try_init();
+    // a builder for `FmtSubscriber`.
+    let subscriber = FmtSubscriber::builder()
+        // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
+        // will be written to stdout.
+        .with_max_level(Level::TRACE)
+        // completes the builder.
+        .finish();
+
+    let _ = tracing::subscriber::set_global_default(subscriber);
 
     let path_override = env::var("DOX_CONFIG_PATH")
         .ok()

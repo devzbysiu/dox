@@ -2,7 +2,7 @@ use crate::helpers::PathRefExt;
 use crate::preprocessor::FilePreprocessor;
 use crate::result::Result;
 
-use log::debug;
+use tracing::debug;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]

@@ -1,6 +1,6 @@
 use crate::result::{DoxErr, Result};
 
-use log::debug;
+use tracing::debug;
 use serde::{Deserialize, Serialize};
 use std::fs::create_dir_all;
 use std::fs::{read_to_string, File};

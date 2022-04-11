@@ -2,7 +2,7 @@ use crate::cfg::Config;
 use crate::indexer::{Repo, SearchResults};
 use crate::result::Result;
 
-use log::debug;
+use tracing::debug;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;

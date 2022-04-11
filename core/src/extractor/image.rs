@@ -3,7 +3,7 @@ use crate::helpers::PathRefExt;
 use crate::result::Result;
 
 use leptess::LepTess;
-use log::debug;
+use tracing::debug;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::path::{Path, PathBuf};
 

@@ -3,7 +3,7 @@ use crate::extractor::DocDetails;
 use crate::result::{DoxErr, Result};
 
 use core::fmt;
-use log::debug;
+use tracing::debug;
 use rocket::serde::Serialize;
 use std::fs::create_dir_all;
 use tantivy::collector::TopDocs;

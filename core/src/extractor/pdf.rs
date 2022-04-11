@@ -2,7 +2,7 @@ use crate::extractor::{DocDetails, TextExtractor};
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 
-use log::debug;
+use tracing::debug;
 use pdf_extract::extract_text;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::path::{Path, PathBuf};

@@ -28,8 +28,8 @@ homepage = ""
 documentation = ""
 
 [dependencies]
-log = "0.4.11"
-pretty_env_logger = "0.4.0"
+tracing = { version = "0.1.33", features = ["log"] }
+tracing-subscriber = "0.2.0"
 cooldown-buffer = { git = "https://github.com/devzbysiu/cooldown-buffer" }
 notify = "4.0.17"
 rayon = "1.5.1"

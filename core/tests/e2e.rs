@@ -5,7 +5,6 @@ use testutils::{config_path, cp_docs, create_test_env, ls, make_search, spawn_do
 #[test]
 #[serial]
 fn it_allows_to_search_through_api() -> Result<()> {
-    pretty_env_logger::init();
     // given
     let (config, config_dir) = create_test_env()?;
 

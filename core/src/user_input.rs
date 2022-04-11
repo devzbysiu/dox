@@ -4,7 +4,7 @@ use crate::prompt;
 use crate::result::{DoxErr, Result};
 
 use inquire::error::InquireError;
-use log::debug;
+use tracing::debug;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 

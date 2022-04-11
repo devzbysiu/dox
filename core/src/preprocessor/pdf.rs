@@ -1,4 +1,4 @@
-use log::debug;
+use tracing::debug;
 
 use crate::helpers::PathRefExt;
 use crate::preprocessor::FilePreprocessor;

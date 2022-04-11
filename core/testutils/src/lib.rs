@@ -1,7 +1,7 @@
 #![allow(clippy::missing_errors_doc)]
 
 use anyhow::{bail, Result};
-use log::debug;
+use tracing::debug;
 use rand::Rng;
 use rocket::local::blocking::LocalResponse;
 use rocket::serde::{Deserialize, Serialize};

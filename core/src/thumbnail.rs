@@ -2,7 +2,7 @@ use crate::helpers::PathRefExt;
 use crate::result::Result;
 
 use cairo::{Context, Format, ImageSurface};
-use log::debug;
+use tracing::debug;
 use poppler::{PopplerDocument, PopplerPage};
 use std::fs::File;
 use std::path::Path;
