@@ -41,7 +41,7 @@ mod server;
 mod thumbnail;
 mod user_input;
 
-static TRACING: Lazy<()> = Lazy::new(|| setup_global_subscriber());
+static TRACING: Lazy<()> = Lazy::new(setup_global_subscriber);
 
 #[launch]
 #[must_use]
