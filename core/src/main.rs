@@ -9,11 +9,11 @@ use crate::notifier::new_doc_notifier;
 use crate::preprocessor::PreprocessorFactory;
 use crate::result::Result;
 use crate::server::{all_thumbnails, receive_document, search};
+use crate::telemetry::init_tracing;
 use crate::user_input::handle_config;
 
 use cooldown_buffer::cooldown_buffer;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
-use once_cell::sync::Lazy;
 use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
@@ -22,11 +22,7 @@ use std::sync::mpsc::channel;
 use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::Duration;
-use tracing::subscriber::set_global_default;
 use tracing::{debug, error, instrument, warn};
-use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
-use tracing_subscriber::registry::Registry;
-use tracing_subscriber::{layer::SubscriberExt, EnvFilter};
 
 mod cfg;
 mod extension;
@@ -38,15 +34,14 @@ mod preprocessor;
 mod prompt;
 mod result;
 mod server;
+mod telemetry;
 mod thumbnail;
 mod user_input;
-
-static TRACING: Lazy<()> = Lazy::new(setup_global_subscriber);
 
 #[launch]
 #[must_use]
 pub fn launch() -> Rocket<Build> {
-    let _guard = Lazy::force(&TRACING);
+    init_tracing();
 
     let path_override = env::var("DOX_CONFIG_PATH")
         .ok()
@@ -62,16 +57,6 @@ pub fn launch() -> Rocket<Build> {
         .mount("/document", FileServer::from(&cfg.watched_dir))
         .manage(repo)
         .manage(cfg)
-}
-
-fn setup_global_subscriber() {
-    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
-    let formatting_layer = BunyanFormattingLayer::new("dox".into(), std::io::stdout);
-    let subscriber = Registry::default()
-        .with(env_filter)
-        .with(JsonStorageLayer)
-        .with(formatting_layer);
-    set_global_default(subscriber).expect("Failed to set subscriber");
 }
 
 #[instrument]
