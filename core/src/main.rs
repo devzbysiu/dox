@@ -5,13 +5,13 @@ use crate::extension::Ext;
 use crate::extractor::ExtractorFactory;
 use crate::helpers::PathRefExt;
 use crate::indexer::{Repo, RepoTools};
+use crate::notifier::new_doc_notifier;
 use crate::preprocessor::PreprocessorFactory;
 use crate::result::Result;
 use crate::server::{all_thumbnails, receive_document, search};
 use crate::user_input::handle_config;
 
 use cooldown_buffer::cooldown_buffer;
-use notifier::new_doc_notifier;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use once_cell::sync::Lazy;
 use rocket::fs::FileServer;
