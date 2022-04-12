@@ -13,7 +13,6 @@ pub struct Ocr;
 impl TextExtractor for Ocr {
     #[instrument]
     fn extract_text(&self, paths: &[PathBuf]) -> Vec<DocDetails> {
-        debug!("extracting text from image...");
         paths
             .par_iter()
             .map(do_ocr)

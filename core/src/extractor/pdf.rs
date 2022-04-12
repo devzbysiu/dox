@@ -4,8 +4,9 @@ use crate::result::Result;
 
 use pdf_extract::extract_text;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use std::fmt::Debug;
 use std::path::{Path, PathBuf};
-use tracing::{debug, instrument};
+use tracing::instrument;
 
 #[derive(Debug, Default)]
 pub struct Pdf;
@@ -13,7 +14,6 @@ pub struct Pdf;
 impl TextExtractor for Pdf {
     #[instrument]
     fn extract_text(&self, paths: &[PathBuf]) -> Vec<DocDetails> {
-        debug!("extracting text from pdf...");
         paths
             .par_iter()
             .map(extract)
@@ -22,9 +22,9 @@ impl TextExtractor for Pdf {
     }
 }
 
-fn extract<P: AsRef<Path>>(path: P) -> Result<DocDetails> {
+#[instrument]
+fn extract<P: AsRef<Path> + Debug>(path: P) -> Result<DocDetails> {
     let path = path.as_ref();
-    debug!("extracting text from PDF on {}", path.display());
     Ok(DocDetails::new(path, extract_text(path)?, thumbnail(path)))
 }
 
