@@ -4,12 +4,12 @@ use crate::prompt;
 use crate::result::{DoxErr, Result};
 
 use inquire::error::InquireError;
-use tracing::debug;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
+use tracing::{debug, instrument};
 
+#[instrument]
 pub fn handle_config(path_override: Option<String>) -> Result<Config> {
-    debug!("handling config with {:?}", path_override);
     let config_path = path_override.map_or(config_path(), PathBuf::from);
     let cfg = if config_path.exists() {
         debug!("loading config from '{}'", config_path.str());

@@ -49,7 +49,6 @@ impl Repo {
     #[instrument(skip(self))]
     pub fn search<S: Into<String> + Debug>(&self, term: S) -> Result<SearchResults> {
         let term = term.into();
-        debug!("searching '{}'...", term);
         let searcher = self.create_searcher()?;
         let top_docs = searcher.search(&self.make_query(term), &TopDocs::with_limit(100))?;
         self.to_search_results(&searcher, top_docs)
@@ -88,7 +87,6 @@ impl Repo {
 
     #[instrument(skip(self))]
     pub fn all_documents(&self) -> Result<SearchResults> {
-        debug!("fetching all documents...");
         let searcher = self.create_searcher()?;
         let top_docs = searcher.search(&AllQuery, &TopDocs::with_limit(100))?;
         self.to_search_results(&searcher, top_docs)
@@ -144,7 +142,6 @@ impl SearchEntry {
 
 #[instrument]
 pub fn mk_idx_and_schema(cfg: &Config) -> Result<RepoTools> {
-    debug!("creating index under path: {}", cfg.index_dir.display());
     if cfg.index_dir.exists() && cfg.index_dir.is_file() {
         return Err(DoxErr::InvalidIndexPath(format!(
             "It needs to be a directory: '{}'",
@@ -171,7 +168,6 @@ pub struct RepoTools {
 #[instrument(skip(tuples, tools))]
 #[allow(clippy::module_name_repetitions)]
 pub fn index_docs(tuples: &[DocDetails], tools: &RepoTools) -> Result<()> {
-    debug!("indexing...");
     let index = &tools.index;
     let schema = &tools.schema;
     // NOTE: IndexWriter is already multithreaded and

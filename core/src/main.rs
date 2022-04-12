@@ -8,7 +8,7 @@ use crate::user_input::handle_config;
 use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
-use tracing::debug;
+use tracing::{debug, instrument};
 
 mod cfg;
 mod extension;
@@ -27,6 +27,7 @@ mod user_input;
 
 #[launch]
 #[must_use]
+#[instrument]
 pub fn launch() -> Rocket<Build> {
     init_tracing();
 

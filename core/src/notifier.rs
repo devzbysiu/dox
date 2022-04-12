@@ -12,7 +12,6 @@ use tracing::{debug, instrument};
 #[instrument]
 #[allow(clippy::module_name_repetitions)]
 pub fn new_doc_notifier(cfg: &Config) -> Result<Notifier> {
-    debug!("creating new doc notifier");
     let (tx, rx) = channel();
     let (sockets_list, notifier) = NotifiableSockets::new(tx);
     sockets_list.await_notifications(rx);
