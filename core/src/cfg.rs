@@ -1,13 +1,14 @@
 use crate::result::{DoxErr, Result};
 
-use tracing::debug;
 use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 use std::fs::create_dir_all;
 use std::fs::{read_to_string, File};
 use std::io::prelude::*;
 use std::net::SocketAddrV4;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
+use tracing::{debug, instrument};
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
 pub struct Config {
@@ -30,8 +31,8 @@ impl Default for Config {
     }
 }
 
-pub fn read_config<P: AsRef<Path>>(config_path: P) -> Result<Config> {
-    debug!("reading config from {}...", config_path.as_ref().display());
+#[instrument]
+pub fn read_config<P: AsRef<Path> + Debug>(config_path: P) -> Result<Config> {
     Ok(toml::from_str(&read_to_string(config_path)?)?)
 }
 
@@ -53,8 +54,8 @@ fn thumbnails_dir_default() -> PathBuf {
         .join("dox/thumbnails")
 }
 
-pub fn store<P: AsRef<Path>>(path: P, cfg: &Config) -> Result<()> {
-    debug!("saving '{:?}' to '{}'", &cfg, path.as_ref().display());
+#[instrument]
+pub fn store<P: AsRef<Path> + Debug>(path: P, cfg: &Config) -> Result<()> {
     let config_dir = path
         .as_ref()
         .parent()
