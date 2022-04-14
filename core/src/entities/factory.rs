@@ -1,6 +1,5 @@
+use crate::entities::extension::Ext;
 use crate::entities::extractor::Extractor;
-
-use crate::extension::Ext; // TODO: this should be in entities
 
 // TODO: those should't be here - only interface should be here
 use crate::extractor::image::Ocr;

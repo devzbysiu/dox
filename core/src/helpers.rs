@@ -1,4 +1,4 @@
-use crate::extension::Ext;
+use crate::entities::extension::Ext;
 use crate::result::Result;
 
 use std::fs::DirEntry;
