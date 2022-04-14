@@ -1,25 +1,18 @@
 use crate::cfg::Config;
 use crate::entities::extension::Ext;
+use crate::entities::preprocessor::{Preprocessor, PreprocessorFactory};
 use crate::preprocessor::image::Image;
 use crate::preprocessor::pdf::Pdf;
-use crate::result::Result;
-
-use std::path::PathBuf;
 
 mod image;
 mod pdf;
 
-#[allow(clippy::module_name_repetitions)]
-pub trait FilePreprocessor {
-    fn preprocess(&self, paths: &[PathBuf]) -> Result<()>;
-}
-
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
-pub struct PreprocessorFactory;
+pub struct PreprocessorFactoryImpl;
 
-impl PreprocessorFactory {
-    pub fn from_ext(ext: &Ext, config: &Config) -> Preprocessor {
+impl PreprocessorFactory for PreprocessorFactoryImpl {
+    fn from_ext(ext: &Ext, config: &Config) -> Preprocessor {
         match ext {
             Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Image::new(config.thumbnails_dir.clone())),
             Ext::Pdf => Box::new(Pdf::new(config.thumbnails_dir.clone())),
@@ -27,16 +20,16 @@ impl PreprocessorFactory {
     }
 }
 
-pub type Preprocessor = Box<dyn FilePreprocessor>;
-
 #[cfg(test)]
 mod test {
-    use tempfile::tempdir;
+    use super::*;
 
     use crate::helpers::PathRefExt;
+    use crate::result::Result;
 
-    use super::*;
+    use std::path::PathBuf;
     use std::time::Duration;
+    use tempfile::tempdir;
 
     #[test]
     fn test_processor_factory_with_corrent_file() -> Result<()> {
@@ -60,7 +53,7 @@ mod test {
                 notifications_addr: "0.0.0.0:8001".parse()?,
             };
             // when
-            let extractor = PreprocessorFactory::from_ext(&ext, &config);
+            let extractor = PreprocessorFactoryImpl::from_ext(&ext, &config);
             extractor.preprocess(&[PathBuf::from(test_case.1)])?;
 
             // then

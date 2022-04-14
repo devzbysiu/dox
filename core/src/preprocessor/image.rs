@@ -1,5 +1,5 @@
+use crate::entities::preprocessor::FilePreprocessor;
 use crate::helpers::PathRefExt;
-use crate::preprocessor::FilePreprocessor;
 use crate::result::Result;
 
 use std::path::{Path, PathBuf};

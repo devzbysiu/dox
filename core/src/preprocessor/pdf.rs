@@ -1,11 +1,10 @@
-use tracing::instrument;
-
+use crate::entities::preprocessor::FilePreprocessor;
 use crate::helpers::PathRefExt;
-use crate::preprocessor::FilePreprocessor;
 use crate::result::Result;
 use crate::thumbnail;
 
 use std::path::{Path, PathBuf};
+use tracing::instrument;
 
 #[derive(Debug)]
 pub struct Pdf {
