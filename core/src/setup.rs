@@ -1,13 +1,13 @@
 use crate::cfg::Config;
 use crate::entities::extension::Ext;
 use crate::entities::extractor::ExtractorFactory;
-use crate::entities::factory::ExtractorFactoryImpl;
 use crate::entities::preprocessor::PreprocessorFactory;
 use crate::helpers::PathRefExt;
 use crate::indexer::{self, Repo, RepoTools};
 use crate::notifier::new_doc_notifier;
-use crate::preprocessor::PreprocessorFactoryImpl; // TODO: this should be in use_cases module
 use crate::result::Result;
+use crate::use_cases::extractor::ExtractorFactoryImpl;
+use crate::use_cases::preprocessor::PreprocessorFactoryImpl;
 
 use cooldown_buffer::cooldown_buffer;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};

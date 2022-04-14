@@ -1,7 +1,7 @@
-use super::extension::Ext;
-use super::extractor::{Extractor, ExtractorFactory};
+// TODO: think about those super::super
+use super::super::entities::extension::Ext;
+use super::super::entities::extractor::{Extractor, ExtractorFactory};
 
-// TODO: those should't be here - only interface should be here
 use crate::extractor::image::Ocr;
 use crate::extractor::pdf::Pdf;
 

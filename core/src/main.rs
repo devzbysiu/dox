@@ -23,6 +23,7 @@ mod server;
 mod setup;
 mod telemetry;
 mod thumbnail;
+mod use_cases;
 mod user_input;
 
 #[launch]
