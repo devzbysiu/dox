@@ -1,4 +1,5 @@
-use crate::extractor::{DocDetails, TextExtractor};
+use crate::entities::document::DocDetails;
+use crate::entities::extractor::TextExtractor;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 
