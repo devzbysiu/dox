@@ -1,11 +1,12 @@
 use crate::cfg::Config;
 use crate::entities::extension::Ext;
-use crate::entities::factory::ExtractorFactory;
+use crate::entities::extractor::ExtractorFactory;
+use crate::entities::factory::ExtractorFactoryImpl;
 use crate::entities::preprocessor::PreprocessorFactory;
 use crate::helpers::PathRefExt;
 use crate::indexer::{self, Repo, RepoTools};
 use crate::notifier::new_doc_notifier;
-use crate::preprocessor::PreprocessorFactoryImpl;
+use crate::preprocessor::PreprocessorFactoryImpl; // TODO: this should be in use_cases module
 use crate::result::Result;
 
 use cooldown_buffer::cooldown_buffer;
@@ -57,7 +58,7 @@ fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoToo
             debug!("new docs: {:?}", paths);
             let extension = extension(&paths);
             PreprocessorFactoryImpl::from_ext(&extension, &cfg).preprocess(&paths)?;
-            let tuples = ExtractorFactory::from_ext(&extension).extract_text(&paths);
+            let tuples = ExtractorFactoryImpl::from_ext(&extension).extract_text(&paths);
             indexer::index_docs(&tuples, &tools)?;
             new_doc_notifier.notify()?;
         }
