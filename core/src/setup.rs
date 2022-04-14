@@ -1,6 +1,6 @@
 use crate::cfg::Config;
+use crate::entities::factory::ExtractorFactory;
 use crate::extension::Ext;
-use crate::extractor::ExtractorFactory;
 use crate::helpers::PathRefExt;
 use crate::indexer::{self, Repo, RepoTools};
 use crate::notifier::new_doc_notifier;

@@ -8,7 +8,7 @@ use std::io::prelude::*;
 use std::net::SocketAddrV4;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use tracing::{debug, instrument};
+use tracing::instrument;
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
 pub struct Config {
