@@ -1,4 +1,5 @@
-use crate::entities::document::DocDetails;
+use super::document::DocDetails;
+
 use std::path::PathBuf;
 
 #[allow(clippy::module_name_repetitions)]

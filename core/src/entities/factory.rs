@@ -1,5 +1,5 @@
-use crate::entities::extension::Ext;
-use crate::entities::extractor::Extractor;
+use super::extension::Ext;
+use super::extractor::Extractor;
 
 // TODO: those should't be here - only interface should be here
 use crate::extractor::image::Ocr;
