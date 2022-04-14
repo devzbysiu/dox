@@ -1,5 +1,5 @@
 use crate::cfg::Config;
-use crate::extractor::DocDetails;
+use crate::entities::document::DocDetails;
 use crate::result::{DoxErr, Result};
 
 use core::fmt;
