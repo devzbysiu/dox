@@ -1,17 +1,10 @@
-use crate::entities::document::DocDetails;
+use crate::data_providers::extractor::image::Ocr;
+use crate::data_providers::extractor::pdf::Pdf;
 use crate::entities::extension::Ext;
-use crate::use_cases::extractor::image::Ocr;
-use crate::use_cases::extractor::pdf::Pdf;
+use crate::use_cases::extractor::TextExtractor;
 
-use std::path::PathBuf;
-
-mod image;
-mod pdf;
-
-#[allow(clippy::module_name_repetitions)]
-pub trait TextExtractor {
-    fn extract_text(&self, path: &[PathBuf]) -> Vec<DocDetails>;
-}
+pub mod image;
+pub mod pdf;
 
 pub trait ExtractorFactory {
     fn from_ext(ext: &Ext) -> Extractor;

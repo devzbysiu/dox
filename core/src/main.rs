@@ -11,6 +11,7 @@ use std::env;
 use tracing::{debug, instrument};
 
 mod cfg;
+mod data_providers;
 mod entities;
 mod helpers;
 mod indexer;
