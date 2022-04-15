@@ -1,23 +1,28 @@
+use crate::entities::thumbnail::ThumbnailGenerator;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 
 use cairo::{Context, Format, ImageSurface};
 use poppler::{PopplerDocument, PopplerPage};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{fmt::Debug, fs::File};
 use tracing::{debug, instrument};
 
 const FIRST: usize = 0;
 
-#[instrument]
-pub fn generate<P: AsRef<Path> + Debug>(pdf_path: P, out_path: P) -> Result<()> {
-    debug!("generating thumbnail for '{}'", pdf_path.as_ref().display());
-    let page = first_page(&pdf_path)?;
-    let surface = paint_background_and_scale(&page)?;
-    debug!("writing thumbnail to: '{}'", out_path.as_ref().display());
-    let mut f: File = File::create(out_path)?;
-    surface.write_to_png(&mut f)?;
-    Ok(())
+#[derive(Debug, Clone)]
+pub struct ThumbnailGeneratorImpl;
+
+impl ThumbnailGenerator for ThumbnailGeneratorImpl {
+    #[instrument]
+    fn generate(&self, pdf_path: &PathBuf, out_path: &PathBuf) -> Result<()> {
+        let page = first_page(&pdf_path)?;
+        let surface = paint_background_and_scale(&page)?;
+        debug!("writing thumbnail to: '{}'", out_path.display());
+        let mut f: File = File::create(out_path)?;
+        surface.write_to_png(&mut f)?;
+        Ok(())
+    }
 }
 
 fn first_page<P: AsRef<Path>>(pdf_path: P) -> Result<PopplerPage> {
@@ -52,13 +57,14 @@ mod test {
     #[test]
     fn test_generate() -> Result<()> {
         // given
-        let pdf_path = Path::new("res/doc1.pdf");
+        let pdf_path = PathBuf::from("res/doc1.pdf");
         let tmp_dir = tempdir()?;
         let out_path = tmp_dir.path().join("output.png");
         assert!(!out_path.exists());
+        let generator = ThumbnailGeneratorImpl;
 
         // when
-        generate(pdf_path, &out_path)?;
+        generator.generate(&pdf_path, &out_path)?;
 
         // then
         // TODO: check also the thumbnail itself

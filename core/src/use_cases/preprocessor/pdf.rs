@@ -1,7 +1,8 @@
 use crate::entities::preprocessor::FilePreprocessor;
+use crate::entities::thumbnail::ThumbnailGenerator;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
-use crate::thumbnail;
+use crate::use_cases::thumbnail::ThumbnailGeneratorImpl;
 
 use std::path::{Path, PathBuf};
 use tracing::instrument;
@@ -9,12 +10,17 @@ use tracing::instrument;
 #[derive(Debug)]
 pub struct Pdf {
     thumbnails_dir: PathBuf,
+    thumbnail_generator: ThumbnailGeneratorImpl,
 }
 
 impl Pdf {
     pub fn new<P: AsRef<Path>>(thumbnails_dir: P) -> Self {
         let thumbnails_dir = thumbnails_dir.as_ref().to_path_buf();
-        Self { thumbnails_dir }
+        let thumbnail_generator = ThumbnailGeneratorImpl;
+        Self {
+            thumbnails_dir,
+            thumbnail_generator,
+        }
     }
 
     fn thumbnail_path<P: AsRef<Path>>(&self, path: P) -> PathBuf {
@@ -26,7 +32,8 @@ impl FilePreprocessor for Pdf {
     #[instrument]
     fn preprocess(&self, paths: &[PathBuf]) -> Result<()> {
         for pdf_path in paths {
-            thumbnail::generate(pdf_path, &self.thumbnail_path(pdf_path))?;
+            self.thumbnail_generator
+                .generate(pdf_path, &self.thumbnail_path(pdf_path))?;
         }
         Ok(())
     }

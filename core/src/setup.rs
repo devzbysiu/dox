@@ -57,6 +57,8 @@ fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoToo
             let paths = rx.recv()?;
             debug!("new docs: {:?}", paths);
             let extension = extension(&paths);
+            // TODO: do I need to pass Config here? Maybe I should introduce some kind of
+            // 'arguments' (like map or something) in the preprocessor interface?
             PreprocessorFactoryImpl::from_ext(&extension, &cfg).preprocess(&paths)?;
             let tuples = ExtractorFactoryImpl::from_ext(&extension).extract_text(&paths);
             indexer::index_docs(&tuples, &tools)?;
