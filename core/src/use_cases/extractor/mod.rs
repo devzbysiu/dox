@@ -1,9 +1,10 @@
-// TODO: think about those super::super
-use super::super::entities::extension::Ext;
-use super::super::entities::extractor::{Extractor, ExtractorFactory};
+use crate::entities::extension::Ext;
+use crate::entities::extractor::{Extractor, ExtractorFactory};
+use crate::use_cases::extractor::image::Ocr;
+use crate::use_cases::extractor::pdf::Pdf;
 
-use crate::extractor::image::Ocr;
-use crate::extractor::pdf::Pdf;
+mod image;
+mod pdf;
 
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]

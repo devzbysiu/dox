@@ -12,7 +12,6 @@ use tracing::{debug, instrument};
 
 mod cfg;
 mod entities;
-mod extractor;
 mod helpers;
 mod indexer;
 mod notifier;
