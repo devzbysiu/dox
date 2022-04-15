@@ -1,11 +1,24 @@
 use crate::cfg::Config;
 use crate::entities::extension::Ext;
-use crate::entities::preprocessor::{Preprocessor, PreprocessorFactory};
+use crate::result::Result;
 use crate::use_cases::preprocessor::image::Image;
 use crate::use_cases::preprocessor::pdf::Pdf;
 
+use std::path::PathBuf;
+
 mod image;
 mod pdf;
+
+#[allow(clippy::module_name_repetitions)]
+pub trait FilePreprocessor {
+    fn preprocess(&self, paths: &[PathBuf]) -> Result<()>;
+}
+
+pub trait PreprocessorFactory {
+    fn from_ext(ext: &Ext, config: &Config) -> Preprocessor;
+}
+
+pub type Preprocessor = Box<dyn FilePreprocessor>;
 
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]

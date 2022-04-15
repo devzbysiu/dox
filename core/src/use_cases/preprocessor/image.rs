@@ -1,6 +1,6 @@
-use crate::entities::preprocessor::FilePreprocessor;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
+use crate::use_cases::preprocessor::FilePreprocessor;
 
 use std::path::{Path, PathBuf};
 use tracing::{debug, instrument};

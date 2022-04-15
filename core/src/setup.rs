@@ -1,12 +1,12 @@
 use crate::cfg::Config;
 use crate::entities::extension::Ext;
-use crate::entities::preprocessor::PreprocessorFactory;
 use crate::helpers::PathRefExt;
 use crate::indexer::{self, Repo, RepoTools};
 use crate::notifier::new_doc_notifier;
 use crate::result::Result;
 use crate::use_cases::extractor::ExtractorFactory;
 use crate::use_cases::extractor::ExtractorFactoryImpl;
+use crate::use_cases::preprocessor::PreprocessorFactory;
 use crate::use_cases::preprocessor::PreprocessorFactoryImpl;
 
 use cooldown_buffer::cooldown_buffer;
