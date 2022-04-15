@@ -1,5 +1,5 @@
-use super::document::DocDetails;
-use super::extension::Ext;
+use crate::entities::document::DocDetails;
+use crate::entities::extension::Ext;
 
 use std::path::PathBuf;
 
