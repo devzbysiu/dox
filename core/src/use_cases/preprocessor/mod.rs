@@ -1,9 +1,11 @@
 use crate::cfg::Config;
 use crate::entities::extension::Ext;
 use crate::entities::preprocessor::{Preprocessor, PreprocessorFactory};
-// TODO: those should be also in use_cases mod
-use crate::preprocessor::image::Image;
-use crate::preprocessor::pdf::Pdf;
+use crate::use_cases::preprocessor::image::Image;
+use crate::use_cases::preprocessor::pdf::Pdf;
+
+mod image;
+mod pdf;
 
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]

@@ -16,7 +16,6 @@ mod extractor;
 mod helpers;
 mod indexer;
 mod notifier;
-mod preprocessor;
 mod prompt;
 mod result;
 mod server;
