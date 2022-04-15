@@ -1,4 +1,3 @@
-use crate::entities::thumbnail::ThumbnailGenerator;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 
@@ -9,6 +8,10 @@ use std::{fmt::Debug, fs::File};
 use tracing::{debug, instrument};
 
 const FIRST: usize = 0;
+
+pub trait ThumbnailGenerator: Debug {
+    fn generate(&self, pdf_path: &PathBuf, out_path: &PathBuf) -> Result<()>;
+}
 
 #[derive(Debug, Clone)]
 pub struct ThumbnailGeneratorImpl;
