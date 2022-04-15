@@ -1,10 +1,23 @@
+use crate::entities::document::DocDetails;
 use crate::entities::extension::Ext;
-use crate::entities::extractor::{Extractor, ExtractorFactory};
 use crate::use_cases::extractor::image::Ocr;
 use crate::use_cases::extractor::pdf::Pdf;
 
+use std::path::PathBuf;
+
 mod image;
 mod pdf;
+
+#[allow(clippy::module_name_repetitions)]
+pub trait TextExtractor {
+    fn extract_text(&self, path: &[PathBuf]) -> Vec<DocDetails>;
+}
+
+pub trait ExtractorFactory {
+    fn from_ext(ext: &Ext) -> Extractor;
+}
+
+pub type Extractor = Box<dyn TextExtractor>;
 
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]

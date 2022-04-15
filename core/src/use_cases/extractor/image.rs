@@ -1,7 +1,7 @@
 use crate::entities::document::DocDetails;
-use crate::entities::extractor::TextExtractor;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
+use crate::use_cases::extractor::TextExtractor;
 
 use leptess::LepTess;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
