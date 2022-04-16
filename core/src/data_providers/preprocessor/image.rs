@@ -28,6 +28,7 @@ impl FilePreprocessor for Image {
     }
 
     #[allow(unused)]
+    #[instrument]
     fn preprocess_location(&self, location: &crate::entities::location::Location) -> Result<()> {
         unimplemented!()
     }

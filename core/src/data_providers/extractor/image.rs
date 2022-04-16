@@ -22,6 +22,7 @@ impl TextExtractor for Ocr {
     }
 
     #[allow(unused)]
+    #[instrument]
     fn extract_text_from_location(
         &self,
         location: &crate::entities::location::Location,

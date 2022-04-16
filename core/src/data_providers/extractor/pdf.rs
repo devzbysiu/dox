@@ -24,6 +24,7 @@ impl TextExtractor for Pdf {
     }
 
     #[allow(unused)]
+    #[instrument]
     fn extract_text_from_location(&self, location: &Location) -> Result<Vec<DocDetails>> {
         unimplemented!()
     }
