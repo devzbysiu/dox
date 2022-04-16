@@ -40,6 +40,7 @@ mod test {
             (Ext::Webp, "res/doc4.webp", "doc4.webp"),
             (Ext::Pdf, "res/doc1.pdf", "doc1.png"),
         ];
+        let preprocessor_factory = PreprocessorFactoryImpl;
 
         for test_case in test_cases {
             let ext = test_case.0;
@@ -53,7 +54,7 @@ mod test {
                 notifications_addr: "0.0.0.0:8001".parse()?,
             };
             // when
-            let extractor = PreprocessorFactoryImpl::from_ext(&ext, &config);
+            let extractor = preprocessor_factory.from_ext(&ext, &config);
             extractor.preprocess(&[PathBuf::from(test_case.1)])?;
 
             // then
