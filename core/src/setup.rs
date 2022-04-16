@@ -1,13 +1,13 @@
 use crate::cfg::Config;
-use crate::data_providers::extractor::ExtractorFactory;
 use crate::data_providers::extractor::ExtractorFactoryImpl;
-use crate::data_providers::preprocessor::PreprocessorFactory;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::entities::extension::Ext;
 use crate::helpers::PathRefExt;
 use crate::indexer::{self, Repo, RepoTools};
 use crate::notifier::new_doc_notifier;
 use crate::result::Result;
+use crate::use_cases::extractor::ExtractorFactory;
+use crate::use_cases::preprocessor::PreprocessorFactory;
 
 use cooldown_buffer::cooldown_buffer;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
@@ -50,6 +50,8 @@ fn spawn_watching_thread(cfg: &Config) -> Receiver<Vec<PathBuf>> {
 #[instrument(skip(tools))]
 fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoTools) {
     debug!("spawning indexing thread");
+    let preprocessor_factory = PreprocessorFactoryImpl;
+    let extractor_factory = ExtractorFactoryImpl;
     thread::spawn(move || -> Result<()> {
         debug!("indexing thread spawned");
         let new_doc_notifier = new_doc_notifier(&cfg)?;
@@ -59,8 +61,10 @@ fn spawn_indexing_thread(cfg: Config, rx: Receiver<Vec<PathBuf>>, tools: RepoToo
             let extension = extension(&paths);
             // TODO: do I need to pass Config here? Maybe I should introduce some kind of
             // 'arguments' (like map or something) in the preprocessor interface?
-            PreprocessorFactoryImpl::from_ext(&extension, &cfg).preprocess(&paths)?;
-            let tuples = ExtractorFactoryImpl::from_ext(&extension).extract_text(&paths);
+            preprocessor_factory
+                .from_ext(&extension, &cfg)
+                .preprocess(&paths)?;
+            let tuples = extractor_factory.from_ext(&extension).extract_text(&paths);
             indexer::index_docs(&tuples, &tools)?;
             new_doc_notifier.notify()?;
         }

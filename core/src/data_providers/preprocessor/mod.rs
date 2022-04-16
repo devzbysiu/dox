@@ -2,16 +2,10 @@ use crate::cfg::Config;
 use crate::data_providers::preprocessor::image::Image;
 use crate::data_providers::preprocessor::pdf::Pdf;
 use crate::entities::extension::Ext;
-use crate::use_cases::preprocessor::FilePreprocessor;
+use crate::use_cases::preprocessor::{Preprocessor, PreprocessorFactory};
 
 pub mod image;
 pub mod pdf;
-
-pub trait PreprocessorFactory {
-    fn from_ext(ext: &Ext, config: &Config) -> Preprocessor;
-}
-
-pub type Preprocessor = Box<dyn FilePreprocessor>;
 
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]

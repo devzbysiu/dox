@@ -1,23 +1,17 @@
 use crate::data_providers::extractor::image::Ocr;
 use crate::data_providers::extractor::pdf::Pdf;
 use crate::entities::extension::Ext;
-use crate::use_cases::extractor::TextExtractor;
+use crate::use_cases::extractor::{Extractor, ExtractorFactory};
 
 pub mod image;
 pub mod pdf;
-
-pub trait ExtractorFactory {
-    fn from_ext(ext: &Ext) -> Extractor;
-}
-
-pub type Extractor = Box<dyn TextExtractor>;
 
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
 pub struct ExtractorFactoryImpl;
 
 impl ExtractorFactory for ExtractorFactoryImpl {
-    fn from_ext(ext: &Ext) -> Extractor {
+    fn from_ext(&self, ext: &Ext) -> Extractor {
         match ext {
             Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Ocr),
             Ext::Pdf => Box::new(Pdf),
@@ -39,12 +33,13 @@ mod test {
             (Ext::Webp, "res/doc4.webp", "Trybunału Konstytucyjnego"),
             (Ext::Pdf, "res/doc1.pdf", "Jak zainstalować scaner"),
         ];
+        let extractor_factory = ExtractorFactoryImpl;
 
         for test_case in test_cases {
             let ext = test_case.0;
 
             // when
-            let extractor = ExtractorFactoryImpl::from_ext(&ext);
+            let extractor = extractor_factory.from_ext(&ext);
             let docs = extractor.extract_text(&[PathBuf::from(test_case.1)]);
             let doc = &docs[0];
 
@@ -57,9 +52,10 @@ mod test {
     fn test_extractor_factory_with_wrong_file() {
         // given
         let ext = Ext::Pdf;
+        let extractor_factory = ExtractorFactoryImpl;
 
         // when
-        let extractor = ExtractorFactoryImpl::from_ext(&ext);
+        let extractor = extractor_factory.from_ext(&ext);
         let docs = extractor.extract_text(&[PathBuf::from("res/doc1.png")]);
 
         // then
