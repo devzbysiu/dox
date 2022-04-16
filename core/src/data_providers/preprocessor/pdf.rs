@@ -1,8 +1,8 @@
+use crate::data_providers::thumbnail::ThumbnailGeneratorImpl;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 use crate::use_cases::preprocessor::FilePreprocessor;
 use crate::use_cases::thumbnail::ThumbnailGenerator;
-use crate::use_cases::thumbnail::ThumbnailGeneratorImpl;
 
 use std::path::{Path, PathBuf};
 use tracing::instrument;
