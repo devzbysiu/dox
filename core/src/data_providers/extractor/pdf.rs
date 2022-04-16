@@ -1,4 +1,5 @@
 use crate::entities::document::DocDetails;
+use crate::entities::location::Location;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 use crate::use_cases::extractor::TextExtractor;
@@ -23,10 +24,7 @@ impl TextExtractor for Pdf {
     }
 
     #[allow(unused)]
-    fn extract_text_from_location(
-        &self,
-        location: &crate::entities::location::Location,
-    ) -> Result<Vec<DocDetails>> {
+    fn extract_text_from_location(&self, location: &Location) -> Result<Vec<DocDetails>> {
         unimplemented!()
     }
 }
