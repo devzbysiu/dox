@@ -38,6 +38,7 @@ impl FilePreprocessor for Pdf {
         Ok(())
     }
 
+    #[allow(unused)]
     fn preprocess_location(&self, location: &crate::entities::location::Location) -> Result<()> {
         unimplemented!()
     }

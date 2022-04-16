@@ -22,6 +22,7 @@ impl TextExtractor for Pdf {
             .collect::<Vec<DocDetails>>()
     }
 
+    #[allow(unused)]
     fn extract_text_from_location(
         &self,
         location: &crate::entities::location::Location,
