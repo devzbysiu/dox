@@ -20,6 +20,13 @@ impl TextExtractor for Ocr {
             .filter_map(Result::ok)
             .collect::<Vec<DocDetails>>()
     }
+
+    fn extract_text_from_location(
+        &self,
+        location: &crate::entities::location::Location,
+    ) -> Result<Vec<DocDetails>> {
+        unimplemented!()
+    }
 }
 
 fn do_ocr<P: AsRef<Path>>(path: P) -> Result<DocDetails> {

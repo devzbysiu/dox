@@ -1,5 +1,5 @@
 use crate::result::Result;
 
-pub trait Notifier {
+pub trait Notifier: Sync + Send {
     fn notify(&self) -> Result<()>;
 }

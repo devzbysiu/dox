@@ -11,7 +11,7 @@ pub trait FilePreprocessor {
     fn preprocess_location(&self, location: &Location) -> Result<()>;
 }
 
-pub trait PreprocessorFactory {
+pub trait PreprocessorFactory: Sync + Send {
     fn from_ext(&self, ext: &Ext, config: &Config) -> Preprocessor;
 }
 

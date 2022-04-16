@@ -11,6 +11,7 @@ pub trait Emitter: Sync + Send + Debug {
     fn send(&self, location: Location) -> Result<()>;
 }
 
+#[allow(unused)]
 #[derive(Debug)]
 pub enum Event {
     NewDocs(Location),

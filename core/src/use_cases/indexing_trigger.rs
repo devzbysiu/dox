@@ -4,12 +4,14 @@ use crate::use_cases::event::{Emitter, Event, Sink};
 use std::thread;
 use tracing::{error, instrument};
 
+#[allow(unused)]
 #[derive(Debug)]
 pub struct IndexingTrigger {
     sink: Box<dyn Sink>,
     emitter: Box<dyn Emitter>,
 }
 
+#[allow(unused)]
 impl IndexingTrigger {
     fn new(sink: Box<dyn Sink>, emitter: Box<dyn Emitter>) -> Self {
         Self { sink, emitter }

@@ -12,7 +12,7 @@ pub mod pdf;
 pub struct PreprocessorFactoryImpl;
 
 impl PreprocessorFactory for PreprocessorFactoryImpl {
-    fn from_ext(ext: &Ext, config: &Config) -> Preprocessor {
+    fn from_ext(&self, ext: &Ext, config: &Config) -> Preprocessor {
         match ext {
             Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Image::new(config.thumbnails_dir.clone())),
             Ext::Pdf => Box::new(Pdf::new(config.thumbnails_dir.clone())),
