@@ -4,7 +4,7 @@ use crate::use_cases::thumbnail::ThumbnailGenerator;
 
 use cairo::{Context, Format, ImageSurface};
 use poppler::{PopplerDocument, PopplerPage};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::{fmt::Debug, fs::File};
 use tracing::{debug, instrument};
 
@@ -16,7 +16,7 @@ pub struct ThumbnailGeneratorImpl;
 
 impl ThumbnailGenerator for ThumbnailGeneratorImpl {
     #[instrument]
-    fn generate(&self, pdf_path: &PathBuf, out_path: &PathBuf) -> Result<()> {
+    fn generate(&self, pdf_path: &Path, out_path: &Path) -> Result<()> {
         let page = first_page(&pdf_path)?;
         let surface = paint_background_and_scale(&page)?;
         debug!("writing thumbnail to: '{}'", out_path.display());
