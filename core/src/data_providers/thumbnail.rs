@@ -51,21 +51,21 @@ fn paint_background_and_scale(page: &PopplerPage) -> Result<ImageSurface> {
 
 #[cfg(test)]
 mod test {
-    use tempfile::tempdir;
-
     use super::*;
+
+    use tempfile::tempdir;
 
     #[test]
     fn test_generate() -> Result<()> {
         // given
-        let pdf_path = PathBuf::from("res/doc1.pdf");
+        let pdf_path = Path::new("res/doc1.pdf");
         let tmp_dir = tempdir()?;
         let out_path = tmp_dir.path().join("output.png");
         assert!(!out_path.exists());
         let generator = ThumbnailGeneratorImpl;
 
         // when
-        generator.generate(&pdf_path, &out_path)?;
+        generator.generate(pdf_path, &out_path)?;
 
         // then
         // TODO: check also the thumbnail itself
