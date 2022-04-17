@@ -11,6 +11,7 @@ use tracing::{debug, instrument};
 const FIRST: usize = 0;
 
 #[derive(Debug, Clone)]
+#[allow(clippy::module_name_repetitions)]
 pub struct ThumbnailGeneratorImpl;
 
 impl ThumbnailGenerator for ThumbnailGeneratorImpl {
