@@ -11,6 +11,7 @@ pub trait TextExtractor {
     fn extract_text_from_location(&self, location: &Location) -> Result<Vec<DocDetails>>;
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub trait ExtractorFactory: Sync + Send {
     fn from_ext(&self, ext: &Ext) -> Extractor;
 }
