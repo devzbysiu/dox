@@ -11,6 +11,7 @@ pub trait FilePreprocessor {
     fn preprocess_location(&self, location: &Location) -> Result<()>;
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub trait PreprocessorFactory: Sync + Send {
     fn from_ext(&self, ext: &Ext, config: &Config) -> Preprocessor;
 }
