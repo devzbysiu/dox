@@ -1,4 +1,5 @@
 use crate::data_providers::thumbnail::ThumbnailGeneratorImpl;
+use crate::entities::location::Location;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 use crate::use_cases::preprocessor::FilePreprocessor;
@@ -40,7 +41,7 @@ impl FilePreprocessor for Pdf {
 
     #[allow(unused)]
     #[instrument]
-    fn preprocess_location(&self, location: &crate::entities::location::Location) -> Result<()> {
+    fn preprocess_location(&self, location: &Location) -> Result<()> {
         unimplemented!()
     }
 }
