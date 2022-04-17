@@ -14,8 +14,7 @@ impl Location {
     pub fn extension(&self) -> Ext {
         let Location::FileSystem(paths) = self;
         paths
-            .iter()
-            .nth(0)
+            .get(0)
             .unwrap_or_else(|| panic!("no new paths received, this shouldn't happen"))
             .ext()
     }
