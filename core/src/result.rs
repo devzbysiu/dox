@@ -5,7 +5,6 @@ use thiserror::Error;
 use tungstenite::handshake::server::{NoCallback, ServerHandshake};
 use tungstenite::handshake::HandshakeError;
 
-// TODO: cleanup error messages and names
 #[derive(Debug, Error)]
 pub enum DoxErr {
     #[error("Invalid watched directory path: '{0}'")]
