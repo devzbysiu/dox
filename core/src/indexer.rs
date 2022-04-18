@@ -105,13 +105,19 @@ fn to_search_entries<'a, V: Iterator<Item = &'a Value>>(
 }
 
 fn to_text((filename, thumbnail): (&Value, &Value)) -> (String, String) {
-    (as_text(filename), as_text(thumbnail))
+    (filename.text(), thumbnail.text())
 }
 
-fn as_text(val: &Value) -> String {
-    val.as_text()
-        .unwrap_or_else(|| panic!("failed to extract text"))
-        .to_string()
+trait ValueExt {
+    fn text(&self) -> String;
+}
+
+impl ValueExt for Value {
+    fn text(&self) -> String {
+        self.as_text()
+            .unwrap_or_else(|| panic!("failed to extract text"))
+            .to_string()
+    }
 }
 
 #[derive(Debug, Serialize, Default, PartialEq, Eq)]
