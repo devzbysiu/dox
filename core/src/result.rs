@@ -46,7 +46,7 @@ pub enum DoxErr {
     #[error("Error when initializing LepTess: '{0}'")]
     OcrExtract(#[from] leptess::tesseract::TessInitError),
 
-    #[error("Error when setting image: '{0}'")]
+    #[error("Error when setting the image: '{0}'")]
     Image(#[from] leptess::leptonica::PixError),
 
     #[error("Error when converting to utf8: '{0}'")]
