@@ -16,7 +16,7 @@ impl TextExtractor for Ocr {
     fn extract_text(&self, paths: &[PathBuf]) -> Vec<DocDetails> {
         paths
             .par_iter()
-            .map(do_ocr)
+            .map(ocr)
             .filter_map(Result::ok)
             .collect::<Vec<DocDetails>>()
     }
@@ -31,7 +31,7 @@ impl TextExtractor for Ocr {
     }
 }
 
-fn do_ocr<P: AsRef<Path>>(path: P) -> Result<DocDetails> {
+fn ocr<P: AsRef<Path>>(path: P) -> Result<DocDetails> {
     debug!("executing OCR on {}", path.as_ref().display());
     // NOTE: it's actually more efficient to create LepTess
     // each time than sharing it between threads
