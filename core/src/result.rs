@@ -7,7 +7,7 @@ use tungstenite::handshake::HandshakeError;
 
 #[derive(Debug, Error)]
 pub enum DoxErr {
-    #[error("Invalid watched directory path: '{0}'")]
+    #[error("Invalid watched directory: '{0}'")]
     InvalidWatchedDirPath(String),
 
     #[error("Invalid config path: '{0}'")]
