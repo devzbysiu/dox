@@ -26,7 +26,6 @@ pub fn all_thumbnails(repo: &State<Repo>) -> Result<Json<SearchResults>> {
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[post("/document/upload", data = "<doc>")]
 pub fn receive_document(doc: Json<Document>, cfg: &State<Config>) -> Result<Status> {
-    debug!("receiving document: {}", doc.filename);
     let mut document = File::create(cfg.watched_dir.join(&doc.filename))?;
     document.write_all(&base64::decode(&doc.body)?)?;
     Ok(Status::Created)
