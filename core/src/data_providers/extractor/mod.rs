@@ -1,4 +1,4 @@
-use crate::data_providers::extractor::image::Ocr;
+use crate::data_providers::extractor::image::FromImage;
 use crate::data_providers::extractor::pdf::Pdf;
 use crate::entities::extension::Ext;
 use crate::use_cases::extractor::{Extractor, ExtractorFactory};
@@ -13,7 +13,7 @@ pub struct ExtractorFactoryImpl;
 impl ExtractorFactory for ExtractorFactoryImpl {
     fn from_ext(&self, ext: &Ext) -> Extractor {
         match ext {
-            Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Ocr),
+            Ext::Png | Ext::Jpg | Ext::Webp => Box::new(FromImage),
             Ext::Pdf => Box::new(Pdf),
         }
     }

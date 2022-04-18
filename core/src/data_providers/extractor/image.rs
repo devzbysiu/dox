@@ -9,9 +9,9 @@ use std::path::{Path, PathBuf};
 use tracing::{debug, instrument};
 
 #[derive(Debug, Default)]
-pub struct Ocr;
+pub struct FromImage;
 
-impl TextExtractor for Ocr {
+impl TextExtractor for FromImage {
     #[instrument]
     fn extract_text(&self, paths: &[PathBuf]) -> Vec<DocDetails> {
         paths
@@ -47,7 +47,7 @@ mod test {
     #[test]
     fn test_extract_text() {
         // given
-        let ocr = Ocr;
+        let ocr = FromImage;
         let paths = vec![PathBuf::from("res/doc1.png"), PathBuf::from("res/doc3.jpg")];
 
         // when
@@ -70,7 +70,7 @@ mod test {
     #[test]
     fn test_extract_text_with_non_existing_paths() {
         // given
-        let ocr = Ocr;
+        let ocr = FromImage;
         let paths = vec![
             PathBuf::from("not/existing-1"),
             PathBuf::from("not/existing-2"),
