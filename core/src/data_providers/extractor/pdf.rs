@@ -11,9 +11,9 @@ use std::path::{Path, PathBuf};
 use tracing::instrument;
 
 #[derive(Debug, Default)]
-pub struct Pdf;
+pub struct FromPdf;
 
-impl TextExtractor for Pdf {
+impl TextExtractor for FromPdf {
     #[instrument]
     fn extract_text(&self, paths: &[PathBuf]) -> Vec<DocDetails> {
         paths
@@ -47,7 +47,7 @@ mod test {
     #[test]
     fn test_extract_text() {
         // given
-        let pdf = Pdf;
+        let pdf = FromPdf;
         let paths = vec![PathBuf::from("res/doc1.pdf"), PathBuf::from("res/doc2.pdf")];
 
         // when
@@ -70,7 +70,7 @@ mod test {
     #[test]
     fn test_extract_text_with_non_existing_paths() {
         // given
-        let pdf = Pdf;
+        let pdf = FromPdf;
         let paths = vec![
             PathBuf::from("not/existing-1"),
             PathBuf::from("not/existing-2"),
