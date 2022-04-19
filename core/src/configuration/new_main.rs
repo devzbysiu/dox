@@ -5,6 +5,7 @@ use crate::data_providers::config_resolver::FsConfigResolver;
 use crate::data_providers::event::{DefaultEmitter, FsSink};
 use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::notifier::WsNotifier;
+use crate::data_providers::persistence::FsPersistence;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::repository::TantivyRepository;
 use crate::server::{all_thumbnails, receive_document, search};
@@ -55,12 +56,14 @@ pub fn launch() -> Rocket<Build> {
 
     indexer.run(cfg.clone());
 
-    // let repo = setup(config).expect("failed to setup indexer");
+    let fs_persistence = Box::new(FsPersistence);
+
     debug!("starting server...");
     rocket::build()
         .mount("/", routes![search, all_thumbnails, receive_document])
         .mount("/thumbnail", FileServer::from(&cfg.thumbnails_dir))
         .mount("/document", FileServer::from(&cfg.watched_dir))
         .manage(repository)
+        .manage(fs_persistence)
         .manage(cfg)
 }

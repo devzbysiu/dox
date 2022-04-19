@@ -5,5 +5,6 @@ pub mod extractor;
 pub mod notifier;
 pub mod preprocessor;
 pub mod repository;
+pub mod persistence;
 pub mod server;
 pub mod thumbnail;
