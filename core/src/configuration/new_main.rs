@@ -8,7 +8,7 @@ use crate::data_providers::notifier::WsNotifier;
 use crate::data_providers::persistence::FsPersistence;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::repository::TantivyRepository;
-use crate::server::{all_thumbnails, receive_document, search};
+use crate::data_providers::server::{all_thumbnails, receive_document, search};
 use crate::telemetry::init_tracing;
 use crate::use_cases::config_resolver::ConfigResolver;
 use crate::use_cases::indexer::Indexer;
