@@ -11,7 +11,7 @@ impl ConfigLoader for FsConfigLoader {
         unimplemented!();
     }
 
-    fn store(&self, cfg: &Config) -> Result<()> {
+    fn store(&self, path: PathBuf, config: &Config) -> Result<()> {
         unimplemented!();
     }
 }
