@@ -13,12 +13,12 @@ pub struct IndexingTrigger {
 
 #[allow(unused)]
 impl IndexingTrigger {
-    fn new(sink: Box<dyn Sink>, emitter: Box<dyn Emitter>) -> Self {
+    pub fn new(sink: Box<dyn Sink>, emitter: Box<dyn Emitter>) -> Self {
         Self { sink, emitter }
     }
 
     #[instrument(skip(self))]
-    fn run(self) {
+    pub fn run(self) {
         thread::spawn(move || -> Result<()> {
             loop {
                 match self.sink.recv() {

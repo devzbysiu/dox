@@ -20,7 +20,7 @@ pub struct Indexer {
 
 #[allow(unused)]
 impl Indexer {
-    fn new(
+    pub fn new(
         sink: Box<dyn Sink>,
         notifier: Box<dyn Notifier>,
         preprocessor_factory: Box<dyn PreprocessorFactory>,
@@ -37,7 +37,7 @@ impl Indexer {
     }
 
     #[instrument(skip(self))]
-    fn run(self, config: Config) {
+    pub fn run(self, config: Config) {
         thread::spawn(move || -> Result<()> {
             loop {
                 match self.sink.recv() {
