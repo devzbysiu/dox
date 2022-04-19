@@ -8,7 +8,7 @@ use rocket::serde::Deserialize;
 use rocket::{get, post, State};
 use std::fs::File;
 use std::io::prelude::*;
-use tracing::{debug, instrument};
+use tracing::instrument;
 
 #[instrument(skip(repo))]
 #[get("/search?<q>")]

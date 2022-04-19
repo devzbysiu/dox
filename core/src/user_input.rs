@@ -24,7 +24,7 @@ pub fn handle_config(path_override: Option<String>) -> Result<Config> {
     Ok(cfg)
 }
 
-pub fn config_from_user() -> Result<Config> {
+fn config_from_user() -> Result<Config> {
     match prompt::show() {
         Ok(cfg) => Ok(cfg),
         Err(DoxErr::Prompt(InquireError::OperationCanceled)) => exit_process(),
