@@ -13,7 +13,7 @@ pub fn handle_config(path_override: Option<String>) -> Result<Config> {
     let config_path = path_override.map_or(config_path(), PathBuf::from);
     let cfg = if config_path.exists() {
         debug!("loading config from '{}'", config_path.str());
-        cfg::read_config(config_path)?
+        cfg::load(config_path)?
     } else {
         debug!("config path '{}' doesn't exist", config_path.str());
         let cfg = config_from_user()?;

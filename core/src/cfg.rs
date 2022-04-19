@@ -32,7 +32,7 @@ impl Default for Config {
 }
 
 #[instrument]
-pub fn read_config<P: AsRef<Path> + Debug>(config_path: P) -> Result<Config> {
+pub fn load<P: AsRef<Path> + Debug>(config_path: P) -> Result<Config> {
     Ok(toml::from_str(&read_to_string(config_path)?)?)
 }
 
@@ -122,7 +122,7 @@ mod test {
         };
 
         // when
-        let read_cfg = read_config(cfg_path)?;
+        let read_cfg = load(cfg_path)?;
 
         // then
         assert_eq!(expected, read_cfg);
@@ -158,7 +158,7 @@ mod test {
         .unwrap();
 
         // then
-        read_config(cfg_path).unwrap(); // should panic
+        load(cfg_path).unwrap(); // should panic
     }
 
     #[test]
@@ -182,7 +182,7 @@ mod test {
         .unwrap();
 
         // then
-        read_config(cfg_path).unwrap(); // should panic
+        load(cfg_path).unwrap(); // should panic
     }
 
     #[test]
@@ -206,7 +206,7 @@ mod test {
         .unwrap();
 
         // then
-        read_config(cfg_path).unwrap(); // should panic
+        load(cfg_path).unwrap(); // should panic
     }
 
     #[test]
@@ -230,7 +230,7 @@ mod test {
         .unwrap();
 
         // then
-        read_config(cfg_path).unwrap(); // should panic
+        load(cfg_path).unwrap(); // should panic
     }
 
     #[test]
@@ -251,7 +251,7 @@ mod test {
         .unwrap();
 
         // then
-        read_config(cfg_path).unwrap(); // should panic
+        load(cfg_path).unwrap(); // should panic
     }
 
     #[test]
