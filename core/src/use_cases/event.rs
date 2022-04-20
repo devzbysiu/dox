@@ -3,7 +3,7 @@ use crate::result::Result;
 
 use std::fmt::Debug;
 
-pub trait Sink: Sync + Send + Debug {
+pub trait Sink: Send + Debug {
     fn recv(&self) -> Result<Event>;
 }
 

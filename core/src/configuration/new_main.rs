@@ -34,13 +34,13 @@ pub fn launch() -> Rocket<Build> {
         .handle_config(path_override)
         .expect("failed to get config");
 
-    let fs_sink = FsSink::new();
+    let fs_sink = FsSink::new(&cfg);
     let emitter = DefaultEmitter::new();
     let trigger = IndexingTrigger::new(Box::new(fs_sink), Box::new(emitter));
 
     trigger.run();
 
-    let fs_sink = Box::new(FsSink::new());
+    let fs_sink = Box::new(FsSink::new(&cfg));
     let notifier = Box::new(WsNotifier);
     let preprocessor_factory = Box::new(PreprocessorFactoryImpl);
     let extractor_factory = Box::new(ExtractorFactoryImpl);
