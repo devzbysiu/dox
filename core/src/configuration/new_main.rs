@@ -52,9 +52,9 @@ pub fn launch() -> Rocket<Build> {
 }
 
 fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
-    let fs_sink = FsSink::new(&cfg);
-    let emitter = DefaultEmitter::new();
-    let trigger = IndexingTrigger::new(Box::new(fs_sink), Box::new(emitter));
+    let fs_sink = Box::new(FsSink::new(&cfg));
+    let emitter = Box::new(DefaultEmitter::new());
+    let trigger = IndexingTrigger::new(fs_sink, emitter);
 
     trigger.run();
 
