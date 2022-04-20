@@ -1,4 +1,4 @@
-use crate::cfg::Config;
+use crate::configuration::cfg::Config;
 use crate::data_providers::preprocessor::image::Image;
 use crate::data_providers::preprocessor::pdf::Pdf;
 use crate::entities::extension::Ext;

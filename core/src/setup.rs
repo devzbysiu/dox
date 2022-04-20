@@ -1,4 +1,4 @@
-use crate::cfg::Config;
+use crate::configuration::cfg::Config;
 use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::entities::extension::Ext;

@@ -10,7 +10,6 @@ use rocket::{launch, routes, Build, Rocket};
 use std::env;
 use tracing::{debug, instrument};
 
-mod cfg;
 mod configuration;
 mod data_providers;
 mod entities;

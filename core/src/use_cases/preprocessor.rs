@@ -1,4 +1,4 @@
-use crate::cfg::Config;
+use crate::configuration::cfg::Config;
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;

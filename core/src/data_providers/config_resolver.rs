@@ -1,4 +1,4 @@
-use crate::cfg::Config;
+use crate::configuration::cfg::Config;
 use crate::helpers::PathRefExt;
 use crate::prompt;
 use crate::result::{DoxErr, Result};

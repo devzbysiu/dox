@@ -1,4 +1,4 @@
-use crate::cfg::Config;
+use crate::configuration::cfg::Config;
 use crate::entities::document::DocDetails;
 use crate::result::{DoxErr, Result};
 use crate::use_cases::repository::{Repository, SearchEntry, SearchResult};

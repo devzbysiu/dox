@@ -1,4 +1,4 @@
-use crate::cfg::Config;
+use crate::configuration::cfg::Config;
 use crate::indexer::{Repo, SearchResults};
 use crate::result::Result;
 

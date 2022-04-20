@@ -1,6 +1,6 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
-use crate::cfg::Config;
+use crate::configuration::cfg::Config;
 use crate::data_providers::config_loader::FsConfigLoader;
 use crate::data_providers::config_resolver::FsConfigResolver;
 use crate::data_providers::event::{DefaultEmitter, FsSink};

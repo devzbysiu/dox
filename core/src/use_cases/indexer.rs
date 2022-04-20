@@ -1,4 +1,4 @@
-use crate::cfg::Config;
+use crate::configuration::cfg::Config;
 use crate::result::Result;
 use crate::use_cases::event::{Event, Sink};
 use crate::use_cases::extractor::ExtractorFactory;

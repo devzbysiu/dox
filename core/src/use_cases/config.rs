@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
-use crate::{cfg::Config, result::Result};
+use crate::configuration::cfg::Config;
+use crate::result::Result;
 
 pub trait ConfigLoader {
     fn load(&self, path: PathBuf) -> Result<Config>;

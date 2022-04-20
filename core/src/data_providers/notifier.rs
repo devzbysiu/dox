@@ -1,4 +1,4 @@
-use crate::cfg::Config;
+use crate::configuration::cfg::Config;
 use crate::result::Result;
 use crate::use_cases::notifier::Notifier;
 
