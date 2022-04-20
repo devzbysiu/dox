@@ -48,7 +48,7 @@ impl Sink for FsSink {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DefaultEmitter;
 
 impl DefaultEmitter {
@@ -59,6 +59,12 @@ impl DefaultEmitter {
 
 impl Emitter for DefaultEmitter {
     fn send(&self, location: Location) -> Result<()> {
+        unimplemented!()
+    }
+}
+
+impl Sink for DefaultEmitter {
+    fn recv(&self) -> Result<Event> {
         unimplemented!()
     }
 }

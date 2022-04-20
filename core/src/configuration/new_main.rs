@@ -54,11 +54,11 @@ pub fn launch() -> Rocket<Build> {
 fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
     let fs_sink = Box::new(FsSink::new(&cfg));
     let emitter = Box::new(DefaultEmitter::new());
-    let trigger = IndexingTrigger::new(fs_sink, emitter);
+    let trigger = IndexingTrigger::new(fs_sink, emitter.clone());
 
     trigger.run();
 
-    let fs_sink = Box::new(FsSink::new(&cfg));
+    let fs_sink = emitter;
     let notifier = Box::new(WsNotifier::new(&cfg)?);
     let preprocessor_factory = Box::new(PreprocessorFactoryImpl);
     let extractor_factory = Box::new(ExtractorFactoryImpl);
