@@ -41,7 +41,7 @@ pub fn launch() -> Rocket<Build> {
     trigger.run();
 
     let fs_sink = Box::new(FsSink::new(&cfg));
-    let notifier = Box::new(WsNotifier);
+    let notifier = Box::new(WsNotifier::new(&cfg).expect("failed to create notifier"));
     let preprocessor_factory = Box::new(PreprocessorFactoryImpl);
     let extractor_factory = Box::new(ExtractorFactoryImpl);
     let repository = Box::new(TantivyRepository);
