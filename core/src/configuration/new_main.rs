@@ -1,5 +1,6 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
+use crate::cfg::Config;
 use crate::data_providers::config_loader::FsConfigLoader;
 use crate::data_providers::config_resolver::FsConfigResolver;
 use crate::data_providers::event::{DefaultEmitter, FsSink};
@@ -9,10 +10,12 @@ use crate::data_providers::persistence::FsPersistence;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::repository::TantivyRepository;
 use crate::data_providers::server::{all_thumbnails, receive_document, search};
+use crate::result::Result;
 use crate::telemetry::init_tracing;
 use crate::use_cases::config_resolver::ConfigResolver;
 use crate::use_cases::indexer::Indexer;
 use crate::use_cases::indexing_trigger::IndexingTrigger;
+use crate::use_cases::repository::Repository;
 
 use rocket::fs::FileServer;
 use rocket::{routes, Build, Rocket};
@@ -34,27 +37,7 @@ pub fn launch() -> Rocket<Build> {
         .handle_config(path_override)
         .expect("failed to get config");
 
-    let fs_sink = FsSink::new(&cfg);
-    let emitter = DefaultEmitter::new();
-    let trigger = IndexingTrigger::new(Box::new(fs_sink), Box::new(emitter));
-
-    trigger.run();
-
-    let fs_sink = Box::new(FsSink::new(&cfg));
-    let notifier = Box::new(WsNotifier::new(&cfg).expect("failed to create notifier"));
-    let preprocessor_factory = Box::new(PreprocessorFactoryImpl);
-    let extractor_factory = Box::new(ExtractorFactoryImpl);
-    let repository = Box::new(TantivyRepository::new(&cfg).expect("failed to create repo"));
-
-    let indexer = Indexer::new(
-        fs_sink,
-        notifier,
-        preprocessor_factory,
-        extractor_factory,
-        repository.clone(),
-    );
-
-    indexer.run(cfg.clone());
+    let repository = setup_core(&cfg).expect("failed to setup core");
 
     let fs_persistence = Box::new(FsPersistence);
 
@@ -66,4 +49,29 @@ pub fn launch() -> Rocket<Build> {
         .manage(repository)
         .manage(fs_persistence)
         .manage(cfg)
+}
+
+fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
+    let fs_sink = FsSink::new(&cfg);
+    let emitter = DefaultEmitter::new();
+    let trigger = IndexingTrigger::new(Box::new(fs_sink), Box::new(emitter));
+
+    trigger.run();
+
+    let fs_sink = Box::new(FsSink::new(&cfg));
+    let notifier = Box::new(WsNotifier::new(&cfg)?);
+    let preprocessor_factory = Box::new(PreprocessorFactoryImpl);
+    let extractor_factory = Box::new(ExtractorFactoryImpl);
+    let repository = Box::new(TantivyRepository::new(&cfg)?);
+
+    let indexer = Indexer::new(
+        fs_sink,
+        notifier,
+        preprocessor_factory,
+        extractor_factory,
+        repository.clone(),
+    );
+
+    indexer.run(cfg.clone());
+    Ok(repository)
 }
