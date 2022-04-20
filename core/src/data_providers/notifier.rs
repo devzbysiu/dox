@@ -11,22 +11,24 @@ use tungstenite::{accept, Message, WebSocket};
 use tracing::debug;
 
 pub struct WsNotifier {
-    notifier: NotifierStruct,
+    tx: Sender<()>,
 }
 
 impl WsNotifier {
     pub fn new(cfg: &Config) -> Result<Self> {
         let (tx, rx) = channel();
-        let (sockets_list, notifier) = NotifiableSockets::new(tx);
+        let (sockets_list, tx) = NotifiableSockets::new(tx);
         sockets_list.await_notifications(rx);
         ConnHandler::new(cfg)?.push_new_conns(sockets_list);
-        Ok(Self { notifier })
+        Ok(Self { tx })
     }
 }
 
 impl Notifier for WsNotifier {
     fn notify(&self) -> Result<()> {
-        self.notifier.notify()
+        debug!("notifying all listeners");
+        self.tx.send(())?;
+        Ok(())
     }
 }
 
@@ -63,12 +65,12 @@ struct NotifiableSockets {
 }
 
 impl NotifiableSockets {
-    fn new(tx: Sender<()>) -> (Self, NotifierStruct) {
+    fn new(tx: Sender<()>) -> (Self, Sender<()>) {
         (
             Self {
                 all: Arc::new(Mutex::new(Vec::new())),
             },
-            NotifierStruct::new(tx),
+            tx,
         )
     }
 
@@ -91,22 +93,6 @@ impl NotifiableSockets {
                     .collect::<Vec<_>>();
             }
         });
-    }
-}
-
-pub struct NotifierStruct {
-    tx: Sender<()>,
-}
-
-impl NotifierStruct {
-    fn new(tx: Sender<()>) -> Self {
-        Self { tx }
-    }
-
-    pub fn notify(&self) -> Result<()> {
-        debug!("notifying all listeners");
-        self.tx.send(())?;
-        Ok(())
     }
 }
 
