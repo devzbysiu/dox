@@ -23,3 +23,7 @@ pub trait ConfigLoader {
     /// should be saved on the disk, the medium is the detail of the implementation.
     fn store(&self, path: PathBuf, cfg: &Config) -> Result<()>;
 }
+
+pub trait ConfigResolver {
+    fn handle_config(&self, path_override: Option<String>) -> Result<Config>;
+}

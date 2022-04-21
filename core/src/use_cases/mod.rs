@@ -1,5 +1,4 @@
 pub mod config;
-pub mod config_resolver;
 pub mod event;
 pub mod extractor;
 pub mod indexer;

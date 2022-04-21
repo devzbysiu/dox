@@ -1,8 +1,7 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
 use crate::configuration::cfg::Config;
-use crate::data_providers::config_loader::FsConfigLoader;
-use crate::data_providers::config_resolver::FsConfigResolver;
+use crate::data_providers::config::{FsConfigLoader, FsConfigResolver};
 use crate::data_providers::event::{DefaultEmitter, FsSink};
 use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::notifier::WsNotifier;
@@ -12,7 +11,7 @@ use crate::data_providers::repository::TantivyRepository;
 use crate::data_providers::server::{all_thumbnails, receive_document, search};
 use crate::result::Result;
 use crate::telemetry::init_tracing;
-use crate::use_cases::config_resolver::ConfigResolver;
+use crate::use_cases::config::ConfigResolver;
 use crate::use_cases::indexer::Indexer;
 use crate::use_cases::indexing_trigger::IndexingTrigger;
 use crate::use_cases::repository::Repository;
