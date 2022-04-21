@@ -24,6 +24,14 @@ pub trait ConfigLoader {
     fn store(&self, path: PathBuf, cfg: &Config) -> Result<()>;
 }
 
+/// Handles config override.
+///
+/// When user specifies configuration path during startup, this interface handles this case.
 pub trait ConfigResolver {
+    /// Loads the [`Config`] using specified path.
+    ///
+    /// This method should read the configuration using the path specified as an argument.
+    /// If the path is `None`, then no override takes place and configuration should be loaded from
+    /// original path.
     fn handle_config(&self, path_override: Option<String>) -> Result<Config>;
 }
