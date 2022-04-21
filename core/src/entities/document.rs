@@ -1,7 +1,11 @@
+//! Abstraction of the document data used to index the document.
 use crate::helpers::PathRefExt;
 
 use std::path::Path;
 
+/// Data of the document.
+///
+/// The values in this structure are used to do the indexing.
 #[derive(Debug, PartialOrd, Ord, Eq, PartialEq)]
 pub struct DocDetails {
     pub filename: String,
