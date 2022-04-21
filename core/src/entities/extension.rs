@@ -1,3 +1,12 @@
+//! Represents extension of the documents appearing in the system.
+//!
+//! Indexing and preprocessing strategies are based on the extension. See
+//! [`ExtractorFactoryImpl`](crate::data_providers::extractor::ExtractorFactoryImpl)
+//! and [`PreprocessorFactoryImpl`](crate::data_providers::preprocessor::PreprocessorFactoryImpl).
+
+/// File extension.
+///
+/// Contains all currently supported filetypes.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ext {
     Png,
