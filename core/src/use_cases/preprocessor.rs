@@ -16,8 +16,11 @@ pub trait FilePreprocessor {
     fn preprocess_location(&self, location: &Location) -> Result<()>;
 }
 
+/// Creates [`Preprocessor`].
 #[allow(clippy::module_name_repetitions)]
 pub trait PreprocessorFactory: Sync + Send {
+    /// Creates [`Preprocessor`] based on the extesion. PDF files require different preprocessing
+    /// than images.
     fn from_ext(&self, ext: &Ext, config: &Config) -> Preprocessor;
 }
 
