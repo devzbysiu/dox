@@ -9,6 +9,7 @@ pub trait Notifier: Send {
     ///
     /// The notification is sent after document has been preprocessed and indexing was triggered.
     /// The matter of waiting for the end of the document processing is left the implementation of
-    /// the document preprocessing routine. See [`Indexer::run`](crate::use_cases::indexer::Indexer::run)
+    /// the document preprocessing routine. See
+    /// [`Indexer::run`](crate::use_cases::indexer::Indexer::run)
     fn notify(&self) -> Result<()>;
 }
