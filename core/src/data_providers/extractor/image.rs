@@ -10,6 +10,10 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::path::{Path, PathBuf};
 use tracing::{debug, instrument};
 
+/// Extracts text from the image.
+///
+/// It's using [`LepTess`] to extract text from the image. All images pointed by `paths` are
+/// processed in parallel thanks to [`ParallelIterator`].
 #[derive(Debug, Default)]
 pub struct FromImage;
 
