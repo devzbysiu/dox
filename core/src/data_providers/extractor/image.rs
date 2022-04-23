@@ -1,3 +1,4 @@
+//! Allows to extract text from image using OCR.
 use crate::entities::document::DocDetails;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
