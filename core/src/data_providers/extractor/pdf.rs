@@ -1,3 +1,4 @@
+//! Allows to extract text from PDF.
 use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
 use crate::helpers::PathRefExt;
@@ -10,6 +11,10 @@ use std::fmt::Debug;
 use std::path::{Path, PathBuf};
 use tracing::instrument;
 
+/// Extracts text from PDF file.
+///
+/// It uses [`extract_text`] to extract text. All files pointed by `paths` are processed in
+/// parallel.
 #[derive(Debug, Default)]
 pub struct FromPdf;
 
