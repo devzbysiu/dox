@@ -1,5 +1,6 @@
 //! Allows to extract text from image using OCR.
 use crate::entities::document::DocDetails;
+use crate::entities::location::Location;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 use crate::use_cases::extractor::TextExtractor;
@@ -24,10 +25,7 @@ impl TextExtractor for FromImage {
 
     #[allow(unused)]
     #[instrument]
-    fn extract_text_from_location(
-        &self,
-        location: &crate::entities::location::Location,
-    ) -> Result<Vec<DocDetails>> {
+    fn extract_text_from_location(&self, location: &Location) -> Result<Vec<DocDetails>> {
         unimplemented!()
     }
 }
