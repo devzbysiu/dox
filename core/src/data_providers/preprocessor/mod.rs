@@ -9,12 +9,12 @@ pub mod pdf;
 
 /// Creates specific [`Preprocessor`] based on the extension.
 ///
-/// Each filetype requires different way of preprocessing a file. For example extracting text from
-/// a PDF file differs from extracting text from regular image (see
+/// Each filetype requires different way of preprocessing a file. For example preprocessing a PDF
+/// file differs from preprocessing regular image (see
 /// [`FromPdf`](crate::data_providers::preprocessor::pdf::Pdf) and
 /// [`FromImage`](crate::data_providers::preprocessor::image::Image)).
 ///
-/// The type of file is decided based on the file extension.
+/// The type of a file is decided based on the file extension.
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
 pub struct PreprocessorFactoryImpl;

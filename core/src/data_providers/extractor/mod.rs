@@ -13,7 +13,7 @@ pub mod pdf;
 /// [`FromPdf`](crate::data_providers::extractor::pdf::FromPdf) and
 /// [`FromImage`](crate::data_providers::extractor::image::FromImage)).
 ///
-/// The type of file is decided based on the file extension.
+/// The type of a file is decided based on the file extension.
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
 pub struct ExtractorFactoryImpl;
