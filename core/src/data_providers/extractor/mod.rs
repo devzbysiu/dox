@@ -6,7 +6,7 @@ use crate::use_cases::extractor::{Extractor, ExtractorFactory};
 pub mod image;
 pub mod pdf;
 
-/// Creates specific extractor based on the extension.
+/// Creates specific [`Extractor`] based on the extension.
 ///
 /// Each filetype requires different way of extracting text. For example extracting text from PDF
 /// file differs from extracting text from regular image (see
