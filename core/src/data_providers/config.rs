@@ -13,6 +13,9 @@ use tracing::{debug, instrument};
 
 pub struct FsConfigLoader;
 
+/// Loads configuration file.
+///
+/// It reads a toml file from the filesystem and decodes it into [`Config`] structure.
 impl ConfigLoader for FsConfigLoader {
     #[instrument(skip(self))]
     fn load(&self, path: PathBuf) -> Result<Config> {
