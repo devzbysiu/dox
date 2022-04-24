@@ -5,6 +5,10 @@ use crate::use_cases::preprocessor::FilePreprocessor;
 use std::path::{Path, PathBuf};
 use tracing::{debug, instrument};
 
+/// Puts copy of an image to thumbnails directory.
+///
+/// It utilizes [`std::fs::copy`] function to move a copy to target directory. Thumbnails directory
+/// comes from the configuration - see [`Config`](crate::configuration::cfg::Config).
 #[derive(Debug)]
 pub struct Image {
     thumbnails_dir: PathBuf,
