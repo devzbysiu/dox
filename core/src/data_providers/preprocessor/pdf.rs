@@ -8,6 +8,10 @@ use crate::use_cases::thumbnail::ThumbnailGenerator;
 use std::path::{Path, PathBuf};
 use tracing::instrument;
 
+/// Generates thumbnail of the PDF file.
+///
+/// The thumbnail is used by the client application to display the document. Always the first page
+/// of the PDF document is used to generate the thumbnail.
 #[derive(Debug)]
 pub struct Pdf {
     thumbnails_dir: PathBuf,
