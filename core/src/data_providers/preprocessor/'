@@ -1,15 +1,18 @@
+use crate::data_providers::thumbnail::ThumbnailGeneratorImpl;
 use crate::entities::location::Location;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 use crate::use_cases::preprocessor::FilePreprocessor;
+use crate::use_cases::thumbnail::ThumbnailGenerator;
 
 use cairo::{Context, Format, ImageSurface};
 use poppler::{PopplerDocument, PopplerPage};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::{fmt::Debug, fs::File};
 use tracing::{debug, instrument};
-
-const FIRST: usize = 0;
+use std::fs::File;
+use std::path::{Path, PathBuf};
+use tracing::{debug, instrument};
 
 /// Generates thumbnail of the PDF file.
 ///
@@ -18,19 +21,24 @@ const FIRST: usize = 0;
 #[derive(Debug)]
 pub struct Pdf {
     thumbnails_dir: PathBuf,
+    thumbnail_generator: ThumbnailGeneratorImpl,
 }
 
 impl Pdf {
     pub fn new<P: AsRef<Path>>(thumbnails_dir: P) -> Self {
         let thumbnails_dir = thumbnails_dir.as_ref().to_path_buf();
-        Self { thumbnails_dir }
+        let thumbnail_generator = ThumbnailGeneratorImpl;
+        Self {
+            thumbnails_dir,
+            thumbnail_generator,
+        }
     }
 
     fn thumbnail_path<P: AsRef<Path>>(&self, path: P) -> PathBuf {
         self.thumbnails_dir.join(format!("{}.png", path.filestem()))
     }
 
-    #[instrument(skip(self))]
+    #[instrument]
     fn generate(&self, pdf_path: &Path, out_path: &Path) -> Result<()> {
         let page = first_page(&pdf_path)?;
         let surface = paint_background_and_scale(&page)?;
@@ -68,7 +76,8 @@ impl FilePreprocessor for Pdf {
     #[instrument]
     fn preprocess(&self, paths: &[PathBuf]) -> Result<()> {
         for pdf_path in paths {
-            self.generate(pdf_path, &self.thumbnail_path(pdf_path))?;
+            self.thumbnail_generator
+                .generate(pdf_path, &self.thumbnail_path(pdf_path))?;
         }
         Ok(())
     }
