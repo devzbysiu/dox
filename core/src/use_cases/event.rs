@@ -18,7 +18,7 @@ pub trait Input: Send + Debug {
 /// Allows sending [`Event`]s.
 ///
 /// This can be send across threads.
-pub trait Output: Sync + Send + Debug {
+pub trait Output: Send + Debug {
     /// Sends one [`Location`].
     fn send(&self, event: Event) -> Result<()>;
 }
