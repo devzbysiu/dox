@@ -52,7 +52,7 @@ pub fn launch() -> Rocket<Build> {
 
 fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
     let (input, output) = channel_pipe();
-    let fs_watcher = Box::new(FsWatcher::new(&cfg, input));
+    FsWatcher::run(&cfg, output);
 
     let notifier = Box::new(WsNotifier::new(&cfg)?);
     let preprocessor_factory = Box::new(PreprocessorFactoryImpl);
@@ -60,7 +60,7 @@ fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
     let repository = Box::new(TantivyRepository::new(&cfg)?);
 
     let indexer = Indexer::new(
-        output,
+        input,
         notifier,
         preprocessor_factory,
         extractor_factory,

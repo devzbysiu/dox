@@ -11,7 +11,7 @@ use tracing::{error, instrument, warn};
 
 #[allow(unused)]
 pub struct Indexer {
-    sink: Box<dyn Input>,
+    input: Box<dyn Input>,
     notifier: Box<dyn Notifier>,
     preprocessor_factory: Box<dyn PreprocessorFactory>,
     extractor_factory: Box<dyn ExtractorFactory>,
@@ -21,14 +21,14 @@ pub struct Indexer {
 #[allow(unused)]
 impl Indexer {
     pub fn new(
-        sink: Box<dyn Input>,
+        input: Box<dyn Input>,
         notifier: Box<dyn Notifier>,
         preprocessor_factory: Box<dyn PreprocessorFactory>,
         extractor_factory: Box<dyn ExtractorFactory>,
         repository: Box<dyn Repository>,
     ) -> Self {
         Self {
-            sink,
+            input,
             notifier,
             preprocessor_factory,
             extractor_factory,
@@ -40,7 +40,7 @@ impl Indexer {
     pub fn run(self, config: Config) {
         thread::spawn(move || -> Result<()> {
             loop {
-                match self.sink.recv() {
+                match self.input.recv() {
                     Ok(Event::NewDocs(location)) => {
                         let extension = location.extension();
                         let preprocessor = self.preprocessor_factory.from_ext(&extension, &config);
