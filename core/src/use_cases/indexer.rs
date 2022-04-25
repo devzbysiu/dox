@@ -1,6 +1,6 @@
 use crate::configuration::cfg::Config;
 use crate::result::Result;
-use crate::use_cases::event::{Event, Sink};
+use crate::use_cases::event::{Event, Input};
 use crate::use_cases::extractor::ExtractorFactory;
 use crate::use_cases::notifier::Notifier;
 use crate::use_cases::preprocessor::PreprocessorFactory;
@@ -11,7 +11,7 @@ use tracing::{error, instrument, warn};
 
 #[allow(unused)]
 pub struct Indexer {
-    sink: Box<dyn Sink>,
+    sink: Box<dyn Input>,
     notifier: Box<dyn Notifier>,
     preprocessor_factory: Box<dyn PreprocessorFactory>,
     extractor_factory: Box<dyn ExtractorFactory>,
@@ -21,7 +21,7 @@ pub struct Indexer {
 #[allow(unused)]
 impl Indexer {
     pub fn new(
-        sink: Box<dyn Sink>,
+        sink: Box<dyn Input>,
         notifier: Box<dyn Notifier>,
         preprocessor_factory: Box<dyn PreprocessorFactory>,
         extractor_factory: Box<dyn ExtractorFactory>,

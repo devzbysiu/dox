@@ -10,7 +10,7 @@ use std::fmt::Debug;
 /// Allows receiving [`Event`]s.
 ///
 /// This can be send across threads.
-pub trait Sink: Send + Debug {
+pub trait Input: Send + Debug {
     /// Receives one [`Event`].
     fn recv(&self) -> Result<Event>;
 }
@@ -18,7 +18,7 @@ pub trait Sink: Send + Debug {
 /// Allows sending [`Event`]s.
 ///
 /// This can be send across threads.
-pub trait Emitter: Sync + Send + Debug {
+pub trait Output: Sync + Send + Debug {
     /// Sends one [`Location`].
     fn send(&self, location: Location) -> Result<()>;
 }
@@ -29,4 +29,8 @@ pub trait Emitter: Sync + Send + Debug {
 pub enum Event {
     /// Represents new documents appearing in the system.
     NewDocs(Location),
+}
+
+pub fn channel_pipe() -> (Box<dyn Input>, Box<dyn Output>) {
+    unimplemented!()
 }

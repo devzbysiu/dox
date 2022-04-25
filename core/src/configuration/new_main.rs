@@ -2,7 +2,7 @@
 
 use crate::configuration::cfg::Config;
 use crate::data_providers::config::{FsConfigLoader, FsConfigResolver};
-use crate::data_providers::event::{DefaultEmitter, FsSink};
+use crate::data_providers::event::FsWatcher;
 use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::notifier::WsNotifier;
 use crate::data_providers::persistence::FsPersistence;
@@ -12,8 +12,8 @@ use crate::data_providers::server::{all_thumbnails, receive_document, search};
 use crate::result::Result;
 use crate::telemetry::init_tracing;
 use crate::use_cases::config::ConfigResolver;
+use crate::use_cases::event::channel_pipe;
 use crate::use_cases::indexer::Indexer;
-use crate::use_cases::indexing_trigger::IndexingTrigger;
 use crate::use_cases::repository::Repository;
 
 use rocket::fs::FileServer;
@@ -51,20 +51,16 @@ pub fn launch() -> Rocket<Build> {
 }
 
 fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
-    let fs_sink = Box::new(FsSink::new(&cfg));
-    let emitter = Box::new(DefaultEmitter::new());
-    let trigger = IndexingTrigger::new(fs_sink, emitter.clone());
+    let (input, output) = channel_pipe();
+    let fs_watcher = Box::new(FsWatcher::new(&cfg, input));
 
-    trigger.run();
-
-    let fs_sink = emitter;
     let notifier = Box::new(WsNotifier::new(&cfg)?);
     let preprocessor_factory = Box::new(PreprocessorFactoryImpl);
     let extractor_factory = Box::new(ExtractorFactoryImpl);
     let repository = Box::new(TantivyRepository::new(&cfg)?);
 
     let indexer = Indexer::new(
-        fs_sink,
+        output,
         notifier,
         preprocessor_factory,
         extractor_factory,
