@@ -5,6 +5,9 @@ use thiserror::Error;
 use tungstenite::handshake::server::{NoCallback, ServerHandshake};
 use tungstenite::handshake::HandshakeError;
 
+use crate::use_cases::event::Event;
+
+// TODO: Remove no longer needed errors after finishing the refactor
 #[derive(Debug, Error)]
 pub enum DoxErr {
     #[error("Invalid watched directory: '{0}'")]
@@ -36,6 +39,9 @@ pub enum DoxErr {
 
     #[error("Error when sending path through channel: '{0}'")]
     Send(#[from] std::sync::mpsc::SendError<PathBuf>),
+
+    #[error("Error when sending event through channel: '{0}'")]
+    SendEvent(#[from] std::sync::mpsc::SendError<Event>),
 
     #[error("Error when receiving list of paths through channel: '{0}'")]
     Recv(#[from] std::sync::mpsc::RecvError),

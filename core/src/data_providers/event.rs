@@ -17,7 +17,7 @@ pub struct ChannelInput {
 
 impl Input for ChannelInput {
     fn recv(&self) -> Result<Event> {
-        unimplemented!()
+        Ok(self.rx.recv()?)
     }
 }
 
@@ -28,6 +28,7 @@ pub struct ChannelOutput {
 
 impl Output for ChannelOutput {
     fn send(&self, event: Event) -> Result<()> {
-        unimplemented!()
+        self.tx.send(event)?;
+        Ok(())
     }
 }
