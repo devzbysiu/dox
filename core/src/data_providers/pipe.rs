@@ -1,5 +1,5 @@
 use crate::result::Result;
-use crate::use_cases::event::{Event, Input, Output};
+use crate::use_cases::pipe::{Event, Input, Output};
 
 use std::sync::mpsc::{channel, Receiver, Sender};
 

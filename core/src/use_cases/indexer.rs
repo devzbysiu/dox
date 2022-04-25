@@ -1,8 +1,8 @@
 use crate::configuration::cfg::Config;
 use crate::result::Result;
-use crate::use_cases::event::{Event, Input};
 use crate::use_cases::extractor::ExtractorFactory;
 use crate::use_cases::notifier::Notifier;
+use crate::use_cases::pipe::{Event, Input};
 use crate::use_cases::preprocessor::PreprocessorFactory;
 use crate::use_cases::repository::Repository;
 

@@ -2,11 +2,11 @@
 
 use crate::configuration::cfg::Config;
 use crate::data_providers::config::{FsConfigLoader, FsConfigResolver};
-use crate::data_providers::event::channel_pipe;
 use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::fs_watcher::FsWatcher;
 use crate::data_providers::notifier::WsNotifier;
 use crate::data_providers::persistence::FsPersistence;
+use crate::data_providers::pipe::channel_pipe;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::repository::TantivyRepository;
 use crate::data_providers::server::{all_thumbnails, receive_document, search};

@@ -5,7 +5,7 @@ use thiserror::Error;
 use tungstenite::handshake::server::{NoCallback, ServerHandshake};
 use tungstenite::handshake::HandshakeError;
 
-use crate::use_cases::event::Event;
+use crate::use_cases::pipe::Event;
 
 // TODO: Remove no longer needed errors after finishing the refactor
 #[derive(Debug, Error)]
