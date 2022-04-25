@@ -3,6 +3,9 @@ use crate::use_cases::pipe::{Event, Input, Output};
 
 use std::sync::mpsc::{channel, Receiver, Sender};
 
+/// Creates a local pipe which is connected via [`channel`].
+///
+/// Local means that no Inter Process Communication is made in this case.
 pub fn channel_pipe() -> (Box<dyn Input>, Box<dyn Output>) {
     let (tx, rx) = channel();
     let input = Box::new(ChannelInput { rx });
@@ -10,6 +13,7 @@ pub fn channel_pipe() -> (Box<dyn Input>, Box<dyn Output>) {
     (input, output)
 }
 
+/// Represents [`Input`] which allows receiving [`Event`]s.
 #[derive(Debug)]
 pub struct ChannelInput {
     rx: Receiver<Event>,
@@ -21,6 +25,7 @@ impl Input for ChannelInput {
     }
 }
 
+/// Represents [`Output`] which allows sending [`Event`]s.
 #[derive(Debug)]
 pub struct ChannelOutput {
     tx: Sender<Event>,
