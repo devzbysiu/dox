@@ -2,7 +2,6 @@ pub mod config;
 pub mod event;
 pub mod extractor;
 pub mod indexer;
-pub mod indexing_trigger;
 pub mod notifier;
 pub mod persistence;
 pub mod preprocessor;

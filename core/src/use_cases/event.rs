@@ -20,7 +20,7 @@ pub trait Input: Send + Debug {
 /// This can be send across threads.
 pub trait Output: Sync + Send + Debug {
     /// Sends one [`Location`].
-    fn send(&self, location: Location) -> Result<()>;
+    fn send(&self, event: Event) -> Result<()>;
 }
 
 /// Represents events happening in the system.
@@ -29,8 +29,4 @@ pub trait Output: Sync + Send + Debug {
 pub enum Event {
     /// Represents new documents appearing in the system.
     NewDocs(Location),
-}
-
-pub fn channel_pipe() -> (Box<dyn Input>, Box<dyn Output>) {
-    unimplemented!()
 }
