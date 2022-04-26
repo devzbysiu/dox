@@ -2,13 +2,8 @@
 
 use crate::configuration::cfg::Config;
 use crate::configuration::factories::{config_loader, config_resolver};
-use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::fs_watcher::FsWatcher;
-use crate::data_providers::notifier::WsNotifier;
-use crate::data_providers::persistence::FsPersistence;
 use crate::data_providers::pipe::channel_pipe;
-use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
-use crate::data_providers::repository::TantivyRepository;
 use crate::data_providers::server::{all_thumbnails, receive_document, search};
 use crate::result::Result;
 use crate::telemetry::init_tracing;
@@ -20,7 +15,9 @@ use rocket::{routes, Build, Rocket};
 use std::env;
 use tracing::{debug, instrument};
 
-use super::factories::{extractor_factory, notifier, preprocessor_factory, repository};
+use super::factories::{
+    extractor_factory, notifier, persistence, preprocessor_factory, repository,
+};
 
 #[must_use]
 #[instrument]
@@ -39,15 +36,13 @@ pub fn launch() -> Rocket<Build> {
 
     let repository = setup_core(&cfg).expect("failed to setup core");
 
-    let fs_persistence = Box::new(FsPersistence);
-
     debug!("starting server...");
     rocket::build()
         .mount("/", routes![search, all_thumbnails, receive_document])
         .mount("/thumbnail", FileServer::from(&cfg.thumbnails_dir))
         .mount("/document", FileServer::from(&cfg.watched_dir))
         .manage(repository)
-        .manage(fs_persistence)
+        .manage(persistence())
         .manage(cfg)
 }
 
