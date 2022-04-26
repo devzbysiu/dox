@@ -31,7 +31,12 @@ impl TextExtractor for FromPdf {
     #[allow(unused)]
     #[instrument]
     fn extract_text_from_location(&self, location: &Location) -> Result<Vec<DocDetails>> {
-        unimplemented!()
+        let Location::FileSystem(paths) = location;
+        Ok(paths
+            .par_iter()
+            .map(extract)
+            .filter_map(Result::ok)
+            .collect::<Vec<DocDetails>>())
     }
 }
 
