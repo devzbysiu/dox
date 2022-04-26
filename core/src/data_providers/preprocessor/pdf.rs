@@ -73,10 +73,13 @@ impl FilePreprocessor for Pdf {
         Ok(())
     }
 
-    #[allow(unused)]
     #[instrument]
     fn preprocess_location(&self, location: &Location) -> Result<()> {
-        unimplemented!()
+        let Location::FileSystem(paths) = location;
+        for pdf_path in paths {
+            self.generate(pdf_path, &self.thumbnail_path(pdf_path))?;
+        }
+        Ok(())
     }
 }
 

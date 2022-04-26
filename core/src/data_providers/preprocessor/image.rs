@@ -33,10 +33,14 @@ impl FilePreprocessor for Image {
         Ok(())
     }
 
-    #[allow(unused)]
     #[instrument]
     fn preprocess_location(&self, location: &Location) -> Result<()> {
-        unimplemented!()
+        let Location::FileSystem(paths) = location;
+        for p in paths {
+            debug!("moving {} to {}", p.display(), self.thumbnails_dir.str());
+            fs::copy(p, self.thumbnails_dir.join(p.filename()))?;
+        }
+        Ok(())
     }
 }
 
