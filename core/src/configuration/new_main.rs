@@ -1,7 +1,7 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
 use crate::configuration::cfg::Config;
-use crate::data_providers::config::{FsConfigLoader, FsConfigResolver};
+use crate::configuration::factories::{config_loader, config_resolver};
 use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::fs_watcher::FsWatcher;
 use crate::data_providers::notifier::WsNotifier;
@@ -12,7 +12,6 @@ use crate::data_providers::repository::TantivyRepository;
 use crate::data_providers::server::{all_thumbnails, receive_document, search};
 use crate::result::Result;
 use crate::telemetry::init_tracing;
-use crate::use_cases::config::ConfigResolver;
 use crate::use_cases::indexer::Indexer;
 use crate::use_cases::repository::Repository;
 
@@ -20,6 +19,8 @@ use rocket::fs::FileServer;
 use rocket::{routes, Build, Rocket};
 use std::env;
 use tracing::{debug, instrument};
+
+use super::factories::{extractor_factory, notifier, preprocessor_factory, repository};
 
 #[must_use]
 #[instrument]
@@ -30,7 +31,7 @@ pub fn launch() -> Rocket<Build> {
         .ok()
         .or_else(|| env::args().nth(1));
 
-    let resolver = FsConfigResolver::new(Box::new(FsConfigLoader));
+    let resolver = config_resolver(config_loader());
 
     let cfg = resolver
         .handle_config(path_override)
@@ -54,16 +55,13 @@ fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
     let (input, output) = channel_pipe();
     FsWatcher::run(&cfg, output);
 
-    let notifier = Box::new(WsNotifier::new(&cfg)?);
-    let preprocessor_factory = Box::new(PreprocessorFactoryImpl);
-    let extractor_factory = Box::new(ExtractorFactoryImpl);
-    let repository = Box::new(TantivyRepository::new(&cfg)?);
+    let repository = repository(cfg)?;
 
     let indexer = Indexer::new(
         input,
-        notifier,
-        preprocessor_factory,
-        extractor_factory,
+        notifier(cfg)?,
+        preprocessor_factory(),
+        extractor_factory(),
         repository.clone(),
     );
 

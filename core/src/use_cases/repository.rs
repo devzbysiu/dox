@@ -2,10 +2,12 @@
 use crate::entities::document::DocDetails;
 use crate::result::Result;
 
+use dyn_clonable::clonable;
 use serde::Serialize;
 
 /// Allows to index and search documents.
-pub trait Repository: Sync + Send {
+#[clonable]
+pub trait Repository: Clone + Sync + Send {
     /// Indexes documents.
     fn index(&self, docs_details: Vec<DocDetails>) -> Result<()>;
     /// Returns list of documents mathing passed query.
