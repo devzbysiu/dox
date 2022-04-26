@@ -67,6 +67,8 @@ mod test {
     use anyhow::Result;
     use tempfile::tempdir;
 
+    use crate::data_providers::config::config_path;
+
     use super::*;
 
     #[test]

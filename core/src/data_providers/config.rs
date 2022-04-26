@@ -62,7 +62,7 @@ impl ConfigResolver for FsConfigResolver {
     }
 }
 
-fn config_path() -> PathBuf {
+pub fn config_path() -> PathBuf {
     dirs::config_dir()
         .expect("failed to read system config direcory")
         .join("dox/dox.toml")
