@@ -36,12 +36,6 @@ pub fn load<P: AsRef<Path> + Debug>(config_path: P) -> Result<Config> {
     Ok(toml::from_str(&read_to_string(config_path)?)?)
 }
 
-pub fn config_path() -> PathBuf {
-    dirs::config_dir()
-        .expect("failed to read system config direcory")
-        .join("dox/dox.toml")
-}
-
 fn index_dir_default() -> PathBuf {
     dirs::data_dir()
         .expect("failed to read system data path")

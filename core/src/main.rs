@@ -1,9 +1,17 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
-use crate::server::{all_thumbnails, receive_document, search};
-use crate::setup::setup;
+use crate::configuration::cfg::Config;
+use crate::configuration::factories::{
+    config_loader, config_resolver, extractor_factory, notifier, persistence, preprocessor_factory,
+    repository,
+};
+use crate::data_providers::fs_watcher::FsWatcher;
+use crate::data_providers::pipe::channel_pipe;
+use crate::data_providers::server::{all_thumbnails, receive_document, search};
+use crate::result::Result;
 use crate::telemetry::init_tracing;
-use crate::user_input::handle_config;
+use crate::use_cases::indexer::Indexer;
+use crate::use_cases::repository::Repository;
 
 use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
@@ -13,35 +21,55 @@ use tracing::{debug, instrument};
 mod configuration;
 mod data_providers;
 mod entities;
+mod use_cases;
+
 mod helpers;
-mod indexer;
-mod notifier;
 mod prompt;
 mod result;
-mod server;
-mod setup;
 mod telemetry;
-mod use_cases;
-mod user_input;
 
-#[launch]
 #[must_use]
 #[instrument]
+#[launch]
 pub fn launch() -> Rocket<Build> {
     init_tracing();
 
     let path_override = env::var("DOX_CONFIG_PATH")
         .ok()
         .or_else(|| env::args().nth(1));
-    let cfg = handle_config(path_override).expect("failed to get config");
 
-    let config = cfg.clone();
-    let repo = setup(config).expect("failed to setup indexer");
+    let resolver = config_resolver(config_loader());
+
+    let cfg = resolver
+        .handle_config(path_override)
+        .expect("failed to get config");
+
+    let repository = setup_core(&cfg).expect("failed to setup core");
+
     debug!("starting server...");
     rocket::build()
         .mount("/", routes![search, all_thumbnails, receive_document])
         .mount("/thumbnail", FileServer::from(&cfg.thumbnails_dir))
         .mount("/document", FileServer::from(&cfg.watched_dir))
-        .manage(repo)
+        .manage(repository)
+        .manage(persistence())
         .manage(cfg)
+}
+
+fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
+    let (input, output) = channel_pipe();
+    FsWatcher::run(&cfg, output);
+
+    let repository = repository(cfg)?;
+
+    let indexer = Indexer::new(
+        input,
+        notifier(cfg)?,
+        preprocessor_factory(),
+        extractor_factory(),
+        repository.clone(),
+    );
+
+    indexer.run(cfg.clone());
+    Ok(repository)
 }
