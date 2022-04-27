@@ -1,6 +1,6 @@
 use crate::configuration::cfg::Config;
+use crate::data_providers::prompt;
 use crate::helpers::PathRefExt;
-use crate::prompt;
 use crate::result::{DoxErr, Result};
 use crate::use_cases::config::{ConfigLoader, ConfigResolver};
 

@@ -5,5 +5,6 @@ pub mod notifier;
 pub mod persistence;
 pub mod pipe;
 pub mod preprocessor;
+pub mod prompt;
 pub mod repository;
 pub mod server;

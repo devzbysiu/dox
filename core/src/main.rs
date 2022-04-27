@@ -24,7 +24,6 @@ mod entities;
 mod use_cases;
 
 mod helpers;
-mod prompt;
 mod result;
 mod telemetry;
 
