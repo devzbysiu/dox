@@ -1,4 +1,6 @@
 //! Abstraction for indexing and searching documents.
+use std::collections::HashSet;
+
 use crate::entities::document::DocDetails;
 use crate::result::Result;
 
@@ -9,7 +11,7 @@ use serde::Serialize;
 #[clonable]
 pub trait Repository: Clone + Sync + Send {
     /// Indexes documents.
-    fn index(&self, docs_details: Vec<DocDetails>) -> Result<()>;
+    fn index(&self, docs_details: &[DocDetails]) -> Result<()>;
     /// Returns list of documents mathing passed query.
     fn search(&self, q: String) -> Result<SearchResult>;
     /// Returns list of all indexed documents.
@@ -19,17 +21,19 @@ pub trait Repository: Clone + Sync + Send {
 /// Holds list of basic document details.
 #[derive(Debug, Serialize, Default, PartialEq, Eq)]
 pub struct SearchResult {
-    entries: Vec<SearchEntry>,
+    entries: HashSet<SearchEntry>,
 }
 
 impl SearchResult {
-    pub fn new(entries: Vec<SearchEntry>) -> Self {
-        Self { entries }
+    pub fn from_vec(entries: Vec<SearchEntry>) -> Self {
+        Self {
+            entries: entries.into_iter().collect(),
+        }
     }
 }
 
 /// Basic document details.
-#[derive(Debug, Serialize, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SearchEntry {
     filename: String,
     thumbnail: String,

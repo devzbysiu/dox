@@ -66,7 +66,7 @@ impl TantivyRepository {
             let thumbnails = retrieved_doc.get_all(self.field(&Fields::Thumbnail));
             results.extend(to_search_entries(filenames, thumbnails));
         }
-        Ok(SearchResult::new(results))
+        Ok(SearchResult::from_vec(results))
     }
 }
 
@@ -79,7 +79,7 @@ impl Repository for TantivyRepository {
     }
 
     #[instrument(skip(self, docs_details))]
-    fn index(&self, docs_details: Vec<DocDetails>) -> Result<()> {
+    fn index(&self, docs_details: &[DocDetails]) -> Result<()> {
         let index = &self.index;
         let schema = &self.schema;
         // NOTE: IndexWriter is already multithreaded and
@@ -151,5 +151,143 @@ impl ValueExt for Value {
         self.as_text()
             .unwrap_or_else(|| panic!("failed to extract text"))
             .to_string()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use anyhow::Result;
+    use std::fs::File;
+    use std::time::Duration;
+    use testutils::{index_dir_path, thumbnails_dir_path, watched_dir_path};
+
+    #[test]
+    fn test_mk_index_and_schema_when_index_dir_is_taken_by_file() -> Result<()> {
+        // given
+        let config = create_config()?;
+        File::create(&config.index_dir)?;
+
+        // when
+        let result = TantivyRepository::new(&config);
+
+        // then
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            format!(
+                "Invalid index path: 'It needs to be a directory: '{}''",
+                config.index_dir.display()
+            )
+        );
+        Ok(())
+    }
+
+    fn create_config() -> Result<Config> {
+        // NOTE: TempDir is removed on the end of this fn call,
+        // but paths are randomized so it's still useful
+        let index_dir = index_dir_path()?;
+        let watched_dir = watched_dir_path()?;
+        let thumbnails_dir = thumbnails_dir_path()?;
+        Ok(Config {
+            watched_dir: watched_dir.path().to_path_buf(),
+            thumbnails_dir: thumbnails_dir.path().to_path_buf(),
+            index_dir: index_dir.path().to_path_buf(),
+            cooldown_time: Duration::from_secs(1),
+            notifications_addr: "0.0.0.0:8001".parse()?,
+        })
+    }
+
+    #[test]
+    fn test_index_docs() -> Result<()> {
+        // given
+        let config = create_config()?;
+        let repo = TantivyRepository::new(&config)?;
+        let tuples_to_index = vec![
+            DocDetails::new("filename1", "body1", "thumbnail1"),
+            DocDetails::new("filename2", "body2", "thumbnail2"),
+            DocDetails::new("filename3", "body3", "thumbnail3"),
+            DocDetails::new("filename4", "body4", "thumbnail4"),
+            DocDetails::new("filename5", "body5", "thumbnail5"),
+        ];
+
+        // when
+        repo.index(&tuples_to_index)?;
+        // TODO: this test should check only indexing but it's also
+        // searching via all_documents
+        let all_docs = repo.all_documents()?;
+
+        // then
+        assert_eq!(
+            all_docs,
+            SearchResult::from_vec(vec![
+                SearchEntry::new(("filename1".into(), "thumbnail1".into())),
+                SearchEntry::new(("filename2".into(), "thumbnail2".into())),
+                SearchEntry::new(("filename3".into(), "thumbnail3".into())),
+                SearchEntry::new(("filename4".into(), "thumbnail4".into())),
+                SearchEntry::new(("filename5".into(), "thumbnail5".into())),
+            ])
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_search() -> Result<()> {
+        // given
+        let config = create_config()?;
+        let repo = TantivyRepository::new(&config)?;
+        let tuples_to_index = vec![
+            DocDetails::new("filename1", "some document body", "thumbnail1"),
+            DocDetails::new("filename2", "another text here", "thumbnail2"),
+            DocDetails::new("filename3", "important information", "thumbnail3"),
+            DocDetails::new("filename4", "this is not so important", "thumbnail4"),
+            DocDetails::new("filename5", "and this is last line", "thumbnail5"),
+        ];
+
+        // when
+        repo.index(&tuples_to_index)?;
+        let results = repo.search("line".into())?;
+
+        // then
+        assert_eq!(
+            results,
+            SearchResult::from_vec(vec![SearchEntry::new((
+                "filename5".into(),
+                "thumbnail5".into()
+            )),])
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_search_with_fuzziness() -> Result<()> {
+        // given
+        let config = create_config()?;
+        let repo = TantivyRepository::new(&config)?;
+        let tuples_to_index = vec![
+            DocDetails::new("filename1", "some document body", "thumbnail1"),
+            DocDetails::new("filename2", "another text here", "thumbnail2"),
+            DocDetails::new("filename3", "this is unique word: 9fZX", "thumbnail3"),
+        ];
+
+        // when
+        repo.index(&tuples_to_index)?;
+        // NOTE: it's not the same word as above, two letters of fuzziness is fine
+        let first_results = repo.search("9fAB".into())?;
+        // NOTE: three letters is too much
+        let second_results = repo.search("9ABC".into())?;
+
+        // then
+        assert_eq!(
+            first_results,
+            SearchResult::from_vec(vec![SearchEntry::new((
+                "filename3".into(),
+                "thumbnail3".into()
+            )),])
+        );
+        assert_eq!(second_results, SearchResult::from_vec(vec![]));
+
+        Ok(())
     }
 }

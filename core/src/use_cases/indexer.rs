@@ -47,7 +47,7 @@ impl Indexer {
                         let extractor = self.extractor_factory.from_ext(&extension);
                         preprocessor.preprocess_location(&location)?;
                         let tuples = extractor.extract_text_from_location(&location)?;
-                        self.repository.index(tuples)?;
+                        self.repository.index(&tuples)?;
                         self.notifier.notify()?;
                     }
                     Err(e) => error!("failed to receive event: {}", e),
