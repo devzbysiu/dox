@@ -5,11 +5,11 @@ use crate::configuration::factories::{
     config_loader, config_resolver, extractor_factory, notifier, persistence, preprocessor_factory,
     repository,
 };
+use crate::configuration::telemetry::init_tracing;
 use crate::data_providers::fs_watcher::FsWatcher;
 use crate::data_providers::pipe::channel_pipe;
 use crate::data_providers::server::{all_thumbnails, receive_document, search};
 use crate::result::Result;
-use crate::telemetry::init_tracing;
 use crate::use_cases::indexer::Indexer;
 use crate::use_cases::repository::Repository;
 
@@ -25,7 +25,6 @@ mod use_cases;
 
 mod helpers;
 mod result;
-mod telemetry;
 
 #[must_use]
 #[instrument]
