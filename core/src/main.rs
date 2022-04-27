@@ -56,7 +56,7 @@ pub fn launch() -> Rocket<Build> {
 
 fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
     let (input, output) = channel_pipe();
-    FsWatcher::run(&cfg, output);
+    FsWatcher::run(cfg, output);
 
     let repository = repository(cfg)?;
 

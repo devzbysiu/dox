@@ -24,7 +24,7 @@ impl FsWatcher {
             loop {
                 match watcher_rx.recv() {
                     Ok(DebouncedEvent::Create(path)) => {
-                        output.send(Event::NewDocs(Location::FileSystem(vec![path])))?
+                        output.send(Event::NewDocs(Location::FileSystem(vec![path])))?;
                     }
                     Ok(e) => warn!("this FS event is not supported: {:?}", e),
                     Err(e) => error!("watch error: {:?}", e),

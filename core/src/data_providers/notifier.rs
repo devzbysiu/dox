@@ -10,6 +10,7 @@ use tungstenite::{accept, Message, WebSocket};
 
 use tracing::debug;
 
+#[allow(clippy::module_name_repetitions)]
 pub struct WsNotifier {
     tx: Sender<()>,
 }

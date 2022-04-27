@@ -15,6 +15,7 @@ use tracing::{debug, instrument};
 /// It's using [`LepTess`] to extract text from the image. All images pointed by `paths` are
 /// processed in parallel thanks to [`ParallelIterator`].
 #[derive(Debug, Default)]
+#[allow(clippy::module_name_repetitions)]
 pub struct FromImage;
 
 impl TextExtractor for FromImage {

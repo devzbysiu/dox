@@ -5,6 +5,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
+#[allow(clippy::module_name_repetitions)]
 pub struct FsPersistence;
 
 impl Persistence for FsPersistence {

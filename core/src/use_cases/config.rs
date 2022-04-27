@@ -10,6 +10,7 @@ use crate::result::Result;
 /// Responsible for reading/saving the configuration from/to some medium.
 ///
 /// Used medium is the implementation detail and is not part of this interface.
+#[allow(clippy::module_name_repetitions)]
 pub trait ConfigLoader {
     /// Reads the configuration.
     ///
@@ -27,6 +28,7 @@ pub trait ConfigLoader {
 /// Handles config override.
 ///
 /// When user specifies configuration path during startup, this interface handles this case.
+#[allow(clippy::module_name_repetitions)]
 pub trait ConfigResolver {
     /// Loads the [`Config`] using specified path.
     ///

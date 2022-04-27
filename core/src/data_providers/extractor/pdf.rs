@@ -16,6 +16,7 @@ use tracing::instrument;
 /// It uses [`extract_text`] to extract text. All files pointed by `paths` are processed in
 /// parallel.
 #[derive(Debug, Default)]
+#[allow(clippy::module_name_repetitions)]
 pub struct FromPdf;
 
 impl TextExtractor for FromPdf {

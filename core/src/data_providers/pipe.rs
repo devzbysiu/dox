@@ -6,6 +6,7 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 /// Creates a local pipe which is connected via [`channel`].
 ///
 /// Local means that no Inter Process Communication is made in this case.
+#[allow(clippy::module_name_repetitions)]
 pub fn channel_pipe() -> (Box<dyn Input>, Box<dyn Output>) {
     let (tx, rx) = channel();
     let input = Box::new(ChannelInput { rx });
