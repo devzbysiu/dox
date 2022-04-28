@@ -1,6 +1,5 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
-use crate::configuration::cfg::Config;
 use crate::configuration::factories::{
     config_loader, config_resolver, extractor_factory, notifier, persistence, preprocessor_factory,
     repository,
@@ -10,6 +9,7 @@ use crate::data_providers::fs_watcher::FsWatcher;
 use crate::data_providers::pipe::channel_pipe;
 use crate::data_providers::server::{all_thumbnails, receive_document, search};
 use crate::result::Result;
+use crate::use_cases::config::Config;
 use crate::use_cases::indexer::Indexer;
 use crate::use_cases::repository::Repository;
 

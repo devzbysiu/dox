@@ -1,7 +1,7 @@
-use crate::configuration::cfg::Config;
 use crate::data_providers::preprocessor::image::Image;
 use crate::data_providers::preprocessor::pdf::Pdf;
 use crate::entities::extension::Ext;
+use crate::use_cases::config::Config;
 use crate::use_cases::preprocessor::{Preprocessor, PreprocessorFactory};
 
 pub mod image;

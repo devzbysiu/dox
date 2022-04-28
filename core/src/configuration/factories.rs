@@ -1,4 +1,3 @@
-use crate::configuration::cfg::Config;
 use crate::data_providers::config::{FsConfigLoader, FsConfigResolver};
 use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::notifier::WsNotifier;
@@ -6,6 +5,7 @@ use crate::data_providers::persistence::FsPersistence;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::repository::TantivyRepository;
 use crate::result::Result;
+use crate::use_cases::config::Config;
 use crate::use_cases::config::{ConfigLoader, ConfigResolver};
 use crate::use_cases::extractor::ExtractorFactory;
 use crate::use_cases::notifier::Notifier;

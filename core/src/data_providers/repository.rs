@@ -1,6 +1,6 @@
-use crate::configuration::cfg::Config;
 use crate::entities::document::DocDetails;
 use crate::result::{DoxErr, Result};
+use crate::use_cases::config::Config;
 use crate::use_cases::repository::{Repository, SearchEntry, SearchResult};
 
 use core::fmt;

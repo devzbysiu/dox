@@ -1,6 +1,6 @@
-use crate::configuration::cfg::Config;
 use crate::entities::location::Location;
 use crate::result::Result;
+use crate::use_cases::config::Config;
 use crate::use_cases::pipe::{Event, Output};
 
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};

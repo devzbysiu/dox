@@ -1,5 +1,5 @@
-use crate::configuration::cfg::Config;
 use crate::result::Result;
+use crate::use_cases::config::Config;
 use crate::use_cases::persistence::Persistence;
 use crate::use_cases::repository::{Repository, SearchResult};
 

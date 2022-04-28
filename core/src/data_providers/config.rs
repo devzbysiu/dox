@@ -1,8 +1,7 @@
-use crate::configuration::cfg::Config;
 use crate::data_providers::prompt;
 use crate::helpers::PathRefExt;
 use crate::result::{DoxErr, Result};
-use crate::use_cases::config::{ConfigLoader, ConfigResolver};
+use crate::use_cases::config::{Config, ConfigLoader, ConfigResolver};
 
 use inquire::error::InquireError;
 use std::fs::create_dir_all;

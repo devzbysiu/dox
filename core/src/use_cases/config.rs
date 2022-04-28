@@ -2,10 +2,12 @@
 //!
 //! The actual place where the config will be saved to or read from is not tight to this interface
 //! and it's considered to be implementation detail.
-use std::path::PathBuf;
-
-use crate::configuration::cfg::Config;
 use crate::result::Result;
+
+use serde::{Deserialize, Serialize};
+use std::net::SocketAddrV4;
+use std::path::PathBuf;
+use std::time::Duration;
 
 /// Responsible for reading/saving the configuration from/to some medium.
 ///
@@ -36,4 +38,64 @@ pub trait ConfigResolver {
     /// If the path is `None`, then no override takes place and configuration should be loaded from
     /// original path.
     fn handle_config(&self, path_override: Option<String>) -> Result<Config>;
+}
+
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
+pub struct Config {
+    pub watched_dir: PathBuf,
+    pub thumbnails_dir: PathBuf,
+    pub index_dir: PathBuf,
+    pub notifications_addr: SocketAddrV4,
+    pub cooldown_time: Duration,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            watched_dir: PathBuf::from(""),
+            thumbnails_dir: thumbnails_dir_default(),
+            index_dir: index_dir_default(),
+            cooldown_time: Duration::from_secs(60),
+            notifications_addr: "0.0.0.0:8001".parse().unwrap(),
+        }
+    }
+}
+
+fn index_dir_default() -> PathBuf {
+    dirs::data_dir()
+        .expect("failed to read system data path")
+        .join("dox/index")
+}
+
+fn thumbnails_dir_default() -> PathBuf {
+    dirs::data_dir()
+        .expect("failed to read system data path")
+        .join("dox/thumbnails")
+}
+
+#[cfg(test)]
+mod test {
+    use anyhow::Result;
+
+    use super::*;
+
+    #[test]
+    fn test_default_config() -> Result<()> {
+        // given
+        let cfg = Config {
+            watched_dir: PathBuf::from(""),
+            thumbnails_dir: dirs::data_dir().unwrap().join("dox/thumbnails"),
+            index_dir: dirs::data_dir().unwrap().join("dox/index"),
+            cooldown_time: Duration::from_secs(60),
+            notifications_addr: "0.0.0.0:8001".parse()?,
+        };
+
+        // when
+        let default_cfg = Config::default();
+
+        // then
+        assert_eq!(cfg, default_cfg);
+
+        Ok(())
+    }
 }

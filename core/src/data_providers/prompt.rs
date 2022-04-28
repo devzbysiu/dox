@@ -1,6 +1,6 @@
-use crate::configuration::cfg::Config;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
+use crate::use_cases::config::Config;
 
 use inquire::{required, CustomType, Text};
 use std::fs;
