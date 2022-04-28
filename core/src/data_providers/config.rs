@@ -125,3 +125,59 @@ fn check_index_dir(config: &Config) -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use crate::data_providers::config::config_path;
+
+    use anyhow::Result;
+    use std::fs::read_to_string;
+    use std::path::Path;
+    use std::time::Duration;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_load_config() -> Result<()> {
+        // given
+        let tmp_cfg = tempdir()?;
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        create_config(
+            &cfg_path,
+            r#"
+            watched_dir = "/home/zbyniu/Tests/notify"
+            thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
+            index_dir = "/home/zbyniu/.local/share/dox/index"
+            notifications_addr = "0.0.0.0:8001"
+
+            [cooldown_time]
+            secs = 1
+            nanos = 0
+            "#,
+        )?;
+        let expected = Config {
+            watched_dir: PathBuf::from("/home/zbyniu/Tests/notify"),
+            thumbnails_dir: PathBuf::from("/home/zbyniu/.local/share/dox/thumbnails"),
+            index_dir: PathBuf::from("/home/zbyniu/.local/share/dox/index"),
+            cooldown_time: Duration::from_secs(1),
+            notifications_addr: "0.0.0.0:8001".parse()?,
+        };
+        let loader = FsConfigLoader;
+
+        // when
+        let read_cfg = loader.load(cfg_path)?;
+
+        // then
+        assert_eq!(expected, read_cfg);
+
+        Ok(())
+    }
+
+    fn create_config<S: Into<String>, A: AsRef<Path>>(path: A, content: S) -> Result<()> {
+        let path = path.as_ref();
+        let mut cfg_file = File::create(&path)?;
+        cfg_file.write_all(content.into().as_bytes())?;
+        Ok(())
+    }
+}
