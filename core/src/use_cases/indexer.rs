@@ -43,11 +43,9 @@ impl Indexer {
                 match self.input.recv() {
                     Ok(Event::NewDocs(location)) => {
                         let extension = location.extension();
-                        let preprocessor = self
-                            .preprocessor_factory
-                            .from_ext(&extension, &config.thumbnails_dir);
+                        let preprocessor = self.preprocessor_factory.from_ext(&extension);
                         let extractor = self.extractor_factory.from_ext(&extension);
-                        preprocessor.preprocess(&location)?;
+                        preprocessor.preprocess(&location, &config.thumbnails_dir)?;
                         let tuples = extractor.extract_text(&location)?;
                         self.repository.index(&tuples)?;
                         self.notifier.notify()?;

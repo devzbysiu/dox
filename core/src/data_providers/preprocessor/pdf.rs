@@ -5,7 +5,7 @@ use crate::use_cases::preprocessor::FilePreprocessor;
 
 use cairo::{Context, Format, ImageSurface};
 use poppler::{PopplerDocument, PopplerPage};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::{fmt::Debug, fs::File};
 use tracing::{debug, instrument};
 
@@ -16,20 +16,9 @@ const FIRST: usize = 0;
 /// The thumbnail is used by the client application to display the document. Always the first page
 /// of the PDF document is used to generate the thumbnail.
 #[derive(Debug)]
-pub struct Pdf {
-    thumbnails_dir: PathBuf,
-}
+pub struct Pdf;
 
 impl Pdf {
-    pub fn new<P: AsRef<Path>>(thumbnails_dir: P) -> Self {
-        let thumbnails_dir = thumbnails_dir.as_ref().to_path_buf();
-        Self { thumbnails_dir }
-    }
-
-    fn thumbnail_path<P: AsRef<Path>>(&self, path: P) -> PathBuf {
-        self.thumbnails_dir.join(format!("{}.png", path.filestem()))
-    }
-
     #[instrument(skip(self))]
     fn generate(&self, pdf_path: &Path, out_path: &Path) -> Result<()> {
         let page = first_page(&pdf_path)?;
@@ -66,10 +55,11 @@ fn paint_background_and_scale(page: &PopplerPage) -> Result<ImageSurface> {
 
 impl FilePreprocessor for Pdf {
     #[instrument]
-    fn preprocess(&self, location: &Location) -> Result<()> {
+    fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<()> {
         let Location::FileSystem(paths) = location;
         for pdf_path in paths {
-            self.generate(pdf_path, &self.thumbnail_path(pdf_path))?;
+            let thumbnail_path = thumbnails_dir.join(format!("{}.png", pdf_path.filestem()));
+            self.generate(pdf_path, &thumbnail_path)?;
         }
         Ok(())
     }
@@ -77,23 +67,24 @@ impl FilePreprocessor for Pdf {
 
 #[cfg(test)]
 mod test {
-    use tempfile::tempdir;
+    use super::*;
 
     use crate::helpers::DirEntryExt;
 
-    use super::*;
+    use std::path::PathBuf;
+    use tempfile::tempdir;
 
     #[test]
     fn test_preprocess_with_correct_files() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
-        let preprocessor = Pdf::new(&tmp_dir);
+        let preprocessor = Pdf;
         let paths = vec![PathBuf::from("res/doc1.pdf")];
         let is_empty = tmp_dir.path().read_dir()?.next().is_none();
         assert!(is_empty);
 
         // when
-        preprocessor.preprocess(&Location::FileSystem(paths))?;
+        preprocessor.preprocess(&Location::FileSystem(paths), tmp_dir.path())?;
         let file = tmp_dir.path().read_dir()?.next().unwrap()?.filename();
 
         // then
@@ -107,12 +98,12 @@ mod test {
     fn test_preprocess_with_wrong_files() {
         // given
         let tmp_dir = tempdir().unwrap();
-        let preprocessor = Pdf::new(tmp_dir);
+        let preprocessor = Pdf;
         let paths = vec![PathBuf::from("res/doc8.jpg")];
 
         // then
         preprocessor
-            .preprocess(&Location::FileSystem(paths))
+            .preprocess(&Location::FileSystem(paths), tmp_dir.path())
             .unwrap(); // should panic
     }
 }

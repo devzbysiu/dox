@@ -11,7 +11,7 @@ use std::path::Path;
 /// [`Indexer::run`](crate::use_cases::indexer::Indexer::run).
 #[allow(clippy::module_name_repetitions)]
 pub trait FilePreprocessor {
-    fn preprocess(&self, location: &Location) -> Result<()>;
+    fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<()>;
 }
 
 /// Creates [`Preprocessor`].
@@ -19,7 +19,7 @@ pub trait FilePreprocessor {
 pub trait PreprocessorFactory: Sync + Send {
     /// Creates [`Preprocessor`] based on the extesion. PDF files require different preprocessing
     /// than images.
-    fn from_ext(&self, ext: &Ext, thumbnails_dir: &Path) -> Preprocessor;
+    fn from_ext(&self, ext: &Ext) -> Preprocessor;
 }
 
 pub type Preprocessor = Box<dyn FilePreprocessor>;

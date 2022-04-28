@@ -3,8 +3,6 @@ use crate::data_providers::preprocessor::pdf::Pdf;
 use crate::entities::extension::Ext;
 use crate::use_cases::preprocessor::{Preprocessor, PreprocessorFactory};
 
-use std::path::Path;
-
 pub mod image;
 pub mod pdf;
 
@@ -21,10 +19,10 @@ pub mod pdf;
 pub struct PreprocessorFactoryImpl;
 
 impl PreprocessorFactory for PreprocessorFactoryImpl {
-    fn from_ext(&self, ext: &Ext, thumbnails_dir: &Path) -> Preprocessor {
+    fn from_ext(&self, ext: &Ext) -> Preprocessor {
         match ext {
-            Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Image::new(thumbnails_dir)),
-            Ext::Pdf => Box::new(Pdf::new(thumbnails_dir)),
+            Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Image),
+            Ext::Pdf => Box::new(Pdf),
         }
     }
 }
@@ -58,8 +56,8 @@ mod test {
             let paths = vec![PathBuf::from(test_case.1)];
 
             // when
-            let extractor = preprocessor_factory.from_ext(&ext, &thumbnails_dir.path());
-            extractor.preprocess(&Location::FileSystem(paths))?;
+            let extractor = preprocessor_factory.from_ext(&ext);
+            extractor.preprocess(&Location::FileSystem(paths), thumbnails_dir.path())?;
 
             // then
             let filename = thumbnails_dir.path().first_filename()?;
