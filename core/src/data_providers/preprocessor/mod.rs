@@ -33,10 +33,11 @@ impl PreprocessorFactory for PreprocessorFactoryImpl {
 mod test {
     use super::*;
 
+    use crate::entities::location::Location;
+    use crate::helpers::PathRefExt;
     use crate::result::Result;
 
     use std::path::PathBuf;
-    use std::time::Duration;
     use tempfile::tempdir;
 
     #[test]
@@ -54,19 +55,14 @@ mod test {
             let ext = test_case.0;
 
             let thumbnails_dir = tempdir()?;
-            let config = Config {
-                watched_dir: PathBuf::from("not-important"),
-                index_dir: PathBuf::from("not-important"),
-                thumbnails_dir: thumbnails_dir.path().to_path_buf(),
-                cooldown_time: Duration::from_secs(1),
-                notifications_addr: "0.0.0.0:8001".parse()?,
-            };
+            let paths = vec![PathBuf::from(test_case.1)];
+
             // when
-            let extractor = preprocessor_factory.from_ext(&ext, &config);
-            extractor.preprocess(&[PathBuf::from(test_case.1)])?;
+            let extractor = preprocessor_factory.from_ext(&ext, &thumbnails_dir.path());
+            extractor.preprocess(&Location::FileSystem(paths))?;
 
             // then
-            let filename = config.thumbnails_dir.first_filename()?;
+            let filename = thumbnails_dir.path().first_filename()?;
             assert_eq!(filename, test_case.2);
         }
 

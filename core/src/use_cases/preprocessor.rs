@@ -3,7 +3,7 @@ use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// Abstracts the process of preprocessing received document.
 ///
@@ -11,8 +11,7 @@ use std::path::{Path, PathBuf};
 /// [`Indexer::run`](crate::use_cases::indexer::Indexer::run).
 #[allow(clippy::module_name_repetitions)]
 pub trait FilePreprocessor {
-    fn preprocess(&self, paths: &[PathBuf]) -> Result<()>;
-    fn preprocess_location(&self, location: &Location) -> Result<()>;
+    fn preprocess(&self, location: &Location) -> Result<()>;
 }
 
 /// Creates [`Preprocessor`].

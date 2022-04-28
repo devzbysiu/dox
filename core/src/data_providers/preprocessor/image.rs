@@ -25,16 +25,7 @@ impl Image {
 
 impl FilePreprocessor for Image {
     #[instrument]
-    fn preprocess(&self, paths: &[PathBuf]) -> Result<()> {
-        for p in paths {
-            debug!("moving {} to {}", p.display(), self.thumbnails_dir.str());
-            fs::copy(p, self.thumbnails_dir.join(p.filename()))?;
-        }
-        Ok(())
-    }
-
-    #[instrument]
-    fn preprocess_location(&self, location: &Location) -> Result<()> {
+    fn preprocess(&self, location: &Location) -> Result<()> {
         let Location::FileSystem(paths) = location;
         for p in paths {
             debug!("moving {} to {}", p.display(), self.thumbnails_dir.str());
@@ -57,12 +48,12 @@ mod test {
         // given
         let tmp_dir = tempdir()?;
         let preprocessor = Image::new(&tmp_dir);
-        let paths = &[PathBuf::from("res/doc1.png")];
+        let paths = vec![PathBuf::from("res/doc1.png")];
         let is_empty = tmp_dir.path().read_dir()?.next().is_none();
         assert!(is_empty);
 
         // when
-        preprocessor.preprocess(paths)?;
+        preprocessor.preprocess(&Location::FileSystem(paths))?;
         let file = tmp_dir.path().read_dir()?.next().unwrap()?.filename();
 
         // then
@@ -76,7 +67,7 @@ mod test {
         // given
         let tmp_dir = tempdir()?;
         let preprocessor = Image::new(&tmp_dir);
-        let paths = &[PathBuf::from("res/doc1.pdf")];
+        let paths = vec![PathBuf::from("res/doc1.pdf")];
         let is_empty = tmp_dir.path().read_dir()?.next().is_none();
         assert!(is_empty);
 
@@ -84,7 +75,7 @@ mod test {
         // checking if this is the correct file type. Potentially this should be checked
         // and error should be thrown (and this should be consistent with Pdf preprocessor)
         // when
-        preprocessor.preprocess(paths)?;
+        preprocessor.preprocess(&Location::FileSystem(paths))?;
         let file = tmp_dir.path().first_filename()?;
 
         // then

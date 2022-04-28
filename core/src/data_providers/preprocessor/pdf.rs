@@ -66,15 +66,7 @@ fn paint_background_and_scale(page: &PopplerPage) -> Result<ImageSurface> {
 
 impl FilePreprocessor for Pdf {
     #[instrument]
-    fn preprocess(&self, paths: &[PathBuf]) -> Result<()> {
-        for pdf_path in paths {
-            self.generate(pdf_path, &self.thumbnail_path(pdf_path))?;
-        }
-        Ok(())
-    }
-
-    #[instrument]
-    fn preprocess_location(&self, location: &Location) -> Result<()> {
+    fn preprocess(&self, location: &Location) -> Result<()> {
         let Location::FileSystem(paths) = location;
         for pdf_path in paths {
             self.generate(pdf_path, &self.thumbnail_path(pdf_path))?;
@@ -96,12 +88,12 @@ mod test {
         // given
         let tmp_dir = tempdir()?;
         let preprocessor = Pdf::new(&tmp_dir);
-        let paths = &[PathBuf::from("res/doc1.pdf")];
+        let paths = vec![PathBuf::from("res/doc1.pdf")];
         let is_empty = tmp_dir.path().read_dir()?.next().is_none();
         assert!(is_empty);
 
         // when
-        preprocessor.preprocess(paths)?;
+        preprocessor.preprocess(&Location::FileSystem(paths))?;
         let file = tmp_dir.path().read_dir()?.next().unwrap()?.filename();
 
         // then
@@ -116,9 +108,11 @@ mod test {
         // given
         let tmp_dir = tempdir().unwrap();
         let preprocessor = Pdf::new(tmp_dir);
-        let paths = &[PathBuf::from("res/doc8.jpg")];
+        let paths = vec![PathBuf::from("res/doc8.jpg")];
 
         // then
-        preprocessor.preprocess(paths).unwrap(); // should panic
+        preprocessor
+            .preprocess(&Location::FileSystem(paths))
+            .unwrap(); // should panic
     }
 }
