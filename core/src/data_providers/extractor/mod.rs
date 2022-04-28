@@ -30,10 +30,14 @@ impl ExtractorFactory for ExtractorFactoryImpl {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    use crate::entities::location::Location;
+    use crate::result::Result;
+
     use std::path::PathBuf;
 
     #[test]
-    fn test_extractor_factory_with_correct_file() {
+    fn test_extractor_factory_with_correct_file() -> Result<()> {
         // given
         let test_cases = vec![
             (Ext::Png, "res/doc1.png", "W dalszym ciągu uważamy"),
@@ -45,28 +49,34 @@ mod test {
 
         for test_case in test_cases {
             let ext = test_case.0;
+            let paths = vec![PathBuf::from(test_case.1)];
 
             // when
             let extractor = extractor_factory.from_ext(&ext);
-            let docs = extractor.extract_text(&[PathBuf::from(test_case.1)]);
+            let docs = extractor.extract_text(&Location::FileSystem(paths))?;
             let doc = &docs[0];
 
             // then
             assert!(doc.body.contains(test_case.2));
         }
+
+        Ok(())
     }
 
     #[test]
-    fn test_extractor_factory_with_wrong_file() {
+    fn test_extractor_factory_with_wrong_file() -> Result<()> {
         // given
         let ext = Ext::Pdf;
         let extractor_factory = ExtractorFactoryImpl;
+        let paths = vec![PathBuf::from("res/doc1.png")];
 
         // when
         let extractor = extractor_factory.from_ext(&ext);
-        let docs = extractor.extract_text(&[PathBuf::from("res/doc1.png")]);
+        let docs = extractor.extract_text(&Location::FileSystem(paths))?;
 
         // then
         assert!(docs.is_empty());
+
+        Ok(())
     }
 }

@@ -48,7 +48,7 @@ impl Indexer {
                             .from_ext(&extension, &config.thumbnails_dir);
                         let extractor = self.extractor_factory.from_ext(&extension);
                         preprocessor.preprocess(&location)?;
-                        let tuples = extractor.extract_text_from_location(&location)?;
+                        let tuples = extractor.extract_text(&location)?;
                         self.repository.index(&tuples)?;
                         self.notifier.notify()?;
                     }

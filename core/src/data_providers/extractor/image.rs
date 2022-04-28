@@ -7,7 +7,7 @@ use crate::use_cases::extractor::TextExtractor;
 
 use leptess::LepTess;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tracing::{debug, instrument};
 
 /// Extracts text from the image.
@@ -20,17 +20,7 @@ pub struct FromImage;
 
 impl TextExtractor for FromImage {
     #[instrument]
-    fn extract_text(&self, paths: &[PathBuf]) -> Vec<DocDetails> {
-        paths
-            .par_iter()
-            .map(ocr)
-            .filter_map(Result::ok)
-            .collect::<Vec<DocDetails>>()
-    }
-
-    #[allow(unused)]
-    #[instrument]
-    fn extract_text_from_location(&self, location: &Location) -> Result<Vec<DocDetails>> {
+    fn extract_text(&self, location: &Location) -> Result<Vec<DocDetails>> {
         let Location::FileSystem(paths) = location;
         Ok(paths
             .par_iter()
@@ -53,14 +43,16 @@ fn ocr<P: AsRef<Path>>(path: P) -> Result<DocDetails> {
 mod test {
     use super::*;
 
+    use std::path::PathBuf;
+
     #[test]
-    fn test_extract_text() {
+    fn test_extract_text() -> Result<()> {
         // given
         let ocr = FromImage;
         let paths = vec![PathBuf::from("res/doc1.png"), PathBuf::from("res/doc3.jpg")];
 
         // when
-        let mut result = ocr.extract_text(&paths);
+        let mut result = ocr.extract_text(&Location::FileSystem(paths))?;
         result.sort();
 
         // then
@@ -74,10 +66,12 @@ mod test {
         assert!(second_doc_details.body.contains("Szanowny Panie"));
         assert_eq!(second_doc_details.filename, "doc3.jpg");
         assert_eq!(second_doc_details.thumbnail, "doc3.jpg");
+
+        Ok(())
     }
 
     #[test]
-    fn test_extract_text_with_non_existing_paths() {
+    fn test_extract_text_with_non_existing_paths() -> Result<()> {
         // given
         let ocr = FromImage;
         let paths = vec![
@@ -86,9 +80,11 @@ mod test {
         ];
 
         // when
-        let result = ocr.extract_text(&paths);
+        let result = ocr.extract_text(&Location::FileSystem(paths))?;
 
         // then
         assert!(result.is_empty());
+
+        Ok(())
     }
 }

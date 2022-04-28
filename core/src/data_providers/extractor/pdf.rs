@@ -8,7 +8,7 @@ use crate::use_cases::extractor::TextExtractor;
 use pdf_extract::extract_text;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::fmt::Debug;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tracing::instrument;
 
 /// Extracts text from PDF file.
@@ -21,17 +21,7 @@ pub struct FromPdf;
 
 impl TextExtractor for FromPdf {
     #[instrument]
-    fn extract_text(&self, paths: &[PathBuf]) -> Vec<DocDetails> {
-        paths
-            .par_iter()
-            .map(extract)
-            .filter_map(Result::ok)
-            .collect::<Vec<DocDetails>>()
-    }
-
-    #[allow(unused)]
-    #[instrument]
-    fn extract_text_from_location(&self, location: &Location) -> Result<Vec<DocDetails>> {
+    fn extract_text(&self, location: &Location) -> Result<Vec<DocDetails>> {
         let Location::FileSystem(paths) = location;
         Ok(paths
             .par_iter()
@@ -55,14 +45,16 @@ fn thumbnail<P: AsRef<Path>>(path: P) -> String {
 mod test {
     use super::*;
 
+    use std::path::PathBuf;
+
     #[test]
-    fn test_extract_text() {
+    fn test_extract_text() -> Result<()> {
         // given
         let pdf = FromPdf;
         let paths = vec![PathBuf::from("res/doc1.pdf"), PathBuf::from("res/doc2.pdf")];
 
         // when
-        let mut result = pdf.extract_text(&paths);
+        let mut result = pdf.extract_text(&Location::FileSystem(paths))?;
         result.sort();
 
         // then
@@ -76,10 +68,12 @@ mod test {
         assert!(second_doc_details.body.contains("Podmiot powierzający"));
         assert_eq!(second_doc_details.filename, "doc2.pdf");
         assert_eq!(second_doc_details.thumbnail, "doc2.png");
+
+        Ok(())
     }
 
     #[test]
-    fn test_extract_text_with_non_existing_paths() {
+    fn test_extract_text_with_non_existing_paths() -> Result<()> {
         // given
         let pdf = FromPdf;
         let paths = vec![
@@ -88,9 +82,11 @@ mod test {
         ];
 
         // when
-        let result = pdf.extract_text(&paths);
+        let result = pdf.extract_text(&Location::FileSystem(paths))?;
 
         // then
         assert!(result.is_empty());
+
+        Ok(())
     }
 }
