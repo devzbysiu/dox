@@ -7,7 +7,7 @@ use inquire::error::InquireError;
 use std::fs::create_dir_all;
 use std::fs::{read_to_string, File};
 use std::io::prelude::*;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tracing::{debug, instrument};
 
 pub struct FsConfigLoader;
@@ -17,12 +17,12 @@ pub struct FsConfigLoader;
 /// It reads a toml file from the filesystem and decodes it into [`Config`] structure.
 impl ConfigLoader for FsConfigLoader {
     #[instrument(skip(self))]
-    fn load(&self, path: PathBuf) -> Result<Config> {
+    fn load(&self, path: &Path) -> Result<Config> {
         Ok(toml::from_str(&read_to_string(path)?)?)
     }
 
     #[instrument(skip(self))]
-    fn store(&self, path: PathBuf, cfg: &Config) -> Result<()> {
+    fn store(&self, path: &Path, cfg: &Config) -> Result<()> {
         let config_dir = path.parent().ok_or_else(|| {
             DoxErr::InvalidConfigPath("Can't use '/' as a configuration path".into())
         })?;
@@ -49,11 +49,11 @@ impl ConfigResolver for FsConfigResolver {
         let config_path = path_override.map_or(config_path(), PathBuf::from);
         let cfg = if config_path.exists() {
             debug!("loading config from '{}'", config_path.str());
-            self.config_loader.load(config_path)?
+            self.config_loader.load(&config_path)?
         } else {
             debug!("config path '{}' doesn't exist", config_path.str());
             let cfg = config_from_user()?;
-            self.config_loader.store(config_path, &cfg)?;
+            self.config_loader.store(&config_path, &cfg)?;
             cfg
         };
         prepare_directories(&cfg)?;
@@ -166,7 +166,7 @@ mod test {
         let loader = FsConfigLoader;
 
         // when
-        let read_cfg = loader.load(cfg_path)?;
+        let read_cfg = loader.load(&cfg_path)?;
 
         // then
         assert_eq!(expected, read_cfg);
@@ -203,7 +203,7 @@ mod test {
         let loader = FsConfigLoader;
 
         // then
-        loader.load(cfg_path).unwrap(); // should panic
+        loader.load(&cfg_path).unwrap(); // should panic
     }
 
     #[test]
@@ -228,7 +228,7 @@ mod test {
         let loader = FsConfigLoader;
 
         // then
-        loader.load(cfg_path).unwrap(); // should panic
+        loader.load(&cfg_path).unwrap(); // should panic
     }
 
     #[test]
@@ -253,7 +253,7 @@ mod test {
         let loader = FsConfigLoader;
 
         // then
-        loader.load(cfg_path).unwrap(); // should panic
+        loader.load(&cfg_path).unwrap(); // should panic
     }
 
     #[test]
@@ -278,7 +278,7 @@ mod test {
         let loader = FsConfigLoader;
 
         // then
-        loader.load(cfg_path).unwrap(); // should panic
+        loader.load(&cfg_path).unwrap(); // should panic
     }
 
     #[test]
@@ -300,6 +300,64 @@ mod test {
         let loader = FsConfigLoader;
 
         // then
-        loader.load(cfg_path).unwrap(); // should panic
+        loader.load(&cfg_path).unwrap(); // should panic
+    }
+
+    #[test]
+    fn test_config_path() {
+        // given
+        let path = dirs::config_dir().unwrap().join("dox/dox.toml");
+
+        // when
+        let cfg_path = config_path();
+
+        // then
+        assert_eq!(cfg_path, path);
+    }
+
+    #[test]
+    fn test_store_config() -> Result<()> {
+        // given
+        let tmp_cfg = tempdir().unwrap();
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        let cfg = Config {
+            watched_dir: PathBuf::from("/watched_dir"),
+            thumbnails_dir: PathBuf::from("/thumbnails_dir"),
+            index_dir: PathBuf::from("/index_dir"),
+            cooldown_time: Duration::from_secs(60),
+            notifications_addr: "0.0.0.0:8001".parse()?,
+        };
+        let loader = FsConfigLoader;
+
+        // when
+        loader.store(&cfg_path, &cfg)?;
+
+        // then
+        assert_eq!(
+            read_to_string(&cfg_path)?,
+            r#"watched_dir = "/watched_dir"
+thumbnails_dir = "/thumbnails_dir"
+index_dir = "/index_dir"
+notifications_addr = "0.0.0.0:8001"
+
+[cooldown_time]
+secs = 60
+nanos = 0
+"#
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    #[should_panic(expected = "Can't use '/' as a configuration path")]
+    fn test_store_config_with_root_as_path() {
+        // given
+        let cfg_path = PathBuf::from("/");
+        let cfg = Config::default();
+        let loader = FsConfigLoader;
+
+        // then
+        loader.store(&cfg_path, &cfg).unwrap();
     }
 }

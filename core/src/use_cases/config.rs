@@ -6,7 +6,7 @@ use crate::result::Result;
 
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddrV4;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 /// Responsible for reading/saving the configuration from/to some medium.
@@ -18,13 +18,13 @@ pub trait ConfigLoader {
     ///
     /// This reads the configuration pointed by `PathBuf`. The `path` argument doesn't need to
     /// represent the location on the File System, this is the implementation detail.
-    fn load(&self, path: PathBuf) -> Result<Config>;
+    fn load(&self, path: &Path) -> Result<Config>;
 
     /// Saves the configuration.
     ///
     /// This saves the configuration in the place pointed by `PathBuf`. It doesn't mean that this
     /// should be saved on the disk, the medium is the detail of the implementation.
-    fn store(&self, path: PathBuf, cfg: &Config) -> Result<()>;
+    fn store(&self, path: &Path, cfg: &Config) -> Result<()>;
 }
 
 /// Handles config override.
