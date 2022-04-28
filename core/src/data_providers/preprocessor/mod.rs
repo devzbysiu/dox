@@ -1,8 +1,9 @@
 use crate::data_providers::preprocessor::image::Image;
 use crate::data_providers::preprocessor::pdf::Pdf;
 use crate::entities::extension::Ext;
-use crate::use_cases::config::Config;
 use crate::use_cases::preprocessor::{Preprocessor, PreprocessorFactory};
+
+use std::path::Path;
 
 pub mod image;
 pub mod pdf;
@@ -20,10 +21,10 @@ pub mod pdf;
 pub struct PreprocessorFactoryImpl;
 
 impl PreprocessorFactory for PreprocessorFactoryImpl {
-    fn from_ext(&self, ext: &Ext, config: &Config) -> Preprocessor {
+    fn from_ext(&self, ext: &Ext, thumbnails_dir: &Path) -> Preprocessor {
         match ext {
-            Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Image::new(config.thumbnails_dir.clone())),
-            Ext::Pdf => Box::new(Pdf::new(config.thumbnails_dir.clone())),
+            Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Image::new(thumbnails_dir)),
+            Ext::Pdf => Box::new(Pdf::new(thumbnails_dir)),
         }
     }
 }
@@ -32,7 +33,6 @@ impl PreprocessorFactory for PreprocessorFactoryImpl {
 mod test {
     use super::*;
 
-    use crate::helpers::PathRefExt;
     use crate::result::Result;
 
     use std::path::PathBuf;

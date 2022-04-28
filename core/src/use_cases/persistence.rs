@@ -1,7 +1,7 @@
 //! Abstraction used to store received documents.
-use std::path::PathBuf;
-
 use crate::result::Result;
+
+use std::path::PathBuf;
 
 /// Abstracts the process of saving document.
 ///

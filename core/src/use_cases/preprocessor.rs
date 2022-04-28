@@ -2,9 +2,8 @@
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::config::Config;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Abstracts the process of preprocessing received document.
 ///
@@ -21,7 +20,7 @@ pub trait FilePreprocessor {
 pub trait PreprocessorFactory: Sync + Send {
     /// Creates [`Preprocessor`] based on the extesion. PDF files require different preprocessing
     /// than images.
-    fn from_ext(&self, ext: &Ext, config: &Config) -> Preprocessor;
+    fn from_ext(&self, ext: &Ext, thumbnails_dir: &Path) -> Preprocessor;
 }
 
 pub type Preprocessor = Box<dyn FilePreprocessor>;
