@@ -31,6 +31,7 @@ pub enum ExternalEvent {
     NewDocs(Location),
 }
 
+#[derive(Debug, Clone)]
 pub enum InternalEvent {
     DocumentReady,
 }

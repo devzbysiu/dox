@@ -13,7 +13,6 @@ use tracing::{instrument, warn};
 #[allow(unused)]
 pub struct Indexer {
     eventbus: Eventador,
-    notifier: Box<dyn Notifier>,
     preprocessor_factory: Box<dyn PreprocessorFactory>,
     extractor_factory: Box<dyn ExtractorFactory>,
     repository: Box<dyn Repository>,
@@ -23,14 +22,12 @@ pub struct Indexer {
 impl Indexer {
     pub fn new(
         eventbus: Eventador,
-        notifier: Box<dyn Notifier>,
         preprocessor_factory: Box<dyn PreprocessorFactory>,
         extractor_factory: Box<dyn ExtractorFactory>,
         repository: Box<dyn Repository>,
     ) -> Self {
         Self {
             eventbus,
-            notifier,
             preprocessor_factory,
             extractor_factory,
             repository,
@@ -50,7 +47,6 @@ impl Indexer {
                         preprocessor.preprocess(&location, &config.thumbnails_dir)?;
                         self.repository.index(&extractor.extract_text(&location)?)?;
                         self.eventbus.publish(InternalEvent::DocumentReady);
-                        self.notifier.notify()?;
                     }
                 }
             }

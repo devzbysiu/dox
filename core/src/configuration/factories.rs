@@ -21,9 +21,9 @@ pub fn config_loader() -> Box<dyn ConfigLoader> {
     Box::new(FsConfigLoader)
 }
 
-pub fn notifier(cfg: &Config) -> Result<Box<dyn Notifier>> {
-    Ok(Box::new(WsNotifier::new(cfg)?))
-}
+// pub fn notifier(cfg: &Config) -> Result<Box<dyn Notifier>> {
+//     Ok(Box::new(WsNotifier::new(cfg)?))
+// }
 
 pub fn preprocessor_factory() -> Box<dyn PreprocessorFactory> {
     Box::new(PreprocessorFactoryImpl)

@@ -1,7 +1,7 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 
 use crate::configuration::factories::{
-    config_loader, config_resolver, extractor_factory, notifier, persistence, preprocessor_factory,
+    config_loader, config_resolver, extractor_factory, persistence, preprocessor_factory,
     repository,
 };
 use crate::configuration::telemetry::init_tracing;
@@ -13,6 +13,7 @@ use crate::use_cases::config::Config;
 use crate::use_cases::indexer::Indexer;
 use crate::use_cases::repository::Repository;
 
+use data_providers::notifier::WsNotifier;
 use eventador::Eventador;
 use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
@@ -58,13 +59,13 @@ pub fn launch() -> Rocket<Build> {
 fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
     let eventbus = Eventador::new(1024)?; // TODO: take care of this `capacity`
 
-    FsWatcher::run(cfg, eventbus.clone());
+    FsWatcher::run(cfg, &eventbus);
+    WsNotifier::new(cfg, &eventbus);
 
     let repository = repository(cfg)?;
 
     let indexer = Indexer::new(
         eventbus,
-        notifier(cfg)?,
         preprocessor_factory(),
         extractor_factory(),
         repository.clone(),

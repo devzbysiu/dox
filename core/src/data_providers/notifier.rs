@@ -1,7 +1,9 @@
 use crate::result::Result;
 use crate::use_cases::config::Config;
 use crate::use_cases::notifier::Notifier;
+use crate::use_cases::pipe::InternalEvent;
 
+use eventador::{Eventador, Subscriber};
 use std::net::{TcpListener, TcpStream};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
@@ -16,10 +18,11 @@ pub struct WsNotifier {
 }
 
 impl WsNotifier {
-    pub fn new(cfg: &Config) -> Result<Self> {
+    pub fn new(cfg: &Config, eventbus: &Eventador) -> Result<Self> {
         let (tx, rx) = channel();
+        let subscriber = eventbus.subscribe::<InternalEvent>();
         let sockets_list = NotifiableSockets::new();
-        sockets_list.await_notifications(rx);
+        sockets_list.await_notifications(subscriber);
         ConnHandler::new(cfg)?.push_new_conns(sockets_list);
         Ok(Self { tx })
     }
@@ -77,18 +80,21 @@ impl NotifiableSockets {
         self.all.lock().expect("poisoned mutex").push(notifier);
     }
 
-    fn await_notifications(&self, rx: Receiver<()>) {
+    fn await_notifications(&self, subscriber: Subscriber<InternalEvent>) {
         debug!("awaiting notifications");
         let all = self.all.clone();
         thread::spawn(move || -> Result<()> {
             loop {
-                rx.recv()?;
-                let _errors = all // TODO: take care of that
-                    .lock()
-                    .expect("poisoned mutex")
-                    .iter_mut()
-                    .map(Socket::notify_new_docs)
-                    .collect::<Vec<_>>();
+                match subscriber.recv().to_owned() {
+                    InternalEvent::DocumentReady => {
+                        let _errors = all // TODO: take care of that
+                            .lock()
+                            .expect("poisoned mutex")
+                            .iter_mut()
+                            .map(Socket::notify_new_docs)
+                            .collect::<Vec<_>>();
+                    }
+                }
             }
         });
     }
