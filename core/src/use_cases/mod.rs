@@ -6,4 +6,3 @@ pub mod persistence;
 pub mod pipe;
 pub mod preprocessor;
 pub mod repository;
-pub mod thumbnail;
