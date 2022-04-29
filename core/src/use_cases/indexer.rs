@@ -2,16 +2,17 @@ use crate::result::Result;
 use crate::use_cases::config::Config;
 use crate::use_cases::extractor::ExtractorFactory;
 use crate::use_cases::notifier::Notifier;
-use crate::use_cases::pipe::{Event, Input};
+use crate::use_cases::pipe::{ExternalEvent, InternalEvent};
 use crate::use_cases::preprocessor::PreprocessorFactory;
 use crate::use_cases::repository::Repository;
 
+use eventador::Eventador;
 use std::thread;
-use tracing::{error, instrument, warn};
+use tracing::{instrument, warn};
 
 #[allow(unused)]
 pub struct Indexer {
-    input: Box<dyn Input>,
+    eventbus: Eventador,
     notifier: Box<dyn Notifier>,
     preprocessor_factory: Box<dyn PreprocessorFactory>,
     extractor_factory: Box<dyn ExtractorFactory>,
@@ -21,14 +22,14 @@ pub struct Indexer {
 #[allow(unused)]
 impl Indexer {
     pub fn new(
-        input: Box<dyn Input>,
+        eventbus: Eventador,
         notifier: Box<dyn Notifier>,
         preprocessor_factory: Box<dyn PreprocessorFactory>,
         extractor_factory: Box<dyn ExtractorFactory>,
         repository: Box<dyn Repository>,
     ) -> Self {
         Self {
-            input,
+            eventbus,
             notifier,
             preprocessor_factory,
             extractor_factory,
@@ -39,17 +40,18 @@ impl Indexer {
     #[instrument(skip(self))]
     pub fn run(self, config: Config) {
         thread::spawn(move || -> Result<()> {
+            let subscriber = self.eventbus.subscribe::<ExternalEvent>();
             loop {
-                match self.input.recv() {
-                    Ok(Event::NewDocs(location)) => {
+                match subscriber.recv().to_owned() {
+                    ExternalEvent::NewDocs(location) => {
                         let extension = location.extension();
                         let preprocessor = self.preprocessor_factory.from_ext(&extension);
                         let extractor = self.extractor_factory.from_ext(&extension);
                         preprocessor.preprocess(&location, &config.thumbnails_dir)?;
                         self.repository.index(&extractor.extract_text(&location)?)?;
+                        self.eventbus.publish(InternalEvent::DocumentReady);
                         self.notifier.notify()?;
                     }
-                    Err(e) => error!("failed to receive event: {}", e),
                 }
             }
         });

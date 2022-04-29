@@ -8,7 +8,7 @@ use crate::helpers::PathRefExt;
 use std::path::PathBuf;
 
 /// Represents abstraction of the location on some medium.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(unused)]
 pub enum Location {
     /// Represents local disk as a medium.

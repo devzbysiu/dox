@@ -1,5 +1,5 @@
 use crate::result::Result;
-use crate::use_cases::pipe::{Event, Input, Output};
+use crate::use_cases::pipe::{ExternalEvent, Input, Output};
 
 use std::sync::mpsc::{channel, Receiver, Sender};
 
@@ -17,11 +17,11 @@ pub fn channel_pipe() -> (Box<dyn Input>, Box<dyn Output>) {
 /// Represents [`Input`] which allows receiving [`Event`]s.
 #[derive(Debug)]
 pub struct ChannelInput {
-    rx: Receiver<Event>,
+    rx: Receiver<ExternalEvent>,
 }
 
 impl Input for ChannelInput {
-    fn recv(&self) -> Result<Event> {
+    fn recv(&self) -> Result<ExternalEvent> {
         Ok(self.rx.recv()?)
     }
 }
@@ -29,11 +29,11 @@ impl Input for ChannelInput {
 /// Represents [`Output`] which allows sending [`Event`]s.
 #[derive(Debug)]
 pub struct ChannelOutput {
-    tx: Sender<Event>,
+    tx: Sender<ExternalEvent>,
 }
 
 impl Output for ChannelOutput {
-    fn send(&self, event: Event) -> Result<()> {
+    fn send(&self, event: ExternalEvent) -> Result<()> {
         self.tx.send(event)?;
         Ok(())
     }

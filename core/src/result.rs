@@ -5,7 +5,7 @@ use thiserror::Error;
 use tungstenite::handshake::server::{NoCallback, ServerHandshake};
 use tungstenite::handshake::HandshakeError;
 
-use crate::use_cases::pipe::Event;
+use crate::use_cases::pipe::ExternalEvent;
 
 // TODO: Remove no longer needed errors after finishing the refactor
 #[derive(Debug, Error)]
@@ -41,7 +41,7 @@ pub enum DoxErr {
     Send(#[from] std::sync::mpsc::SendError<PathBuf>),
 
     #[error("Error when sending event through channel: '{0}'")]
-    SendEvent(#[from] std::sync::mpsc::SendError<Event>),
+    SendEvent(#[from] std::sync::mpsc::SendError<ExternalEvent>),
 
     #[error("Error when receiving list of paths through channel: '{0}'")]
     Recv(#[from] std::sync::mpsc::RecvError),
@@ -90,6 +90,9 @@ pub enum DoxErr {
 
     #[error("Error while parsing to SocketAddrV4: '{0}'")]
     NotificationSocket(#[from] std::net::AddrParseError),
+
+    #[error("Generic error occured: '{0}'")]
+    Generic(#[from] anyhow::Error),
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;

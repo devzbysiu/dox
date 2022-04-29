@@ -12,7 +12,7 @@ use std::fmt::Debug;
 /// This can be send across threads.
 pub trait Input: Send + Debug {
     /// Receives one [`Event`].
-    fn recv(&self) -> Result<Event>;
+    fn recv(&self) -> Result<ExternalEvent>;
 }
 
 /// Allows sending [`Event`]s.
@@ -20,13 +20,17 @@ pub trait Input: Send + Debug {
 /// This can be send across threads.
 pub trait Output: Send + Debug {
     /// Sends one [`Location`].
-    fn send(&self, event: Event) -> Result<()>;
+    fn send(&self, event: ExternalEvent) -> Result<()>;
 }
 
 /// Represents events happening in the system.
+#[derive(Debug, Clone)]
 #[allow(unused)]
-#[derive(Debug)]
-pub enum Event {
+pub enum ExternalEvent {
     /// Represents new documents appearing in the system.
     NewDocs(Location),
+}
+
+pub enum InternalEvent {
+    DocumentReady,
 }

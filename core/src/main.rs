@@ -13,6 +13,7 @@ use crate::use_cases::config::Config;
 use crate::use_cases::indexer::Indexer;
 use crate::use_cases::repository::Repository;
 
+use eventador::Eventador;
 use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
@@ -55,13 +56,14 @@ pub fn launch() -> Rocket<Build> {
 }
 
 fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
-    let (input, output) = channel_pipe();
-    FsWatcher::run(cfg, output);
+    let eventbus = Eventador::new(1024)?; // TODO: take care of this `capacity`
+
+    FsWatcher::run(cfg, eventbus.clone());
 
     let repository = repository(cfg)?;
 
     let indexer = Indexer::new(
-        input,
+        eventbus,
         notifier(cfg)?,
         preprocessor_factory(),
         extractor_factory(),
