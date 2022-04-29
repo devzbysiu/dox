@@ -46,8 +46,7 @@ impl Indexer {
                         let preprocessor = self.preprocessor_factory.from_ext(&extension);
                         let extractor = self.extractor_factory.from_ext(&extension);
                         preprocessor.preprocess(&location, &config.thumbnails_dir)?;
-                        let tuples = extractor.extract_text(&location)?;
-                        self.repository.index(&tuples)?;
+                        self.repository.index(&extractor.extract_text(&location)?)?;
                         self.notifier.notify()?;
                     }
                     Err(e) => error!("failed to receive event: {}", e),
