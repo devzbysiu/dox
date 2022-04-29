@@ -60,7 +60,7 @@ fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
     let eventbus = Eventador::new(1024)?; // TODO: take care of this `capacity`
 
     FsWatcher::run(cfg, &eventbus);
-    WsNotifier::new(cfg, &eventbus);
+    WsNotifier::run(cfg, &eventbus)?;
 
     let repository = repository(cfg)?;
 

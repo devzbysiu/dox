@@ -1,11 +1,9 @@
 use crate::result::Result;
 use crate::use_cases::config::Config;
-use crate::use_cases::notifier::Notifier;
 use crate::use_cases::pipe::InternalEvent;
 
 use eventador::{Eventador, Subscriber};
 use std::net::{TcpListener, TcpStream};
-use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use tungstenite::{accept, Message, WebSocket};
@@ -13,25 +11,14 @@ use tungstenite::{accept, Message, WebSocket};
 use tracing::debug;
 
 #[allow(clippy::module_name_repetitions)]
-pub struct WsNotifier {
-    tx: Sender<()>,
-}
+pub struct WsNotifier;
 
 impl WsNotifier {
-    pub fn new(cfg: &Config, eventbus: &Eventador) -> Result<Self> {
-        let (tx, rx) = channel();
+    pub fn run(cfg: &Config, eventbus: &Eventador) -> Result<()> {
         let subscriber = eventbus.subscribe::<InternalEvent>();
         let sockets_list = NotifiableSockets::new();
         sockets_list.await_notifications(subscriber);
         ConnHandler::new(cfg)?.push_new_conns(sockets_list);
-        Ok(Self { tx })
-    }
-}
-
-impl Notifier for WsNotifier {
-    fn notify(&self) -> Result<()> {
-        debug!("notifying all listeners");
-        self.tx.send(())?;
         Ok(())
     }
 }
