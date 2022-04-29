@@ -18,7 +18,7 @@ pub struct WsNotifier {
 impl WsNotifier {
     pub fn new(cfg: &Config) -> Result<Self> {
         let (tx, rx) = channel();
-        let (sockets_list, tx) = NotifiableSockets::new(tx);
+        let sockets_list = NotifiableSockets::new();
         sockets_list.await_notifications(rx);
         ConnHandler::new(cfg)?.push_new_conns(sockets_list);
         Ok(Self { tx })
@@ -66,13 +66,10 @@ struct NotifiableSockets {
 }
 
 impl NotifiableSockets {
-    fn new(tx: Sender<()>) -> (Self, Sender<()>) {
-        (
-            Self {
-                all: Arc::new(Mutex::new(Vec::new())),
-            },
-            tx,
-        )
+    fn new() -> Self {
+        Self {
+            all: Arc::new(Mutex::new(Vec::new())),
+        }
     }
 
     fn add(&mut self, notifier: Socket) {
