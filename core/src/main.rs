@@ -6,7 +6,6 @@ use crate::configuration::factories::{
 };
 use crate::configuration::telemetry::init_tracing;
 use crate::data_providers::fs_watcher::FsWatcher;
-use crate::data_providers::pipe::channel_pipe;
 use crate::data_providers::server::{all_thumbnails, receive_document, search};
 use crate::result::Result;
 use crate::use_cases::config::Config;

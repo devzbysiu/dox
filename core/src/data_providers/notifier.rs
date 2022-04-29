@@ -1,6 +1,6 @@
 use crate::result::Result;
+use crate::use_cases::bus::InternalEvent;
 use crate::use_cases::config::Config;
-use crate::use_cases::pipe::InternalEvent;
 
 use eventador::{Eventador, Subscriber};
 use std::net::{TcpListener, TcpStream};

@@ -1,7 +1,7 @@
 use crate::entities::location::Location;
 use crate::result::Result;
+use crate::use_cases::bus::ExternalEvent;
 use crate::use_cases::config::Config;
-use crate::use_cases::pipe::ExternalEvent;
 
 use eventador::Eventador;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
