@@ -6,14 +6,16 @@ use crate::entities::location::Location;
 
 use std::fmt::Debug;
 
-/// Represents events happening in the system.
+/// Represents external events happening in the system.
 #[derive(Debug, Clone)]
 pub enum ExternalEvent {
     /// Represents new documents appearing in the system.
     NewDocs(Location),
 }
 
+/// Represents internal core events.
 #[derive(Debug, Clone)]
 pub enum InternalEvent {
+    /// Represents document finished indexing.
     DocumentReady,
 }
