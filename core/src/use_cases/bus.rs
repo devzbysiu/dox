@@ -8,7 +8,6 @@ use std::fmt::Debug;
 
 /// Represents events happening in the system.
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub enum ExternalEvent {
     /// Represents new documents appearing in the system.
     NewDocs(Location),
