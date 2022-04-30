@@ -27,6 +27,8 @@ mod use_cases;
 mod helpers;
 mod result;
 
+const BUS_CAPACITY: u64 = 1024;
+
 #[must_use]
 #[instrument]
 #[launch]
@@ -56,7 +58,7 @@ pub fn launch() -> Rocket<Build> {
 }
 
 fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
-    let eventbus = Eventador::new(1024)?; // TODO: take care of this `capacity`
+    let eventbus = Eventador::new(BUS_CAPACITY)?; // TODO: take care of this `capacity`
 
     FsWatcher::run(cfg, &eventbus);
     WsNotifier::run(cfg, &eventbus)?;
