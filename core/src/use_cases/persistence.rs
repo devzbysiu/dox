@@ -1,4 +1,4 @@
-//! Abstraction used to store received documents.
+//! Abstraction used to save received documents.
 use crate::result::Result;
 
 use std::path::PathBuf;
