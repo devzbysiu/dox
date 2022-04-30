@@ -1,4 +1,4 @@
-//! Abstract interfaces for sending and receiving events.
+//! Represents external and internal events.
 //!
 //! The events represent new files of particular document, appearing in the system, which are going
 //! to be indexed by dox' core.
