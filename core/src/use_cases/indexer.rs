@@ -9,7 +9,6 @@ use eventador::Eventador;
 use std::thread;
 use tracing::{instrument, warn};
 
-#[allow(unused)]
 pub struct Indexer {
     eventbus: Eventador,
     preprocessor_factory: Box<dyn PreprocessorFactory>,
@@ -17,7 +16,6 @@ pub struct Indexer {
     repository: Box<dyn Repository>,
 }
 
-#[allow(unused)]
 impl Indexer {
     pub fn new(
         eventbus: Eventador,
