@@ -13,23 +13,28 @@ impl Bus for LocalBus {
         unimplemented!()
     }
 
-    fn publish(&self, event: &Event) -> Result<()> {
+    fn publish(&self, event: Event) -> Result<()> {
         unimplemented!()
     }
 }
 
-pub struct LocalSubscriber;
+pub struct LocalSubscriber {
+    sub: eventador::Subscriber<Event>,
+}
 
 impl Subscriber for LocalSubscriber {
     fn recv(&self) -> Result<Event> {
-        unimplemented!()
+        Ok(self.sub.recv().to_owned())
     }
 }
 
-pub struct LocalPublisher;
+pub struct LocalPublisher {
+    publ: eventador::Publisher,
+}
 
 impl Publisher for LocalPublisher {
-    fn publish(&self, event: &Event) -> Result<()> {
-        unimplemented!()
+    fn publish(&self, event: Event) -> Result<()> {
+        self.publ.send(event);
+        Ok(())
     }
 }

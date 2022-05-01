@@ -10,20 +10,21 @@ use std::fmt::Debug;
 pub trait Bus {
     fn subscriber(&self) -> Box<dyn Subscriber>;
     fn publisher(&self) -> Box<dyn Publisher>;
-    fn publish(&self, event: &Event) -> Result<()>;
+    fn publish(&self, event: Event) -> Result<()>;
 }
 
 pub trait Subscriber {
     fn recv(&self) -> Result<Event>;
 }
 
+#[derive(Debug, Clone)]
 pub enum Event {
     Internal(InternalEvent),
     External(ExternalEvent),
 }
 
 pub trait Publisher {
-    fn publish(&self, event: &Event) -> Result<()>;
+    fn publish(&self, event: Event) -> Result<()>;
 }
 
 /// Represents external events happening in the system.
