@@ -10,7 +10,7 @@ use std::fmt::Debug;
 pub trait Bus: Send {
     fn subscriber(&self) -> Box<dyn Subscriber>;
     fn publisher(&self) -> Box<dyn Publisher>;
-    fn publish(&self, event: Event) -> Result<()>;
+    fn send(&self, event: Event) -> Result<()>;
 }
 
 pub trait Subscriber: Send {

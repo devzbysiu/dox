@@ -2,6 +2,8 @@ use crate::result::Result;
 use crate::use_cases::bus::Bus;
 use crate::use_cases::bus::{Event, Publisher, Subscriber};
 
+const BUS_CAPACITY: u64 = 1024; // TODO: take care of this `capacity`
+
 pub struct LocalBus {
     eventador: eventador::Eventador,
 }
@@ -9,7 +11,7 @@ pub struct LocalBus {
 impl LocalBus {
     pub fn new() -> Result<Self> {
         Ok(Self {
-            eventador: eventador::Eventador::new(1024)?,
+            eventador: eventador::Eventador::new(BUS_CAPACITY)?,
         })
     }
 }
@@ -23,7 +25,7 @@ impl Bus for LocalBus {
         Box::new(LocalPublisher::new(self.eventador.publisher()))
     }
 
-    fn publish(&self, event: Event) -> Result<()> {
+    fn send(&self, event: Event) -> Result<()> {
         self.eventador.publish(event);
         Ok(())
     }

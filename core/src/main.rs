@@ -14,7 +14,6 @@ use crate::use_cases::repository::Repository;
 
 use configuration::factories::bus;
 use data_providers::notifier::WsNotifier;
-use eventador::Eventador;
 use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
@@ -27,8 +26,6 @@ mod use_cases;
 
 mod helpers;
 mod result;
-
-const BUS_CAPACITY: u64 = 1024; // TODO: take care of this `capacity`
 
 #[must_use]
 #[instrument]
@@ -60,16 +57,14 @@ pub fn launch() -> Rocket<Build> {
 
 fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
     let bus = bus()?;
-    let eventbus = Eventador::new(BUS_CAPACITY)?;
 
-    FsWatcher::run(cfg, &eventbus, &bus);
-    WsNotifier::run(cfg, &eventbus, &bus)?;
+    FsWatcher::run(cfg, &bus);
+    WsNotifier::run(cfg, &bus)?;
 
     let repository = repository(cfg)?;
 
     let indexer = Indexer::new(
         bus,
-        eventbus,
         preprocessor_factory(),
         extractor_factory(),
         repository.clone(),
