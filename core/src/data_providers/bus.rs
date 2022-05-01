@@ -58,7 +58,7 @@ impl LocalPublisher {
 }
 
 impl Publisher for LocalPublisher {
-    fn publish(&mut self, event: Event) -> Result<()> {
+    fn send(&mut self, event: Event) -> Result<()> {
         self.publ.send(event);
         Ok(())
     }

@@ -1,5 +1,5 @@
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, Event, ExternalEvent, InternalEvent};
+use crate::use_cases::bus::{Bus, Event};
 use crate::use_cases::config::Config;
 use crate::use_cases::extractor::ExtractorFactory;
 use crate::use_cases::preprocessor::PreprocessorFactory;
@@ -37,14 +37,13 @@ impl Indexer {
             let sub = self.bus.subscriber();
             loop {
                 match sub.recv()? {
-                    Event::External(ExternalEvent::NewDocs(location)) => {
+                    Event::NewDocs(location) => {
                         let extension = location.extension();
                         let preprocessor = self.preprocessor_factory.from_ext(&extension);
                         let extractor = self.extractor_factory.from_ext(&extension);
                         preprocessor.preprocess(&location, &config.thumbnails_dir)?;
                         self.repository.index(&extractor.extract_text(&location)?)?;
-                        self.bus
-                            .send(Event::Internal(InternalEvent::DocumentReady))?;
+                        self.bus.send(Event::DocumentReady)?;
                     }
                     _ => debug!("event not supported here"),
                 }

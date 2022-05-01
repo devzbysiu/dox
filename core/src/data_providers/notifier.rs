@@ -1,5 +1,5 @@
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, Event, InternalEvent, Subscriber};
+use crate::use_cases::bus::{Bus, Event, Subscriber};
 use crate::use_cases::config::Config;
 
 use std::net::{TcpListener, TcpStream};
@@ -72,7 +72,7 @@ impl NotifiableSockets {
         thread::spawn(move || -> Result<()> {
             loop {
                 match sub.recv()? {
-                    Event::Internal(InternalEvent::DocumentReady) => {
+                    Event::DocumentReady => {
                         let _errors = all // TODO: take care of that
                             .lock()
                             .expect("poisoned mutex")

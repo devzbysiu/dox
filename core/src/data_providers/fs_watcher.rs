@@ -1,5 +1,5 @@
 use crate::result::Result;
-use crate::use_cases::bus::{Event, ExternalEvent};
+use crate::use_cases::bus::Event;
 use crate::use_cases::config::Config;
 use crate::{entities::location::Location, use_cases::bus::Bus};
 
@@ -25,9 +25,7 @@ impl FsWatcher {
             loop {
                 match watcher_rx.recv() {
                     Ok(DebouncedEvent::Create(path)) => {
-                        publ.publish(Event::External(ExternalEvent::NewDocs(
-                            Location::FileSystem(vec![path]),
-                        )))?;
+                        publ.send(Event::NewDocs(Location::FileSystem(vec![path])))?;
                     }
                     Ok(e) => warn!("this FS event is not supported: {:?}", e),
                     Err(e) => error!("watch error: {:?}", e),

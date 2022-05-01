@@ -25,26 +25,20 @@ pub trait Subscriber: Send {
     fn recv(&self) -> Result<Event>;
 }
 
+// TODO: Think about splitting events to internal and external. Currently, it's not possible to
+// subscribe only to Internal or only to External events
+/// Represents events happening in the system.
+///
+/// It describes both - internal and external events.
 #[derive(Debug, Clone)]
 pub enum Event {
-    Internal(InternalEvent),
-    External(ExternalEvent),
+    /// Represents new documents appearing in the system. External event.
+    NewDocs(Location),
+
+    /// Represents document finished indexing. Internal event.
+    DocumentReady,
 }
 
 pub trait Publisher: Send {
-    fn publish(&mut self, event: Event) -> Result<()>;
-}
-
-/// Represents external events happening in the system.
-#[derive(Debug, Clone)]
-pub enum ExternalEvent {
-    /// Represents new documents appearing in the system.
-    NewDocs(Location),
-}
-
-/// Represents internal core events.
-#[derive(Debug, Clone)]
-pub enum InternalEvent {
-    /// Represents document finished indexing.
-    DocumentReady,
+    fn send(&mut self, event: Event) -> Result<()>;
 }
