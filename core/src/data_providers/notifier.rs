@@ -1,8 +1,8 @@
 use crate::result::Result;
-use crate::use_cases::bus::InternalEvent;
+use crate::use_cases::bus::{Bus, Event, InternalEvent, Subscriber};
 use crate::use_cases::config::Config;
 
-use eventador::{Eventador, Subscriber};
+use eventador::Eventador;
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -14,10 +14,11 @@ use tracing::debug;
 pub struct WsNotifier;
 
 impl WsNotifier {
-    pub fn run(cfg: &Config, eventbus: &Eventador) -> Result<()> {
+    pub fn run(cfg: &Config, eventbus: &Eventador, bus: &Box<dyn Bus>) -> Result<()> {
         let subscriber = eventbus.subscribe::<InternalEvent>();
+        let sub = bus.subscriber();
         let sockets_list = NotifiableSockets::new();
-        sockets_list.await_notifications(subscriber);
+        sockets_list.await_notifications(subscriber, sub);
         ConnHandler::new(cfg)?.push_new_conns(sockets_list);
         Ok(())
     }
@@ -67,13 +68,17 @@ impl NotifiableSockets {
         self.all.lock().expect("poisoned mutex").push(notifier);
     }
 
-    fn await_notifications(&self, subscriber: Subscriber<InternalEvent>) {
+    fn await_notifications(
+        &self,
+        subscriber: eventador::Subscriber<InternalEvent>,
+        sub: Box<dyn Subscriber>,
+    ) {
         debug!("awaiting notifications");
         let all = self.all.clone();
         thread::spawn(move || -> Result<()> {
             loop {
-                match subscriber.recv().to_owned() {
-                    InternalEvent::DocumentReady => {
+                match sub.recv()? {
+                    Event::Internal(InternalEvent::DocumentReady) => {
                         let _errors = all // TODO: take care of that
                             .lock()
                             .expect("poisoned mutex")
@@ -81,7 +86,18 @@ impl NotifiableSockets {
                             .map(Socket::notify_new_docs)
                             .collect::<Vec<_>>();
                     }
+                    _ => debug!("event not supported here"),
                 }
+                // match subscriber.recv().to_owned() {
+                //     InternalEvent::DocumentReady => {
+                //         let _errors = all // TODO: take care of that
+                //             .lock()
+                //             .expect("poisoned mutex")
+                //             .iter_mut()
+                //             .map(Socket::notify_new_docs)
+                //             .collect::<Vec<_>>();
+                //     }
+                // }
             }
         });
     }

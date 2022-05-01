@@ -7,13 +7,13 @@ use crate::result::Result;
 
 use std::fmt::Debug;
 
-pub trait Bus {
+pub trait Bus: Send {
     fn subscriber(&self) -> Box<dyn Subscriber>;
     fn publisher(&self) -> Box<dyn Publisher>;
     fn publish(&self, event: Event) -> Result<()>;
 }
 
-pub trait Subscriber {
+pub trait Subscriber: Send {
     fn recv(&self) -> Result<Event>;
 }
 
@@ -23,8 +23,8 @@ pub enum Event {
     External(ExternalEvent),
 }
 
-pub trait Publisher {
-    fn publish(&self, event: Event) -> Result<()>;
+pub trait Publisher: Send {
+    fn publish(&mut self, event: Event) -> Result<()>;
 }
 
 /// Represents external events happening in the system.

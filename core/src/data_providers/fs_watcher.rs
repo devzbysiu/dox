@@ -1,7 +1,7 @@
-use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::bus::ExternalEvent;
+use crate::use_cases::bus::{Event, ExternalEvent};
 use crate::use_cases::config::Config;
+use crate::{entities::location::Location, use_cases::bus::Bus};
 
 use eventador::Eventador;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
@@ -14,10 +14,11 @@ use tracing::{debug, error, warn};
 pub struct FsWatcher;
 
 impl FsWatcher {
-    pub fn run(cfg: &Config, eventbus: &Eventador) {
+    pub fn run(cfg: &Config, eventbus: &Eventador, bus: &Box<dyn Bus>) {
         debug!("spawning watching thread");
         let watched_dir = cfg.watched_dir.clone();
         let mut publisher = eventbus.publisher();
+        let mut publ = bus.publisher();
         thread::spawn(move || -> Result<()> {
             debug!("watching thread spawned");
             let (watcher_tx, watcher_rx) = channel();
@@ -26,7 +27,10 @@ impl FsWatcher {
             loop {
                 match watcher_rx.recv() {
                     Ok(DebouncedEvent::Create(path)) => {
-                        publisher.send(ExternalEvent::NewDocs(Location::FileSystem(vec![path])));
+                        publ.publish(Event::External(ExternalEvent::NewDocs(
+                            Location::FileSystem(vec![path.clone()]),
+                        )))?;
+                        // publisher.send(ExternalEvent::NewDocs(Location::FileSystem(vec![path])));
                     }
                     Ok(e) => warn!("this FS event is not supported: {:?}", e),
                     Err(e) => error!("watch error: {:?}", e),
