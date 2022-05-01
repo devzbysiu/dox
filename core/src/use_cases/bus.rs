@@ -1,4 +1,4 @@
-//! Represents external and internal events.
+//! Represents event bus used to coordinate components.
 //!
 //! The events represent new files of particular document, appearing in the system, which are going
 //! to be indexed by dox' core.
@@ -7,9 +7,18 @@ use crate::result::Result;
 
 use std::fmt::Debug;
 
+/// Generic bus.
+///
+/// It allows to publish and subscribe to particular events in the system. Publishing can be done
+/// either via [`Publisher`] or via [`Bus::send`] method.
 pub trait Bus: Send {
+    /// Creates [`Subscriber`].
     fn subscriber(&self) -> Box<dyn Subscriber>;
+
+    /// Creates [`Publisher`].
     fn publisher(&self) -> Box<dyn Publisher>;
+
+    /// Publishes [`Event`] without the need to create [`Publisher`].
     fn send(&self, event: Event) -> Result<()>;
 }
 
