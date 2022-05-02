@@ -4,6 +4,9 @@ use crate::use_cases::bus::{Event, Publisher, Subscriber};
 
 const BUS_CAPACITY: u64 = 1024; // TODO: take care of this `capacity`
 
+/// Event bus for communicating between core components inside the same process space.
+///
+/// It's using [`Eventador`] to handle message queue and message delivery.
 pub struct LocalBus {
     eventador: eventador::Eventador,
 }
@@ -31,6 +34,9 @@ impl Bus for LocalBus {
     }
 }
 
+/// Represents Subscriber of [`LocalBus`].
+///
+/// It allows to receive [`Event`]s.
 pub struct LocalSubscriber {
     sub: eventador::Subscriber<Event>,
 }
@@ -47,6 +53,9 @@ impl Subscriber for LocalSubscriber {
     }
 }
 
+/// Represents Publisher of [`LocalBus`].
+///
+/// It allows to send [`Event`]s.
 pub struct LocalPublisher {
     publ: eventador::Publisher,
 }
