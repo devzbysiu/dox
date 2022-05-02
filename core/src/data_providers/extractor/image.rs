@@ -19,7 +19,7 @@ use tracing::{debug, instrument};
 pub struct FromImage;
 
 impl TextExtractor for FromImage {
-    #[instrument]
+    #[instrument(skip(self))]
     fn extract_text(&self, location: &Location) -> Result<Vec<DocDetails>> {
         let Location::FileSystem(paths) = location;
         Ok(paths
