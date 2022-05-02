@@ -15,7 +15,7 @@ use tracing::{debug, instrument};
 pub struct Image;
 
 impl FilePreprocessor for Image {
-    #[instrument]
+    #[instrument(skip(self))]
     fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<()> {
         let Location::FileSystem(paths) = location;
         for p in paths {
