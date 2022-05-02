@@ -33,6 +33,13 @@ impl ConfigLoader for FsConfigLoader {
     }
 }
 
+/// Handles configuration override and accepts configuration from the user.
+///
+/// When no configuration exists and no configuration override is passed, the resolver accepts
+/// configuration from the user using prompt in the terminal. So the priority order is as follows:
+/// 1. Default configuration path. See [`config_path`].
+/// 2. Config override.
+/// 3. Config from the user.
 pub struct FsConfigResolver {
     config_loader: Box<dyn ConfigLoader>,
 }
