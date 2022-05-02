@@ -20,7 +20,7 @@ use tracing::instrument;
 pub struct FromPdf;
 
 impl TextExtractor for FromPdf {
-    #[instrument]
+    #[instrument(skip(self))]
     fn extract_text(&self, location: &Location) -> Result<Vec<DocDetails>> {
         let Location::FileSystem(paths) = location;
         Ok(paths
