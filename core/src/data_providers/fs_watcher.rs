@@ -9,6 +9,7 @@ use std::thread;
 use std::time::Duration;
 use tracing::{debug, error, warn};
 
+/// Watches for the changes on the File System and publishes correct event on the event bus.
 #[derive(Debug)]
 pub struct FsWatcher;
 
