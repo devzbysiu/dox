@@ -19,7 +19,7 @@ pub trait FilePreprocessor {
 pub trait PreprocessorFactory: Sync + Send {
     /// Creates [`Preprocessor`] based on the extesion. PDF files require different preprocessing
     /// than images.
-    fn from_ext(&self, ext: &Ext) -> Preprocessor;
+    fn make(&self, ext: &Ext) -> Preprocessor;
 }
 
 pub type Preprocessor = Box<dyn FilePreprocessor>;

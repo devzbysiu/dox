@@ -19,7 +19,7 @@ pub mod pdf;
 pub struct ExtractorFactoryImpl;
 
 impl ExtractorFactory for ExtractorFactoryImpl {
-    fn from_ext(&self, ext: &Ext) -> Extractor {
+    fn make(&self, ext: &Ext) -> Extractor {
         match ext {
             Ext::Png | Ext::Jpg | Ext::Webp => Box::new(FromImage),
             Ext::Pdf => Box::new(FromPdf),
@@ -52,7 +52,7 @@ mod test {
             let paths = vec![PathBuf::from(test_case.1)];
 
             // when
-            let extractor = extractor_factory.from_ext(&ext);
+            let extractor = extractor_factory.make(&ext);
             let docs = extractor.extract_text(&Location::FileSystem(paths))?;
             let doc = &docs[0];
 
@@ -71,7 +71,7 @@ mod test {
         let paths = vec![PathBuf::from("res/doc1.png")];
 
         // when
-        let extractor = extractor_factory.from_ext(&ext);
+        let extractor = extractor_factory.make(&ext);
         let docs = extractor.extract_text(&Location::FileSystem(paths))?;
 
         // then

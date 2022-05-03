@@ -38,8 +38,8 @@ impl Indexer {
             loop {
                 if let Event::NewDocs(location) = sub.recv()? {
                     let extension = location.extension();
-                    let preprocessor = self.preprocessor_factory.from_ext(&extension);
-                    let extractor = self.extractor_factory.from_ext(&extension);
+                    let preprocessor = self.preprocessor_factory.make(&extension);
+                    let extractor = self.extractor_factory.make(&extension);
                     preprocessor.preprocess(&location, &config.thumbnails_dir)?;
                     self.repository.index(&extractor.extract_text(&location)?)?;
                     self.bus.send(Event::DocumentReady)?;

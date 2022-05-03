@@ -15,7 +15,7 @@ pub trait TextExtractor {
 #[allow(clippy::module_name_repetitions)]
 pub trait ExtractorFactory: Sync + Send {
     /// Creates different extractors based on the provided extension.
-    fn from_ext(&self, ext: &Ext) -> Extractor;
+    fn make(&self, ext: &Ext) -> Extractor;
 }
 
 pub type Extractor = Box<dyn TextExtractor>;

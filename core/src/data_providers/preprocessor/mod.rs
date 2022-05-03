@@ -19,7 +19,7 @@ pub mod pdf;
 pub struct PreprocessorFactoryImpl;
 
 impl PreprocessorFactory for PreprocessorFactoryImpl {
-    fn from_ext(&self, ext: &Ext) -> Preprocessor {
+    fn make(&self, ext: &Ext) -> Preprocessor {
         match ext {
             Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Image),
             Ext::Pdf => Box::new(Pdf),
@@ -56,7 +56,7 @@ mod test {
             let paths = vec![PathBuf::from(test_case.1)];
 
             // when
-            let extractor = preprocessor_factory.from_ext(&ext);
+            let extractor = preprocessor_factory.make(&ext);
             extractor.preprocess(&Location::FileSystem(paths), thumbnails_dir.path())?;
 
             // then
