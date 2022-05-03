@@ -20,6 +20,21 @@ pub trait Bus: Send {
     fn send(&self, event: Event) -> Result<()>;
 }
 
+// allows to pass Box<dyn Bus> as &dyn Bus
+impl<T: Bus + ?Sized> Bus for Box<T> {
+    fn subscriber(&self) -> Box<dyn Subscriber> {
+        (**self).subscriber()
+    }
+
+    fn publisher(&self) -> Box<dyn Publisher> {
+        (**self).publisher()
+    }
+
+    fn send(&self, event: Event) -> Result<()> {
+        (**self).send(event)
+    }
+}
+
 /// Represents abstraction for receiving events.
 pub trait Subscriber: Send {
     fn recv(&self) -> Result<Event>;
