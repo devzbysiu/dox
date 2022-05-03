@@ -9,7 +9,7 @@ use tungstenite::{accept, Message, WebSocket};
 
 use tracing::debug;
 
-/// Accepts new WebSocket connections and notifies all connected parties.
+/// Accepts new websocket connections and notifies all connected parties.
 ///
 /// When [`Event::DocumentReady`] event appears on the bus, it notifies all connected devices about
 /// new documents, ready to be displayed.
@@ -17,7 +17,7 @@ use tracing::debug;
 pub struct WsNotifier;
 
 impl WsNotifier {
-    pub fn run(cfg: &Config, bus: &dyn Bus) -> Result<()> {
+    pub fn run(cfg: &Config, bus: &Box<dyn Bus>) -> Result<()> {
         let sub = bus.subscriber();
         let sockets_list = NotifiableSockets::new();
         sockets_list.await_notifications(sub);
@@ -75,16 +75,13 @@ impl NotifiableSockets {
         let all = self.all.clone();
         thread::spawn(move || -> Result<()> {
             loop {
-                match sub.recv()? {
-                    Event::DocumentReady => {
-                        let _errors = all // TODO: take care of that
-                            .lock()
-                            .expect("poisoned mutex")
-                            .iter_mut()
-                            .map(Socket::notify_new_docs)
-                            .collect::<Vec<_>>();
-                    }
-                    _ => debug!("event not supported here"),
+                if let Event::DocumentReady = sub.recv()? {
+                    let _errors = all // TODO: take care of that
+                        .lock()
+                        .expect("poisoned mutex")
+                        .iter_mut()
+                        .map(Socket::notify_new_docs)
+                        .collect::<Vec<_>>();
                 }
             }
         });
