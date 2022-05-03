@@ -14,7 +14,7 @@ use tracing::{debug, error, warn};
 pub struct FsWatcher;
 
 impl FsWatcher {
-    pub fn run(cfg: &Config, bus: &Box<dyn Bus>) {
+    pub fn run(cfg: &Config, bus: &dyn Bus) {
         debug!("spawning watching thread");
         let watched_dir = cfg.watched_dir.clone();
         let mut publ = bus.publisher();

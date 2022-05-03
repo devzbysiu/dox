@@ -17,7 +17,7 @@ use tracing::debug;
 pub struct WsNotifier;
 
 impl WsNotifier {
-    pub fn run(cfg: &Config, bus: &Box<dyn Bus>) -> Result<()> {
+    pub fn run(cfg: &Config, bus: &dyn Bus) -> Result<()> {
         let sub = bus.subscriber();
         let sockets_list = NotifiableSockets::new();
         sockets_list.await_notifications(sub);
