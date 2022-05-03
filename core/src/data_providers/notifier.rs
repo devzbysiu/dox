@@ -82,6 +82,8 @@ impl NotifiableSockets {
                         .iter_mut()
                         .map(Socket::notify_new_docs)
                         .collect::<Vec<_>>();
+                } else {
+                    debug!("event not supported here");
                 }
             }
         });

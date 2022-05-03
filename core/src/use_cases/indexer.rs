@@ -36,16 +36,15 @@ impl Indexer {
         thread::spawn(move || -> Result<()> {
             let sub = self.bus.subscriber();
             loop {
-                match sub.recv()? {
-                    Event::NewDocs(location) => {
-                        let extension = location.extension();
-                        let preprocessor = self.preprocessor_factory.from_ext(&extension);
-                        let extractor = self.extractor_factory.from_ext(&extension);
-                        preprocessor.preprocess(&location, &config.thumbnails_dir)?;
-                        self.repository.index(&extractor.extract_text(&location)?)?;
-                        self.bus.send(Event::DocumentReady)?;
-                    }
-                    _ => debug!("event not supported here"),
+                if let Event::NewDocs(location) = sub.recv()? {
+                    let extension = location.extension();
+                    let preprocessor = self.preprocessor_factory.from_ext(&extension);
+                    let extractor = self.extractor_factory.from_ext(&extension);
+                    preprocessor.preprocess(&location, &config.thumbnails_dir)?;
+                    self.repository.index(&extractor.extract_text(&location)?)?;
+                    self.bus.send(Event::DocumentReady)?;
+                } else {
+                    debug!("event not supported here");
                 }
             }
         });
