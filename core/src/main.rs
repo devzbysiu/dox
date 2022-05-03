@@ -1,4 +1,5 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
+#![allow(clippy::module_name_repetitions)]
 
 use crate::configuration::factories::{
     config_loader, config_resolver, extractor_factory, persistence, preprocessor_factory,
