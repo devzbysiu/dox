@@ -5,14 +5,12 @@ use crate::entities::location::Location;
 use crate::result::Result;
 
 /// Extracts text.
-#[allow(clippy::module_name_repetitions)]
 pub trait TextExtractor {
     /// Given the [`Location`], extracts text from all documents contained in it.
     fn extract_text(&self, location: &Location) -> Result<Vec<DocDetails>>;
 }
 
 /// Creates extractor.
-#[allow(clippy::module_name_repetitions)]
 pub trait ExtractorFactory: Sync + Send {
     /// Creates different extractors based on the provided extension.
     fn make(&self, ext: &Ext) -> Extractor;

@@ -14,7 +14,6 @@ use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy, Term};
 use tracing::{debug, instrument};
 
 #[derive(Debug, Clone)]
-#[allow(clippy::module_name_repetitions)]
 pub struct TantivyRepository {
     index: Index,
     schema: Schema,

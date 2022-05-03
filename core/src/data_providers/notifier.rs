@@ -13,7 +13,6 @@ use tracing::debug;
 ///
 /// When [`Event::DocumentReady`] event appears on the bus, it notifies all connected devices about
 /// new documents, ready to be displayed.
-#[allow(clippy::module_name_repetitions)]
 pub struct WsNotifier;
 
 impl WsNotifier {

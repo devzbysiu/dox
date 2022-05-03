@@ -15,7 +15,6 @@ pub mod pdf;
 ///
 /// The type of a file is decided based on the file extension.
 #[derive(Debug)]
-#[allow(clippy::module_name_repetitions)]
 pub struct ExtractorFactoryImpl;
 
 impl ExtractorFactory for ExtractorFactoryImpl {

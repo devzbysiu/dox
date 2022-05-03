@@ -68,7 +68,6 @@ impl ConfigResolver for FsConfigResolver {
     }
 }
 
-#[allow(clippy::module_name_repetitions)]
 pub fn config_path() -> PathBuf {
     dirs::config_dir()
         .expect("failed to read system config direcory")
