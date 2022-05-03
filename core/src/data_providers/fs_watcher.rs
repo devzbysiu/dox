@@ -1,7 +1,7 @@
+use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::bus::Event;
+use crate::use_cases::bus::{Bus, Event};
 use crate::use_cases::config::Config;
-use crate::{entities::location::Location, use_cases::bus::Bus};
 
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use std::sync::mpsc::channel;
