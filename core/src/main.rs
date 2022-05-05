@@ -66,12 +66,7 @@ fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
 
     let repository = repository(cfg)?;
 
-    let indexer = Indexer::new(
-        bus,
-        preprocessor_factory(),
-        extractor_factory(),
-        repository.clone(),
-    );
+    let indexer = Indexer::new(bus, extractor_factory(), repository.clone());
 
     indexer.run(cfg.clone());
     Ok(repository)
