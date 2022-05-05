@@ -19,6 +19,7 @@ use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
 use tracing::{debug, instrument};
+use use_cases::preprocessor::ThumbnailGenerator;
 
 mod configuration;
 mod data_providers;
@@ -61,6 +62,7 @@ fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
 
     FsWatcher::run(cfg, &bus);
     WsNotifier::run(cfg, &bus)?;
+    ThumbnailGenerator::run(cfg, &bus, preprocessor_factory());
 
     let repository = repository(cfg)?;
 

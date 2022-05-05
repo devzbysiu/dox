@@ -52,6 +52,8 @@ pub enum Event {
 
     /// Represents document finished indexing. Internal event.
     DocumentReady,
+
+    ThumbnailMade,
 }
 
 pub trait Publisher: Send {
