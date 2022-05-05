@@ -3,6 +3,33 @@ use crate::entities::document::DocDetails;
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
+use crate::use_cases::bus::{Bus, Event};
+use crate::use_cases::config::Config;
+
+use std::thread;
+use tracing::log::debug;
+use tracing::{instrument, warn};
+
+pub struct TextExtractorImpl;
+
+impl TextExtractorImpl {
+    #[instrument(skip(bus, extractor_factory))]
+    pub fn run(cfg: &Config, bus: &dyn Bus, extractor_factory: Box<dyn ExtractorFactory>) {
+        let sub = bus.subscriber();
+        let mut publ = bus.publisher();
+        thread::spawn(move || -> Result<()> {
+            loop {
+                if let Event::NewDocs(location) = sub.recv()? {
+                    let extension = location.extension();
+                    let extractor = extractor_factory.make(&extension);
+                    publ.send(Event::TextExtracted(extractor.extract_text(&location)?))?;
+                } else {
+                    debug!("event not supported here");
+                }
+            }
+        });
+    }
+}
 
 /// Extracts text.
 pub trait TextExtractor {
