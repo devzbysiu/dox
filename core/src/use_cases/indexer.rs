@@ -1,19 +1,24 @@
 use crate::result::Result;
 use crate::use_cases::bus::{Bus, Event};
-use crate::use_cases::config::Config;
 use crate::use_cases::repository::Repository;
 
 use std::thread;
 use tracing::log::debug;
 use tracing::{instrument, warn};
 
-pub struct Indexer;
+pub struct Indexer<'a> {
+    bus: &'a dyn Bus,
+}
 
-impl Indexer {
-    #[instrument(skip(bus, repository))]
-    pub fn run(cfg: &Config, bus: &dyn Bus, repository: Box<dyn Repository>) {
-        let sub = bus.subscriber();
-        let mut publ = bus.publisher();
+impl<'a> Indexer<'a> {
+    pub fn new(bus: &'a dyn Bus) -> Self {
+        Self { bus }
+    }
+
+    #[instrument(skip(self, repository))]
+    pub fn run(&self, repository: Box<dyn Repository>) {
+        let sub = self.bus.subscriber();
+        let mut publ = self.bus.publisher();
         thread::spawn(move || -> Result<()> {
             loop {
                 if let Event::TextExtracted(doc_details) = sub.recv()? {

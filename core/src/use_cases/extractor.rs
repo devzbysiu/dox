@@ -4,19 +4,24 @@ use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
 use crate::use_cases::bus::{Bus, Event};
-use crate::use_cases::config::Config;
 
 use std::thread;
 use tracing::log::debug;
 use tracing::{instrument, warn};
 
-pub struct TextExtractorImpl;
+pub struct TextExtractorImpl<'a> {
+    bus: &'a dyn Bus,
+}
 
-impl TextExtractorImpl {
-    #[instrument(skip(bus, extractor_factory))]
-    pub fn run(cfg: &Config, bus: &dyn Bus, extractor_factory: Box<dyn ExtractorFactory>) {
-        let sub = bus.subscriber();
-        let mut publ = bus.publisher();
+impl<'a> TextExtractorImpl<'a> {
+    pub fn new(bus: &'a dyn Bus) -> Self {
+        Self { bus }
+    }
+
+    #[instrument(skip(self, extractor_factory))]
+    pub fn run(&self, extractor_factory: Box<dyn ExtractorFactory>) {
+        let sub = self.bus.subscriber();
+        let mut publ = self.bus.publisher();
         thread::spawn(move || -> Result<()> {
             loop {
                 if let Event::NewDocs(location) = sub.recv()? {
