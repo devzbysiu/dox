@@ -4,21 +4,18 @@ use std::collections::HashSet;
 use crate::entities::document::DocDetails;
 use crate::result::Result;
 
-use dyn_clonable::clonable;
 use serde::Serialize;
 
-/// Allows to index and search documents.
-#[clonable]
-pub trait RepositoryRead: Clone + Sync + Send {
+/// Allows to search and list all indexed documents .
+pub trait RepositoryRead: Sync + Send {
     /// Returns list of documents mathing passed query.
     fn search(&self, q: String) -> Result<SearchResult>;
     /// Returns list of all indexed documents.
     fn all_documents(&self) -> Result<SearchResult>;
 }
 
-/// Allows to index and search documents.
-#[clonable]
-pub trait RepositoryWrite: Clone + Sync + Send {
+/// Allows to index documents.
+pub trait RepositoryWrite: Sync + Send {
     /// Indexes documents.
     fn index(&self, docs_details: &[DocDetails]) -> Result<()>;
 }
