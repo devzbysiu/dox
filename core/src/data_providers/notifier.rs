@@ -13,14 +13,21 @@ use tracing::debug;
 ///
 /// When [`Event::DocumentReady`] event appears on the bus, it notifies all connected devices about
 /// new documents, ready to be displayed.
-pub struct WsNotifier;
+pub struct WsNotifier<'a> {
+    cfg: &'a Config,
+    bus: &'a dyn Bus,
+}
 
-impl WsNotifier {
-    pub fn run(cfg: &Config, bus: &dyn Bus) -> Result<()> {
-        let sub = bus.subscriber();
+impl<'a> WsNotifier<'a> {
+    pub fn new(cfg: &'a Config, bus: &'a dyn Bus) -> Self {
+        Self { cfg, bus }
+    }
+
+    pub fn run(&self) -> Result<()> {
+        let sub = self.bus.subscriber();
         let sockets_list = NotifiableSockets::new();
         sockets_list.await_notifications(sub);
-        ConnHandler::new(cfg)?.push_new_conns(sockets_list);
+        ConnHandler::new(self.cfg)?.push_new_conns(sockets_list);
         Ok(())
     }
 }
