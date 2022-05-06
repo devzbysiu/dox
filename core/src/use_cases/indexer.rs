@@ -1,42 +1,24 @@
 use crate::result::Result;
 use crate::use_cases::bus::{Bus, Event};
 use crate::use_cases::config::Config;
-use crate::use_cases::extractor::ExtractorFactory;
 use crate::use_cases::repository::Repository;
 
 use std::thread;
 use tracing::log::debug;
 use tracing::{instrument, warn};
 
-pub struct Indexer {
-    bus: Box<dyn Bus>,
-    extractor_factory: Box<dyn ExtractorFactory>,
-    repository: Box<dyn Repository>,
-}
+pub struct Indexer;
 
 impl Indexer {
-    pub fn new(
-        bus: Box<dyn Bus>,
-        extractor_factory: Box<dyn ExtractorFactory>,
-        repository: Box<dyn Repository>,
-    ) -> Self {
-        Self {
-            bus,
-            extractor_factory,
-            repository,
-        }
-    }
-
-    #[instrument(skip(self))]
-    pub fn run(self, config: Config) {
+    #[instrument(skip(bus, repository))]
+    pub fn run(cfg: &Config, bus: &dyn Bus, repository: Box<dyn Repository>) {
+        let sub = bus.subscriber();
+        let mut publ = bus.publisher();
         thread::spawn(move || -> Result<()> {
-            let sub = self.bus.subscriber();
             loop {
-                if let Event::NewDocs(location) = sub.recv()? {
-                    let extension = location.extension();
-                    let extractor = self.extractor_factory.make(&extension);
-                    self.repository.index(&extractor.extract_text(&location)?)?;
-                    self.bus.send(Event::DocumentReady)?;
+                if let Event::TextExtracted(doc_details) = sub.recv()? {
+                    repository.index(&doc_details)?;
+                    publ.send(Event::DocumentReady)?;
                 } else {
                     debug!("event not supported here");
                 }
