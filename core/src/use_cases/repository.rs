@@ -1,10 +1,9 @@
 //! Abstraction for indexing and searching documents.
-use std::collections::HashSet;
-
 use crate::entities::document::DocDetails;
 use crate::result::Result;
 
 use serde::Serialize;
+use std::collections::HashSet;
 
 /// Allows to search and list all indexed documents .
 pub trait RepositoryRead: Sync + Send {
