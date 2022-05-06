@@ -11,7 +11,7 @@ use crate::data_providers::server::{all_thumbnails, receive_document, search};
 use crate::result::Result;
 use crate::use_cases::config::Config;
 use crate::use_cases::indexer::Indexer;
-use crate::use_cases::repository::Repository;
+use crate::use_cases::repository::RepositoryRead;
 
 use configuration::factories::bus;
 use data_providers::notifier::WsNotifier;
@@ -58,7 +58,7 @@ pub fn launch() -> Rocket<Build> {
         .manage(cfg)
 }
 
-fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
+fn setup_core(cfg: &Config) -> Result<Box<dyn RepositoryRead>> {
     let bus = bus()?;
     let watcher = FsWatcher::new(cfg, &bus);
     let notifier = WsNotifier::new(cfg, &bus);
@@ -70,8 +70,8 @@ fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
     notifier.run()?;
     preprocessor.run(preprocessor_factory());
     extractor.run(extractor_factory());
-    let repository = repository(cfg)?;
-    indexer.run(repository.clone());
+    let (repo_read, repo_write) = repository(cfg)?;
+    indexer.run(repo_write);
 
-    Ok(repository)
+    Ok(repo_read)
 }

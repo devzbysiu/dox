@@ -9,13 +9,18 @@ use serde::Serialize;
 
 /// Allows to index and search documents.
 #[clonable]
-pub trait Repository: Clone + Sync + Send {
-    /// Indexes documents.
-    fn index(&self, docs_details: &[DocDetails]) -> Result<()>;
+pub trait RepositoryRead: Clone + Sync + Send {
     /// Returns list of documents mathing passed query.
     fn search(&self, q: String) -> Result<SearchResult>;
     /// Returns list of all indexed documents.
     fn all_documents(&self) -> Result<SearchResult>;
+}
+
+/// Allows to index and search documents.
+#[clonable]
+pub trait RepositoryWrite: Clone + Sync + Send {
+    /// Indexes documents.
+    fn index(&self, docs_details: &[DocDetails]) -> Result<()>;
 }
 
 /// Holds list of basic document details.

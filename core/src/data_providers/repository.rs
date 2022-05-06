@@ -1,7 +1,7 @@
 use crate::entities::document::DocDetails;
 use crate::result::{DoxErr, Result};
 use crate::use_cases::config::Config;
-use crate::use_cases::repository::{Repository, SearchEntry, SearchResult};
+use crate::use_cases::repository::{RepositoryRead, RepositoryWrite, SearchEntry, SearchResult};
 
 use core::fmt;
 use std::fmt::Debug;
@@ -14,13 +14,10 @@ use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy, Term};
 use tracing::{debug, instrument};
 
 #[derive(Debug, Clone)]
-pub struct TantivyRepository {
-    index: Index,
-    schema: Schema,
-}
+pub struct TantivyRepository;
 
 impl TantivyRepository {
-    pub fn new(cfg: &Config) -> Result<Self> {
+    pub fn new(cfg: &Config) -> Result<(Box<dyn RepositoryRead>, Box<dyn RepositoryWrite>)> {
         if cfg.index_dir.exists() && cfg.index_dir.is_file() {
             return Err(DoxErr::InvalidIndexPath(format!(
                 "It needs to be a directory: '{}'",
@@ -35,7 +32,22 @@ impl TantivyRepository {
         let schema = schema_builder.build();
         let dir = MmapDirectory::open(&cfg.index_dir)?;
         let index = Index::open_or_create(dir, schema.clone())?;
-        Ok(Self { index, schema })
+        Ok((
+            Box::new(TantivyRead::new(index.clone(), schema.clone())),
+            Box::new(TantivyWrite::new(index, schema)),
+        ))
+    }
+}
+
+#[derive(Debug, Clone)]
+struct TantivyRead {
+    index: Index,
+    schema: Schema,
+}
+
+impl TantivyRead {
+    fn new(index: Index, schema: Schema) -> Self {
+        Self { index, schema }
     }
 
     fn create_searcher(&self) -> Result<Searcher> {
@@ -70,7 +82,7 @@ impl TantivyRepository {
     }
 }
 
-impl Repository for TantivyRepository {
+impl RepositoryRead for TantivyRead {
     #[instrument(skip(self))]
     fn search(&self, term: String) -> Result<SearchResult> {
         let searcher = self.create_searcher()?;
@@ -78,6 +90,27 @@ impl Repository for TantivyRepository {
         self.to_search_result(&searcher, top_docs)
     }
 
+    #[instrument(skip(self))]
+    fn all_documents(&self) -> Result<SearchResult> {
+        let searcher = self.create_searcher()?;
+        let top_docs = searcher.search(&AllQuery, &TopDocs::with_limit(100))?;
+        self.to_search_result(&searcher, top_docs)
+    }
+}
+
+#[derive(Debug, Clone)]
+struct TantivyWrite {
+    index: Index,
+    schema: Schema,
+}
+
+impl TantivyWrite {
+    fn new(index: Index, schema: Schema) -> Self {
+        Self { index, schema }
+    }
+}
+
+impl RepositoryWrite for TantivyWrite {
     #[instrument(skip(self, docs_details))]
     fn index(&self, docs_details: &[DocDetails]) -> Result<()> {
         let index = &self.index;
@@ -98,13 +131,6 @@ impl Repository for TantivyRepository {
             index_writer.commit()?;
         }
         Ok(())
-    }
-
-    #[instrument(skip(self))]
-    fn all_documents(&self) -> Result<SearchResult> {
-        let searcher = self.create_searcher()?;
-        let top_docs = searcher.search(&AllQuery, &TopDocs::with_limit(100))?;
-        self.to_search_result(&searcher, top_docs)
     }
 }
 
@@ -201,7 +227,7 @@ mod test {
     fn test_index_docs() -> Result<()> {
         // given
         let config = create_config()?;
-        let repo = TantivyRepository::new(&config)?;
+        let (repo_read, repo_write) = TantivyRepository::new(&config)?;
         let tuples_to_index = vec![
             DocDetails::new("filename1", "body1", "thumbnail1"),
             DocDetails::new("filename2", "body2", "thumbnail2"),
@@ -211,10 +237,10 @@ mod test {
         ];
 
         // when
-        repo.index(&tuples_to_index)?;
+        repo_write.index(&tuples_to_index)?;
         // TODO: this test should check only indexing but it's also
         // searching via all_documents
-        let all_docs = repo.all_documents()?;
+        let all_docs = repo_read.all_documents()?;
 
         // then
         assert_eq!(
@@ -235,7 +261,7 @@ mod test {
     fn test_search() -> Result<()> {
         // given
         let config = create_config()?;
-        let repo = TantivyRepository::new(&config)?;
+        let (repo_read, repo_write) = TantivyRepository::new(&config)?;
         let tuples_to_index = vec![
             DocDetails::new("filename1", "some document body", "thumbnail1"),
             DocDetails::new("filename2", "another text here", "thumbnail2"),
@@ -245,8 +271,8 @@ mod test {
         ];
 
         // when
-        repo.index(&tuples_to_index)?;
-        let results = repo.search("line".into())?;
+        repo_write.index(&tuples_to_index)?;
+        let results = repo_read.search("line".into())?;
 
         // then
         assert_eq!(
@@ -264,7 +290,7 @@ mod test {
     fn test_search_with_fuzziness() -> Result<()> {
         // given
         let config = create_config()?;
-        let repo = TantivyRepository::new(&config)?;
+        let (repo_read, repo_write) = TantivyRepository::new(&config)?;
         let tuples_to_index = vec![
             DocDetails::new("filename1", "some document body", "thumbnail1"),
             DocDetails::new("filename2", "another text here", "thumbnail2"),
@@ -272,11 +298,11 @@ mod test {
         ];
 
         // when
-        repo.index(&tuples_to_index)?;
+        repo_write.index(&tuples_to_index)?;
         // NOTE: it's not the same word as above, two letters of fuzziness is fine
-        let first_results = repo.search("9fAB".into())?;
+        let first_results = repo_read.search("9fAB".into())?;
         // NOTE: three letters is too much
-        let second_results = repo.search("9ABC".into())?;
+        let second_results = repo_read.search("9ABC".into())?;
 
         // then
         assert_eq!(

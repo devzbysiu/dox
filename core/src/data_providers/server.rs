@@ -1,7 +1,7 @@
 use crate::result::Result;
 use crate::use_cases::config::Config;
 use crate::use_cases::persistence::Persistence;
-use crate::use_cases::repository::{Repository, SearchResult};
+use crate::use_cases::repository::{RepositoryRead, SearchResult};
 
 use rocket::http::Status;
 use rocket::serde::json::Json;
@@ -11,13 +11,13 @@ use tracing::instrument;
 
 #[instrument(skip(repo))]
 #[get("/search?<q>")]
-pub fn search(q: String, repo: &State<Box<dyn Repository>>) -> Result<Json<SearchResult>> {
+pub fn search(q: String, repo: &State<Box<dyn RepositoryRead>>) -> Result<Json<SearchResult>> {
     Ok(Json(repo.search(q)?))
 }
 
 #[instrument(skip(repo))]
 #[get("/thumbnails/all")]
-pub fn all_thumbnails(repo: &State<Box<dyn Repository>>) -> Result<Json<SearchResult>> {
+pub fn all_thumbnails(repo: &State<Box<dyn RepositoryRead>>) -> Result<Json<SearchResult>> {
     Ok(Json(repo.all_documents()?))
 }
 

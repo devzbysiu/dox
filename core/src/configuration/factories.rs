@@ -11,7 +11,7 @@ use crate::use_cases::config::{ConfigLoader, ConfigResolver};
 use crate::use_cases::extractor::ExtractorFactory;
 use crate::use_cases::persistence::Persistence;
 use crate::use_cases::preprocessor::PreprocessorFactory;
-use crate::use_cases::repository::Repository;
+use crate::use_cases::repository::{RepositoryRead, RepositoryWrite};
 
 pub fn config_resolver(config_loader: Box<dyn ConfigLoader>) -> Box<dyn ConfigResolver> {
     Box::new(FsConfigResolver::new(config_loader))
@@ -33,8 +33,8 @@ pub fn extractor_factory() -> Box<dyn ExtractorFactory> {
     Box::new(ExtractorFactoryImpl)
 }
 
-pub fn repository(cfg: &Config) -> Result<Box<dyn Repository>> {
-    Ok(Box::new(TantivyRepository::new(cfg)?))
+pub fn repository(cfg: &Config) -> Result<(Box<dyn RepositoryRead>, Box<dyn RepositoryWrite>)> {
+    Ok(TantivyRepository::new(cfg)?)
 }
 
 pub fn persistence() -> Box<dyn Persistence> {
