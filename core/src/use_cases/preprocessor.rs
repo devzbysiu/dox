@@ -10,14 +10,21 @@ use std::thread;
 use tracing::log::debug;
 use tracing::{instrument, warn};
 
-pub struct ThumbnailGenerator;
+pub struct ThumbnailGenerator<'a> {
+    cfg: &'a Config,
+    bus: &'a dyn Bus,
+}
 
-impl ThumbnailGenerator {
-    #[instrument(skip(bus, preprocessor_factory))]
-    pub fn run(cfg: &Config, bus: &dyn Bus, preprocessor_factory: Box<dyn PreprocessorFactory>) {
-        let thumbnails_dir = cfg.thumbnails_dir.clone();
-        let sub = bus.subscriber();
-        let mut publ = bus.publisher();
+impl<'a> ThumbnailGenerator<'a> {
+    pub fn new(cfg: &'a Config, bus: &'a dyn Bus) -> Self {
+        Self { cfg, bus }
+    }
+
+    #[instrument(skip(self, preprocessor_factory))]
+    pub fn run(&self, preprocessor_factory: Box<dyn PreprocessorFactory>) {
+        let thumbnails_dir = self.cfg.thumbnails_dir.clone();
+        let sub = self.bus.subscriber();
+        let mut publ = self.bus.publisher();
         thread::spawn(move || -> Result<()> {
             loop {
                 if let Event::NewDocs(location) = sub.recv()? {

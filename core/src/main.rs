@@ -62,10 +62,11 @@ fn setup_core(cfg: &Config) -> Result<Box<dyn Repository>> {
     let bus = bus()?;
     let watcher = FsWatcher::new(cfg, &bus);
     let notifier = WsNotifier::new(cfg, &bus);
+    let preprocessor = ThumbnailGenerator::new(cfg, &bus);
 
     watcher.run();
     notifier.run()?;
-    ThumbnailGenerator::run(cfg, &bus, preprocessor_factory());
+    preprocessor.run(preprocessor_factory());
     TextExtractorImpl::run(cfg, &bus, extractor_factory());
     let repository = repository(cfg)?;
     Indexer::run(cfg, &bus, repository.clone());
