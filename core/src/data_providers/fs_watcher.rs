@@ -11,13 +11,20 @@ use tracing::{debug, error, warn};
 
 /// Watches for the changes on the File System and publishes correct event on the event bus.
 #[derive(Debug)]
-pub struct FsWatcher;
+pub struct FsWatcher<'a> {
+    cfg: &'a Config,
+    bus: &'a dyn Bus,
+}
 
-impl FsWatcher {
-    pub fn run(cfg: &Config, bus: &dyn Bus) {
+impl<'a> FsWatcher<'a> {
+    pub fn new(cfg: &'a Config, bus: &'a dyn Bus) -> Self {
+        Self { cfg, bus }
+    }
+
+    pub fn run(&self) {
         debug!("spawning watching thread");
-        let watched_dir = cfg.watched_dir.clone();
-        let mut publ = bus.publisher();
+        let watched_dir = self.cfg.watched_dir.clone();
+        let mut publ = self.bus.publisher();
         thread::spawn(move || -> Result<()> {
             debug!("watching thread spawned");
             let (watcher_tx, watcher_rx) = channel();

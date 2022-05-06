@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::result::Result;
 use crate::use_cases::bus::Bus;
 use crate::use_cases::bus::{Event, Publisher, Subscriber};
@@ -9,6 +11,12 @@ const BUS_CAPACITY: u64 = 1024; // TODO: take care of this `capacity`
 /// It's using [`Eventador`] to handle message queue and message delivery.
 pub struct LocalBus {
     eventador: eventador::Eventador,
+}
+
+impl Debug for LocalBus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("local bus")
+    }
 }
 
 impl LocalBus {

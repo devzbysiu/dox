@@ -12,7 +12,7 @@ use std::fmt::Debug;
 ///
 /// It allows to publish and subscribe to particular events in the system. Publishing can be done
 /// either via [`Publisher`] or via [`Bus::send`] method.
-pub trait Bus: Send {
+pub trait Bus: Send + Debug {
     fn subscriber(&self) -> Box<dyn Subscriber>;
 
     fn publisher(&self) -> Box<dyn Publisher>;
