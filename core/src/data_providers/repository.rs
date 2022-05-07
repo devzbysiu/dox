@@ -17,7 +17,7 @@ use tracing::{debug, instrument};
 pub struct TantivyRepository;
 
 impl TantivyRepository {
-    pub fn new(cfg: &Config) -> Result<(Box<dyn RepositoryRead>, Box<dyn RepositoryWrite>)> {
+    pub fn create(cfg: &Config) -> Result<(Box<dyn RepositoryRead>, Box<dyn RepositoryWrite>)> {
         if cfg.index_dir.exists() && cfg.index_dir.is_file() {
             return Err(DoxErr::InvalidIndexPath(format!(
                 "It needs to be a directory: '{}'",
@@ -195,7 +195,7 @@ mod test {
         File::create(&config.index_dir)?;
 
         // when
-        let result = TantivyRepository::new(&config);
+        let result = TantivyRepository::create(&config);
 
         // then
         assert_eq!(
@@ -227,7 +227,7 @@ mod test {
     fn test_index_docs() -> Result<()> {
         // given
         let config = create_config()?;
-        let (repo_read, repo_write) = TantivyRepository::new(&config)?;
+        let (repo_read, repo_write) = TantivyRepository::create(&config)?;
         let tuples_to_index = vec![
             DocDetails::new("filename1", "body1", "thumbnail1"),
             DocDetails::new("filename2", "body2", "thumbnail2"),
@@ -261,7 +261,7 @@ mod test {
     fn test_search() -> Result<()> {
         // given
         let config = create_config()?;
-        let (repo_read, repo_write) = TantivyRepository::new(&config)?;
+        let (repo_read, repo_write) = TantivyRepository::create(&config)?;
         let tuples_to_index = vec![
             DocDetails::new("filename1", "some document body", "thumbnail1"),
             DocDetails::new("filename2", "another text here", "thumbnail2"),
@@ -290,7 +290,7 @@ mod test {
     fn test_search_with_fuzziness() -> Result<()> {
         // given
         let config = create_config()?;
-        let (repo_read, repo_write) = TantivyRepository::new(&config)?;
+        let (repo_read, repo_write) = TantivyRepository::create(&config)?;
         let tuples_to_index = vec![
             DocDetails::new("filename1", "some document body", "thumbnail1"),
             DocDetails::new("filename2", "another text here", "thumbnail2"),
