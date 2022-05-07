@@ -5,6 +5,7 @@ use crate::use_cases::config::Config;
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::Duration;
 use tungstenite::{accept, Message, WebSocket};
 
 use tracing::debug;
@@ -27,26 +28,29 @@ impl<'a> WsNotifier<'a> {
         let sub = self.bus.subscriber();
         let sockets_list = NotifiableSockets::new();
         sockets_list.await_notifications(sub);
-        ConnHandler::new(self.cfg)?.push_new_conns(sockets_list);
+        let conn_handler = ConnHandler::new(self.cfg.clone(), sockets_list)?;
+        conn_handler.push_new_conns()?;
+        conn_handler.run_periodic_cleanup();
         Ok(())
     }
 }
 
 struct ConnHandler {
-    listener: TcpListener,
+    cfg: Config,
+    sockets: NotifiableSockets,
 }
 
 impl ConnHandler {
-    fn new(cfg: &Config) -> Result<Self> {
-        Ok(Self {
-            listener: TcpListener::bind(&cfg.notifications_addr)?,
-        })
+    fn new(cfg: Config, sockets: NotifiableSockets) -> Result<Self> {
+        Ok(Self { cfg, sockets })
     }
 
-    fn push_new_conns(self, mut sockets: NotifiableSockets) {
+    fn push_new_conns(&self) -> Result<()> {
+        let listener = TcpListener::bind(&self.cfg.notifications_addr)?;
+        let mut sockets = self.sockets.clone();
         thread::spawn(move || -> Result<()> {
             debug!("waiting for a connection...");
-            for stream in self.listener.incoming() {
+            for stream in listener.incoming() {
                 let stream = stream?;
                 debug!("\tconnection accepted");
                 let websocket = accept(stream)?;
@@ -57,9 +61,27 @@ impl ConnHandler {
             }
             Ok(())
         });
+        Ok(())
+    }
+
+    fn run_periodic_cleanup(&self) {
+        let sockets = self.sockets.clone();
+        thread::spawn(move || -> Result<()> {
+            loop {
+                debug!("checking for inactive sockets");
+                sockets
+                    .all
+                    .lock()
+                    .expect("poisoned mutex")
+                    .retain(Socket::is_active);
+                debug!("sleeping for 10 seconds");
+                thread::sleep(Duration::from_secs(10)); // TODO: take care of this
+            }
+        });
     }
 }
 
+#[derive(Clone)]
 struct NotifiableSockets {
     all: Arc<Mutex<Vec<Socket>>>, // TODO: handle case when socket is disconnected
 }
@@ -119,5 +141,11 @@ impl Socket {
             .write_message(Message::Text("new-doc".into()))?;
         debug!("notified");
         Ok(())
+    }
+
+    fn is_active(&self) -> bool {
+        let res = self.websocket.can_write();
+        debug!("is_active: {}", res);
+        res
     }
 }
