@@ -8,7 +8,7 @@ use std::thread;
 use std::time::Duration;
 use tungstenite::{accept, Message, WebSocket};
 
-use tracing::debug;
+use tracing::{debug, instrument};
 
 /// Accepts new websocket connections and notifies all connected parties.
 ///
@@ -24,6 +24,7 @@ impl<'a> WsNotifier<'a> {
         Self { cfg, bus }
     }
 
+    #[instrument(skip(self))]
     pub fn run(&self) -> Result<()> {
         ConnHandler::new(self.cfg.clone(), NotifiableSockets::new(self.bus))?;
         Ok(())
@@ -36,6 +37,7 @@ struct ConnHandler {
 }
 
 impl ConnHandler {
+    #[instrument(skip(sockets))]
     fn new(cfg: Config, sockets: NotifiableSockets) -> Result<Self> {
         let handler = Self { cfg, sockets };
         handler.push_new_conns()?;
