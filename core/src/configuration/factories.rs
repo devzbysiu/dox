@@ -34,7 +34,7 @@ pub fn extractor_factory() -> Box<dyn ExtractorFactory> {
 }
 
 pub fn repository(cfg: &Config) -> Result<(Box<dyn RepositoryRead>, Box<dyn RepositoryWrite>)> {
-    Ok(TantivyRepository::new(cfg)?)
+    TantivyRepository::new(cfg)
 }
 
 pub fn persistence() -> Box<dyn Persistence> {
