@@ -1,11 +1,8 @@
-use std::path::PathBuf;
-
 use rocket::{http::Status, response::Responder};
 use thiserror::Error;
 use tungstenite::handshake::server::{NoCallback, ServerHandshake};
 use tungstenite::handshake::HandshakeError;
 
-// TODO: Remove no longer needed errors after finishing the refactor
 #[derive(Debug, Error)]
 pub enum DoxErr {
     #[error("Invalid watched directory: '{0}'")]
@@ -29,17 +26,8 @@ pub enum DoxErr {
     #[error("Indexer failure: '{0}'")]
     Indexing(#[from] tantivy::TantivyError),
 
-    #[error("Error during query parsing: '{0}'")]
-    Parsing(#[from] tantivy::query::QueryParserError),
-
     #[error("Error from fs watcher: '{0}'")]
     FsWatcher(#[from] notify::Error),
-
-    #[error("Error when sending path through channel: '{0}'")]
-    Send(#[from] std::sync::mpsc::SendError<PathBuf>),
-
-    #[error("Error when receiving list of paths through channel: '{0}'")]
-    Recv(#[from] std::sync::mpsc::RecvError),
 
     #[error("Error when deserializing from TOML: '{0}'")]
     TomlDe(#[from] toml::de::Error),
@@ -79,9 +67,6 @@ pub enum DoxErr {
 
     #[error("Error while writing websocket message: '{0}'")]
     Websocket(#[from] tungstenite::Error),
-
-    #[error("Error while notifying about new docs: '{0}'")]
-    Notifier(#[from] std::sync::mpsc::SendError<()>),
 
     #[error("Error while parsing to SocketAddrV4: '{0}'")]
     NotificationSocket(#[from] std::net::AddrParseError),
