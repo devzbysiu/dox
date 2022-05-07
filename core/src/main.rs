@@ -59,12 +59,12 @@ pub fn launch() -> Rocket<Build> {
 }
 
 fn setup_core(cfg: &Config) -> Result<Box<dyn RepositoryRead>> {
-    let bus = bus()?;
-    let watcher = FsWatcher::new(cfg, &bus);
-    let notifier = WsNotifier::new(cfg, &bus);
-    let preprocessor = ThumbnailGenerator::new(cfg, &bus);
-    let extractor = TextExtractorImpl::new(&bus);
-    let indexer = Indexer::new(&bus);
+    let bus = &bus()?;
+    let watcher = FsWatcher::new(cfg, bus);
+    let notifier = WsNotifier::new(cfg, bus);
+    let preprocessor = ThumbnailGenerator::new(cfg, bus);
+    let extractor = TextExtractorImpl::new(bus);
+    let indexer = Indexer::new(bus);
 
     watcher.run();
     notifier.run()?;
