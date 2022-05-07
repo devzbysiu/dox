@@ -25,12 +25,7 @@ impl<'a> WsNotifier<'a> {
     }
 
     pub fn run(&self) -> Result<()> {
-        let sub = self.bus.subscriber();
-        let sockets_list = NotifiableSockets::new();
-        sockets_list.await_notifications(sub);
-        let conn_handler = ConnHandler::new(self.cfg.clone(), sockets_list)?;
-        conn_handler.push_new_conns()?;
-        conn_handler.run_periodic_cleanup();
+        ConnHandler::new(self.cfg.clone(), NotifiableSockets::new(self.bus))?;
         Ok(())
     }
 }
@@ -42,7 +37,10 @@ struct ConnHandler {
 
 impl ConnHandler {
     fn new(cfg: Config, sockets: NotifiableSockets) -> Result<Self> {
-        Ok(Self { cfg, sockets })
+        let handler = Self { cfg, sockets };
+        handler.push_new_conns()?;
+        handler.run_periodic_cleanup();
+        Ok(handler)
     }
 
     fn push_new_conns(&self) -> Result<()> {
@@ -87,10 +85,13 @@ struct NotifiableSockets {
 }
 
 impl NotifiableSockets {
-    fn new() -> Self {
-        Self {
+    fn new(bus: &dyn Bus) -> Self {
+        let sockets = Self {
             all: Arc::new(Mutex::new(Vec::new())),
-        }
+        };
+        let sub = bus.subscriber();
+        sockets.await_notifications(sub);
+        sockets
     }
 
     fn add(&mut self, notifier: Socket) {
