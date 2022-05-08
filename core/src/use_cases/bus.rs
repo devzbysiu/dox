@@ -46,7 +46,7 @@ pub trait Subscriber: Send {
 /// Represents events happening in the system.
 ///
 /// It describes both - internal and external events.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Event {
     /// Represents new documents appearing in the system. External event.
     NewDocs(Location),

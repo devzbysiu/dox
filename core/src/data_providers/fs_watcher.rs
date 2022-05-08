@@ -31,6 +31,7 @@ impl<'a> FsWatcher<'a> {
             let mut watcher = watcher(watcher_tx, Duration::from_millis(100))?;
             watcher.watch(watched_dir, RecursiveMode::Recursive)?;
             loop {
+                debug!("waiting for event from watcher");
                 match watcher_rx.recv() {
                     Ok(DebouncedEvent::Create(path)) => {
                         publ.send(Event::NewDocs(Location::FileSystem(vec![path])))?;
@@ -40,5 +41,44 @@ impl<'a> FsWatcher<'a> {
                 }
             }
         });
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use crate::{configuration::telemetry::init_tracing, data_providers::bus::LocalBus};
+
+    use anyhow::Result;
+    use std::fs::File;
+    use std::thread;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_fs_watcher_with_file_creation() -> Result<()> {
+        // given
+        init_tracing();
+        let tmp_dir = tempdir()?;
+        let bus = LocalBus::new()?;
+        let cfg = Config {
+            watched_dir: tmp_dir.path().into(),
+            ..Default::default()
+        };
+        let watcher = FsWatcher::new(&cfg, &bus);
+        let sub = bus.subscriber();
+        let file_path = tmp_dir.path().join("test-file");
+
+        // when
+        watcher.run();
+        thread::sleep(Duration::from_secs(2));
+        File::create(&file_path)?;
+
+        let event = sub.recv()?;
+
+        // then
+        assert_eq!(event, Event::NewDocs(Location::FileSystem(vec![file_path])));
+
+        Ok(())
     }
 }
