@@ -54,11 +54,14 @@ pub enum Event {
     /// Represents document finished indexing. Internal event.
     DocumentReady,
 
+    /// Published when thumbnail generation is finished.
     ThumbnailMade,
 
+    /// Published when text extraction is finished.
     TextExtracted(Vec<DocDetails>),
 }
 
+/// Represents abstraction for sending events.
 pub trait Publisher: Send {
     fn send(&mut self, event: Event) -> Result<()>;
 }
