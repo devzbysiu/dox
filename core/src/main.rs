@@ -19,7 +19,7 @@ use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
 use tracing::{debug, instrument};
-use use_cases::extractor::TextExtractorImpl;
+use use_cases::extractor::TxtExtractor;
 use use_cases::preprocessor::ThumbnailGenerator;
 
 mod configuration;
@@ -63,7 +63,7 @@ fn setup_core(cfg: &Config) -> Result<Box<dyn RepositoryRead>> {
     let watcher = FsWatcher::new(cfg, bus);
     let notifier = WsNotifier::new(cfg, bus);
     let preprocessor = ThumbnailGenerator::new(cfg, bus);
-    let extractor = TextExtractorImpl::new(bus);
+    let extractor = TxtExtractor::new(bus);
     let indexer = Indexer::new(bus);
 
     watcher.run();

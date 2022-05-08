@@ -9,11 +9,11 @@ use std::thread;
 use tracing::log::debug;
 use tracing::{instrument, warn};
 
-pub struct TextExtractorImpl<'a> {
+pub struct TxtExtractor<'a> {
     bus: &'a dyn Bus,
 }
 
-impl<'a> TextExtractorImpl<'a> {
+impl<'a> TxtExtractor<'a> {
     pub fn new(bus: &'a dyn Bus) -> Self {
         Self { bus }
     }
