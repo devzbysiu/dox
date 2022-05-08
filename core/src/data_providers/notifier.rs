@@ -6,7 +6,7 @@ use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use tungstenite::{accept, Message, WebSocket};
+use tungstenite::{accept, Error, Message, WebSocket};
 
 use tracing::{debug, instrument};
 
@@ -68,12 +68,30 @@ impl ConnHandler {
         let sockets = self.sockets.clone();
         thread::spawn(move || -> Result<()> {
             loop {
-                debug!("checking for inactive sockets");
-                sockets
-                    .all
-                    .lock()
-                    .expect("poisoned mutex")
-                    .retain(Socket::is_active);
+                let mut idx = 0;
+                let mut all_sockets = sockets.all.lock().expect("poisoned mutex");
+                debug!("checking for inactive sockets, #: {}", all_sockets.len());
+                while idx < all_sockets.len() {
+                    let socket = &mut all_sockets[idx];
+                    match socket.websocket.read_message() {
+                        Ok(Message::Close(_)) => debug!("got closed message"),
+                        Err(Error::ConnectionClosed) => {
+                            debug!("connection closed, removing socket");
+                            all_sockets.remove(idx);
+                            continue;
+                        }
+                        Err(Error::AlreadyClosed) => {
+                            debug!("connection already closed, removing socket");
+                            all_sockets.remove(idx);
+                            continue;
+                        }
+                        _e => {
+                            debug!("other message: {:?}", _e);
+                            idx += 1;
+                        }
+                    }
+                }
+                drop(all_sockets);
                 debug!("sleeping for 10 seconds");
                 thread::sleep(Duration::from_secs(10)); // TODO: take care of this
             }
