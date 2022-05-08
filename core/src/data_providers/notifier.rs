@@ -6,7 +6,6 @@ use std::io::ErrorKind;
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
 use tungstenite::error::ProtocolError;
 use tungstenite::{accept, Error, Message, WebSocket};
 
@@ -163,11 +162,5 @@ impl Socket {
             .write_message(Message::Text("new-doc".into()))?;
         debug!("notified");
         Ok(())
-    }
-
-    fn is_active(&self) -> bool {
-        let res = self.websocket.can_write();
-        debug!("is_active: {}", res);
-        res
     }
 }
