@@ -78,31 +78,20 @@ impl ConnHandler {
                     let socket = &mut all_sockets[idx];
                     match socket.websocket.read_message() {
                         Ok(Message::Close(_)) => debug!("got closed message"),
-                        Err(Error::ConnectionClosed) => {
+                        Err(Error::ConnectionClosed)
+                        | Err(Error::AlreadyClosed)
+                        | Err(Error::Protocol(ProtocolError::ResetWithoutClosingHandshake)) => {
                             debug!("connection closed, removing socket");
                             all_sockets.remove(idx);
                             continue;
                         }
-                        Err(Error::AlreadyClosed) => {
-                            debug!("connection already closed, removing socket");
-                            all_sockets.remove(idx);
-                            continue;
-                        }
-                        Err(Error::Protocol(ProtocolError::ResetWithoutClosingHandshake)) => {
-                            debug!("connection closed abrubptly, removing socket");
-                            all_sockets.remove(idx);
-                            continue;
-                        }
-                        Err(Error::Io(e)) if e.kind() == ErrorKind::WouldBlock => {
-                            // no message in non-blocking socket, see [`TcpStream::set_nonblocking`]
-                        }
-                        _e => {
-                            debug!("other message: {:?}", _e);
-                            idx += 1;
-                        }
+                        // no message in non-blocking socket, see [`TcpStream::set_nonblocking`]
+                        Err(Error::Io(e)) if e.kind() == ErrorKind::WouldBlock => {}
+                        _ => {}
                     }
+                    idx += 1;
                 }
-                drop(all_sockets);
+                drop(all_sockets); // unlock mutex
                 debug!("sleeping for 10 seconds");
                 thread::sleep(Duration::from_secs(10)); // TODO: take care of this
             }
