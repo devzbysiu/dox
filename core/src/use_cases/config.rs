@@ -45,6 +45,7 @@ pub struct Config {
     pub index_dir: PathBuf,
     pub notifications_addr: SocketAddrV4,
     pub cooldown_time: Duration,
+    pub websocket_cleanup_time: Duration,
 }
 
 impl Default for Config {
@@ -55,6 +56,7 @@ impl Default for Config {
             index_dir: index_dir_default(),
             cooldown_time: Duration::from_secs(60),
             notifications_addr: "0.0.0.0:8001".parse().unwrap(),
+            websocket_cleanup_time: Duration::from_secs(10),
         }
     }
 }
@@ -86,6 +88,7 @@ mod test {
             index_dir: dirs::data_dir().unwrap().join("dox/index"),
             cooldown_time: Duration::from_secs(60),
             notifications_addr: "0.0.0.0:8001".parse()?,
+            websocket_cleanup_time: Duration::from_secs(10),
         };
 
         // when

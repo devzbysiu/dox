@@ -69,6 +69,7 @@ impl ConnHandler {
 
     fn run_periodic_cleanup(&self) {
         let sockets = self.sockets.clone();
+        let cleanup_duration = self.cfg.websocket_cleanup_time;
         thread::spawn(move || -> Result<()> {
             loop {
                 let mut idx = 0;
@@ -93,7 +94,7 @@ impl ConnHandler {
                 }
                 drop(all_sockets); // unlock mutex
                 debug!("sleeping for 10 seconds");
-                thread::sleep(Duration::from_secs(10)); // TODO: take care of this
+                thread::sleep(cleanup_duration);
             }
         });
     }

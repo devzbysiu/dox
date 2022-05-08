@@ -1,7 +1,6 @@
 #![allow(clippy::missing_errors_doc)]
 
 use anyhow::{bail, Result};
-use tracing::debug;
 use rand::Rng;
 use rocket::local::blocking::LocalResponse;
 use rocket::serde::{Deserialize, Serialize};
@@ -16,6 +15,7 @@ use std::process::{Child, Command};
 use std::thread;
 use std::time::Duration;
 use tempfile::TempDir;
+use tracing::debug;
 
 #[derive(Debug, Deserialize, Default)]
 pub struct SearchResults {
@@ -41,6 +41,7 @@ pub struct TestConfig {
     index_dir: TempDir,
     notifications_addr: SocketAddrV4,
     cooldown_time: Duration,
+    websocket_cleanup_time: Duration,
 }
 
 impl TestConfig {
@@ -51,6 +52,7 @@ impl TestConfig {
             index_dir: index_dir_path()?,
             notifications_addr: random_addr(),
             cooldown_time: Duration::from_secs(1),
+            websocket_cleanup_time: Duration::from_secs(10),
         })
     }
 
@@ -74,6 +76,7 @@ impl Serialize for TestConfig {
         state.serialize_field("index_dir", self.index_dir.path())?;
         state.serialize_field("notifications_addr", &self.notifications_addr)?;
         state.serialize_field("cooldown_time", &self.cooldown_time)?;
+        state.serialize_field("websocket_cleanup_time", &self.websocket_cleanup_time)?;
         state.end()
     }
 }

@@ -160,6 +160,10 @@ mod test {
             [cooldown_time]
             secs = 1
             nanos = 0
+
+            [websocket_cleanup_time]
+            secs = 10
+            nanos = 0
             "#,
         )?;
         let expected = Config {
@@ -168,6 +172,7 @@ mod test {
             index_dir: PathBuf::from("/home/zbyniu/.local/share/dox/index"),
             cooldown_time: Duration::from_secs(1),
             notifications_addr: "0.0.0.0:8001".parse()?,
+            websocket_cleanup_time: Duration::from_secs(10),
         };
         let loader = FsConfigLoader;
 
@@ -203,6 +208,10 @@ mod test {
                 [cooldown_time]
                 secs = 1
                 nanos = 0
+
+                [websocket_cleanup_time]
+                secs = 10
+                nanos = 0
                 "#,
         )
         .unwrap();
@@ -227,6 +236,10 @@ mod test {
 
                 [cooldown_time]
                 secs = 1
+                nanos = 0
+
+                [websocket_cleanup_time]
+                secs = 10
                 nanos = 0
                 "#,
         )
@@ -253,6 +266,10 @@ mod test {
                 [cooldown_time]
                 secs = 1
                 nanos = 0
+
+                [websocket_cleanup_time]
+                secs = 10
+                nanos = 0
                 "#,
         )
         .unwrap();
@@ -278,6 +295,10 @@ mod test {
                 [cooldown_time]
                 secs = 1
                 nanos = 0
+
+                [websocket_cleanup_time]
+                secs = 10
+                nanos = 0
                 "#,
         )
         .unwrap();
@@ -300,6 +321,36 @@ mod test {
                 thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
                 index_dir = "/home/zbyniu/.local/share/dox/index"
                 notifications_addr = "0.0.0.0:8001"
+
+                [websocket_cleanup_time]
+                secs = 10
+                nanos = 0
+                "#,
+        )
+        .unwrap();
+        let loader = FsConfigLoader;
+
+        // then
+        loader.load(&cfg_path).unwrap(); // should panic
+    }
+
+    #[test]
+    #[should_panic(expected = "missing field `websocket_cleanup_time`")]
+    fn test_load_config_when_missing_websocket_cleanup_time() {
+        // given
+        let tmp_cfg = tempdir().unwrap();
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        create_config(
+            &cfg_path,
+            r#"
+                watched_dir = "/home/zbyniu/Tests/notify"
+                thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
+                index_dir = "/home/zbyniu/.local/share/dox/index"
+                notifications_addr = "0.0.0.0:8001"
+
+                [cooldown_time]
+                secs = 1
+                nanos = 0
                 "#,
         )
         .unwrap();
@@ -332,6 +383,7 @@ mod test {
             index_dir: PathBuf::from("/index_dir"),
             cooldown_time: Duration::from_secs(60),
             notifications_addr: "0.0.0.0:8001".parse()?,
+            websocket_cleanup_time: Duration::from_secs(10),
         };
         let loader = FsConfigLoader;
 
@@ -348,6 +400,10 @@ notifications_addr = "0.0.0.0:8001"
 
 [cooldown_time]
 secs = 60
+nanos = 0
+
+[websocket_cleanup_time]
+secs = 10
 nanos = 0
 "#
         );

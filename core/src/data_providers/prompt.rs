@@ -16,6 +16,7 @@ pub fn show() -> Result<Config> {
         index_dir: index_dir_prompt(&config)?,
         cooldown_time: cooldown_time_prompt(&config)?,
         notifications_addr: notifications_addr_prompt()?,
+        websocket_cleanup_time: websocket_cleanup_time_prompt(&config)?,
     })
 }
 
@@ -78,4 +79,14 @@ fn notifications_addr_prompt() -> Result<SocketAddrV4> {
         .with_default("0.0.0.0:8001")
         .prompt()?
         .parse()?)
+}
+
+fn websocket_cleanup_time_prompt(config: &Config) -> Result<Duration> {
+    Ok(Duration::from_secs(
+        CustomType::<u64>::new(
+            "Websocket cleanup - # of seconds after which websockets are checked and cleaned up:",
+        )
+        .with_default((config.cooldown_time.as_secs(), &|secs| format!("{}", secs)))
+        .prompt()?,
+    ))
 }
