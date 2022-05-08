@@ -2,10 +2,12 @@ use crate::result::Result;
 use crate::use_cases::bus::{Bus, Event, Subscriber};
 use crate::use_cases::config::Config;
 
+use std::io::ErrorKind;
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
+use tungstenite::error::ProtocolError;
 use tungstenite::{accept, Error, Message, WebSocket};
 
 use tracing::{debug, instrument};
@@ -52,6 +54,7 @@ impl ConnHandler {
             debug!("waiting for a connection...");
             for stream in listener.incoming() {
                 let stream = stream?;
+                stream.set_nonblocking(true)?;
                 debug!("\tconnection accepted");
                 let websocket = accept(stream)?;
                 debug!("\twebsocket ready");
@@ -84,6 +87,14 @@ impl ConnHandler {
                             debug!("connection already closed, removing socket");
                             all_sockets.remove(idx);
                             continue;
+                        }
+                        Err(Error::Protocol(ProtocolError::ResetWithoutClosingHandshake)) => {
+                            debug!("connection closed abrubptly, removing socket");
+                            all_sockets.remove(idx);
+                            continue;
+                        }
+                        Err(Error::Io(e)) if e.kind() == ErrorKind::WouldBlock => {
+                            // no message in non-blocking socket, see [`TcpStream::set_nonblocking`]
                         }
                         _e => {
                             debug!("other message: {:?}", _e);
