@@ -154,9 +154,11 @@ impl Socket {
     fn is_active(&self) -> bool {
         match self.websocket.borrow_mut().read_message() {
             Ok(Message::Close(_))
-            | Err(Error::ConnectionClosed)
-            | Err(Error::AlreadyClosed)
-            | Err(Error::Protocol(ProtocolError::ResetWithoutClosingHandshake)) => {
+            | Err(
+                Error::ConnectionClosed
+                | Error::AlreadyClosed
+                | Error::Protocol(ProtocolError::ResetWithoutClosingHandshake),
+            ) => {
                 debug!("connection closed, removing socket");
                 false
             }
