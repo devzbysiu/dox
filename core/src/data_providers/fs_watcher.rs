@@ -48,7 +48,8 @@ impl<'a> FsWatcher<'a> {
 mod test {
     use super::*;
 
-    use crate::{configuration::telemetry::init_tracing, data_providers::bus::LocalBus};
+    use crate::configuration::telemetry::init_tracing;
+    use crate::data_providers::bus::LocalBus;
 
     use anyhow::Result;
     use std::fs::File;
