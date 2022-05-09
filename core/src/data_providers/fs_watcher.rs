@@ -67,7 +67,7 @@ mod test {
         let bus = LocalBus::new()?;
         let cfg = Config {
             watched_dir: tmp_dir.path().into(),
-            ..Default::default()
+            ..Config::default()
         };
         let watcher = FsWatcher::new(&cfg, &bus);
         let sub = bus.subscriber();
