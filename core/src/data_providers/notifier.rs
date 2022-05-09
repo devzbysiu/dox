@@ -78,9 +78,11 @@ impl ConnHandler {
                     let socket = &mut all_sockets[idx];
                     match socket.websocket.read_message() {
                         Ok(Message::Close(_)) => debug!("got closed message"),
-                        Err(Error::ConnectionClosed)
-                        | Err(Error::AlreadyClosed)
-                        | Err(Error::Protocol(ProtocolError::ResetWithoutClosingHandshake)) => {
+                        Err(
+                            Error::ConnectionClosed
+                            | Error::AlreadyClosed
+                            | Error::Protocol(ProtocolError::ResetWithoutClosingHandshake),
+                        ) => {
                             debug!("connection closed, removing socket");
                             all_sockets.remove(idx);
                             continue;
