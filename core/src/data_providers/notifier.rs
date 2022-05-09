@@ -2,7 +2,7 @@ use crate::result::Result;
 use crate::use_cases::bus::{Bus, Event, Subscriber};
 use crate::use_cases::config::Config;
 
-use std::io::ErrorKind;
+use std::cell::RefCell;
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -70,29 +70,11 @@ impl ConnHandler {
         let cleanup_duration = self.cfg.websocket_cleanup_time;
         thread::spawn(move || -> Result<()> {
             loop {
-                let mut idx = 0;
-                let mut all_sockets = sockets.all.lock().expect("poisoned mutex");
-                debug!("checking for inactive sockets, #: {}", all_sockets.len());
-                while idx < all_sockets.len() {
-                    let socket = &mut all_sockets[idx];
-                    match socket.websocket.read_message() {
-                        Ok(Message::Close(_)) => debug!("got closed message"),
-                        Err(
-                            Error::ConnectionClosed
-                            | Error::AlreadyClosed
-                            | Error::Protocol(ProtocolError::ResetWithoutClosingHandshake),
-                        ) => {
-                            debug!("connection closed, removing socket");
-                            all_sockets.remove(idx);
-                            continue;
-                        }
-                        // no message in non-blocking socket, see [`TcpStream::set_nonblocking`]
-                        Err(Error::Io(e)) if e.kind() == ErrorKind::WouldBlock => {}
-                        _ => {}
-                    }
-                    idx += 1;
-                }
-                drop(all_sockets); // unlock mutex
+                sockets
+                    .all
+                    .lock()
+                    .expect("poisoned mutex")
+                    .retain(Socket::is_active);
                 debug!("sleeping for 10 seconds");
                 thread::sleep(cleanup_duration);
             }
@@ -141,17 +123,20 @@ impl NotifiableSockets {
 }
 
 struct Socket {
-    websocket: WebSocket<TcpStream>,
+    websocket: RefCell<WebSocket<TcpStream>>,
 }
 
 impl Socket {
     fn new(websocket: WebSocket<TcpStream>) -> Self {
-        Self { websocket }
+        Self {
+            websocket: RefCell::new(websocket),
+        }
     }
 
     fn inform_connected(&mut self) -> Result<()> {
         debug!("notifying about connection established...");
         self.websocket
+            .borrow_mut()
             .write_message(Message::Text("connected".into()))?;
         debug!("notified");
         Ok(())
@@ -160,8 +145,22 @@ impl Socket {
     fn notify_new_docs(&mut self) -> Result<()> {
         debug!("notifying about new docs...");
         self.websocket
+            .borrow_mut()
             .write_message(Message::Text("new-doc".into()))?;
         debug!("notified");
         Ok(())
+    }
+
+    fn is_active(&self) -> bool {
+        match self.websocket.borrow_mut().read_message() {
+            Ok(Message::Close(_))
+            | Err(Error::ConnectionClosed)
+            | Err(Error::AlreadyClosed)
+            | Err(Error::Protocol(ProtocolError::ResetWithoutClosingHandshake)) => {
+                debug!("connection closed, removing socket");
+                false
+            }
+            _ => true,
+        }
     }
 }
