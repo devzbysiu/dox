@@ -75,7 +75,7 @@ impl ConnHandler {
                     .lock()
                     .expect("poisoned mutex")
                     .retain(Socket::is_active);
-                debug!("sleeping for 10 seconds");
+                debug!("sleeping for {} seconds", cleanup_duration.as_secs());
                 thread::sleep(cleanup_duration);
             }
         });
@@ -84,7 +84,7 @@ impl ConnHandler {
 
 #[derive(Clone)]
 struct NotifiableSockets {
-    all: Arc<Mutex<Vec<Socket>>>, // TODO: handle case when socket is disconnected
+    all: Arc<Mutex<Vec<Socket>>>,
 }
 
 impl NotifiableSockets {
