@@ -6,10 +6,9 @@ use std::io::ErrorKind;
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use tracing::{debug, instrument};
 use tungstenite::error::ProtocolError;
 use tungstenite::{accept, Error, Message, WebSocket};
-
-use tracing::{debug, instrument};
 
 /// Accepts new websocket connections and notifies all connected parties.
 ///
