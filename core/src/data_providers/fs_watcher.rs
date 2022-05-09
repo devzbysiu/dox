@@ -4,6 +4,7 @@ use crate::use_cases::bus::{Bus, Event};
 use crate::use_cases::config::Config;
 
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
+use std::path::PathBuf;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
@@ -33,15 +34,17 @@ impl<'a> FsWatcher<'a> {
             loop {
                 debug!("waiting for event from watcher");
                 match watcher_rx.recv() {
-                    Ok(DebouncedEvent::Create(path)) => {
-                        publ.send(Event::NewDocs(Location::FileSystem(vec![path])))?;
-                    }
+                    Ok(DebouncedEvent::Create(path)) => publ.send(new_docs_event(path))?,
                     Ok(e) => warn!("this FS event is not supported: {:?}", e),
                     Err(e) => error!("watch error: {:?}", e),
                 }
             }
         });
     }
+}
+
+fn new_docs_event(path: PathBuf) -> Event {
+    Event::NewDocs(Location::FileSystem(vec![path]))
 }
 
 #[cfg(test)]
