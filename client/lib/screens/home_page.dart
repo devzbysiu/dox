@@ -1,5 +1,6 @@
 import 'package:dox/models/connection_state.dart';
 import 'package:dox/models/docs_state.dart';
+import 'package:dox/utilities/events_stream.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:dox/widgets/add_button.dart';
 import 'package:dox/widgets/app_bar.dart';
@@ -15,10 +16,12 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final eventsStream = context.select((EventsImpl events) => events.stream);
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<DocsState>(create: (_) => DocsStateImpl()),
         ChangeNotifierProvider<ConnState>(create: (_) => ConnStateImpl()),
+        StreamProvider<dynamic>(create: (_) => eventsStream, initialData: '')
       ],
       builder: (context, _) => Scaffold(
         backgroundColor: context.background,
