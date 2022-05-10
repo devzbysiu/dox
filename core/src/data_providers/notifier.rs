@@ -19,9 +19,10 @@ use tungstenite::{accept, Error, Message, WebSocket};
 /// - When client connects to the core, it holds the socket and informs connected client that the
 /// connection succeeded.
 /// - When [`Event::DocumentReady`] event appears on the bus, it notifies all connected devices, via
-/// stored sockets, about new documents, ready to be displayed.
+/// stored sockets, about new documents ready to be displayed.
 /// - When one of the stored socket receives connection closed event or losts connection, this
-/// socket is removed from memory.
+/// socket is removed from memory. This cleanup is performed periodically and the period of the
+/// check is controlled by [`Config::websocket_cleanup_time`].
 pub struct WsNotifier<'a> {
     cfg: &'a Config,
     bus: &'a dyn Bus,
