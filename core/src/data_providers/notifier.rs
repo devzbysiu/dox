@@ -8,6 +8,7 @@ use std::cell::RefCell;
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::Duration;
 use tracing::{debug, instrument};
 use tungstenite::error::ProtocolError;
 use tungstenite::{accept, Error, Message, WebSocket};
@@ -54,7 +55,12 @@ impl ConnHandler {
             debug!("waiting for a connection...");
             for stream in listener.incoming() {
                 let stream = stream?;
-                stream.set_nonblocking(true)?;
+                // Initially this was `stream.set_nonblocking(true)`, but it causes an issues
+                // with a handshake when clients connect to the core.
+                // The timeout (or non-blocking) is needed because of the connection cleanup which
+                // needs to read from a sockets to detect closed connection. It needs to iterate
+                // through sockets and thus it cannot block forever.
+                stream.set_read_timeout(Some(Duration::from_secs(1)))?;
                 debug!("\tconnection accepted");
                 let websocket = accept(stream)?;
                 debug!("\twebsocket ready");
