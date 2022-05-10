@@ -2,6 +2,8 @@ use crate::result::Result;
 use crate::use_cases::bus::{Bus, Event, Subscriber};
 use crate::use_cases::config::Config;
 
+use retry::delay::{jitter, Exponential};
+use retry::retry;
 use std::cell::RefCell;
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
@@ -144,9 +146,11 @@ impl Socket {
 
     fn notify_new_docs(&mut self) -> Result<()> {
         debug!("notifying about new docs...");
-        self.websocket
-            .borrow_mut()
-            .write_message(Message::Text("new-doc".into()))?;
+        retry(Exponential::from_millis(200).map(jitter).take(3), || {
+            self.websocket
+                .borrow_mut()
+                .write_message(Message::Text("new-doc".into()))
+        })?;
         debug!("notified");
         Ok(())
     }

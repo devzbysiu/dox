@@ -68,6 +68,9 @@ pub enum DoxErr {
     #[error("Error while writing websocket message: '{0}'")]
     Websocket(#[from] tungstenite::Error),
 
+    #[error("Error while retrying websocket operation: '{0}'")]
+    WebsocketRetry(#[from] retry::Error<tungstenite::Error>),
+
     #[error("Error while parsing to SocketAddrV4: '{0}'")]
     NotificationSocket(#[from] std::net::AddrParseError),
 

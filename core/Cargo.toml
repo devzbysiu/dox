@@ -50,6 +50,7 @@ tungstenite = "0.17.2"
 once_cell = "1.10.0"
 eventador = "0.0.18"
 anyhow = "1.0.52"
+retry = "1.3.1"
 
 [dev-dependencies]
 tempfile = "3.3.0"
