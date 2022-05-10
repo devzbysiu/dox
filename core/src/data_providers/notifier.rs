@@ -55,7 +55,7 @@ impl ConnHandler {
             debug!("waiting for a connection...");
             for stream in listener.incoming() {
                 let stream = stream?;
-                // Initially this was `stream.set_nonblocking(true)`, but it causes an issues
+                // Initially this was `stream.set_nonblocking(true)`, but it causes some issues
                 // with a handshake when clients connect to the core.
                 // The timeout (or non-blocking) is needed because of the connection cleanup which
                 // needs to read from a sockets to detect closed connection. It needs to iterate
