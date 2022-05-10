@@ -13,10 +13,15 @@ use tracing::{debug, instrument};
 use tungstenite::error::ProtocolError;
 use tungstenite::{accept, Error, Message, WebSocket};
 
-/// Accepts new websocket connections and notifies all connected parties.
+/// Accepts new websocket connections, notifies all connected clients and performs socket cleanup.
 ///
-/// When [`Event::DocumentReady`] event appears on the bus, it notifies all connected devices about
-/// new documents, ready to be displayed.
+/// It performs three jobs:
+/// - When client connects to the core, it holds the socket and informs connected client that the
+/// connection succeeded.
+/// - When [`Event::DocumentReady`] event appears on the bus, it notifies all connected devices, via
+/// stored sockets, about new documents, ready to be displayed.
+/// - When one of the stored socket receives connection closed event or losts connection, this
+/// socket is removed from memory.
 pub struct WsNotifier<'a> {
     cfg: &'a Config,
     bus: &'a dyn Bus,
