@@ -1,4 +1,5 @@
 import 'package:dox/screens/home_page.dart';
+import 'package:dox/services/lifecycle_service.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
@@ -38,7 +39,8 @@ class _SplashScreenState extends State<SplashScreen>
             ..forward().whenComplete(
               () => Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const HomePage()),
+                MaterialPageRoute(
+                    builder: (context) => const Lifecycle(child: HomePage())),
               ),
             );
         },
