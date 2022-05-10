@@ -4,11 +4,11 @@ import 'package:dox/utilities/urls.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:web_socket_channel/io.dart';
 
-abstract class Events implements ChangeNotifier {
+abstract class Events {
   Stream get stream;
 }
 
-class EventsImpl extends ChangeNotifier with Log implements Events {
+class EventsImpl with Log implements Events {
   EventsImpl({
     Urls? urlsProvider,
   }) {
@@ -22,11 +22,6 @@ class EventsImpl extends ChangeNotifier with Log implements Events {
     return IOWebSocketChannel.connect(_notificationsUri)
         .stream
         .asBroadcastStream();
-  }
-
-  void reconnect() {
-    _stream = _connect();
-    notifyListeners();
   }
 
   late final Stream _stream;

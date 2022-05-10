@@ -10,8 +10,6 @@ class StatusDot extends StatelessWidget with Log {
 
   @override
   Widget build(BuildContext context) {
-    final eventsData = context.read<String>();
-    log.fine('##################         delivered events data: "$eventsData"');
     return Container(
       width: 15,
       height: 15,

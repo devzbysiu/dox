@@ -16,12 +16,10 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final eventsStream = context.select((EventsImpl events) => events.stream);
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<DocsState>(create: (_) => DocsStateImpl()),
         ChangeNotifierProvider<ConnState>(create: (_) => ConnStateImpl()),
-        StreamProvider<dynamic>(create: (_) => eventsStream, initialData: '')
       ],
       builder: (context, _) => Scaffold(
         backgroundColor: context.background,
