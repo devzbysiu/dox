@@ -1,6 +1,7 @@
 import 'package:dox/models/connection_state.dart';
 import 'package:dox/models/docs_state.dart';
 import 'package:dox/utilities/events_stream.dart';
+import 'package:dox/utilities/notifications_stream.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:dox/widgets/add_button.dart';
 import 'package:dox/widgets/app_bar.dart';
@@ -20,6 +21,7 @@ class HomePage extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<DocsState>(create: (_) => DocsStateImpl()),
         ChangeNotifierProvider<ConnState>(create: (_) => ConnStateImpl()),
+        ChangeNotifierProvider<NotificationsStream>(create: (_) => NotificationsStreamImpl()),
       ],
       builder: (context, _) => Scaffold(
         backgroundColor: context.background,
