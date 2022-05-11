@@ -1,4 +1,4 @@
-import 'package:dox/widgets/status_dot_2.dart';
+import 'package:dox/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
 
 class ScrollableAppBar extends StatelessWidget {

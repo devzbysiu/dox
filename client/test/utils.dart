@@ -5,6 +5,7 @@ import 'package:dox/services/connection_service.dart';
 import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/config.dart';
 import 'package:dox/utilities/events_stream.dart';
+import 'package:dox/utilities/notifications_stream.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:dox/widgets/search_input.dart';
 import 'package:dox/widgets/status_dot.dart';
@@ -17,6 +18,7 @@ MultiProvider wrapper({
   Config? cfg,
   Urls? urls,
   Events? ev,
+  NotificationsStream? stream,
   DocsService? docs,
   DocsState? docsSt,
   ConnService? conn,
@@ -25,15 +27,18 @@ MultiProvider wrapper({
   final config = cfg ?? ConfigMock();
   final urlsProvider = urls ?? Urls(config: config);
   final events = ev ?? EventsImpl(urlsProvider: urlsProvider);
+  final notificationsStream = stream ?? NotificationsStreamImpl(urlsProvider: urlsProvider);
   final docsService = docs ?? DocsService(urls: urlsProvider, ev: events);
   final connService = conn ?? ConnService(ev: events);
   DocsState docsState(_) => docsSt ?? DocsStateImpl(docsService: docsService);
   ConnState connState(_) => connSt ?? ConnStateImpl(connService: connService);
+  NotificationsStream notifStream(_) => notificationsStream ?? NotificationsStreamImpl(urlsProvider: urlsProvider);
 
   return MultiProvider(
     providers: [
       ChangeNotifierProvider<DocsState>(create: docsState),
       ChangeNotifierProvider<ConnState>(create: connState),
+      ChangeNotifierProvider<NotificationsStream>(create: notifStream),
     ],
     child: MaterialApp(home: widget),
   );
