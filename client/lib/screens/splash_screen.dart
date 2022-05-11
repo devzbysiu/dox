@@ -1,7 +1,11 @@
+import 'package:dox/models/connection_state.dart';
+import 'package:dox/models/docs_state.dart';
 import 'package:dox/screens/home_page.dart';
 import 'package:dox/services/lifecycle_service.dart';
+import 'package:dox/utilities/notifications_stream.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({
@@ -40,7 +44,14 @@ class _SplashScreenState extends State<SplashScreen>
               () => Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const Lifecycle(child: HomePage())),
+                    builder: (context) => MultiProvider(providers: [
+                          ChangeNotifierProvider<DocsState>(
+                              create: (_) => DocsStateImpl()),
+                          ChangeNotifierProvider<ConnState>(
+                              create: (_) => ConnStateImpl()),
+                          ChangeNotifierProvider<NotificationsStream>(
+                              create: (_) => NotificationsStreamImpl()),
+                        ], builder: (context, _) => const HomePage())),
               ),
             );
         },

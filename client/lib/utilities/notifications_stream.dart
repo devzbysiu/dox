@@ -6,6 +6,7 @@ import 'package:web_socket_channel/io.dart';
 
 abstract class NotificationsStream implements ChangeNotifier {
   Stream get stream;
+  void reconnect();
 }
 
 class NotificationsStreamImpl extends ChangeNotifier
@@ -26,6 +27,7 @@ class NotificationsStreamImpl extends ChangeNotifier
         .asBroadcastStream();
   }
 
+  @override
   void reconnect() {
     _stream = _connect();
     notifyListeners();
