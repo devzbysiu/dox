@@ -9,6 +9,7 @@ use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
+use tracing::log::trace;
 use tracing::{debug, instrument};
 use tungstenite::error::ProtocolError;
 use tungstenite::{accept, Error, Message, WebSocket};
@@ -89,7 +90,7 @@ impl ConnHandler {
                     .lock()
                     .expect("poisoned mutex")
                     .retain(Socket::is_active);
-                debug!("sleeping for {} seconds", cleanup_duration.as_secs());
+                trace!("sleeping for {} seconds", cleanup_duration.as_secs());
                 thread::sleep(cleanup_duration);
             }
         });
@@ -113,7 +114,9 @@ impl NotifiableSockets {
 
     fn add(&mut self, notifier: Socket) {
         debug!("adding socket");
-        self.all.lock().expect("poisoned mutex").push(notifier);
+        let mut all = self.all.lock().expect("poisoned mutex");
+        all.push(notifier);
+        debug!("number of sockets connected: {}", all.len());
     }
 
     fn await_notifications(&self, sub: Box<dyn Subscriber>) {
