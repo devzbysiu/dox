@@ -1,7 +1,6 @@
 import 'package:dox/utilities/log.dart';
 import 'package:dox/utilities/service_locator.dart';
 import 'package:dox/utilities/urls.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:web_socket_channel/io.dart';
 
 abstract class Events {
