@@ -9,8 +9,7 @@ use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use tracing::log::trace;
-use tracing::{debug, instrument};
+use tracing::{debug, info, instrument};
 use tungstenite::error::ProtocolError;
 use tungstenite::{accept, Error, Message, WebSocket};
 
@@ -59,7 +58,7 @@ impl ConnHandler {
         let listener = TcpListener::bind(&self.cfg.notifications_addr)?;
         let mut sockets = self.sockets.clone();
         thread::spawn(move || -> Result<()> {
-            debug!("waiting for a connection...");
+            info!("waiting for a connection...");
             for stream in listener.incoming() {
                 let stream = stream?;
                 // Initially this was `stream.set_nonblocking(true)`, but it causes some issues
@@ -68,9 +67,9 @@ impl ConnHandler {
                 // needs to read from a sockets to detect closed connection. It needs to iterate
                 // through sockets and thus it cannot block forever.
                 stream.set_read_timeout(Some(Duration::from_secs(1)))?;
-                debug!("\tconnection accepted");
+                info!("\tconnection accepted");
                 let websocket = accept(stream)?;
-                debug!("\twebsocket ready");
+                info!("\twebsocket ready");
                 let mut socket = Socket::new(websocket);
                 socket.inform_connected()?;
                 sockets.add(socket);
@@ -90,7 +89,7 @@ impl ConnHandler {
                     .lock()
                     .expect("poisoned mutex")
                     .retain(Socket::is_active);
-                trace!("sleeping for {} seconds", cleanup_duration.as_secs());
+                debug!("sleeping for {} seconds", cleanup_duration.as_secs());
                 thread::sleep(cleanup_duration);
             }
         });
@@ -113,14 +112,14 @@ impl NotifiableSockets {
     }
 
     fn add(&mut self, notifier: Socket) {
-        debug!("adding socket");
+        info!("adding socket");
         let mut all = self.all.lock().expect("poisoned mutex");
         all.push(notifier);
         debug!("number of sockets connected: {}", all.len());
     }
 
     fn await_notifications(&self, sub: Box<dyn Subscriber>) {
-        debug!("awaiting notifications");
+        info!("awaiting notifications");
         let all = self.all.clone();
         thread::spawn(move || -> Result<()> {
             loop {
@@ -178,10 +177,13 @@ impl Socket {
                 | Error::AlreadyClosed
                 | Error::Protocol(ProtocolError::ResetWithoutClosingHandshake),
             ) => {
-                debug!("connection closed, removing socket");
+                info!("connection closed, removing socket");
                 false
             }
-            _ => true,
+            _e => {
+                debug!("other event: {:?}", _e);
+                true
+            }
         }
     }
 }
