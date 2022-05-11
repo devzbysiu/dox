@@ -7,6 +7,7 @@ import 'package:web_socket_channel/io.dart';
 abstract class NotificationsStream implements ChangeNotifier {
   Stream get stream;
   void reconnect();
+  void disconnect();
 }
 
 class NotificationsStreamImpl extends ChangeNotifier
@@ -18,20 +19,27 @@ class NotificationsStreamImpl extends ChangeNotifier
     final urls = urlsProvider ?? getIt<Urls>();
     _notificationsUri = urls.notifications();
     log.fine('initializing EventsStream with URL: "$_notificationsUri"');
-    _stream = _connect();
+    _channel = _connect();
+    _stream = _channel.stream.asBroadcastStream();
   }
 
-  Stream _connect() {
-    return IOWebSocketChannel.connect(_notificationsUri)
-        .stream
-        .asBroadcastStream();
+  IOWebSocketChannel _connect() {
+    return IOWebSocketChannel.connect(_notificationsUri);
   }
 
   @override
   void reconnect() {
-    _stream = _connect();
+    _channel = _connect();
+    _stream = _channel.stream.asBroadcastStream();
     notifyListeners();
   }
+
+  @override
+  void disconnect() {
+    _channel.sink.close();
+  }
+
+  late IOWebSocketChannel _channel;
 
   late Stream _stream;
 

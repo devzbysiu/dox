@@ -16,8 +16,7 @@ class _LifecycleState extends State<Lifecycle>
     with WidgetsBindingObserver, Log {
   @override
   Widget build(BuildContext context) {
-    _reconnect = context.select((NotificationsStream notificationsStream) =>
-        notificationsStream.reconnect);
+    _notificationsStream = context.read<NotificationsStream>();
     return widget.child;
   }
 
@@ -38,9 +37,10 @@ class _LifecycleState extends State<Lifecycle>
     switch (state) {
       case AppLifecycleState.paused:
         log.fine('app paused');
+        _notificationsStream.disconnect();
         break;
       case AppLifecycleState.resumed:
-        _reconnect();
+        _notificationsStream.reconnect();
         log.fine('app resumed');
         break;
       default:
@@ -48,5 +48,5 @@ class _LifecycleState extends State<Lifecycle>
     }
   }
 
-  late final Function _reconnect;
+  late final NotificationsStream _notificationsStream;
 }
