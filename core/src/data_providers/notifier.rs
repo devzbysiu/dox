@@ -84,11 +84,9 @@ impl ConnHandler {
         let cleanup_duration = self.cfg.websocket_cleanup_time;
         thread::spawn(move || -> Result<()> {
             loop {
-                sockets
-                    .all
-                    .lock()
-                    .expect("poisoned mutex")
-                    .retain(Socket::is_active);
+                let mut sockets = sockets.all.lock().expect("poisoned mutex");
+                sockets.retain(Socket::is_active);
+                drop(sockets);
                 debug!("sleeping for {} seconds", cleanup_duration.as_secs());
                 thread::sleep(cleanup_duration);
             }
@@ -177,7 +175,7 @@ impl Socket {
                 | Error::AlreadyClosed
                 | Error::Protocol(ProtocolError::ResetWithoutClosingHandshake),
             ) => {
-                info!("connection closed, removing socket");
+                info!("connection closed");
                 false
             }
             _e => {
