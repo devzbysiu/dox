@@ -5,6 +5,7 @@ use crate::use_cases::config::Config;
 use retry::delay::{jitter, Exponential};
 use retry::retry;
 use std::cell::RefCell;
+use std::fmt::Debug;
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -109,10 +110,10 @@ impl NotifiableSockets {
         sockets
     }
 
-    fn add(&mut self, notifier: Socket) {
-        info!("adding socket");
+    fn add(&mut self, socket: Socket) {
+        info!("adding socket {:?}", socket);
         let mut all = self.all.lock().expect("poisoned mutex");
-        all.push(notifier);
+        all.push(socket);
         debug!("number of sockets connected: {}", all.len());
     }
 
@@ -168,6 +169,7 @@ impl Socket {
     }
 
     fn is_active(&self) -> bool {
+        debug!("checking if socket {:?} is active", self);
         match self.websocket.borrow_mut().read_message() {
             Ok(Message::Close(_))
             | Err(
@@ -183,5 +185,20 @@ impl Socket {
                 true
             }
         }
+    }
+}
+
+impl Debug for Socket {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.websocket
+                .borrow()
+                .get_ref()
+                .peer_addr()
+                .expect("failed to get addr")
+                .to_string()
+        )
     }
 }
