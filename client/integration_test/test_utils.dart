@@ -4,7 +4,6 @@ import 'package:dox/main.dart' as app;
 import 'package:dox/services/doc_scan_service.dart';
 import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/config.dart';
-import 'package:dox/utilities/events_stream.dart';
 import 'package:dox/utilities/service_locator.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:http/http.dart' as http;
@@ -25,59 +24,19 @@ class MockConfig implements Config {
   String get websocketUrl => websocket;
 }
 
-class EventsMock implements Events {
-  EventsMock() {
-    _streamController = StreamController();
-    final sinkController = StreamController();
-    final channel = StreamChannel(
-      _streamController.stream,
-      sinkController.sink,
-    );
-    _stream = channel.stream.asBroadcastStream();
-  }
-
-  late final StreamController _streamController;
-
-  late final Stream _stream;
-
-  void cause(Event event) {
-    if (event == Event.disconnected) {
-      _streamController.close();
-      return;
-    }
-    _streamController.add(event.string());
-  }
-
-  @override
-  Stream get stream => _stream;
-}
-
-enum Event { connected, disconnected }
-
-extension EventExt on Event {
-  String string() {
-    return name.toString().split('.').last;
-  }
-}
-
 class DoxMock {
   static Future<DoxMock> init() async {
     final server = MockWebServer();
     await server.start();
-    return DoxMock._(server, EventsMock());
+    return DoxMock._(server);
   }
 
-  DoxMock._(MockWebServer server, EventsMock eventsMock) {
+  DoxMock._(MockWebServer server) {
     _server = server;
     app.configOverride = MockConfig(server.url, server.url);
-
-    _events = eventsMock;
-    app.eventsOverride = eventsMock;
   }
 
   late final MockWebServer _server;
-
-  late final EventsMock _events;
 
   void serveEmptyDocumentsList() {
     _server.enqueue(body: _emptyDocumentsList());
@@ -99,8 +58,6 @@ class DoxMock {
       );
     }
   }
-
-  EventsMock get events => _events;
 }
 
 void unregisterServices() {

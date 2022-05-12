@@ -68,7 +68,6 @@ void main() {
     expect(statusDot.color(tester), equals(disconnectedColor()));
 
     // when
-    _doxMock.events.cause(Event.connected);
     await tester.pumpAndSettle();
 
     // then
@@ -79,14 +78,12 @@ void main() {
     // given
     _doxMock.serveEmptyDocumentsList(); // not important
     app.main();
-    _doxMock.events.cause(Event.connected);
     await tester.pumpAndSettle();
 
     final StatusDot statusDot = tester.firstWidget(find.byType(StatusDot));
     expect(statusDot.color(tester), equals(connectedColor()));
 
     // when
-    _doxMock.events.cause(Event.disconnected);
     await tester.pumpAndSettle();
 
     // then
