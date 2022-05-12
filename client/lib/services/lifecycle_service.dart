@@ -16,7 +16,7 @@ class _LifecycleState extends State<Lifecycle>
     with WidgetsBindingObserver, Log {
   @override
   Widget build(BuildContext context) {
-    _connection = context.read<Connection>();
+    _connection = context.watch<Connection>();
     return widget.child;
   }
 
@@ -48,5 +48,5 @@ class _LifecycleState extends State<Lifecycle>
     }
   }
 
-  late final Connection _connection;
+  late Connection _connection;
 }

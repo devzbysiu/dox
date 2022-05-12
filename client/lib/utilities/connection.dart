@@ -5,11 +5,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:web_socket_channel/io.dart';
 
 abstract class Connection implements ChangeNotifier {
-  Stream get stream;
-
   void reconnect();
 
   void disconnect();
+
+  void onConnected(Function fun);
+
+  void onNewDoc(Function fun);
+
+  void onDisconnected(Function fun);
 }
 
 class ConnectionImpl extends ChangeNotifier with Log implements Connection {
@@ -38,12 +42,37 @@ class ConnectionImpl extends ChangeNotifier with Log implements Connection {
     _channel.sink.close();
   }
 
+  @override
+  void onConnected(Function fun) {
+    _stream.listen((data) {
+      if (data == 'connected') {
+        log.fine('connected, calling handler');
+        fun();
+      }
+    });
+  }
+
+  @override
+  void onNewDoc(Function fun) {
+    _stream.listen((data) {
+      if (data == 'new-doc') {
+        log.fine('new document available, calling handler');
+        fun();
+      }
+    });
+  }
+
+  @override
+  void onDisconnected(Function fun) {
+    _stream.listen((_) {}, onDone: () {
+      log.fine('disconnected, calling handler');
+      fun();
+    });
+  }
+
   late IOWebSocketChannel _channel;
 
   late Stream _stream;
 
   late final Uri _notificationsUri;
-
-  @override
-  Stream get stream => _stream;
 }

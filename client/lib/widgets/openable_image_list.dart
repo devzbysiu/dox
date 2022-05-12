@@ -16,13 +16,7 @@ class OpenableImageList extends StatelessWidget with Log {
   Widget build(BuildContext context) {
     final docsState = context.watch<DocsState>();
     final connection = context.watch<Connection>();
-    connection.stream.listen((data) {
-      log.fine('received data: $data');
-      if (data == 'new-doc') {
-        log.fine('new doc event received, calling handler');
-        docsState.refresh();
-      }
-    });
+    connection.onNewDoc(docsState.refresh);
     return ListView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       children: _buildOpenableDocuments(docsState.suggestions),

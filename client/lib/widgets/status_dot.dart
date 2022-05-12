@@ -11,26 +11,12 @@ class StatusDot extends StatefulWidget {
 }
 
 class _StatusDotState extends State<StatusDot> with Log {
-  _StatusDotState() {
-    _dotColors = [Colors.blueGrey, Colors.blueGrey];
-  }
-
   @override
   Widget build(BuildContext context) {
-    final stream = context.select((Connection notificationsStream) =>
-        notificationsStream.stream);
-    stream.listen((data) {
-      if (data == 'connected') {
-        log.fine('connected event received, changing colors');
-        setState(() {
-          _dotColors = [Colors.green[300]!, Colors.yellow[400]!];
-        });
-      }
-    }, onDone: () {
-      setState(() {
-        _dotColors = [Colors.blueGrey, Colors.blueGrey];
-      });
-    });
+    final connection = context.watch<Connection>();
+    connection.onConnected(turnOn);
+    connection.onDisconnected(turnOff);
+
     return Container(
       width: 15,
       height: 15,
@@ -45,5 +31,17 @@ class _StatusDotState extends State<StatusDot> with Log {
     );
   }
 
-  late List<Color> _dotColors;
+  void turnOn() {
+    setState(() {
+      _dotColors = [Colors.green[300]!, Colors.yellow[400]!];
+    });
+  }
+
+  void turnOff() {
+    setState(() {
+      _dotColors = [Colors.blueGrey, Colors.blueGrey];
+    });
+  }
+
+  List<Color> _dotColors = [Colors.blueGrey, Colors.blueGrey];
 }
