@@ -11,9 +11,6 @@ Events? eventsOverride;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  await setupServices(
-    configOverride: configOverride,
-    eventsOverride: eventsOverride,
-  );
+  await setupServices(configOverride: configOverride);
   runApp(const Dox());
 }

@@ -18,7 +18,6 @@ class DocsStateImpl extends ChangeNotifier with Log implements DocsState {
   }) {
     log.fine('initializing DocsState');
     _docsService = docsService ?? getIt<DocsService>();
-    _docsService.onNewDoc(refresh);
     _docsService.fetchAllFiles().then((value) {
       log.fine('fetched all docs, notifying');
       _suggestions = value;

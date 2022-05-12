@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:dox/main.dart' as app;
-import 'package:dox/services/connection_service.dart';
 import 'package:dox/services/doc_scan_service.dart';
 import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/config.dart';
@@ -107,9 +106,7 @@ class DoxMock {
 void unregisterServices() {
   getIt.unregister<Config>();
   getIt.unregister<Urls>();
-  getIt.unregister<Events>();
   getIt.unregister<DocsService>();
-  getIt.unregister<ConnService>();
   getIt.unregister<DocScanService>();
 }
 

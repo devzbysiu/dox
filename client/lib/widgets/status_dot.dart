@@ -1,6 +1,5 @@
-import 'package:dox/models/connection_state.dart';
+import 'package:dox/utilities/connection.dart';
 import 'package:dox/utilities/log.dart';
-import 'package:dox/utilities/notifications_stream.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -44,14 +43,6 @@ class _StatusDotState extends State<StatusDot> with Log {
         ),
       ),
     );
-  }
-
-  List<Color> _colors(BuildContext context) {
-    final isConnected = context.select((ConnState state) => state.isConnected);
-    log.fine('showing status color for: "isConnected == $isConnected"');
-    return isConnected
-        ? [Colors.green[300]!, Colors.yellow[400]!]
-        : [Colors.blueGrey, Colors.blueGrey];
   }
 
   late List<Color> _dotColors;

@@ -66,7 +66,7 @@ impl ConnHandler {
                 // The timeout (or non-blocking) is needed because of the connection cleanup which
                 // needs to read from a sockets to detect closed connection. It needs to iterate
                 // through sockets and thus it cannot block forever.
-                stream.set_read_timeout(Some(Duration::from_secs(1)))?;
+                stream.set_read_timeout(Some(Duration::from_secs(3)))?;
                 info!("\tconnection accepted");
                 let websocket = accept(stream)?;
                 info!("\twebsocket ready");
@@ -150,7 +150,7 @@ impl Socket {
     }
 
     fn inform_connected(&mut self) -> Result<()> {
-        debug!("notifying about connection established...");
+        info!("notifying about connection established...");
         self.websocket
             .borrow_mut()
             .write_message(Message::Text("connected".into()))?;
@@ -159,7 +159,7 @@ impl Socket {
     }
 
     fn notify_new_docs(&mut self) -> Result<()> {
-        debug!("notifying about new docs...");
+        info!("notifying about new docs...");
         retry(Exponential::from_millis(200).map(jitter).take(3), || {
             self.websocket
                 .borrow_mut()

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dox/models/document.dart';
-import 'package:dox/utilities/events_stream.dart';
 import 'package:dox/utilities/log.dart';
 import 'package:dox/utilities/service_locator.dart';
 import 'package:dox/utilities/urls.dart';
@@ -17,17 +16,12 @@ const thumbnailUrl = 'thumbnailUrl';
 class DocsService with Log {
   DocsService({
     Urls? urls,
-    Events? ev,
   }) {
     log.fine('initializing DocsService');
     _urls = urls ?? getIt<Urls>();
-    final events = ev ?? getIt<Events>();
-    _stream = events.stream;
   }
 
   late final Urls _urls;
-
-  late final Stream _stream;
 
   Future<List<Document>> fetchAllFiles() async {
     log.fine('fetching all files');
@@ -83,17 +77,6 @@ class DocsService with Log {
 
   Uri _toDocUrl(String filename) {
     return _urls.document(filename);
-  }
-
-  void onNewDoc(Function onNewDoc) {
-    log.fine('setting onNewDoc handler');
-    _stream.listen((data) {
-      log.fine('received data: $data');
-      if (data == 'new-doc') {
-        log.fine('new doc event received, calling handler');
-        onNewDoc();
-      }
-    });
   }
 }
 

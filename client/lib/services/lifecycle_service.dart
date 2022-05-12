@@ -1,5 +1,5 @@
 import 'package:dox/utilities/log.dart';
-import 'package:dox/utilities/notifications_stream.dart';
+import 'package:dox/utilities/connection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
@@ -16,7 +16,7 @@ class _LifecycleState extends State<Lifecycle>
     with WidgetsBindingObserver, Log {
   @override
   Widget build(BuildContext context) {
-    _notificationsStream = context.read<Connection>();
+    _connection = context.read<Connection>();
     return widget.child;
   }
 
@@ -37,10 +37,10 @@ class _LifecycleState extends State<Lifecycle>
     switch (state) {
       case AppLifecycleState.paused:
         log.fine('app paused');
-        _notificationsStream.disconnect();
+        _connection.disconnect();
         break;
       case AppLifecycleState.resumed:
-        _notificationsStream.reconnect();
+        _connection.reconnect();
         log.fine('app resumed');
         break;
       default:
@@ -48,5 +48,5 @@ class _LifecycleState extends State<Lifecycle>
     }
   }
 
-  late final Connection _notificationsStream;
+  late final Connection _connection;
 }
