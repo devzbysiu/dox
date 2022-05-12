@@ -2,7 +2,6 @@ import 'package:dox/models/docs_state.dart';
 import 'package:dox/models/document.dart';
 import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/config.dart';
-import 'package:dox/utilities/events_stream.dart';
 import 'package:dox/utilities/connection.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:dox/widgets/search_input.dart';
@@ -15,23 +14,20 @@ MultiProvider wrapper({
   required widget,
   Config? cfg,
   Urls? urls,
-  Events? ev,
-  Connection? stream,
+  Connection? conn,
   DocsService? docs,
   DocsState? docsSt,
 }) {
   final config = cfg ?? ConfigMock();
   final urlsProvider = urls ?? Urls(config: config);
-  final events = ev ?? EventsImpl(urlsProvider: urlsProvider);
-  final notificationsStream = stream ?? ConnectionImpl(urlsProvider: urlsProvider);
   final docsService = docs ?? DocsService(urls: urlsProvider);
   DocsState docsState(_) => docsSt ?? DocsStateImpl(docsService: docsService);
-  Connection notifStream(_) => notificationsStream ?? ConnectionImpl(urlsProvider: urlsProvider);
+  Connection connState(_) => conn ?? ConnectionImpl(urlsProvider: urlsProvider);
 
   return MultiProvider(
     providers: [
       ChangeNotifierProvider<DocsState>(create: docsState),
-      ChangeNotifierProvider<Connection>(create: notifStream),
+      ChangeNotifierProvider<Connection>(create: connState),
     ],
     child: MaterialApp(home: widget),
   );
@@ -116,4 +112,43 @@ List<Color> connectedColor() {
 
 List<Color> disconnectedColor() {
   return [Colors.blueGrey, Colors.blueGrey];
+}
+
+class ConnectionMock extends ChangeNotifier implements Connection {
+  @override
+  void disconnect() {
+    // nothing to do
+  }
+
+  @override
+  void onConnected(Function fun) {
+    onConnectedFun = fun;
+  }
+
+  @override
+  void onDisconnected(Function fun) {
+    onDisconnectedFun = fun;
+  }
+
+  @override
+  void onNewDoc(Function fun) {
+    // nothing to do
+  }
+
+  @override
+  void reconnect() {
+    // nothing to do
+  }
+
+  void forceConnected() {
+    onConnectedFun();
+  }
+
+  void forceDisconnected() {
+    onDisconnectedFun();
+  }
+
+  late Function onConnectedFun;
+
+  late Function onDisconnectedFun;
 }

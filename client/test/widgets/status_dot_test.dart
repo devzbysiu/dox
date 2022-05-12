@@ -17,37 +17,38 @@ void main() {
   });
 
   testWidgets('StatusDot changes color when connected', (tester) async {
-    // // given
-    // const statusDot = StatusDot();
-    //
-    // // when
-    // await tester.pumpWidget(wrapper(widget: statusDot, connSt: connState));
-    // expect(statusDot.color(tester), equals(disconnectedColor()));
-    //
-    // connState.isConnected = true;
-    // await tester.pump();
-    //
-    // // then
-    // expect(statusDot.color(tester), equals(connectedColor()));
-  }, skip: true); // TODO: stream implementation needs to be properly mocked first
+    // given
+    final conn = ConnectionMock();
+    const statusDot = StatusDot();
+
+    // when
+    await tester.pumpWidget(wrapper(widget: statusDot, conn: conn));
+    expect(statusDot.color(tester), equals(disconnectedColor()));
+
+    conn.forceConnected();
+    await tester.pump();
+
+    // then
+    expect(statusDot.color(tester), equals(connectedColor()));
+  }); // TODO: stream implementation needs to be properly mocked first
 
   testWidgets('StatusDot changes color when disconnected', (tester) async {
-    // // given
-    // final connState = ConnStateMock();
-    // const statusDot = StatusDot();
-    //
-    // await tester.pumpWidget(wrapper(widget: statusDot, connSt: connState));
-    // expect(statusDot.color(tester), equals(disconnectedColor()));
-    //
-    // connState.isConnected = true;
-    // await tester.pump();
-    // expect(statusDot.color(tester), equals(connectedColor()));
-    //
-    // // when
-    // connState.isConnected = false;
-    // await tester.pump();
-    //
-    // // then
-    // expect(statusDot.color(tester), equals(disconnectedColor()));
-  }, skip: true); // TODO: stream implementation needs to be properly mocked first
+    // given
+    final conn = ConnectionMock();
+    const statusDot = StatusDot();
+
+    await tester.pumpWidget(wrapper(widget: statusDot, conn: conn));
+    expect(statusDot.color(tester), equals(disconnectedColor()));
+
+    conn.forceConnected();
+    await tester.pump();
+    expect(statusDot.color(tester), equals(connectedColor()));
+
+    // when
+    conn.forceDisconnected();
+    await tester.pump();
+
+    // then
+    expect(statusDot.color(tester), equals(disconnectedColor()));
+  });
 }
