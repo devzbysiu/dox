@@ -4,33 +4,32 @@ import 'package:dox/utilities/urls.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:web_socket_channel/io.dart';
 
-abstract class NotificationsStream implements ChangeNotifier {
+abstract class Connection implements ChangeNotifier {
   Stream get stream;
+
   void reconnect();
+
   void disconnect();
 }
 
-class NotificationsStreamImpl extends ChangeNotifier
-    with Log
-    implements NotificationsStream {
-  NotificationsStreamImpl({
+class ConnectionImpl extends ChangeNotifier with Log implements Connection {
+  ConnectionImpl({
     Urls? urlsProvider,
   }) {
     final urls = urlsProvider ?? getIt<Urls>();
     _notificationsUri = urls.notifications();
     log.fine('initializing EventsStream with URL: "$_notificationsUri"');
-    _channel = _connect();
-    _stream = _channel.stream.asBroadcastStream();
+    _connect();
   }
 
-  IOWebSocketChannel _connect() {
-    return IOWebSocketChannel.connect(_notificationsUri);
+  void _connect() {
+    _channel = IOWebSocketChannel.connect(_notificationsUri);
+    _stream = _channel.stream.asBroadcastStream();
   }
 
   @override
   void reconnect() {
-    _channel = _connect();
-    _stream = _channel.stream.asBroadcastStream();
+    _connect();
     notifyListeners();
   }
 

@@ -49,8 +49,8 @@ class _SplashScreenState extends State<SplashScreen>
                               create: (_) => DocsStateImpl()),
                           ChangeNotifierProvider<ConnState>(
                               create: (_) => ConnStateImpl()),
-                          ChangeNotifierProvider<NotificationsStream>(
-                              create: (_) => NotificationsStreamImpl()),
+                          ChangeNotifierProvider<Connection>(
+                              create: (_) => ConnectionImpl()),
                         ], builder: (context, _) => const HomePage())),
               ),
             );

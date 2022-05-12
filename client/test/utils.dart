@@ -18,7 +18,7 @@ MultiProvider wrapper({
   Config? cfg,
   Urls? urls,
   Events? ev,
-  NotificationsStream? stream,
+  Connection? stream,
   DocsService? docs,
   DocsState? docsSt,
   ConnService? conn,
@@ -27,18 +27,18 @@ MultiProvider wrapper({
   final config = cfg ?? ConfigMock();
   final urlsProvider = urls ?? Urls(config: config);
   final events = ev ?? EventsImpl(urlsProvider: urlsProvider);
-  final notificationsStream = stream ?? NotificationsStreamImpl(urlsProvider: urlsProvider);
+  final notificationsStream = stream ?? ConnectionImpl(urlsProvider: urlsProvider);
   final docsService = docs ?? DocsService(urls: urlsProvider, ev: events);
   final connService = conn ?? ConnService(ev: events);
   DocsState docsState(_) => docsSt ?? DocsStateImpl(docsService: docsService);
   ConnState connState(_) => connSt ?? ConnStateImpl(connService: connService);
-  NotificationsStream notifStream(_) => notificationsStream ?? NotificationsStreamImpl(urlsProvider: urlsProvider);
+  Connection notifStream(_) => notificationsStream ?? ConnectionImpl(urlsProvider: urlsProvider);
 
   return MultiProvider(
     providers: [
       ChangeNotifierProvider<DocsState>(create: docsState),
       ChangeNotifierProvider<ConnState>(create: connState),
-      ChangeNotifierProvider<NotificationsStream>(create: notifStream),
+      ChangeNotifierProvider<Connection>(create: notifStream),
     ],
     child: MaterialApp(home: widget),
   );

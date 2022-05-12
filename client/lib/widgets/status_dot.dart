@@ -18,7 +18,7 @@ class _StatusDotState extends State<StatusDot> with Log {
 
   @override
   Widget build(BuildContext context) {
-    final stream = context.select((NotificationsStream notificationsStream) =>
+    final stream = context.select((Connection notificationsStream) =>
         notificationsStream.stream);
     stream.listen((data) {
       if (data == 'connected') {

@@ -16,7 +16,7 @@ class _LifecycleState extends State<Lifecycle>
     with WidgetsBindingObserver, Log {
   @override
   Widget build(BuildContext context) {
-    _notificationsStream = context.read<NotificationsStream>();
+    _notificationsStream = context.read<Connection>();
     return widget.child;
   }
 
@@ -48,5 +48,5 @@ class _LifecycleState extends State<Lifecycle>
     }
   }
 
-  late final NotificationsStream _notificationsStream;
+  late final Connection _notificationsStream;
 }
