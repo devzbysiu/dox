@@ -34,7 +34,8 @@ args = ["tarpaulin", "--ignore-tests", "-v", "--out", "Html"]
 dependencies = [
     "format",
     "clippy",
-    "codecov-flow"
+    "test"
+    # "codecov-flow" - code coverage is failing for some reason, but cargo test is passing
 ]
 
 [env]

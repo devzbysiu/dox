@@ -180,8 +180,8 @@ impl Socket {
                 info!("connection closed");
                 false
             }
-            _e => {
-                debug!("other event: {:?}", _e);
+            e => {
+                debug!("other event: {:?}", e);
                 true
             }
         }
@@ -198,7 +198,6 @@ impl Debug for Socket {
                 .get_ref()
                 .peer_addr()
                 .expect("failed to get addr")
-                .to_string()
         )
     }
 }
