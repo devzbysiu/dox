@@ -8,7 +8,6 @@ import 'package:dox/utilities/service_locator.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:http/http.dart' as http;
 import 'package:mock_web_server/mock_web_server.dart';
-import 'package:stream_channel/stream_channel.dart';
 
 class MockConfig implements Config {
   MockConfig(this.base, this.websocket);
