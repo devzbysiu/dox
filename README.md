@@ -14,20 +14,12 @@
     <tr>
       <td>
         <p>
-        <img src="https://github.com/devzbysiu/dox/workflows/core-ci/badge.svg" alt="core CI status
-          badge" />
-          <a href="https://codecov.io/gh/devzbysiu/dox">
-            <img src="https://img.shields.io/codecov/c/github/devzbysiu/dox?style=for-the-badge&token=f2339b3de9e44be0a902458a669c1160" alt="core code coverage"/>
-          </a>
+          <img src="https://img.shields.io/github/workflow/status/devzbysiu/dox/core-ci?style=for-the-badge" alt="Core CI status badge" />
         </p>
       </td>
       <td>
         <p>
-        <img src="https://github.com/devzbysiu/dox/workflows/client-ci/badge.svg" alt="client CI status
-          badge" />
-          <a href="https://codecov.io/gh/devzbysiu/dox">
-            <img src="https://img.shields.io/codecov/c/github/devzbysiu/dox?style=for-the-badge&token=f2339b3de9e44be0a902458a669c1160" alt="client code coverage"/>
-          </a>
+          <img src="https://img.shields.io/github/workflow/status/devzbysiu/dox/client-ci?style=for-the-badge" alt="Core CI status badge" />
         </p>
       </td>
     </tr>
