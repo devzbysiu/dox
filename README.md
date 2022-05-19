@@ -43,6 +43,9 @@
 
 # <p id="about">About</p>
 
+> :warning: This is still in progress and undergoes heavy refactoring so it should be considered
+unstable.
+
 One of the most frustrating activities I had to do from time to time is to search through a pile
 of documents to find the one I'm looking for. Wouldn't be better to just open an app and type
 keywords in the search bar?
