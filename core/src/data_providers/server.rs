@@ -1,4 +1,5 @@
 use crate::result::Result;
+use crate::use_cases::bus::Bus;
 use crate::use_cases::config::Config;
 use crate::use_cases::persistence::Persistence;
 use crate::use_cases::repository::{RepositoryRead, SearchResult};
@@ -33,6 +34,13 @@ pub fn receive_document(
         cfg.watched_dir.join(&doc.filename),
         &base64::decode(&doc.body)?,
     )?;
+    Ok(Status::Created)
+}
+
+#[instrument(skip(bus))]
+#[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
+#[post("/document/notifications")]
+pub fn notifications(bus: &State<Box<dyn Bus>>) -> Result<Status> {
     Ok(Status::Created)
 }
 
