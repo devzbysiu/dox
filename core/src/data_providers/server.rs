@@ -1,5 +1,5 @@
 use crate::result::Result;
-use crate::use_cases::bus::Bus;
+use crate::use_cases::bus::{Bus, Event};
 use crate::use_cases::config::Config;
 use crate::use_cases::persistence::Persistence;
 use crate::use_cases::repository::{RepositoryRead, SearchResult};
@@ -8,6 +8,8 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, post, State};
+use std::thread;
+use std::time::Duration;
 use tracing::instrument;
 
 #[instrument(skip(repo))]
@@ -41,7 +43,13 @@ pub fn receive_document(
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[post("/document/notifications")]
 pub fn notifications(bus: &State<Box<dyn Bus>>) -> Result<Status> {
-    Ok(Status::Created)
+    let sub = bus.subscriber();
+    loop {
+        if let Event::DocumentReady = sub.recv()? {
+            return Ok(Status::Ok);
+        }
+        thread::sleep(Duration::from_secs(10));
+    }
 }
 
 #[derive(Debug, Deserialize)]
