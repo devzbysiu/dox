@@ -40,7 +40,6 @@ pub fn receive_document(
 }
 
 #[instrument(skip(bus))]
-#[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[get("/document/notifications")]
 pub fn notifications(bus: &State<Box<dyn Bus>>) -> Result<Status> {
     let sub = bus.subscriber();
