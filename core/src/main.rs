@@ -19,6 +19,7 @@ use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
 use tracing::{debug, instrument};
+use use_cases::bus::Bus;
 use use_cases::extractor::TxtExtractor;
 use use_cases::preprocessor::ThumbnailGenerator;
 
@@ -46,7 +47,8 @@ pub fn launch() -> Rocket<Build> {
         .handle_config(path_override)
         .expect("failed to get config");
 
-    let repository = setup_core(&cfg).expect("failed to setup core");
+    let bus = bus().expect("failed to create bus");
+    let repository = setup_core(&cfg, &bus).expect("failed to setup core");
 
     debug!("starting server...");
     rocket::build()
@@ -58,8 +60,7 @@ pub fn launch() -> Rocket<Build> {
         .manage(cfg)
 }
 
-fn setup_core(cfg: &Config) -> Result<Box<dyn RepositoryRead>> {
-    let bus = &bus()?;
+fn setup_core(cfg: &Config, bus: &dyn Bus) -> Result<Box<dyn RepositoryRead>> {
     let watcher = FsWatcher::new(cfg, bus);
     let notifier = WsNotifier::new(cfg, bus);
     let preprocessor = ThumbnailGenerator::new(cfg, bus);
