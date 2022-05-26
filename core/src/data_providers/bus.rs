@@ -1,3 +1,4 @@
+//! This module is a concrete implementation of the interfaces defined in [`crate::use_cases::bus`].
 use std::fmt::Debug;
 
 use crate::result::Result;
