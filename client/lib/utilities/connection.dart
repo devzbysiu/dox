@@ -16,21 +16,6 @@ abstract class Connection implements ChangeNotifier {
   void onDisconnected(Function fun);
 }
 
-abstract class Connection2 implements ChangeNotifier {
-  void onNewDoc();
-}
-
-class LongPolling extends ChangeNotifier with Log implements Connection2 {
-  LongPolling(this.newDocFun);
-
-  @override
-  void onNewDoc() {
-    newDocFun();
-  }
-
-  late final Function newDocFun;
-}
-
 class ConnectionImpl extends ChangeNotifier with Log implements Connection {
   ConnectionImpl({
     Urls? urlsProvider,
