@@ -39,6 +39,8 @@ pub fn receive_document(
     Ok(Status::Created)
 }
 
+// TODO: rethink the approach to long polling
+// - it doesn't fit the connected/disconnected state and StatusDot in mobile app
 #[instrument(skip(bus))]
 #[get("/document/notifications")]
 pub fn notifications(bus: &State<Box<dyn Bus>>) -> Result<Status> {
