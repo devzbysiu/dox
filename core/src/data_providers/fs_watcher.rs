@@ -11,6 +11,8 @@ use std::time::Duration;
 use tracing::{debug, error, warn};
 
 /// Watches for the changes on the File System and publishes correct event on the event bus.
+///
+/// This implementation uses [`notify`] library to watch for the changes on the File System.
 #[derive(Debug)]
 pub struct FsWatcher<'a> {
     cfg: &'a Config,
