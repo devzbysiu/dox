@@ -1,3 +1,6 @@
+//! This module allows to gather configuration data from the user. It displays interactive prompt
+//! in the terminal which asks the user for the data.
+
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 use crate::use_cases::config::Config;
