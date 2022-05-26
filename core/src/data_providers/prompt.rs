@@ -8,6 +8,10 @@ use std::net::SocketAddrV4;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+/// Shows prompt in the terminal.
+///
+/// The prompt will get all the fields needed in the [`Config`] struct. It uses [`inquire`] to
+/// render the prompt.
 pub fn show() -> Result<Config> {
     let config = Config::default();
     Ok(Config {
