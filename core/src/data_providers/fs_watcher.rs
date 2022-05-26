@@ -13,6 +13,9 @@ use tracing::{debug, error, warn};
 /// Watches for the changes on the File System and publishes correct event on the event bus.
 ///
 /// This implementation uses [`notify`] library to watch for the changes on the File System.
+/// It then spawns new thread in which it receives events from `notify` lib. If the event is
+/// [`DebouncedEvent::Create`], then [`Event::NewDocs`] is created out of it and published on the
+/// bus.
 #[derive(Debug)]
 pub struct FsWatcher<'a> {
     cfg: &'a Config,
