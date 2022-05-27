@@ -1,3 +1,4 @@
+//! This is a concrete implementation of [`crate::use_cases::config`] mod.
 use crate::data_providers::prompt;
 use crate::helpers::PathRefExt;
 use crate::result::{DoxErr, Result};
