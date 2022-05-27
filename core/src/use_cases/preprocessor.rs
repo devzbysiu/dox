@@ -10,6 +10,11 @@ use std::thread;
 use tracing::log::debug;
 use tracing::{instrument, warn};
 
+/// Generates thumbnail either for PDF file or image file when [`Event::NewDocs`] appears on the
+/// bus.
+///
+/// Depending on the [`Location::extension`], specific preprocessor is selected (see
+/// [`FilePreprocessor`]). It then calls [`FilePreprocessor::preprocess`] method.
 pub struct ThumbnailGenerator<'a> {
     cfg: &'a Config,
     bus: &'a dyn Bus,
