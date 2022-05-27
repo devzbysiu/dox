@@ -1,3 +1,6 @@
+//! This is aconcrete implementation of a [`crate::use_cases::persistence`] mod.
+//!
+//! It uses just regular File System primitives to provide persistence.
 use crate::result::Result;
 use crate::use_cases::persistence::Persistence;
 
