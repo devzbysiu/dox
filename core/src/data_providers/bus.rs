@@ -1,4 +1,6 @@
 //! This module is a concrete implementation of the interfaces defined in [`crate::use_cases::bus`].
+//!
+//! It uses [`eventador`] library to build local event bus implementation.
 use std::fmt::Debug;
 
 use crate::result::Result;
