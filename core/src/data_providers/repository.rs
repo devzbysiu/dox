@@ -1,3 +1,6 @@
+//! This is concrete implementation of [`crate::use_cases::repository`] abstractions.
+//!
+//! It uses [`tantivy`] as full text search library.
 use crate::entities::document::DocDetails;
 use crate::result::{DoxErr, Result};
 use crate::use_cases::config::Config;
