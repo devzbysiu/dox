@@ -59,7 +59,7 @@ pub fn launch() -> Rocket<Build> {
         .mount("/thumbnail", FileServer::from(&cfg.thumbnails_dir))
         .mount("/document", FileServer::from(&cfg.watched_dir))
         .manage(repository)
-        .manage(Box::new(bus))
+        .manage(bus)
         .manage(persistence())
         .manage(cfg)
 }
