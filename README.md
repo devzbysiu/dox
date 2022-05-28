@@ -43,7 +43,7 @@
 
 # <p id="about">About</p>
 
-> :warning: This is still in progress and undergoes heavy refactoring so it should be considered
+> :warning: This is still in progress and undergoes heavy refactoring, so it should be considered
 unstable.
 
 One of the most frustrating activities I had to do from time to time is to search through a pile
@@ -65,7 +65,7 @@ scanned files. It also allows scanning new documents by using a camera or just p
 
 ## Core
 1. Go to [releases](https://github.com/devzbysiu/dox/releases) and download binary for your system.
-2. Run `dox init`. It will display a CLI so you can configure it:
+2. Run `dox init`. It will display a CLI, so you can configure it:
   1. `watched_directory` - a directory which is monitored for new files. If you are going to scan
      documents through your printer, use the directory to which your printer is saving scanner files.
   2. `index_dir` - directory holding and indexed text.
