@@ -9,9 +9,12 @@ use crate::configuration::telemetry::init_tracing;
 use crate::data_providers::fs_watcher::FsWatcher;
 use crate::data_providers::server::{all_thumbnails, notifications, receive_document, search};
 use crate::result::Result;
+use crate::use_cases::bus::Bus;
 use crate::use_cases::config::Config;
+use crate::use_cases::extractor::TxtExtractor;
 use crate::use_cases::indexer::Indexer;
-use crate::use_cases::repository::RepositoryRead;
+use crate::use_cases::preprocessor::ThumbnailGenerator;
+use crate::use_cases::repository::RepoRead;
 
 use configuration::factories::bus;
 use data_providers::notifier::WsNotifier;
@@ -19,9 +22,6 @@ use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
 use tracing::{debug, instrument};
-use use_cases::bus::Bus;
-use use_cases::extractor::TxtExtractor;
-use use_cases::preprocessor::ThumbnailGenerator;
 
 mod configuration;
 mod data_providers;
@@ -64,7 +64,7 @@ pub fn launch() -> Rocket<Build> {
         .manage(cfg)
 }
 
-fn setup_core(cfg: &Config, bus: &dyn Bus) -> Result<Box<dyn RepositoryRead>> {
+fn setup_core(cfg: &Config, bus: &dyn Bus) -> Result<RepoRead> {
     let watcher = FsWatcher::new(cfg, bus);
     let notifier = WsNotifier::new(cfg, bus);
     let preprocessor = ThumbnailGenerator::new(cfg, bus);

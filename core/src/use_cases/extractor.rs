@@ -9,6 +9,8 @@ use std::thread;
 use tracing::log::debug;
 use tracing::{instrument, warn};
 
+pub type ExtractorCreator = Box<dyn ExtractorFactory>;
+
 pub struct TxtExtractor<'a> {
     bus: &'a dyn Bus,
 }
@@ -19,7 +21,7 @@ impl<'a> TxtExtractor<'a> {
     }
 
     #[instrument(skip(self, extractor_factory))]
-    pub fn run(&self, extractor_factory: Box<dyn ExtractorFactory>) {
+    pub fn run(&self, extractor_factory: ExtractorCreator) {
         let sub = self.bus.subscriber();
         let mut publ = self.bus.publisher();
         thread::spawn(move || -> Result<()> {

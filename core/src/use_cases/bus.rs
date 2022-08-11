@@ -8,14 +8,18 @@ use crate::result::Result;
 
 use std::fmt::Debug;
 
+pub type EventBus = Box<dyn Bus>;
+pub type EventSubscriber = Box<dyn Subscriber>;
+pub type EventPublisher = Box<dyn Publisher>;
+
 /// Generic bus.
 ///
 /// It allows to publish and subscribe to particular events in the system. Publishing can be done
 /// either via [`Publisher`] or via [`Bus::send`] method.
 pub trait Bus: Send + Sync + Debug {
-    fn subscriber(&self) -> Box<dyn Subscriber>;
+    fn subscriber(&self) -> EventSubscriber;
 
-    fn publisher(&self) -> Box<dyn Publisher>;
+    fn publisher(&self) -> EventPublisher;
 
     /// Publishes [`Event`] without the need to create [`Publisher`].
     fn send(&self, event: Event) -> Result<()>;
@@ -23,11 +27,11 @@ pub trait Bus: Send + Sync + Debug {
 
 // allows to pass Box<dyn Bus> as &dyn Bus
 impl<T: Bus + ?Sized> Bus for Box<T> {
-    fn subscriber(&self) -> Box<dyn Subscriber> {
+    fn subscriber(&self) -> EventSubscriber {
         (**self).subscriber()
     }
 
-    fn publisher(&self) -> Box<dyn Publisher> {
+    fn publisher(&self) -> EventPublisher {
         (**self).publisher()
     }
 

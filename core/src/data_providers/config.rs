@@ -2,7 +2,7 @@
 use crate::data_providers::prompt;
 use crate::helpers::PathRefExt;
 use crate::result::{DoxErr, Result};
-use crate::use_cases::config::{Config, ConfigLoader, ConfigResolver};
+use crate::use_cases::config::{CfgLoader, Config, ConfigLoader, ConfigResolver};
 
 use inquire::error::InquireError;
 use std::fs::create_dir_all;
@@ -42,11 +42,11 @@ impl ConfigLoader for FsConfigLoader {
 /// 2. Config override.
 /// 3. Config from the user.
 pub struct FsConfigResolver {
-    config_loader: Box<dyn ConfigLoader>,
+    config_loader: CfgLoader,
 }
 
 impl FsConfigResolver {
-    pub fn new(config_loader: Box<dyn ConfigLoader>) -> Self {
+    pub fn new(config_loader: CfgLoader) -> Self {
         Self { config_loader }
     }
 }

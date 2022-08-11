@@ -4,8 +4,7 @@
 use std::fmt::Debug;
 
 use crate::result::Result;
-use crate::use_cases::bus::Bus;
-use crate::use_cases::bus::{Event, Publisher, Subscriber};
+use crate::use_cases::bus::{Bus, Event, EventPublisher, EventSubscriber, Publisher, Subscriber};
 
 const BUS_CAPACITY: u64 = 1024; // TODO: take care of this `capacity`
 
@@ -31,11 +30,11 @@ impl LocalBus {
 }
 
 impl Bus for LocalBus {
-    fn subscriber(&self) -> Box<dyn Subscriber> {
+    fn subscriber(&self) -> EventSubscriber {
         Box::new(LocalSubscriber::new(self.eventador.subscribe()))
     }
 
-    fn publisher(&self) -> Box<dyn Publisher> {
+    fn publisher(&self) -> EventPublisher {
         Box::new(LocalPublisher::new(self.eventador.publisher()))
     }
 

@@ -5,6 +5,9 @@ use crate::result::Result;
 use serde::Serialize;
 use std::collections::HashSet;
 
+pub type RepoRead = Box<dyn RepositoryRead>;
+pub type RepoWrite = Box<dyn RepositoryWrite>;
+
 /// Allows to search and list all indexed documents .
 pub trait RepositoryRead: Sync + Send {
     /// Returns list of documents mathing passed query.

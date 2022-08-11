@@ -1,5 +1,5 @@
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, Event, Subscriber};
+use crate::use_cases::bus::{Bus, Event, EventSubscriber};
 use crate::use_cases::config::Config;
 
 use retry::delay::{jitter, Exponential};
@@ -117,7 +117,7 @@ impl NotifiableSockets {
         debug!("number of sockets connected: {}", all.len());
     }
 
-    fn await_notifications(&self, sub: Box<dyn Subscriber>) {
+    fn await_notifications(&self, sub: EventSubscriber) {
         info!("awaiting notifications");
         let all = self.all.clone();
         thread::spawn(move || -> Result<()> {

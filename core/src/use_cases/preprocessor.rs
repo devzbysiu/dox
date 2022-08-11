@@ -10,6 +10,8 @@ use std::thread;
 use tracing::log::debug;
 use tracing::{instrument, warn};
 
+pub type PreprocessorCreator = Box<dyn PreprocessorFactory>;
+
 /// Generates thumbnail either for PDF file or image file when [`Event::NewDocs`] appears on the
 /// bus.
 ///
@@ -26,7 +28,7 @@ impl<'a> ThumbnailGenerator<'a> {
     }
 
     #[instrument(skip(self, preprocessor_factory))]
-    pub fn run(&self, preprocessor_factory: Box<dyn PreprocessorFactory>) {
+    pub fn run(&self, preprocessor_factory: PreprocessorCreator) {
         let thumbnails_dir = self.cfg.thumbnails_dir.clone();
         let sub = self.bus.subscriber();
         let mut publ = self.bus.publisher();

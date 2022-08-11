@@ -4,7 +4,9 @@
 use crate::entities::document::DocDetails;
 use crate::result::{DoxErr, Result};
 use crate::use_cases::config::Config;
-use crate::use_cases::repository::{RepositoryRead, RepositoryWrite, SearchEntry, SearchResult};
+use crate::use_cases::repository::{
+    RepoRead, RepoWrite, RepositoryRead, RepositoryWrite, SearchEntry, SearchResult,
+};
 
 use core::fmt;
 use std::fmt::Debug;
@@ -20,7 +22,7 @@ use tracing::{debug, instrument};
 pub struct TantivyRepository;
 
 impl TantivyRepository {
-    pub fn create(cfg: &Config) -> Result<(Box<dyn RepositoryRead>, Box<dyn RepositoryWrite>)> {
+    pub fn create(cfg: &Config) -> Result<(RepoRead, RepoWrite)> {
         if cfg.index_dir.exists() && cfg.index_dir.is_file() {
             return Err(DoxErr::InvalidIndexPath(format!(
                 "It needs to be a directory: '{}'",

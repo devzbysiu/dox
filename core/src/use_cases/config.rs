@@ -9,6 +9,10 @@ use std::net::SocketAddrV4;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+pub type CfgResolver = Box<dyn ConfigResolver>;
+
+pub type CfgLoader = Box<dyn ConfigLoader>;
+
 /// Responsible for reading/saving the configuration from/to some medium.
 ///
 /// Used medium is the implementation detail and is not part of this interface.

@@ -1,6 +1,6 @@
 use crate::result::Result;
 use crate::use_cases::bus::{Bus, Event};
-use crate::use_cases::repository::RepositoryWrite;
+use crate::use_cases::repository::RepoWrite;
 
 use std::thread;
 use tracing::log::debug;
@@ -16,7 +16,7 @@ impl<'a> Indexer<'a> {
     }
 
     #[instrument(skip(self, repository))]
-    pub fn run(&self, repository: Box<dyn RepositoryWrite>) {
+    pub fn run(&self, repository: RepoWrite) {
         let sub = self.bus.subscriber();
         let mut publ = self.bus.publisher();
         thread::spawn(move || -> Result<()> {

@@ -1,8 +1,8 @@
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, Event};
+use crate::use_cases::bus::{Event, EventBus};
 use crate::use_cases::config::Config;
 use crate::use_cases::persistence::Persistence;
-use crate::use_cases::repository::{RepositoryRead, SearchResult};
+use crate::use_cases::repository::{RepoRead, SearchResult};
 
 use rocket::http::Status;
 use rocket::serde::json::Json;
@@ -14,13 +14,13 @@ use tracing::instrument;
 
 #[instrument(skip(repo))]
 #[get("/search?<q>")]
-pub fn search(q: String, repo: &State<Box<dyn RepositoryRead>>) -> Result<Json<SearchResult>> {
+pub fn search(q: String, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
     Ok(Json(repo.search(q)?))
 }
 
 #[instrument(skip(repo))]
 #[get("/thumbnails/all")]
-pub fn all_thumbnails(repo: &State<Box<dyn RepositoryRead>>) -> Result<Json<SearchResult>> {
+pub fn all_thumbnails(repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
     Ok(Json(repo.all_documents()?))
 }
 
@@ -30,7 +30,7 @@ pub fn all_thumbnails(repo: &State<Box<dyn RepositoryRead>>) -> Result<Json<Sear
 pub fn receive_document(
     doc: Json<Document>,
     cfg: &State<Config>,
-    persistence: &State<Box<dyn Persistence>>,
+    persistence: &State<Persistence>,
 ) -> Result<Status> {
     persistence.save(
         cfg.watched_dir.join(&doc.filename),
@@ -43,7 +43,7 @@ pub fn receive_document(
 // - it doesn't fit the connected/disconnected state and StatusDot in mobile app
 #[instrument(skip(bus))]
 #[get("/document/notifications")]
-pub fn notifications(bus: &State<Box<dyn Bus>>) -> Result<Status> {
+pub fn notifications(bus: &State<EventBus>) -> Result<Status> {
     let sub = bus.subscriber();
     loop {
         if let Event::DocumentReady = sub.recv()? {
