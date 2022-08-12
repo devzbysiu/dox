@@ -1,4 +1,3 @@
-import 'package:dox/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
 
 class ScrollableAppBar extends StatelessWidget {
@@ -9,7 +8,6 @@ class ScrollableAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      title: const StatusDot(),
       expandedHeight: 220.0,
       flexibleSpace: FlexibleSpaceBar(
         background: Image.asset('assets/app-bar.webp', fit: BoxFit.cover),

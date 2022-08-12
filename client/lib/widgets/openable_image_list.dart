@@ -1,6 +1,5 @@
 import 'package:dox/models/docs_state.dart';
 import 'package:dox/models/document.dart';
-import 'package:dox/utilities/connection.dart';
 import 'package:dox/utilities/log.dart';
 import 'package:dox/widgets/document/openable_document.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,8 +14,6 @@ class OpenableImageList extends StatelessWidget with Log {
   @override
   Widget build(BuildContext context) {
     final docsState = context.watch<DocsState>();
-    final connection = context.watch<Connection>();
-    connection.onNewDoc(docsState.refresh);
     return ListView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       children: _buildOpenableDocuments(docsState.suggestions),

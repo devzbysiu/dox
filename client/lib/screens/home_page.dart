@@ -1,4 +1,3 @@
-import 'package:dox/services/lifecycle_service.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:dox/widgets/add_button.dart';
 import 'package:dox/widgets/app_bar.dart';
@@ -13,8 +12,7 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Lifecycle(
-        child: Scaffold(
+    return Scaffold(
       backgroundColor: context.background,
       body: NestedScrollView(
         headerSliverBuilder: (_ctx, _) => [const ScrollableAppBar()],
@@ -29,6 +27,6 @@ class HomePage extends StatelessWidget {
         ),
       ),
       floatingActionButton: AddButton(),
-    ));
+    );
   }
 }

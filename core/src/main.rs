@@ -7,7 +7,6 @@ use crate::configuration::factories::{
 };
 use crate::configuration::telemetry::init_tracing;
 use crate::data_providers::fs_watcher::FsWatcher;
-use crate::data_providers::notifier::WsNotifier;
 use crate::data_providers::server::{all_thumbnails, notifications, receive_document, search};
 use crate::result::Result;
 use crate::use_cases::bus::Bus;
@@ -65,13 +64,11 @@ pub fn launch() -> Rocket<Build> {
 
 fn setup_core(cfg: &Config, bus: &dyn Bus) -> Result<RepoRead> {
     let watcher = FsWatcher::new(cfg, bus);
-    let notifier = WsNotifier::new(cfg, bus);
     let preprocessor = ThumbnailGenerator::new(cfg, bus);
     let extractor = TxtExtractor::new(bus);
     let indexer = Indexer::new(bus);
 
     watcher.run();
-    notifier.run()?;
     preprocessor.run(preprocessor_factory());
     extractor.run(extractor_factory());
     let (repo_read, repo_write) = repository(cfg)?;

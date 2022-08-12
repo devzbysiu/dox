@@ -1,6 +1,5 @@
 import 'package:dox/models/docs_state.dart';
 import 'package:dox/screens/home_page.dart';
-import 'package:dox/utilities/connection.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
@@ -45,8 +44,6 @@ class _SplashScreenState extends State<SplashScreen>
                     builder: (context) => MultiProvider(providers: [
                           ChangeNotifierProvider<DocsState>(
                               create: (_) => DocsStateImpl()),
-                          ChangeNotifierProvider<Connection>(
-                              create: (_) => ConnectionImpl()),
                         ], builder: (context, _) => const HomePage())),
               ),
             );

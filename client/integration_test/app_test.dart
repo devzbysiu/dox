@@ -1,6 +1,5 @@
 import 'package:dox/main.dart' as app;
 import 'package:dox/widgets/document/openable_document.dart';
-import 'package:dox/widgets/status_dot.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -45,48 +44,4 @@ void main() {
     // then
     expect(find.byType(OpenableDocument), findsWidgets);
   });
-
-  testWidgets('the StatusDot is gray when no connection', (tester) async {
-    // given
-    _doxMock.serveEmptyDocumentsList(); // not important
-
-    // when
-    app.main();
-    await tester.pumpAndSettle();
-    final StatusDot statusDot = tester.firstWidget(find.byType(StatusDot));
-
-    // then
-    expect(statusDot.color(tester), equals(disconnectedColor()));
-  });
-
-  testWidgets('StatusDot changes to green when connected', (tester) async {
-    // given
-    _doxMock.serveEmptyDocumentsList(); // not important
-    app.main();
-    await tester.pumpAndSettle();
-    final StatusDot statusDot = tester.firstWidget(find.byType(StatusDot));
-    expect(statusDot.color(tester), equals(disconnectedColor()));
-
-    // when
-    await tester.pumpAndSettle();
-
-    // then
-    expect(statusDot.color(tester), equals(connectedColor()));
-  }, skip: true); // TODO: fix this
-
-  testWidgets('StatusDot changes to grey when disconnected', (tester) async {
-    // given
-    _doxMock.serveEmptyDocumentsList(); // not important
-    app.main();
-    await tester.pumpAndSettle();
-
-    final StatusDot statusDot = tester.firstWidget(find.byType(StatusDot));
-    expect(statusDot.color(tester), equals(connectedColor()));
-
-    // when
-    await tester.pumpAndSettle();
-
-    // then
-    expect(statusDot.color(tester), equals(disconnectedColor()));
-  }, skip: true); // TODO: fix this
 }
