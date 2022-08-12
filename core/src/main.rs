@@ -7,7 +7,7 @@ use crate::configuration::factories::{
 };
 use crate::configuration::telemetry::init_tracing;
 use crate::data_providers::fs_watcher::FsWatcher;
-use crate::data_providers::server::{all_thumbnails, notifications, receive_document, search};
+use crate::data_providers::server::{all_thumbnails, receive_document, search};
 use crate::result::Result;
 use crate::use_cases::bus::Bus;
 use crate::use_cases::config::Config;
@@ -50,10 +50,7 @@ pub fn launch() -> Rocket<Build> {
 
     debug!("starting server...");
     rocket::build()
-        .mount(
-            "/",
-            routes![search, all_thumbnails, receive_document, notifications],
-        )
+        .mount("/", routes![search, all_thumbnails, receive_document])
         .mount("/thumbnail", FileServer::from(&cfg.thumbnails_dir))
         .mount("/document", FileServer::from(&cfg.watched_dir))
         .manage(repository)

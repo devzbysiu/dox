@@ -1,5 +1,4 @@
 use crate::result::Result;
-use crate::use_cases::bus::{Event, EventBus};
 use crate::use_cases::config::Config;
 use crate::use_cases::persistence::Persistence;
 use crate::use_cases::repository::{RepoRead, SearchResult};
@@ -8,8 +7,6 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, post, State};
-use std::thread;
-use std::time::Duration;
 use tracing::instrument;
 
 #[instrument(skip(repo))]
@@ -37,20 +34,6 @@ pub fn receive_document(
         &base64::decode(&doc.body)?,
     )?;
     Ok(Status::Created)
-}
-
-// TODO: rethink the approach to long polling
-// - it doesn't fit the connected/disconnected state and StatusDot in mobile app
-#[instrument(skip(bus))]
-#[get("/document/notifications")]
-pub fn notifications(bus: &State<EventBus>) -> Result<Status> {
-    let sub = bus.subscriber();
-    loop {
-        if let Event::DocumentReady = sub.recv()? {
-            return Ok(Status::Ok);
-        }
-        thread::sleep(Duration::from_secs(10));
-    }
 }
 
 #[derive(Debug, Deserialize)]
