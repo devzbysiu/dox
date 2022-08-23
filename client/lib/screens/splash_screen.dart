@@ -1,5 +1,6 @@
 import 'package:dox/models/docs_state.dart';
 import 'package:dox/screens/home_page.dart';
+import 'package:dox/screens/sign_in.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
