@@ -3,11 +3,13 @@ use crate::use_cases::config::Config;
 use crate::use_cases::persistence::Persistence;
 use crate::use_cases::repository::{RepoRead, SearchResult};
 
+use jwks_client::keyset::KeyStore;
 use rocket::http::Status;
+use rocket::request::{FromRequest, Outcome, Request};
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, post, State};
-use tracing::instrument;
+use tracing::{debug, error, instrument};
 
 #[instrument(skip(repo))]
 #[get("/search?<q>")]
@@ -15,9 +17,9 @@ pub fn search(q: String, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
     Ok(Json(repo.search(q)?))
 }
 
-#[instrument(skip(repo))]
+#[instrument(skip(repo, api))]
 #[get("/thumbnails/all")]
-pub fn all_thumbnails(repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
+pub fn all_thumbnails(api: ApiKey, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
     Ok(Json(repo.all_documents()?))
 }
 
@@ -40,6 +42,39 @@ pub fn receive_document(
 pub struct Document {
     filename: String,
     body: String,
+}
+
+#[derive(Debug)]
+pub enum ApiKeyError {
+    BadCount,
+    Missing,
+    Invalid,
+}
+
+pub struct ApiKey(String);
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for ApiKey {
+    type Error = ApiKeyError;
+
+    async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        let token = req.headers().get("authorization").next();
+        let jkws_url = "https://www.googleapis.com/oauth2/v3/certs";
+
+        let key_set = KeyStore::new_from(jkws_url.into())
+            .await
+            .expect("failed to create key store");
+
+        match key_set.verify(token.unwrap()) {
+            Ok(jwt) => {
+                debug!("name={:?}", jwt.payload().get_str("name"));
+            }
+            Err(e) => {
+                error!("Could not verify token. Reason: {:?}", e);
+            }
+        }
+        Outcome::Success(ApiKey("some".into()))
+    }
 }
 
 #[cfg(test)]
