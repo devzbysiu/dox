@@ -17,9 +17,9 @@ pub fn search(q: String, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
     Ok(Json(repo.search(q)?))
 }
 
-#[instrument(skip(repo, api))]
+#[instrument(skip(repo))]
 #[get("/thumbnails/all")]
-pub fn all_thumbnails(api: ApiKey, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
+pub fn all_thumbnails(_user: User, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
     Ok(Json(repo.all_documents()?))
 }
 
@@ -45,35 +45,54 @@ pub struct Document {
 }
 
 #[derive(Debug)]
-pub enum ApiKeyError {
-    BadCount,
-    Missing,
-    Invalid,
+pub enum AuthError {
+    InvalidIdToken,
+    TokenVerification,
+    MissingToken,
 }
 
-pub struct ApiKey(String);
+#[derive(Debug, Default)]
+pub struct User {
+    email: String,
+}
+
+impl User {
+    fn new<S: Into<String>>(email: S) -> Self {
+        Self {
+            email: email.into(),
+        }
+    }
+}
 
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for ApiKey {
-    type Error = ApiKeyError;
+impl<'r> FromRequest<'r> for User {
+    type Error = AuthError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let token = req.headers().get("authorization").next();
-        let jkws_url = "https://www.googleapis.com/oauth2/v3/certs";
-
-        let key_set = KeyStore::new_from(jkws_url.into())
+        if let None = token {
+            return Outcome::Failure((Status::Unauthorized, AuthError::MissingToken));
+        }
+        let token = token.unwrap(); // can unwrap, because checked earlier
+        let key_set = KeyStore::new_from("https://www.googleapis.com/oauth2/v3/certs".into())
             .await
             .expect("failed to create key store");
-
-        match key_set.verify(token.unwrap()) {
-            Ok(jwt) => {
-                debug!("name={:?}", jwt.payload().get_str("name"));
-            }
+        match key_set.verify(token) {
+            Ok(jwt) => match jwt.payload().get_str("email") {
+                Some(email) => {
+                    debug!("name={:?}", email);
+                    Outcome::Success(User::new(email))
+                }
+                None => {
+                    error!("Invalid idToken, missing 'email' field");
+                    Outcome::Failure((Status::BadRequest, AuthError::InvalidIdToken))
+                }
+            },
             Err(e) => {
                 error!("Could not verify token. Reason: {:?}", e);
+                Outcome::Failure((Status::Unauthorized, AuthError::TokenVerification))
             }
         }
-        Outcome::Success(ApiKey("some".into()))
     }
 }
 
