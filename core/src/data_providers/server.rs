@@ -14,13 +14,13 @@ use tracing::{debug, error, instrument};
 
 #[instrument(skip(repo))]
 #[get("/search?<q>")]
-pub fn search(_user: User, q: String, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
+pub fn search(user: User, q: String, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
     Ok(Json(repo.search(q)?))
 }
 
 #[instrument(skip(repo))]
 #[get("/thumbnails/all")]
-pub fn all_thumbnails(_user: User, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
+pub fn all_thumbnails(user: User, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
     Ok(Json(repo.all_documents()?))
 }
 
@@ -28,7 +28,7 @@ pub fn all_thumbnails(_user: User, repo: &State<RepoRead>) -> Result<Json<Search
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[post("/document/<name>")]
 pub fn document(
-    _user: User,
+    user: User,
     name: String,
     cfg: &State<Config>,
     persistence: &State<Persistence>,
@@ -40,7 +40,7 @@ pub fn document(
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[post("/document/upload", data = "<doc>")]
 pub fn receive_document(
-    _user: User,
+    user: User,
     doc: Json<Document>,
     cfg: &State<Config>,
     persistence: &State<Persistence>,
@@ -67,6 +67,7 @@ pub enum AuthError {
 
 #[derive(Debug, Default)]
 pub struct User {
+    #[allow(dead_code)]
     email: String,
 }
 
@@ -84,7 +85,7 @@ impl<'r> FromRequest<'r> for User {
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let token = req.headers().get("authorization").next();
-        if let None = token {
+        if token.is_none() {
             return Outcome::Failure((Status::Unauthorized, AuthError::MissingToken));
         }
         let token = token.unwrap(); // can unwrap, because checked earlier
