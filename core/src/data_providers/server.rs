@@ -9,11 +9,12 @@ use rocket::request::{FromRequest, Outcome, Request};
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, post, State};
+use std::fs::File;
 use tracing::{debug, error, instrument};
 
 #[instrument(skip(repo))]
 #[get("/search?<q>")]
-pub fn search(q: String, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
+pub fn search(_user: User, q: String, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
     Ok(Json(repo.search(q)?))
 }
 
@@ -23,10 +24,23 @@ pub fn all_thumbnails(_user: User, repo: &State<RepoRead>) -> Result<Json<Search
     Ok(Json(repo.all_documents()?))
 }
 
+#[instrument(skip(persistence))]
+#[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
+#[post("/document/<name>")]
+pub fn document(
+    _user: User,
+    name: String,
+    cfg: &State<Config>,
+    persistence: &State<Persistence>,
+) -> Result<Option<File>> {
+    persistence.load(cfg.watched_dir.join(name))
+}
+
 #[instrument(skip(doc, persistence))]
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[post("/document/upload", data = "<doc>")]
 pub fn receive_document(
+    _user: User,
     doc: Json<Document>,
     cfg: &State<Config>,
     persistence: &State<Persistence>,

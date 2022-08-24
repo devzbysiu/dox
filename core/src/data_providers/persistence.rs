@@ -16,4 +16,11 @@ impl DataPersistence for FsPersistence {
         file.write_all(buf)?;
         Ok(())
     }
+
+    fn load(&self, uri: PathBuf) -> Result<Option<File>> {
+        if !uri.exists() {
+            return Ok(None);
+        }
+        Ok(Some(File::open(uri)?))
+    }
 }
