@@ -61,11 +61,12 @@ mod test {
 
     use anyhow::Result;
     use std::fs::File;
+    use std::io::Write;
     use std::thread;
     use tempfile::tempdir;
 
     #[test]
-    fn test_fs_watcher_with_file_creation() -> Result<()> {
+    fn test_fs_watcher_with_writin_to_file() -> Result<()> {
         // given
         init_tracing();
         let tmp_dir = tempdir()?;
@@ -81,7 +82,9 @@ mod test {
         // when
         watcher.run();
         thread::sleep(Duration::from_secs(2));
-        File::create(&file_path)?;
+        let mut file = File::create(&file_path)?;
+        thread::sleep(Duration::from_secs(2)); // wait for Created event to be ignored
+        file.write_all(b"test")?;
 
         let event = sub.recv()?;
 

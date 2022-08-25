@@ -2,7 +2,7 @@ use crate::entities::location::Location;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 use crate::use_cases::preprocessor::FilePreprocessor;
-use std::fs;
+use std::fs::{self, create_dir_all};
 
 use std::path::Path;
 use tracing::{debug, instrument};
@@ -19,15 +19,15 @@ impl FilePreprocessor for Image {
     fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<()> {
         let Location::FileSystem(paths) = location;
         for p in paths {
-            debug!("moving {} to {}", p.display(), thumbnails_dir.str());
-            fs::copy(
-                p,
-                thumbnails_dir.join(format!(
-                    "{}/{}",
-                    p.parent().expect("failed to get parent dir").filename(), // TODO: maybe this should be moved to helpers?
-                    p.filename()
-                )),
-            )?;
+            let relative_path = format!(
+                "{}/{}",
+                p.parent().expect("failed to get parent dir").filename(), // TODO: maybe this should be moved to helpers?
+                p.filename()
+            );
+            let target_path = thumbnails_dir.join(relative_path);
+            create_dir_all(target_path.parent().expect("failedto get parent"))?;
+            debug!("moving '{}' to '{}'", p.display(), target_path.display());
+            fs::copy(p, target_path)?;
         }
         Ok(())
     }
@@ -35,13 +35,15 @@ impl FilePreprocessor for Image {
 
 #[cfg(test)]
 mod test {
+    use crate::helpers::DirEntryExt;
+
     use super::*;
 
     use std::path::PathBuf;
     use tempfile::tempdir;
 
     #[test]
-    fn test_preprocess_with_correct_files() -> Result<()> {
+    fn test_image_preprocessor_with_correct_files() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
         let preprocessor = Image;
@@ -51,20 +53,21 @@ mod test {
 
         // when
         preprocessor.preprocess(&Location::FileSystem(paths), tmp_dir.path())?;
-        let file = tmp_dir.path().first_filename()?;
+        let user_dir = tmp_dir.path().read_dir()?.next().unwrap()?;
 
         // then
-        assert_eq!(file, "doc1.png");
+        assert_eq!(user_dir.filename(), "res");
+        assert_eq!(user_dir.path().first_filename()?, "doc1.png");
 
         Ok(())
     }
 
     #[test]
-    fn test_preprocess_with_wrong_files() -> Result<()> {
+    fn test_image_preprocessor_with_wrong_files() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
         let preprocessor = Image;
-        let paths = vec![PathBuf::from("res/doc1.pdf")];
+        let paths = vec![PathBuf::from("res/doc1.png")];
         let is_empty = tmp_dir.path().read_dir()?.next().is_none();
         assert!(is_empty);
 
@@ -73,10 +76,11 @@ mod test {
         // and error should be thrown (and this should be consistent with Pdf preprocessor)
         // when
         preprocessor.preprocess(&Location::FileSystem(paths), tmp_dir.path())?;
-        let file = tmp_dir.path().first_filename()?;
+        let user_dir = tmp_dir.path().read_dir()?.next().unwrap()?;
 
         // then
-        assert_eq!(file, "doc1.pdf");
+        assert_eq!(user_dir.filename(), "res");
+        assert_eq!(user_dir.path().first_filename()?, "doc1.png");
 
         Ok(())
     }

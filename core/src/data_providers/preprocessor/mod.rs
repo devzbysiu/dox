@@ -60,7 +60,11 @@ mod test {
 
             // then
             let filename = thumbnails_dir.path().first_filename()?;
-            assert_eq!(filename, test_case.2);
+            assert_eq!(filename, "res");
+            assert_eq!(
+                thumbnails_dir.path().join("res").first_filename()?,
+                test_case.2
+            );
         }
 
         Ok(())

@@ -281,12 +281,14 @@ mod test {
             DocDetails::new("filename4", "body4", "thumbnail4"),
             DocDetails::new("filename5", "body5", "thumbnail5"),
         ];
+        let user_email = "some@email.com";
+        let user = User::new(user_email);
 
         // when
-        repo_write.index(&tuples_to_index)?;
+        repo_write.index(user.clone(), &tuples_to_index)?;
         // TODO: this test should check only indexing but it's also
         // searching via all_documents
-        let all_docs = repo_read.all_documents()?;
+        let all_docs = repo_read.all_documents(user)?;
 
         // then
         assert_eq!(
@@ -315,10 +317,12 @@ mod test {
             DocDetails::new("filename4", "this is not so important", "thumbnail4"),
             DocDetails::new("filename5", "and this is last line", "thumbnail5"),
         ];
+        let user_email = "some@email.com";
+        let user = User::new(user_email);
 
         // when
-        repo_write.index(&tuples_to_index)?;
-        let results = repo_read.search("line".into())?;
+        repo_write.index(user.clone(), &tuples_to_index)?;
+        let results = repo_read.search(user, "line".into())?;
 
         // then
         assert_eq!(
@@ -342,13 +346,15 @@ mod test {
             DocDetails::new("filename2", "another text here", "thumbnail2"),
             DocDetails::new("filename3", "this is unique word: 9fZX", "thumbnail3"),
         ];
+        let user_email = "some@email.com";
+        let user = User::new(user_email);
 
         // when
-        repo_write.index(&tuples_to_index)?;
+        repo_write.index(user.clone(), &tuples_to_index)?;
         // NOTE: it's not the same word as above, two letters of fuzziness is fine
-        let first_results = repo_read.search("9fAB".into())?;
+        let first_results = repo_read.search(user.clone(), "9fAB".into())?;
         // NOTE: three letters is too much
-        let second_results = repo_read.search("9ABC".into())?;
+        let second_results = repo_read.search(user, "9ABC".into())?;
 
         // then
         assert_eq!(

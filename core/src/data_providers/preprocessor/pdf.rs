@@ -22,10 +22,10 @@ pub struct Pdf;
 impl Pdf {
     #[instrument(skip(self))]
     fn generate(&self, pdf_path: &Path, out_path: &Path) -> Result<()> {
+        create_dir_all(out_path.parent().expect("failed to get parent dir"))?; // TODO: get rid of this expect (maybe put parent() in helpers)
         let page = first_page(&pdf_path)?;
         let surface = paint_background_and_scale(&page)?;
         debug!("writing thumbnail to: '{}'", out_path.display());
-        create_dir_all(out_path.parent().expect("failed to get parent dir"))?; // TODO: get rid of this expect (maybe put parent() in helpers)
         let mut f: File = File::create(out_path)?;
         surface.write_to_png(&mut f)?;
         Ok(())
@@ -84,7 +84,7 @@ mod test {
     use tempfile::tempdir;
 
     #[test]
-    fn test_preprocess_with_correct_files() -> Result<()> {
+    fn test_pdf_preprocessor_with_correct_files() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
         let preprocessor = Pdf;
@@ -94,17 +94,18 @@ mod test {
 
         // when
         preprocessor.preprocess(&Location::FileSystem(paths), tmp_dir.path())?;
-        let file = tmp_dir.path().read_dir()?.next().unwrap()?.filename();
+        let user_dir = tmp_dir.path().read_dir()?.next().unwrap()?;
 
         // then
-        assert_eq!(file, "doc1.png");
+        assert_eq!(user_dir.filename(), "res");
+        assert_eq!(user_dir.path().first_filename()?, "doc1.png");
 
         Ok(())
     }
 
     #[test]
     #[should_panic(expected = "PDF document is damaged")]
-    fn test_preprocess_with_wrong_files() {
+    fn test_pdf_preprocessor_with_wrong_files() {
         // given
         let tmp_dir = tempdir().unwrap();
         let preprocessor = Pdf;
