@@ -39,7 +39,7 @@ impl<'a> FsWatcher<'a> {
             loop {
                 debug!("waiting for event from watcher");
                 match watcher_rx.recv() {
-                    Ok(DebouncedEvent::Create(path)) => publ.send(new_docs_event(path))?,
+                    Ok(DebouncedEvent::Write(path)) => publ.send(new_docs_event(path))?,
                     Ok(e) => warn!("this FS event is not supported: {:?}", e),
                     Err(e) => error!("watch error: {:?}", e),
                 }

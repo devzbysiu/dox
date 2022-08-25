@@ -21,8 +21,8 @@ impl<'a> Indexer<'a> {
         let mut publ = self.bus.publisher();
         thread::spawn(move || -> Result<()> {
             loop {
-                if let Event::TextExtracted(doc_details) = sub.recv()? {
-                    repository.index(&doc_details)?;
+                if let Event::TextExtracted(user, doc_details) = sub.recv()? {
+                    repository.index(user, &doc_details)?;
                     publ.send(Event::DocumentReady)?;
                 } else {
                     debug!("event not supported here");

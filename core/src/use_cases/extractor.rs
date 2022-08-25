@@ -1,10 +1,12 @@
 //! Represents abstractions for extracting text.
+use crate::data_providers::server::User;
 use crate::entities::document::DocDetails;
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
 use crate::use_cases::bus::{Bus, Event};
 
+use std::convert::TryFrom;
 use std::thread;
 use tracing::log::debug;
 use tracing::{instrument, warn};
@@ -29,7 +31,10 @@ impl<'a> TxtExtractor<'a> {
                 if let Event::NewDocs(location) = sub.recv()? {
                     let extension = location.extension();
                     let extractor = extractor_factory.make(&extension);
-                    publ.send(Event::TextExtracted(extractor.extract_text(&location)?))?;
+                    publ.send(Event::TextExtracted(
+                        User::try_from(&location)?,
+                        extractor.extract_text(&location)?,
+                    ))?;
                 } else {
                     debug!("event not supported here");
                 }

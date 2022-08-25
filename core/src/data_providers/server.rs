@@ -1,4 +1,6 @@
-use crate::result::Result;
+use crate::entities::location::Location;
+use crate::helpers::PathRefExt;
+use crate::result::{DoxErr, Result};
 use crate::use_cases::config::Config;
 use crate::use_cases::persistence::Persistence;
 use crate::use_cases::repository::{RepoRead, SearchResult};
@@ -9,31 +11,36 @@ use rocket::request::{FromRequest, Outcome, Request};
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, post, State};
+use std::convert::TryFrom;
 use std::fs::File;
 use tracing::{debug, error, instrument};
 
 #[instrument(skip(repo))]
 #[get("/search?<q>")]
 pub fn search(user: User, q: String, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
-    Ok(Json(repo.search(q)?))
+    Ok(Json(repo.search(user, q)?))
 }
 
 #[instrument(skip(repo))]
 #[get("/thumbnails/all")]
 pub fn all_thumbnails(user: User, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
-    Ok(Json(repo.all_documents()?))
+    Ok(Json(repo.all_documents(user)?))
 }
 
 #[instrument(skip(persistence))]
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
-#[post("/document/<name>")]
+#[post("/document/<filename>")]
 pub fn document(
     user: User,
-    name: String,
+    filename: String,
     cfg: &State<Config>,
     persistence: &State<Persistence>,
 ) -> Result<Option<File>> {
-    persistence.load(cfg.watched_dir.join(name))
+    persistence.load(cfg.watched_dir.join(relative_path(&user, filename)))
+}
+
+fn relative_path<S: Into<String>>(user: &User, filename: S) -> String {
+    format!("{}/{}", base64::encode(&user.email), filename.into())
 }
 
 #[instrument(skip(doc, persistence))]
@@ -46,7 +53,7 @@ pub fn receive_document(
     persistence: &State<Persistence>,
 ) -> Result<Status> {
     persistence.save(
-        cfg.watched_dir.join(&doc.filename),
+        cfg.watched_dir.join(relative_path(&user, &doc.filename)),
         &base64::decode(&doc.body)?,
     )?;
     Ok(Status::Created)
@@ -65,10 +72,9 @@ pub enum AuthError {
     MissingToken,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Hash)]
 pub struct User {
-    #[allow(dead_code)]
-    email: String,
+    pub email: String,
 }
 
 impl User {
@@ -76,6 +82,20 @@ impl User {
         Self {
             email: email.into(),
         }
+    }
+}
+
+impl TryFrom<&Location> for User {
+    type Error = DoxErr;
+
+    fn try_from(location: &Location) -> std::result::Result<Self, Self::Error> {
+        let Location::FileSystem(paths) = location;
+        let path = paths.get(0).ok_or(DoxErr::EmptyLocation)?;
+        let parent_dir = path.parent().ok_or(DoxErr::InvalidPath)?;
+        let parent_name = parent_dir.filename();
+        let user_email = base64::decode(parent_name)?;
+        let user_email = String::from_utf8(user_email)?;
+        Ok(User::new(user_email))
     }
 }
 

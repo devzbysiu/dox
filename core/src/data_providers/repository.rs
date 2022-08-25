@@ -1,6 +1,7 @@
 //! This is concrete implementation of [`crate::use_cases::repository`] abstractions.
 //!
 //! It uses [`tantivy`] as full text search library.
+use crate::data_providers::server::User;
 use crate::entities::document::DocDetails;
 use crate::result::{DoxErr, Result};
 use crate::use_cases::config::Config;
@@ -9,8 +10,11 @@ use crate::use_cases::repository::{
 };
 
 use core::fmt;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::fs::create_dir_all;
+use std::path::PathBuf;
+use std::sync::{Arc, RwLock};
 use tantivy::collector::TopDocs;
 use tantivy::directory::MmapDirectory;
 use tantivy::query::{AllQuery, FuzzyTermQuery, Query};
@@ -35,29 +39,32 @@ impl TantivyRepository {
         schema_builder.add_text_field(&Fields::Body.to_string(), TEXT);
         schema_builder.add_text_field(&Fields::Thumbnail.to_string(), TEXT | STORED);
         let schema = schema_builder.build();
-        let dir = MmapDirectory::open(&cfg.index_dir)?;
-        let index = Index::open_or_create(dir, schema.clone())?;
+        let indexes = Arc::new(RwLock::new(HashMap::new()));
         Ok((
-            Box::new(TantivyRead::new(index.clone(), schema.clone())),
-            Box::new(TantivyWrite::new(index, schema)),
+            Box::new(TantivyRead::new(indexes.clone(), schema.clone())),
+            Box::new(TantivyWrite::new(cfg.index_dir.clone(), indexes, schema)),
         ))
     }
 }
 
 #[derive(Debug, Clone)]
 struct TantivyRead {
-    index: Index,
+    indexes: Arc<RwLock<HashMap<User, Index>>>,
     schema: Schema,
 }
 
 impl TantivyRead {
-    fn new(index: Index, schema: Schema) -> Self {
-        Self { index, schema }
+    fn new(indexes: Arc<RwLock<HashMap<User, Index>>>, schema: Schema) -> Self {
+        Self { indexes, schema }
     }
 
-    fn create_searcher(&self) -> Result<Searcher> {
+    fn create_searcher(&self, user: User) -> Result<Searcher> {
         Ok(self
-            .index
+            .indexes
+            .read()
+            .expect("poisoned lock")
+            .get(&user)
+            .ok_or(DoxErr::MissingIndex(user.email))?
             .reader_builder()
             .reload_policy(ReloadPolicy::OnCommit)
             .try_into()?
@@ -89,36 +96,69 @@ impl TantivyRead {
 
 impl RepositoryRead for TantivyRead {
     #[instrument(skip(self))]
-    fn search(&self, term: String) -> Result<SearchResult> {
-        let searcher = self.create_searcher()?;
+    fn search(&self, user: User, term: String) -> Result<SearchResult> {
+        let searcher = self.create_searcher(user);
+        if let Err(DoxErr::MissingIndex(email)) = searcher {
+            debug!("No index for user: '{}'", email);
+            return Ok(SearchResult::default());
+        }
+        let searcher = searcher.unwrap(); // can unwrap because it's checked above
         let top_docs = searcher.search(&self.make_query(term), &TopDocs::with_limit(100))?;
-        self.to_search_result(&searcher, top_docs)
+        Ok(self.to_search_result(&searcher, top_docs)?)
     }
 
     #[instrument(skip(self))]
-    fn all_documents(&self) -> Result<SearchResult> {
-        let searcher = self.create_searcher()?;
+    fn all_documents(&self, user: User) -> Result<SearchResult> {
+        // TODO: get rid of this duplication
+        let searcher = self.create_searcher(user);
+        if let Err(DoxErr::MissingIndex(email)) = searcher {
+            debug!("No index for user: '{}'", email);
+            return Ok(SearchResult::default());
+        }
+        let searcher = searcher.unwrap(); // can unwrap beause it's checked above
         let top_docs = searcher.search(&AllQuery, &TopDocs::with_limit(100))?;
-        self.to_search_result(&searcher, top_docs)
+        Ok(self.to_search_result(&searcher, top_docs)?)
     }
 }
 
 #[derive(Debug, Clone)]
 struct TantivyWrite {
-    index: Index,
+    indexes: Arc<RwLock<HashMap<User, Index>>>,
+    idx_root: PathBuf,
     schema: Schema,
 }
 
 impl TantivyWrite {
-    fn new(index: Index, schema: Schema) -> Self {
-        Self { index, schema }
+    fn new(idx_root: PathBuf, indexes: Arc<RwLock<HashMap<User, Index>>>, schema: Schema) -> Self {
+        Self {
+            idx_root,
+            indexes,
+            schema,
+        }
     }
 }
 
 impl RepositoryWrite for TantivyWrite {
     #[instrument(skip(self, docs_details))]
-    fn index(&self, docs_details: &[DocDetails]) -> Result<()> {
-        let index = &self.index;
+    fn index(&self, user: User, docs_details: &[DocDetails]) -> Result<()> {
+        {
+            let mut indexes = self.indexes.write().expect("poisoned rw lock");
+            if !indexes.contains_key(&user) {
+                let idx_dir = self.idx_root.join(base64::encode(&user.email));
+                debug!(
+                    "creating new index directory for '{}' under path '{}'",
+                    user.email,
+                    idx_dir.display()
+                );
+                create_dir_all(&idx_dir)?;
+                let dir = MmapDirectory::open(&idx_dir)?;
+                let index = Index::open_or_create(dir, self.schema.clone())?;
+                debug!("adding newly created index to indexes map");
+                indexes.insert(user.clone(), index);
+            }
+        }
+        let indexes = self.indexes.read().expect("poisoned rw lock");
+        let index = indexes.get(&user).unwrap(); // can unwrap because it's added above
         let schema = &self.schema;
         // NOTE: IndexWriter is already multithreaded and
         // cannot be shared between external threads

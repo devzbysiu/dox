@@ -2,6 +2,7 @@
 //!
 //! The events represent new files of particular document, appearing in the system, which are going
 //! to be indexed by dox' core.
+use crate::data_providers::server::User;
 use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
 use crate::result::Result;
@@ -62,7 +63,7 @@ pub enum Event {
     ThumbnailMade,
 
     /// Published when text extraction is finished.
-    TextExtracted(Vec<DocDetails>),
+    TextExtracted(User, Vec<DocDetails>),
 }
 
 /// Represents abstraction for sending events.

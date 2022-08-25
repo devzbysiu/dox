@@ -1,3 +1,5 @@
+use std::string::FromUtf8Error;
+
 use rocket::{http::Status, response::Responder};
 use thiserror::Error;
 use tungstenite::handshake::server::{NoCallback, ServerHandshake};
@@ -25,6 +27,9 @@ pub enum DoxErr {
 
     #[error("Indexer failure: '{0}'")]
     Indexing(#[from] tantivy::TantivyError),
+
+    #[error("No index for user '{0}' found")]
+    MissingIndex(String),
 
     #[error("Error from fs watcher: '{0}'")]
     FsWatcher(#[from] notify::Error),
@@ -76,6 +81,15 @@ pub enum DoxErr {
 
     #[error("Generic error occured: '{0}'")]
     Generic(#[from] anyhow::Error),
+
+    #[error("Error while extracting location - there should be at least one path")]
+    EmptyLocation,
+
+    #[error("Error while reading parent directory")]
+    InvalidPath,
+
+    #[error("Invalid utf characters: '{0}'")]
+    InvalidUtf8(#[from] FromUtf8Error),
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;

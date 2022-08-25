@@ -20,7 +20,14 @@ impl FilePreprocessor for Image {
         let Location::FileSystem(paths) = location;
         for p in paths {
             debug!("moving {} to {}", p.display(), thumbnails_dir.str());
-            fs::copy(p, thumbnails_dir.join(p.filename()))?;
+            fs::copy(
+                p,
+                thumbnails_dir.join(format!(
+                    "{}/{}",
+                    p.parent().expect("failed to get parent dir").filename(), // TODO: maybe this should be moved to helpers?
+                    p.filename()
+                )),
+            )?;
         }
         Ok(())
     }

@@ -5,6 +5,7 @@ use crate::use_cases::preprocessor::FilePreprocessor;
 
 use cairo::{Context, Format, ImageSurface};
 use poppler::{PopplerDocument, PopplerPage};
+use std::fs::create_dir_all;
 use std::path::Path;
 use std::{fmt::Debug, fs::File};
 use tracing::{debug, instrument};
@@ -24,6 +25,7 @@ impl Pdf {
         let page = first_page(&pdf_path)?;
         let surface = paint_background_and_scale(&page)?;
         debug!("writing thumbnail to: '{}'", out_path.display());
+        create_dir_all(out_path.parent().expect("failed to get parent dir"))?; // TODO: get rid of this expect (maybe put parent() in helpers)
         let mut f: File = File::create(out_path)?;
         surface.write_to_png(&mut f)?;
         Ok(())
@@ -58,7 +60,14 @@ impl FilePreprocessor for Pdf {
     fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<()> {
         let Location::FileSystem(paths) = location;
         for pdf_path in paths {
-            let thumbnail_path = thumbnails_dir.join(format!("{}.png", pdf_path.filestem()));
+            let thumbnail_path = thumbnails_dir.join(format!(
+                "{}/{}.png",
+                pdf_path
+                    .parent() // TODO: maybe this should be moved to helpers?
+                    .expect("failed to get parent dir")
+                    .filename(),
+                pdf_path.filestem()
+            ));
             self.generate(pdf_path, &thumbnail_path)?;
         }
         Ok(())
