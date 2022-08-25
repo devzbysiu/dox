@@ -104,7 +104,7 @@ impl RepositoryRead for TantivyRead {
         }
         let searcher = searcher.unwrap(); // can unwrap because it's checked above
         let top_docs = searcher.search(&self.make_query(term), &TopDocs::with_limit(100))?;
-        Ok(self.to_search_result(&searcher, top_docs)?)
+        self.to_search_result(&searcher, top_docs)
     }
 
     #[instrument(skip(self))]
@@ -117,7 +117,7 @@ impl RepositoryRead for TantivyRead {
         }
         let searcher = searcher.unwrap(); // can unwrap beause it's checked above
         let top_docs = searcher.search(&AllQuery, &TopDocs::with_limit(100))?;
-        Ok(self.to_search_result(&searcher, top_docs)?)
+        self.to_search_result(&searcher, top_docs)
     }
 }
 
@@ -131,8 +131,8 @@ struct TantivyWrite {
 impl TantivyWrite {
     fn new(idx_root: PathBuf, indexes: Arc<RwLock<HashMap<User, Index>>>, schema: Schema) -> Self {
         Self {
-            idx_root,
             indexes,
+            idx_root,
             schema,
         }
     }
