@@ -4,11 +4,12 @@ import 'package:google_sign_in/google_sign_in.dart';
 class SignInService with Log {
   SignInService();
 
-  late final String _idToken;
+  String _idToken = '';
 
   Future<void> signIn() async {
     final signIn = GoogleSignIn();
-    final account = await signIn.signInSilently();
+    GoogleSignInAccount? account = await signIn.signInSilently();
+    account ??= await signIn.signIn();
     final auth = await account!.authentication;
     _idToken = auth.idToken!;
   }
