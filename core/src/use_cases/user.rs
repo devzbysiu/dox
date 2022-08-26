@@ -37,12 +37,12 @@ impl TryFrom<&Location> for User {
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for User {
-    type Error = AuthError;
+    type Error = DoxErr;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let token = req.headers().get("authorization").next();
         if token.is_none() {
-            return Outcome::Failure((Status::Unauthorized, AuthError::MissingToken));
+            return Outcome::Failure((Status::Unauthorized, DoxErr::MissingToken));
         }
         let token = token.unwrap(); // can unwrap, because checked earlier
         let key_set = KeyStore::new_from("https://www.googleapis.com/oauth2/v3/certs".into())
@@ -56,20 +56,13 @@ impl<'r> FromRequest<'r> for User {
                 }
                 None => {
                     error!("Invalid idToken, missing 'email' field");
-                    Outcome::Failure((Status::BadRequest, AuthError::InvalidIdToken))
+                    Outcome::Failure((Status::BadRequest, DoxErr::InvalidIdToken))
                 }
             },
             Err(e) => {
                 error!("Could not verify token. Reason: {:?}", e);
-                Outcome::Failure((Status::Unauthorized, AuthError::TokenVerification))
+                Outcome::Failure((Status::Unauthorized, DoxErr::TokenVerification))
             }
         }
     }
-}
-
-#[derive(Debug)]
-pub enum AuthError {
-    InvalidIdToken,
-    TokenVerification,
-    MissingToken,
 }

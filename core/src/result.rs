@@ -90,6 +90,15 @@ pub enum DoxErr {
 
     #[error("Invalid utf characters: '{0}'")]
     InvalidUtf8(#[from] FromUtf8Error),
+
+    #[error("Missing 'email' field in IdToken")]
+    InvalidIdToken,
+
+    #[error("Token could not be verified by identity provider")]
+    TokenVerification,
+
+    #[error("No authorization header found")]
+    MissingToken,
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;
