@@ -14,7 +14,7 @@ Future<void> setupServices({
   getIt.registerSingleton<Config>(configOverride ?? await ConfigImpl.init());
   getIt.registerSingleton<Urls>(Urls());
   getIt.registerSingleton<SignInService>(SignInService());
-  getIt.registerSingleton<AuthenticatedClient>(await AuthenticatedClient.init());
+  getIt.registerSingleton<AuthClient>(await AuthClient.init());
   getIt.registerSingleton<DocsService>(DocsService());
   getIt.registerSingleton<DocScanService>(const DocScanService());
 }

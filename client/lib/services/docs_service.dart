@@ -17,16 +17,16 @@ const thumbnailUrl = 'thumbnailUrl';
 class DocsService with Log {
   DocsService({
     Urls? urls,
-    AuthenticatedClient? http,
+    AuthClient? http,
   }) {
     log.fine('initializing DocsService');
     _urls = urls ?? getIt<Urls>();
-    _http = http ?? getIt<AuthenticatedClient>();
+    _http = http ?? getIt<AuthClient>();
   }
 
   late final Urls _urls;
 
-  late final AuthenticatedClient _http;
+  late final AuthClient _http;
 
   Future<List<Document>> fetchAllFiles() async {
     log.fine('fetching all files');

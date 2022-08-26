@@ -5,7 +5,8 @@ import 'package:dox/utilities/service_locator.dart';
 import 'package:flutter/material.dart';
 
 class HeroImage extends StatelessWidget {
-  HeroImage({super.key,
+  HeroImage({
+    super.key,
     required this.doc,
     SignInService? signInService,
   }) {
