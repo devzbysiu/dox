@@ -45,8 +45,7 @@ fn path_suggester(input: &str) -> std::result::Result<Vec<String>, CustomUserErr
         return Ok(vec![]);
     }
     let dir = fs::read_dir(parent.unwrap()); // can unwrap, it's checked earlier
-    Ok(dir
-        .unwrap()
+    Ok(dir?
         .filter_map(std::result::Result::ok)
         .map(|entry| entry.path())
         .filter(|path| path.as_path().is_dir())
