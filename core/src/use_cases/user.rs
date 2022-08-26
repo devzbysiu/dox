@@ -2,6 +2,7 @@ use crate::entities::location::Location;
 use crate::helpers::PathRefExt;
 use crate::result::DoxErr;
 
+use async_once_cell::OnceCell;
 use jwks_client::keyset::KeyStore;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
@@ -35,6 +36,18 @@ impl TryFrom<&Location> for User {
     }
 }
 
+async fn key_store() -> &'static KeyStore {
+    static INSTANCE: OnceCell<KeyStore> = OnceCell::new();
+
+    INSTANCE
+        .get_or_init(async {
+            KeyStore::new_from("https://www.googleapis.com/oauth2/v3/certs".into())
+                .await
+                .expect("failed to create key store")
+        })
+        .await
+}
+
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for User {
     type Error = DoxErr;
@@ -45,10 +58,8 @@ impl<'r> FromRequest<'r> for User {
             return Outcome::Failure((Status::Unauthorized, DoxErr::MissingToken));
         }
         let token = token.unwrap(); // can unwrap, because checked earlier
-        let key_set = KeyStore::new_from("https://www.googleapis.com/oauth2/v3/certs".into())
-            .await
-            .expect("failed to create key store");
-        match key_set.verify(token) {
+        let key_store = key_store().await;
+        match key_store.verify(token) {
             Ok(jwt) => match jwt.payload().get_str("email") {
                 Some(email) => {
                     debug!("name={:?}", email);
