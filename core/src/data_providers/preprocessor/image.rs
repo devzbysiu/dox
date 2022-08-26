@@ -25,7 +25,7 @@ impl FilePreprocessor for Image {
                 p.filename()
             );
             let target_path = thumbnails_dir.join(relative_path);
-            create_dir_all(target_path.parent().expect("failedto get parent"))?;
+            create_dir_all(target_path.parent().expect("failed to get parent"))?;
             debug!("moving '{}' to '{}'", p.display(), target_path.display());
             fs::copy(p, target_path)?;
         }

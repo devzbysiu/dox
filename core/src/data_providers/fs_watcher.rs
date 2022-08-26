@@ -39,7 +39,9 @@ impl<'a> FsWatcher<'a> {
             loop {
                 debug!("waiting for event from watcher");
                 match watcher_rx.recv() {
-                    Ok(DebouncedEvent::Write(path)) => publ.send(new_docs_event(path))?,
+                    Ok(DebouncedEvent::Create(path)) if path.is_file() => {
+                        publ.send(new_docs_event(path))?
+                    }
                     Ok(e) => warn!("this FS event is not supported: {:?}", e),
                     Err(e) => error!("watch error: {:?}", e),
                 }
@@ -49,6 +51,7 @@ impl<'a> FsWatcher<'a> {
 }
 
 fn new_docs_event(path: PathBuf) -> Event {
+    debug!("new doc appeared, creating NewDocs event");
     Event::NewDocs(Location::FileSystem(vec![path]))
 }
 

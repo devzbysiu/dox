@@ -10,14 +10,22 @@ use crate::use_cases::persistence::DataPersistence;
 use std::fs::{create_dir_all, File};
 use std::io::Write;
 use std::path::PathBuf;
+use std::thread;
+use std::time::Duration;
 
 pub struct FsPersistence;
 
 impl DataPersistence for FsPersistence {
-    #[instrument(skip(self))]
+    #[instrument(skip(self, buf))]
     fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<()> {
         let parent_dir = uri.parent().expect("failed to get parent dir");
-        create_dir_all(parent_dir)?;
+        if !parent_dir.exists() {
+            create_dir_all(parent_dir)?;
+            // NOTE: this is needed because when file creation happens immediately after directory
+            // creation, then the file creation event is not yet registered by filesystem watching
+            // library
+            thread::sleep(Duration::from_secs(1)); // allow to start watching for new directory
+        }
         let mut file = File::create(uri)?;
         file.write_all(buf)?;
         Ok(())
