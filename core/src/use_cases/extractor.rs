@@ -1,10 +1,10 @@
 //! Represents abstractions for extracting text.
-use crate::data_providers::server::User;
 use crate::entities::document::DocDetails;
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
 use crate::use_cases::bus::{Bus, Event};
+use crate::use_cases::user::User;
 
 use std::convert::TryFrom;
 use std::thread;

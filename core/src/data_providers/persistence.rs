@@ -1,6 +1,9 @@
 //! This is aconcrete implementation of a [`crate::use_cases::persistence`] mod.
 //!
 //! It uses just regular File System primitives to provide persistence.
+use tracing::instrument;
+use tracing::log::debug;
+
 use crate::result::Result;
 use crate::use_cases::persistence::DataPersistence;
 
@@ -11,6 +14,7 @@ use std::path::PathBuf;
 pub struct FsPersistence;
 
 impl DataPersistence for FsPersistence {
+    #[instrument(skip(self))]
     fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<()> {
         let parent_dir = uri.parent().expect("failed to get parent dir");
         create_dir_all(parent_dir)?;
@@ -19,10 +23,13 @@ impl DataPersistence for FsPersistence {
         Ok(())
     }
 
+    #[instrument(skip(self))]
     fn load(&self, uri: PathBuf) -> Result<Option<File>> {
         if !uri.exists() {
+            debug!("uri: '{}' don't exist", uri.display());
             return Ok(None);
         }
+        debug!("returning file under '{}'", uri.display());
         Ok(Some(File::open(uri)?))
     }
 }

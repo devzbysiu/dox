@@ -1,7 +1,7 @@
 //! Abstraction for indexing and searching documents.
-use crate::data_providers::server::User;
 use crate::entities::document::DocDetails;
 use crate::result::Result;
+use crate::use_cases::user::User;
 
 use serde::Serialize;
 use std::collections::HashSet;

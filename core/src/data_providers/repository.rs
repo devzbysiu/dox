@@ -1,13 +1,13 @@
 //! This is concrete implementation of [`crate::use_cases::repository`] abstractions.
 //!
 //! It uses [`tantivy`] as full text search library.
-use crate::data_providers::server::User;
 use crate::entities::document::DocDetails;
 use crate::result::{DoxErr, Result};
 use crate::use_cases::config::Config;
 use crate::use_cases::repository::{
     RepoRead, RepoWrite, RepositoryRead, RepositoryWrite, SearchEntry, SearchResult,
 };
+use crate::use_cases::user::User;
 
 use core::fmt;
 use std::collections::HashMap;

@@ -2,10 +2,10 @@
 //!
 //! The events represent new files of particular document, appearing in the system, which are going
 //! to be indexed by dox' core.
-use crate::data_providers::server::User;
 use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
 use crate::result::Result;
+use crate::use_cases::user::User;
 
 use std::fmt::Debug;
 

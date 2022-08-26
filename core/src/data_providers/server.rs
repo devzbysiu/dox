@@ -1,24 +1,31 @@
-use crate::entities::location::Location;
-use crate::helpers::PathRefExt;
-use crate::result::{DoxErr, Result};
+use crate::result::Result;
 use crate::use_cases::config::Config;
 use crate::use_cases::persistence::Persistence;
 use crate::use_cases::repository::{RepoRead, SearchResult};
+use crate::use_cases::user::User;
 
-use jwks_client::keyset::KeyStore;
 use rocket::http::Status;
-use rocket::request::{FromRequest, Outcome, Request};
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, post, State};
-use std::convert::TryFrom;
 use std::fs::File;
-use tracing::{debug, error, instrument};
+use tracing::instrument;
 
 #[instrument(skip(repo))]
 #[get("/search?<q>")]
 pub fn search(user: User, q: String, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
     Ok(Json(repo.search(user, q)?))
+}
+
+#[instrument(skip(persistence))]
+#[get("/thumbnail/<filename>")]
+pub fn thumbnail(
+    user: User,
+    filename: String,
+    cfg: &State<Config>,
+    persistence: &State<Persistence>,
+) -> Result<Option<File>> {
+    persistence.load(cfg.thumbnails_dir.join(relative_path(&user, filename)))
 }
 
 #[instrument(skip(repo))]
@@ -29,7 +36,7 @@ pub fn all_thumbnails(user: User, repo: &State<RepoRead>) -> Result<Json<SearchR
 
 #[instrument(skip(persistence))]
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
-#[post("/document/<filename>")]
+#[get("/document/<filename>")]
 pub fn document(
     user: User,
     filename: String,
@@ -63,72 +70,6 @@ pub fn receive_document(
 pub struct Document {
     filename: String,
     body: String,
-}
-
-#[derive(Debug)]
-pub enum AuthError {
-    InvalidIdToken,
-    TokenVerification,
-    MissingToken,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Default, Hash)]
-pub struct User {
-    pub email: String,
-}
-
-impl User {
-    pub fn new<S: Into<String>>(email: S) -> Self {
-        Self {
-            email: email.into(),
-        }
-    }
-}
-
-impl TryFrom<&Location> for User {
-    type Error = DoxErr;
-
-    fn try_from(location: &Location) -> std::result::Result<Self, Self::Error> {
-        let Location::FileSystem(paths) = location;
-        let path = paths.get(0).ok_or(DoxErr::EmptyLocation)?;
-        let parent_dir = path.parent().ok_or(DoxErr::InvalidPath)?;
-        let parent_name = parent_dir.filename();
-        let user_email = base64::decode(parent_name)?;
-        let user_email = String::from_utf8(user_email)?;
-        Ok(User::new(user_email))
-    }
-}
-
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for User {
-    type Error = AuthError;
-
-    async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let token = req.headers().get("authorization").next();
-        if token.is_none() {
-            return Outcome::Failure((Status::Unauthorized, AuthError::MissingToken));
-        }
-        let token = token.unwrap(); // can unwrap, because checked earlier
-        let key_set = KeyStore::new_from("https://www.googleapis.com/oauth2/v3/certs".into())
-            .await
-            .expect("failed to create key store");
-        match key_set.verify(token) {
-            Ok(jwt) => match jwt.payload().get_str("email") {
-                Some(email) => {
-                    debug!("name={:?}", email);
-                    Outcome::Success(User::new(email))
-                }
-                None => {
-                    error!("Invalid idToken, missing 'email' field");
-                    Outcome::Failure((Status::BadRequest, AuthError::InvalidIdToken))
-                }
-            },
-            Err(e) => {
-                error!("Could not verify token. Reason: {:?}", e);
-                Outcome::Failure((Status::Unauthorized, AuthError::TokenVerification))
-            }
-        }
-    }
 }
 
 #[cfg(test)]

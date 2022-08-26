@@ -7,7 +7,9 @@ use crate::configuration::factories::{
 };
 use crate::configuration::telemetry::init_tracing;
 use crate::data_providers::fs_watcher::FsWatcher;
-use crate::data_providers::server::{all_thumbnails, document, receive_document, search};
+use crate::data_providers::server::{
+    all_thumbnails, document, receive_document, search, thumbnail,
+};
 use crate::result::Result;
 use crate::use_cases::bus::Bus;
 use crate::use_cases::config::Config;
@@ -16,7 +18,6 @@ use crate::use_cases::indexer::Indexer;
 use crate::use_cases::preprocessor::ThumbnailGenerator;
 use crate::use_cases::repository::RepoRead;
 
-use rocket::fs::FileServer;
 use rocket::{launch, routes, Build, Rocket};
 use std::env;
 use tracing::{debug, instrument};
@@ -52,9 +53,14 @@ pub fn launch() -> Rocket<Build> {
     rocket::build()
         .mount(
             "/",
-            routes![search, all_thumbnails, document, receive_document],
+            routes![
+                search,
+                thumbnail,
+                all_thumbnails,
+                document,
+                receive_document
+            ],
         )
-        .mount("/thumbnail", FileServer::from(&cfg.thumbnails_dir))
         .manage(repository)
         .manage(bus)
         .manage(persistence())
