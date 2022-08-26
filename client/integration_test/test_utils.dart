@@ -18,9 +18,6 @@ class MockConfig implements Config {
 
   @override
   String get baseUrl => base;
-
-  @override
-  String get websocketUrl => websocket;
 }
 
 class DoxMock {

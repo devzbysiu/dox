@@ -3,7 +3,6 @@ import 'package:dox/widgets/document/openable_document.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import '../test/utils.dart';
 import 'test_utils.dart';
 
 late final DoxMock _doxMock;

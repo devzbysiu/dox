@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dox/screens/incorrect_file.dart';
 import 'package:dox/services/sign_in_service.dart';
 import 'package:dox/utilities/filetype.dart';

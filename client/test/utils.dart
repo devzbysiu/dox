@@ -31,9 +31,6 @@ MultiProvider wrapper({
 class ConfigMock implements Config {
   @override
   String get baseUrl => 'http://192.168.16.247:8000';
-
-  @override
-  String get websocketUrl => 'ws://192.168.16.247:8001';
 }
 
 class DocsStateMock extends ChangeNotifier implements DocsState {

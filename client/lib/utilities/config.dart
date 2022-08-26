@@ -27,8 +27,6 @@ class ConfigImpl with Log implements Config {
 
   late final String _coreBaseUrl;
 
-  late final String _coreWebSocketUrl;
-
   @override
   String get baseUrl => _coreBaseUrl;
 }
