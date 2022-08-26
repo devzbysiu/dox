@@ -80,7 +80,7 @@ pub enum DoxErr {
     NotificationSocket(#[from] std::net::AddrParseError),
 
     #[error("Generic error occured: '{0}'")]
-    Generic(#[from] anyhow::Error),
+    GenericAnyhow(#[from] anyhow::Error),
 
     #[error("Error while extracting location - there should be at least one path")]
     EmptyLocation,
