@@ -10,11 +10,10 @@ use crate::use_cases::repository::{
 use crate::use_cases::user::User;
 
 use core::fmt;
-use std::collections::HashMap;
+use dashmap::DashMap;
 use std::fmt::Debug;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
-use std::sync::{Arc, RwLock};
 use tantivy::collector::TopDocs;
 use tantivy::directory::MmapDirectory;
 use tantivy::query::{AllQuery, FuzzyTermQuery, Query};
@@ -39,30 +38,28 @@ impl TantivyRepository {
         schema_builder.add_text_field(&Fields::Body.to_string(), TEXT);
         schema_builder.add_text_field(&Fields::Thumbnail.to_string(), TEXT | STORED);
         let schema = schema_builder.build();
-        let indexes = Arc::new(RwLock::new(HashMap::new()));
+        let indexes = DashMap::new();
         Ok((
             Box::new(TantivyRead::new(indexes.clone(), schema.clone())),
-            Box::new(TantivyWrite::new(cfg.index_dir.clone(), indexes, schema)),
+            Box::new(TantivyWrite::new(indexes, cfg.index_dir.clone(), schema)),
         ))
     }
 }
 
 #[derive(Debug, Clone)]
 struct TantivyRead {
-    indexes: Arc<RwLock<HashMap<User, Index>>>,
+    indexes: DashMap<User, Index>,
     schema: Schema,
 }
 
 impl TantivyRead {
-    fn new(indexes: Arc<RwLock<HashMap<User, Index>>>, schema: Schema) -> Self {
+    fn new(indexes: DashMap<User, Index>, schema: Schema) -> Self {
         Self { indexes, schema }
     }
 
     fn create_searcher(&self, user: User) -> Result<Searcher> {
         Ok(self
             .indexes
-            .read()
-            .expect("poisoned lock")
             .get(&user)
             .ok_or(DoxErr::MissingIndex(user.email))?
             .reader_builder()
@@ -123,42 +120,43 @@ impl RepositoryRead for TantivyRead {
 
 #[derive(Debug, Clone)]
 struct TantivyWrite {
-    indexes: Arc<RwLock<HashMap<User, Index>>>,
+    indexes: DashMap<User, Index>,
     idx_root: PathBuf,
     schema: Schema,
 }
 
 impl TantivyWrite {
-    fn new(idx_root: PathBuf, indexes: Arc<RwLock<HashMap<User, Index>>>, schema: Schema) -> Self {
+    fn new(indexes: DashMap<User, Index>, idx_root: PathBuf, schema: Schema) -> Self {
         Self {
             indexes,
             idx_root,
             schema,
         }
     }
+
+    fn insert_idx_if_missing(&self, user: &User) -> Result<()> {
+        if !self.indexes.contains_key(user) {
+            let idx_dir = self.idx_root.join(base64::encode(&user.email));
+            debug!(
+                "creating new index directory for '{}' under path '{}'",
+                user.email,
+                idx_dir.display()
+            );
+            create_dir_all(&idx_dir)?;
+            let dir = MmapDirectory::open(&idx_dir)?;
+            let index = Index::open_or_create(dir, self.schema.clone())?;
+            debug!("adding newly created index to indexes map");
+            self.indexes.insert(user.clone(), index);
+        }
+        Ok(())
+    }
 }
 
 impl RepositoryWrite for TantivyWrite {
     #[instrument(skip(self, docs_details))]
     fn index(&self, user: User, docs_details: &[DocDetails]) -> Result<()> {
-        {
-            let mut indexes = self.indexes.write().expect("poisoned rw lock");
-            if !indexes.contains_key(&user) {
-                let idx_dir = self.idx_root.join(base64::encode(&user.email));
-                debug!(
-                    "creating new index directory for '{}' under path '{}'",
-                    user.email,
-                    idx_dir.display()
-                );
-                create_dir_all(&idx_dir)?;
-                let dir = MmapDirectory::open(&idx_dir)?;
-                let index = Index::open_or_create(dir, self.schema.clone())?;
-                debug!("adding newly created index to indexes map");
-                indexes.insert(user.clone(), index);
-            }
-        }
-        let indexes = self.indexes.read().expect("poisoned rw lock");
-        let index = indexes.get(&user).unwrap(); // can unwrap because it's added above
+        self.insert_idx_if_missing(&user)?;
+        let index = self.indexes.get(&user).unwrap(); // can unwrap because it's added above
         let schema = &self.schema;
         // NOTE: IndexWriter is already multithreaded and
         // cannot be shared between external threads

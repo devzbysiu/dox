@@ -1,7 +1,9 @@
 import 'package:dox/models/docs_state.dart';
 import 'package:dox/models/document.dart';
 import 'package:dox/services/docs_service.dart';
+import 'package:dox/services/sign_in_service.dart';
 import 'package:dox/utilities/config.dart';
+import 'package:dox/utilities/http.dart';
 import 'package:dox/utilities/urls.dart';
 import 'package:dox/widgets/search_input.dart';
 import 'package:flutter/material.dart';
@@ -12,11 +14,15 @@ MultiProvider wrapper({
   required widget,
   Config? cfg,
   Urls? urls,
+  SignInService? signIn,
+  AuthClient? authCl,
   DocsService? docs,
   DocsState? docsSt,
 }) {
   final config = cfg ?? ConfigMock();
   final urlsProvider = urls ?? Urls(config: config);
+  final signInService
+  final authClient = authCl ?? AuthClient.init()
   final docsService = docs ?? DocsService(urls: urlsProvider);
   DocsState docsState(_) => docsSt ?? DocsStateImpl(docsService: docsService);
 
