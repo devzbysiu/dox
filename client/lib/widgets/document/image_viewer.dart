@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dox/utilities/theme.dart';
 import 'package:dox/widgets/document/document_viewer.dart';
 import 'package:flutter/material.dart';
@@ -5,16 +6,20 @@ import 'package:photo_view/photo_view.dart';
 
 class ImageViewer extends DocumentViewer {
   const ImageViewer({
-    Key? key,
-    required this.imageProvider,
-  }) : super(key: key);
+    super.key,
+    required this.fileUrl,
+    required this.headers,
+  });
 
-  final ImageProvider imageProvider;
+  final Uri fileUrl;
+
+  final Map<String, String> headers;
 
   @override
   Widget viewer(BuildContext context) {
     return PhotoView(
-      imageProvider: imageProvider,
+      imageProvider:
+          CachedNetworkImageProvider(fileUrl.toString(), headers: headers),
       backgroundDecoration: BoxDecoration(color: context.onPrimary),
       loadingBuilder: (context, event) => Center(
         child: SizedBox(

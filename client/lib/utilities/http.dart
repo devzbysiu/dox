@@ -20,13 +20,13 @@ class AuthenticatedClient with Log {
   static AuthenticatedClient? _singleton;
 
   Future<http.Response> get(Uri url) async {
-    return http.get(url, headers: {'authorization': _signInService.idToken});
+    return http.get(url, headers: _signInService.authHeaders);
   }
 
   Future<http.Response> post(Uri url,
       {Map<String, String>? headers, Object? body}) {
     final authenticatedHeaders = headers ?? {};
-    authenticatedHeaders.addAll({'authorization': _signInService.idToken});
+    authenticatedHeaders.addAll(_signInService.authHeaders);
     return http.post(url, headers: authenticatedHeaders, body: body);
   }
 }

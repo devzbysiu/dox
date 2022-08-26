@@ -4,14 +4,17 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class PdfViewer extends DocumentViewer {
   const PdfViewer({
-    Key? key,
+    super.key,
     required this.fileUrl,
-  }) : super(key: key);
+    required this.headers,
+  });
 
   final Uri fileUrl;
 
+  final Map<String, String> headers;
+
   @override
   Widget viewer(BuildContext context) {
-    return SfPdfViewer.network(fileUrl.toString());
+    return SfPdfViewer.network(fileUrl.toString(), headers: headers);
   }
 }
