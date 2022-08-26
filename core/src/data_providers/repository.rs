@@ -14,6 +14,7 @@ use dashmap::DashMap;
 use std::fmt::Debug;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
+use std::sync::Arc;
 use tantivy::collector::TopDocs;
 use tantivy::directory::MmapDirectory;
 use tantivy::query::{AllQuery, FuzzyTermQuery, Query};
@@ -38,7 +39,7 @@ impl TantivyRepository {
         schema_builder.add_text_field(&Fields::Body.to_string(), TEXT);
         schema_builder.add_text_field(&Fields::Thumbnail.to_string(), TEXT | STORED);
         let schema = schema_builder.build();
-        let indexes = DashMap::new();
+        let indexes = Arc::new(DashMap::new());
         Ok((
             Box::new(TantivyRead::new(indexes.clone(), schema.clone())),
             Box::new(TantivyWrite::new(indexes, cfg.index_dir.clone(), schema)),
@@ -48,12 +49,12 @@ impl TantivyRepository {
 
 #[derive(Debug, Clone)]
 struct TantivyRead {
-    indexes: DashMap<User, Index>,
+    indexes: Arc<DashMap<User, Index>>,
     schema: Schema,
 }
 
 impl TantivyRead {
-    fn new(indexes: DashMap<User, Index>, schema: Schema) -> Self {
+    fn new(indexes: Arc<DashMap<User, Index>>, schema: Schema) -> Self {
         Self { indexes, schema }
     }
 
@@ -120,13 +121,13 @@ impl RepositoryRead for TantivyRead {
 
 #[derive(Debug, Clone)]
 struct TantivyWrite {
-    indexes: DashMap<User, Index>,
+    indexes: Arc<DashMap<User, Index>>,
     idx_root: PathBuf,
     schema: Schema,
 }
 
 impl TantivyWrite {
-    fn new(indexes: DashMap<User, Index>, idx_root: PathBuf, schema: Schema) -> Self {
+    fn new(indexes: Arc<DashMap<User, Index>>, idx_root: PathBuf, schema: Schema) -> Self {
         Self {
             indexes,
             idx_root,

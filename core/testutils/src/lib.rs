@@ -2,7 +2,6 @@
 
 use anyhow::{bail, Result};
 use rand::Rng;
-use rocket::local::blocking::LocalResponse;
 use rocket::serde::{Deserialize, Serialize};
 use serde::ser::SerializeStruct;
 use serde::Serializer;
@@ -170,18 +169,6 @@ pub fn random_addr() -> SocketAddrV4 {
     let mut rng = rand::thread_rng();
     let port = rng.gen_range(8000..9000);
     format!("0.0.0.0:{}", port).parse().unwrap()
-}
-
-pub trait LocalResponseExt {
-    fn read_body<const N: usize>(&mut self) -> Result<String>;
-}
-
-impl LocalResponseExt for LocalResponse<'_> {
-    fn read_body<const N: usize>(&mut self) -> Result<String> {
-        let mut buffer = [0; N];
-        self.read_exact(&mut buffer)?;
-        Ok(String::from_utf8(buffer.to_vec())?)
-    }
 }
 
 pub fn to_base64<P: AsRef<Path>>(path: P) -> Result<String> {

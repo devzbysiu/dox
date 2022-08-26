@@ -21,6 +21,10 @@ pub trait PathRefExt {
     fn filestem(&self) -> String;
     fn filename(&self) -> String;
     fn first_filename(&self) -> Result<String>;
+    fn parent_name(&self) -> String;
+    fn parent_path(&self) -> &Path;
+    fn rel_path(&self) -> String;
+    fn rel_stem(&self) -> String;
 }
 
 impl<T: AsRef<Path>> PathRefExt for T {
@@ -54,6 +58,22 @@ impl<T: AsRef<Path>> PathRefExt for T {
 
     fn first_filename(&self) -> Result<String> {
         Ok(self.as_ref().read_dir()?.next().unwrap()?.filename())
+    }
+
+    fn parent_name(&self) -> String {
+        self.parent_path().filename()
+    }
+
+    fn parent_path(&self) -> &Path {
+        self.as_ref().parent().expect("failed to get parent dir")
+    }
+
+    fn rel_path(&self) -> String {
+        format!("{}/{}", self.parent_name(), self.filename())
+    }
+
+    fn rel_stem(&self) -> String {
+        format!("{}/{}", self.parent_name(), self.filestem())
     }
 }
 

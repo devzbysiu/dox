@@ -19,13 +19,8 @@ impl FilePreprocessor for Image {
     fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<()> {
         let Location::FileSystem(paths) = location;
         for p in paths {
-            let relative_path = format!(
-                "{}/{}",
-                p.parent().expect("failed to get parent dir").filename(), // TODO: maybe this should be moved to helpers?
-                p.filename()
-            );
-            let target_path = thumbnails_dir.join(relative_path);
-            create_dir_all(target_path.parent().expect("failed to get parent"))?;
+            let target_path = thumbnails_dir.join(p.rel_path());
+            create_dir_all(target_path.parent_path())?;
             debug!("moving '{}' to '{}'", p.display(), target_path.display());
             fs::copy(p, target_path)?;
         }

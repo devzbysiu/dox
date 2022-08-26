@@ -22,7 +22,7 @@ pub struct Pdf;
 impl Pdf {
     #[instrument(skip(self))]
     fn generate(&self, pdf_path: &Path, out_path: &Path) -> Result<()> {
-        create_dir_all(out_path.parent().expect("failed to get parent dir"))?; // TODO: get rid of this expect (maybe put parent() in helpers)
+        create_dir_all(out_path.parent_path())?;
         let page = first_page(&pdf_path)?;
         let surface = paint_background_and_scale(&page)?;
         debug!("writing thumbnail to: '{}'", out_path.display());
@@ -60,14 +60,7 @@ impl FilePreprocessor for Pdf {
     fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<()> {
         let Location::FileSystem(paths) = location;
         for pdf_path in paths {
-            let thumbnail_path = thumbnails_dir.join(format!(
-                "{}/{}.png",
-                pdf_path
-                    .parent() // TODO: maybe this should be moved to helpers?
-                    .expect("failed to get parent dir")
-                    .filename(),
-                pdf_path.filestem()
-            ));
+            let thumbnail_path = thumbnails_dir.join(format!("{}.png", pdf_path.rel_stem()));
             self.generate(pdf_path, &thumbnail_path)?;
         }
         Ok(())

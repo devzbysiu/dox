@@ -4,6 +4,7 @@
 use tracing::instrument;
 use tracing::log::debug;
 
+use crate::helpers::PathRefExt;
 use crate::result::Result;
 use crate::use_cases::persistence::DataPersistence;
 
@@ -18,7 +19,7 @@ pub struct FsPersistence;
 impl DataPersistence for FsPersistence {
     #[instrument(skip(self, buf))]
     fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<()> {
-        let parent_dir = uri.parent().expect("failed to get parent dir");
+        let parent_dir = uri.parent_path();
         if !parent_dir.exists() {
             create_dir_all(parent_dir)?;
             // NOTE: this is needed because when file creation happens immediately after directory

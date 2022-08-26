@@ -77,11 +77,29 @@ mod test {
     use crate::launch;
 
     use anyhow::Result;
+    use rocket::local::blocking::LocalResponse;
     use rocket::{http::Status, local::blocking::Client};
     use serial_test::serial;
+    use std::io::Read;
     use std::thread;
     use std::time::Duration;
-    use testutils::{cp_docs, create_test_env, to_base64, LocalResponseExt};
+    use testutils::{cp_docs, create_test_env, to_base64};
+
+    // TODO: this trait WAS also defined here [`testutils::LocalResponseExt`], but for some reason
+    // it's not visible by rust compiler. However, when rocket is set to version 0.5.0-rc.1, it's
+    // working properly, but for 0.5.0-rc.2 it's not working - no idea why. For now, I'm leaving
+    // the definition of LocalResponseExt here
+    trait LocalResponseExt {
+        fn read_body<const N: usize>(&mut self) -> Result<String>;
+    }
+
+    impl LocalResponseExt for LocalResponse<'_> {
+        fn read_body<const N: usize>(&mut self) -> Result<String> {
+            let mut buffer = [0; N];
+            self.read_exact(&mut buffer)?;
+            Ok(String::from_utf8(buffer.to_vec())?)
+        }
+    }
 
     #[test]
     #[serial]
