@@ -6,7 +6,7 @@ use rocket::serde::{Deserialize, Serialize};
 use serde::ser::SerializeStruct;
 use serde::Serializer;
 use std::env;
-use std::fs::{self, File};
+use std::fs::{self, create_dir_all, File};
 use std::io::{Read, Write};
 use std::net::SocketAddrV4;
 use std::path::{Path, PathBuf};
@@ -130,17 +130,41 @@ pub fn spawn_dox<P: AsRef<Path>>(config_path: P) -> Result<DoxProcess> {
 
 pub fn make_search<S: Into<String>>(query: S) -> Result<SearchResults> {
     let url = format!("http://localhost:8000/search?q={}", query.into());
-    let res = ureq::get(&url).call()?.into_json()?;
+    let res = ureq::get(&url)
+        .set("authorization", &id_token()?)
+        .call()?
+        .into_json()?;
     debug!("search results: {:?}", res);
     Ok(res)
 }
 
-pub fn cp_docs<P: AsRef<Path>>(watched_dir: P) -> Result<()> {
+fn id_token() -> Result<String> {
+    let res: IdToken = ureq::post("https://www.googleapis.com/oauth2/v4/token")
+        .send_json(ureq::json!({
+                "grant_type": "refresh_token",
+                "client_id": env!("DOX_CLIENT_ID"),
+                "client_secret": env!("DOX_CLIENT_SECRET"),
+                "refresh_token": env!("DOX_REFRESH_TOKEN"),
+
+        }))?
+        .into_json()?;
+    Ok(res.id_token)
+}
+
+#[derive(Default, Deserialize)]
+struct IdToken {
+    id_token: String,
+}
+
+pub fn cp_docs<P: AsRef<Path>>(parent_dir: P) -> Result<()> {
     debug!("copying docs to watched dir...");
-    let watched_dir = watched_dir.as_ref();
-    let from = Path::new("./res/doc1.png");
-    debug!("\tfrom {} to {}", from.display(), watched_dir.display());
-    fs::copy(from, &watched_dir.join("doc1.png"))?; // TODO: it should be just one file
+    let parent_dir = parent_dir.as_ref();
+    let from = "./res/doc1.png";
+    let to = parent_dir.join("doc1.png");
+    create_dir_all(to.parent().expect("failed to get parent"))?;
+    thread::sleep(Duration::from_secs(1)); // allow to start listening for events on this new dir
+    debug!("\tfrom {} to {}", from, to.display());
+    fs::copy(from, to)?; // TODO: it should be just one file
     debug!("done");
     thread::sleep(Duration::from_secs(15));
     Ok(())
