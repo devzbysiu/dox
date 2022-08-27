@@ -40,4 +40,7 @@ jobs:
       run: cargo make --profile ci all
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        DOX_CLIENT_ID: ${{ secrets.DOX_CLIENT_ID }}
+        DOX_CLIENT_SECRET: ${{ secrets.DOX_CLIENT_SECRET }}
+        DOX_REFRESH_TOKEN: ${{ secrets.DOX_REFRESH_TOKEN }}
         RUST_LOG: debug
