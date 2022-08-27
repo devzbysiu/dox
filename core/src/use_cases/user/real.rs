@@ -1,6 +1,7 @@
 use crate::entities::location::Location;
 use crate::helpers::PathRefExt;
 use crate::result::DoxErr;
+use crate::use_cases::user::User;
 
 use async_once_cell::OnceCell;
 use jwks_client::keyset::KeyStore;
@@ -8,19 +9,6 @@ use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 use std::convert::TryFrom;
 use tracing::{debug, error};
-
-#[derive(Debug, Clone, PartialEq, Eq, Default, Hash)]
-pub struct User {
-    pub email: String,
-}
-
-impl User {
-    pub fn new<S: Into<String>>(email: S) -> Self {
-        Self {
-            email: email.into(),
-        }
-    }
-}
 
 impl TryFrom<&Location> for User {
     type Error = DoxErr;

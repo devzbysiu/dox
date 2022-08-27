@@ -364,17 +364,6 @@ checksum = "fbdcdcb6d86f71c5e97409ad45898af11cbc995b4ee8112d59095a28d376c935"
 
 [[package]]
 name = "cookie"
-version = "0.15.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5f1c7727e460397e56abc4bddc1d49e07a1ad78fc98eb2e1c8f032a58a2f80d"
-dependencies = [
- "percent-encoding",
- "time 0.2.27",
- "version_check",
-]
-
-[[package]]
-name = "cookie"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94d4706de1b0fa5b132270cddffa8585166037822e260a944fe161acd137ca05"
@@ -514,7 +503,7 @@ dependencies = [
  "crossterm_winapi",
  "libc",
  "mio 0.8.4",
- "parking_lot 0.12.1",
+ "parking_lot",
  "signal-hook",
  "signal-hook-mio",
  "winapi 0.3.9",
@@ -573,7 +562,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "hashbrown",
  "lock_api",
- "parking_lot_core 0.9.3",
+ "parking_lot_core",
 ]
 
 [[package]]
@@ -685,7 +674,7 @@ dependencies = [
  "poppler",
  "rayon",
  "retry",
- "rocket 0.5.0-rc.2",
+ "rocket",
  "serde",
  "serial_test",
  "tantivy",
@@ -1021,17 +1010,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93a66fc6d035a26a3ae255a6d2bca35eda63ae4c5512bef54449113f7a1228e5"
 
 [[package]]
-name = "futures-macro"
-version = "0.3.23"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0db9cce532b0eae2ccf2766ab246f114b56b9cf6d445e00c2549fbc100ca045d"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "futures-sink"
 version = "0.3.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1052,7 +1030,6 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "futures-io",
- "futures-macro",
  "futures-sink",
  "futures-task",
  "memchr",
@@ -1192,7 +1169,7 @@ dependencies = [
  "indexmap",
  "slab",
  "tokio",
- "tokio-util 0.7.3",
+ "tokio-util",
  "tracing",
 ]
 
@@ -1752,7 +1729,7 @@ dependencies = [
  "mime",
  "spin 0.9.4",
  "tokio",
- "tokio-util 0.7.3",
+ "tokio-util",
  "version_check",
 ]
 
@@ -1948,37 +1925,12 @@ dependencies = [
 
 [[package]]
 name = "parking_lot"
-version = "0.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d17b78036a60663b797adeaee46f5c9dfebb86948d1255007a1d6be0271ff99"
-dependencies = [
- "instant",
- "lock_api",
- "parking_lot_core 0.8.5",
-]
-
-[[package]]
-name = "parking_lot"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3742b2c103b9f06bc9fff0a37ff4912935851bee6d36f3c02bcc755bcfec228f"
 dependencies = [
  "lock_api",
- "parking_lot_core 0.9.3",
-]
-
-[[package]]
-name = "parking_lot_core"
-version = "0.8.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d76e8e1493bcac0d2766c42737f34458f1c8c50c0d23bcb24ea953affb273216"
-dependencies = [
- "cfg-if 1.0.0",
- "instant",
- "libc",
- "redox_syscall",
- "smallvec",
- "winapi 0.3.9",
+ "parking_lot_core",
 ]
 
 [[package]]
@@ -2391,44 +2343,6 @@ dependencies = [
 
 [[package]]
 name = "rocket"
-version = "0.5.0-rc.1"
-source = "git+https://github.com/SergioBenitez/Rocket/?tag=v0.5.0-rc.1#c028d63e5ba275927424397fe9d67cfebdc138ec"
-dependencies = [
- "async-stream",
- "async-trait",
- "atomic",
- "atty",
- "binascii",
- "bytes",
- "either",
- "figment",
- "futures",
- "indexmap",
- "log",
- "memchr",
- "multer",
- "num_cpus",
- "parking_lot 0.11.2",
- "pin-project-lite",
- "rand",
- "ref-cast",
- "rocket_codegen 0.5.0-rc.1",
- "rocket_http 0.5.0-rc.1",
- "serde",
- "serde_json",
- "state",
- "tempfile",
- "time 0.2.27",
- "tokio",
- "tokio-stream",
- "tokio-util 0.6.10",
- "ubyte",
- "version_check",
- "yansi",
-]
-
-[[package]]
-name = "rocket"
 version = "0.5.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "98ead083fce4a405feb349cf09abdf64471c6077f14e0ce59364aa90d4b99317"
@@ -2447,12 +2361,12 @@ dependencies = [
  "memchr",
  "multer",
  "num_cpus",
- "parking_lot 0.12.1",
+ "parking_lot",
  "pin-project-lite",
  "rand",
  "ref-cast",
- "rocket_codegen 0.5.0-rc.2",
- "rocket_http 0.5.0-rc.2",
+ "rocket_codegen",
+ "rocket_http",
  "serde",
  "serde_json",
  "state",
@@ -2460,25 +2374,10 @@ dependencies = [
  "time 0.3.13",
  "tokio",
  "tokio-stream",
- "tokio-util 0.7.3",
+ "tokio-util",
  "ubyte",
  "version_check",
  "yansi",
-]
-
-[[package]]
-name = "rocket_codegen"
-version = "0.5.0-rc.1"
-source = "git+https://github.com/SergioBenitez/Rocket/?tag=v0.5.0-rc.1#c028d63e5ba275927424397fe9d67cfebdc138ec"
-dependencies = [
- "devise",
- "glob",
- "indexmap",
- "proc-macro2",
- "quote",
- "rocket_http 0.5.0-rc.1",
- "syn",
- "unicode-xid",
 ]
 
 [[package]]
@@ -2492,36 +2391,9 @@ dependencies = [
  "indexmap",
  "proc-macro2",
  "quote",
- "rocket_http 0.5.0-rc.2",
+ "rocket_http",
  "syn",
  "unicode-xid",
-]
-
-[[package]]
-name = "rocket_http"
-version = "0.5.0-rc.1"
-source = "git+https://github.com/SergioBenitez/Rocket/?tag=v0.5.0-rc.1#c028d63e5ba275927424397fe9d67cfebdc138ec"
-dependencies = [
- "cookie 0.15.1",
- "either",
- "http",
- "hyper",
- "indexmap",
- "log",
- "memchr",
- "mime",
- "parking_lot 0.11.2",
- "pear",
- "percent-encoding",
- "pin-project-lite",
- "ref-cast",
- "serde",
- "smallvec",
- "stable-pattern",
- "state",
- "time 0.2.27",
- "tokio",
- "uncased",
 ]
 
 [[package]]
@@ -2530,7 +2402,7 @@ version = "0.5.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2ded65d127954de3c12471630bf4b81a2792f065984461e65b91d0fdaafc17a2"
 dependencies = [
- "cookie 0.16.0",
+ "cookie",
  "either",
  "futures",
  "http",
@@ -2732,7 +2604,7 @@ dependencies = [
  "futures",
  "lazy_static",
  "log",
- "parking_lot 0.12.1",
+ "parking_lot",
  "serial_test_derive",
 ]
 
@@ -3127,7 +2999,7 @@ dependencies = [
  "anyhow",
  "base64 0.13.0",
  "rand",
- "rocket 0.5.0-rc.1",
+ "rocket",
  "serde",
  "tempfile",
  "toml",
@@ -3299,20 +3171,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df54d54117d6fdc4e4fea40fe1e4e566b3505700e148a6827e59b34b0d2600d9"
 dependencies = [
  "futures-core",
- "pin-project-lite",
- "tokio",
-]
-
-[[package]]
-name = "tokio-util"
-version = "0.6.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36943ee01a6d67977dd3f84a5a1d2efeb4ada3a1ae771cadfaa535d9d9fc6507"
-dependencies = [
- "bytes",
- "futures-core",
- "futures-sink",
- "log",
  "pin-project-lite",
  "tokio",
 ]

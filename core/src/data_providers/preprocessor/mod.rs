@@ -38,7 +38,7 @@ mod test {
     use tempfile::tempdir;
 
     #[test]
-    fn test_processor_factory_with_corrent_file() -> Result<()> {
+    fn test_processor_factory_with_correct_file() -> Result<()> {
         // given
         let test_cases = vec![
             (Ext::Png, "res/doc1.png", "doc1.png"),
@@ -51,20 +51,16 @@ mod test {
         for test_case in test_cases {
             let ext = test_case.0;
 
-            let thumbnails_dir = tempdir()?;
+            let tmp_dir = tempdir()?;
             let paths = vec![PathBuf::from(test_case.1)];
 
             // when
             let extractor = preprocessor_factory.make(&ext);
-            extractor.preprocess(&Location::FileSystem(paths), thumbnails_dir.path())?;
+            extractor.preprocess(&Location::FileSystem(paths), tmp_dir.path())?;
 
             // then
-            let filename = thumbnails_dir.path().first_filename()?;
-            assert_eq!(filename, "res");
-            assert_eq!(
-                thumbnails_dir.path().join("res").first_filename()?,
-                test_case.2
-            );
+            assert_eq!(tmp_dir.path().first_filename()?, "res");
+            assert_eq!(tmp_dir.path().join("res").first_filename()?, test_case.2);
         }
 
         Ok(())

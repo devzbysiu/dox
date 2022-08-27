@@ -71,11 +71,10 @@ mod test {
         // and error should be thrown (and this should be consistent with Pdf preprocessor)
         // when
         preprocessor.preprocess(&Location::FileSystem(paths), tmp_dir.path())?;
-        let user_dir = tmp_dir.path().read_dir()?.next().unwrap()?;
 
         // then
-        assert_eq!(user_dir.filename(), "res");
-        assert_eq!(user_dir.path().first_filename()?, "doc1.png");
+        assert_eq!(tmp_dir.path().first_filename()?, "res");
+        assert_eq!(tmp_dir.path().join("res").first_filename()?, "doc1.png");
 
         Ok(())
     }
