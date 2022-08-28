@@ -84,20 +84,25 @@ mod test {
     use std::thread;
     use std::time::Duration;
     use testutils::{cp_docs, create_test_env, to_base64};
+    use tracing::debug;
+    use tracing::instrument;
 
     // TODO: this trait WAS also defined here [`testutils::LocalResponseExt`], but for some reason
     // it's not visible by rust compiler. However, when rocket is set to version 0.5.0-rc.1, it's
     // working properly, but for 0.5.0-rc.2 it's not working - no idea why. For now, I'm leaving
     // the definition of LocalResponseExt here
     trait LocalResponseExt {
-        fn read_body<const N: usize>(&mut self) -> Result<String>;
+        fn read_body(&mut self) -> Result<String>;
     }
 
     impl LocalResponseExt for LocalResponse<'_> {
-        fn read_body<const N: usize>(&mut self) -> Result<String> {
-            let mut buffer = [0; N];
-            self.read_exact(&mut buffer)?;
-            Ok(String::from_utf8(buffer.to_vec())?)
+        #[instrument]
+        fn read_body(&mut self) -> Result<String> {
+            let mut buffer = Vec::new();
+            self.read_to_end(&mut buffer)?;
+            let res = String::from_utf8(buffer.to_vec())?;
+            debug!("read the whole buffer: '{}'", res);
+            Ok(res)
         }
     }
 
@@ -110,7 +115,7 @@ mod test {
 
         // when
         let mut resp = client.get("/search?q=not-important").dispatch();
-        let body = resp.read_body::<14>()?;
+        let body = resp.read_body()?;
 
         // then
         assert_eq!(resp.status(), Status::Ok);
@@ -124,16 +129,18 @@ mod test {
     // everything is working correctly
     #[test]
     #[serial]
+    #[instrument]
     fn test_search_endpoint_with_indexed_docs() -> Result<()> {
         // given
         let (config, _config_dir) = create_test_env()?;
         let client = Client::tracked(launch())?;
         thread::sleep(Duration::from_secs(5));
-        cp_docs(config.watched_dir_path())?;
+        let user_dir_name = base64::encode("some@email.com"); // TODO: it's repetition, think about this
+        cp_docs(config.watched_dir_path().join(user_dir_name))?;
 
         // when
         let mut resp = client.get("/search?q=Parlamentarny").dispatch();
-        let body = resp.read_body::<60>()?;
+        let body = resp.read_body()?;
 
         // then
         assert_eq!(resp.status(), Status::Ok);
@@ -152,11 +159,12 @@ mod test {
         let (config, _config_dir) = create_test_env()?;
         let client = Client::tracked(launch())?;
         thread::sleep(Duration::from_secs(5));
-        cp_docs(config.watched_dir_path())?;
+        let user_dir_name = base64::encode("some@email.com");
+        cp_docs(config.watched_dir_path().join(user_dir_name))?;
 
         // when
         let mut resp = client.get("/search?q=not-existing-query").dispatch();
-        let body = resp.read_body::<14>()?;
+        let body = resp.read_body()?;
 
         // then
         assert_eq!(resp.status(), Status::Ok);
@@ -174,7 +182,7 @@ mod test {
 
         // when
         let mut resp = client.get("/thumbnails/all").dispatch();
-        let body = resp.read_body::<14>()?;
+        let body = resp.read_body()?;
 
         // then
         assert_eq!(resp.status(), Status::Ok);
@@ -190,11 +198,12 @@ mod test {
         let (config, _config_dir) = create_test_env()?;
         let client = Client::tracked(launch())?;
         thread::sleep(Duration::from_secs(5));
-        cp_docs(config.watched_dir_path())?;
+        let user_dir_name = base64::encode("some@email.com");
+        cp_docs(config.watched_dir_path().join(user_dir_name))?;
 
         // when
         let mut resp = client.get("/thumbnails/all").dispatch();
-        let body = resp.read_body::<60>()?;
+        let body = resp.read_body()?;
 
         // then
         assert_eq!(resp.status(), Status::Ok);
@@ -208,13 +217,14 @@ mod test {
 
     #[test]
     #[serial]
+    #[ignore]
     fn test_receive_document_endpoint() -> Result<()> {
         // given
         let _env = create_test_env()?;
         let client = Client::tracked(launch())?;
 
         let mut resp = client.get("/search?q=Parlamentarny").dispatch();
-        let body = resp.read_body::<14>()?;
+        let body = resp.read_body()?;
         assert_eq!(resp.status(), Status::Ok);
         assert_eq!(body, r#"{"entries":[]}"#);
 
@@ -231,7 +241,7 @@ mod test {
         thread::sleep(Duration::from_secs(15)); // allow to index docs
 
         let mut resp = client.get("/search?q=Parlamentarny").dispatch();
-        let body = resp.read_body::<60>()?;
+        let body = resp.read_body()?;
 
         // then
         assert_eq!(resp.status(), Status::Ok);
