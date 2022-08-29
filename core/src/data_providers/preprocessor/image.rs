@@ -16,15 +16,17 @@ pub struct Image;
 
 impl FilePreprocessor for Image {
     #[instrument(skip(self))]
-    fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<()> {
+    fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<Location> {
         let Location::FileSystem(paths) = location;
+        let mut result_paths = Vec::new();
         for p in paths {
             let target_path = thumbnails_dir.join(p.rel_path());
             create_dir_all(target_path.parent_path())?;
             debug!("moving '{}' to '{}'", p.display(), target_path.display());
-            fs::copy(p, target_path)?;
+            fs::copy(p, &target_path)?;
+            result_paths.push(target_path);
         }
-        Ok(())
+        Ok(Location::FileSystem(result_paths))
     }
 }
 

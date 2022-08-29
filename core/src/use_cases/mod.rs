@@ -1,5 +1,6 @@
 pub mod bus;
 pub mod config;
+pub mod encrypter;
 pub mod extractor;
 pub mod indexer;
 pub mod persistence;

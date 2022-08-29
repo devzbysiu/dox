@@ -56,14 +56,20 @@ pub enum Event {
     /// Represents new documents appearing in the system. External event.
     NewDocs(Location),
 
-    /// Represents document finished indexing. Internal event.
-    DocumentReady,
-
-    /// Published when thumbnail generation is finished.
-    ThumbnailMade,
-
     /// Published when text extraction is finished.
     TextExtracted(User, Vec<DocDetails>),
+
+    /// Published when thumbnail generation is finished.
+    ThumbnailMade(Location),
+
+    /// Represents document finished indexing. Internal event.
+    Indexed(Vec<DocDetails>),
+
+    /// Published when there is a time to encrypt the file.
+    EncryptionRequest(Location),
+
+    /// Published when document processing is finished.
+    PipelineFinished,
 }
 
 /// Represents abstraction for sending events.

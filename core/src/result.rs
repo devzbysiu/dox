@@ -104,6 +104,9 @@ pub enum DoxErr {
     #[cfg(not(test))]
     #[error("No authorization header found")]
     MissingToken,
+
+    #[error("Failed encryption")]
+    Encryption(#[from] chacha20poly1305::Error),
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;

@@ -1,18 +1,16 @@
-//! This is aconcrete implementation of a [`crate::use_cases::persistence`] mod.
+//! This is a specific implementation of a [`crate::use_cases::persistence`] mod.
 //!
 //! It uses just regular File System primitives to provide persistence.
-use tracing::instrument;
-use tracing::log::debug;
-
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 use crate::use_cases::persistence::DataPersistence;
 
-use std::fs::{create_dir_all, File};
+use std::fs::{self, create_dir_all, File};
 use std::io::Write;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
+use tracing::{debug, instrument};
 
 pub struct FsPersistence;
 
@@ -33,12 +31,12 @@ impl DataPersistence for FsPersistence {
     }
 
     #[instrument(skip(self))]
-    fn load(&self, uri: PathBuf) -> Result<Option<File>> {
+    fn load(&self, uri: PathBuf) -> Result<Option<Vec<u8>>> {
         if !uri.exists() {
             debug!("uri: '{}' don't exist", uri.display());
             return Ok(None);
         }
         debug!("returning file under '{}'", uri.display());
-        Ok(Some(File::open(uri)?))
+        Ok(Some(fs::read(uri)?))
     }
 }

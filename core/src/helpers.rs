@@ -77,6 +77,39 @@ impl<T: AsRef<Path>> PathRefExt for T {
     }
 }
 
+// TODO: think about moving it somewhere more important
+pub mod cipher {
+    use crate::result::Result;
+
+    use chacha20poly1305::aead::{Aead, OsRng};
+    use chacha20poly1305::{AeadCore, Key, KeyInit, XChaCha20Poly1305, XNonce};
+    use once_cell::sync::OnceCell;
+
+    pub fn key() -> &'static Key {
+        static KEY_INSTANCE: OnceCell<Key> = OnceCell::new();
+
+        KEY_INSTANCE.get_or_init(|| XChaCha20Poly1305::generate_key(&mut OsRng))
+    }
+
+    pub fn nonce() -> &'static XNonce {
+        static NONCE_INSTANCE: OnceCell<XNonce> = OnceCell::new();
+
+        NONCE_INSTANCE.get_or_init(|| XChaCha20Poly1305::generate_nonce(&mut OsRng))
+    }
+
+    pub fn encrypt(src_buf: &[u8], key: &Key, nonce: &XNonce) -> Result<Vec<u8>> {
+        let cipher = XChaCha20Poly1305::new(key);
+        let encrypted = cipher.encrypt(nonce, src_buf)?;
+        Ok(encrypted)
+    }
+
+    pub fn decrypt(src_buf: &[u8], key: &Key, nonce: &XNonce) -> Result<Vec<u8>> {
+        let cipher = XChaCha20Poly1305::new(key);
+        let decrypted = cipher.decrypt(nonce, src_buf)?;
+        Ok(decrypted)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

@@ -8,8 +8,7 @@ use crate::use_cases::user::User;
 
 use std::convert::TryFrom;
 use std::thread;
-use tracing::log::debug;
-use tracing::{instrument, warn};
+use tracing::{debug, instrument, warn};
 
 pub type ExtractorCreator = Box<dyn ExtractorFactory>;
 
@@ -35,6 +34,8 @@ impl<'a> TxtExtractor<'a> {
                         User::try_from(&location)?,
                         extractor.extract_text(&location)?,
                     ))?;
+                    debug!("sending encryption request");
+                    publ.send(Event::EncryptionRequest(location))?;
                 } else {
                     debug!("event not supported here");
                 }

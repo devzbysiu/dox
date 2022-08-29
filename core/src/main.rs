@@ -13,6 +13,7 @@ use crate::data_providers::server::{
 use crate::result::Result;
 use crate::use_cases::bus::Bus;
 use crate::use_cases::config::Config;
+use crate::use_cases::encrypter::Encrypter;
 use crate::use_cases::extractor::TxtExtractor;
 use crate::use_cases::indexer::Indexer;
 use crate::use_cases::preprocessor::ThumbnailGenerator;
@@ -72,12 +73,14 @@ fn setup_core(cfg: &Config, bus: &dyn Bus) -> Result<RepoRead> {
     let preprocessor = ThumbnailGenerator::new(cfg, bus);
     let extractor = TxtExtractor::new(bus);
     let indexer = Indexer::new(bus);
+    let encrypter = Encrypter::new(bus);
 
     watcher.run();
     preprocessor.run(preprocessor_factory());
     extractor.run(extractor_factory());
     let (repo_read, repo_write) = repository(cfg)?;
     indexer.run(repo_write);
+    encrypter.run();
 
     Ok(repo_read)
 }

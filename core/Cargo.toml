@@ -54,6 +54,8 @@ retry = "1.3.1"
 jwks-client = { git = "https://github.com/jfbilodeau/jwks-client" }
 async-once-cell = "0.4.2"
 dashmap = "5.3.4"
+chacha20poly1305 = { version = "0.10.1", features = ["std"] }
+object = "0.29.0"
 
 [dev-dependencies]
 tempfile = "3.3.0"

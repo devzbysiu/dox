@@ -1,3 +1,4 @@
+use crate::helpers::cipher::{self, key, nonce};
 use crate::result::Result;
 use crate::use_cases::config::Config;
 use crate::use_cases::persistence::Persistence;
@@ -8,7 +9,6 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, post, State};
-use std::fs::File;
 use tracing::instrument;
 
 #[instrument(skip(repo))]
@@ -24,8 +24,13 @@ pub fn thumbnail(
     filename: String,
     cfg: &State<Config>,
     persistence: &State<Persistence>,
-) -> Result<Option<File>> {
-    persistence.load(cfg.thumbnails_dir.join(relative_path(&user, filename)))
+) -> Result<Option<Vec<u8>>> {
+    Ok(
+        match persistence.load(cfg.thumbnails_dir.join(relative_path(&user, filename)))? {
+            Some(buf) => Some(cipher::decrypt(&buf, key(), nonce())?),
+            None => None,
+        },
+    )
 }
 
 #[instrument(skip(repo))]
@@ -42,8 +47,13 @@ pub fn document(
     filename: String,
     cfg: &State<Config>,
     persistence: &State<Persistence>,
-) -> Result<Option<File>> {
-    persistence.load(cfg.watched_dir.join(relative_path(&user, filename)))
+) -> Result<Option<Vec<u8>>> {
+    Ok(
+        match persistence.load(cfg.watched_dir.join(relative_path(&user, filename)))? {
+            Some(buf) => Some(cipher::decrypt(&buf, key(), nonce())?),
+            None => None,
+        },
+    )
 }
 
 fn relative_path<S: Into<String>>(user: &User, filename: S) -> String {
@@ -84,8 +94,7 @@ mod test {
     use std::thread;
     use std::time::Duration;
     use testutils::{cp_docs, create_test_env, to_base64};
-    use tracing::debug;
-    use tracing::instrument;
+    use tracing::{debug, instrument};
 
     // TODO: this trait WAS also defined here [`testutils::LocalResponseExt`], but for some reason
     // it's not visible by rust compiler. However, when rocket is set to version 0.5.0-rc.1, it's

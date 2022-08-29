@@ -7,8 +7,7 @@ use crate::use_cases::config::Config;
 
 use std::path::Path;
 use std::thread;
-use tracing::log::debug;
-use tracing::{instrument, warn};
+use tracing::{debug, instrument, warn};
 
 pub type PreprocessorCreator = Box<dyn PreprocessorFactory>;
 
@@ -37,8 +36,10 @@ impl<'a> ThumbnailGenerator<'a> {
                 if let Event::NewDocs(location) = sub.recv()? {
                     let extension = location.extension();
                     let preprocessor = preprocessor_factory.make(&extension);
-                    preprocessor.preprocess(&location, &thumbnails_dir)?;
-                    publ.send(Event::ThumbnailMade)?;
+                    let thumbnail_location = preprocessor.preprocess(&location, &thumbnails_dir)?;
+                    publ.send(Event::ThumbnailMade(thumbnail_location.clone()))?;
+                    debug!("sending encryption request");
+                    publ.send(Event::EncryptionRequest(thumbnail_location))?;
                 } else {
                     debug!("event not supported here");
                 }
@@ -52,7 +53,9 @@ impl<'a> ThumbnailGenerator<'a> {
 /// This happens right after the document was received. See
 /// [`Indexer::run`](crate::use_cases::indexer::Indexer::run).
 pub trait FilePreprocessor {
-    fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<()>;
+    /// Take source location as the input and the parent directory for the output.
+    /// Returns the final location of the preprocessing.
+    fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<Location>;
 }
 
 /// Creates [`Preprocessor`].

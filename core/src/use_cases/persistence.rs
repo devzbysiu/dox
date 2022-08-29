@@ -1,7 +1,6 @@
 //! Abstraction used to save received documents.
 use crate::result::Result;
 
-use std::fs::File;
 use std::path::PathBuf;
 
 pub type Persistence = Box<dyn DataPersistence>;
@@ -15,5 +14,5 @@ pub trait DataPersistence: Sync + Send {
     fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<()>;
 
     /// Loads the file under first argument.
-    fn load(&self, uri: PathBuf) -> Result<Option<File>>;
+    fn load(&self, uri: PathBuf) -> Result<Option<Vec<u8>>>;
 }
