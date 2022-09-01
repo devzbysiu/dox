@@ -91,14 +91,14 @@ impl TantivyRead {
         Ok(SearchResult::from_vec(results))
     }
 
-    fn search_for(&self, user: User, query: impl Query) -> Result<SearchResult> {
+    fn search_for(&self, user: User, query: &impl Query) -> Result<SearchResult> {
         let searcher = self.create_searcher(user);
         if let Err(DoxErr::MissingIndex(email)) = searcher {
             debug!("No index for user: '{}'", email);
             return Ok(SearchResult::default());
         }
         let searcher = searcher.unwrap(); // can unwrap because it's checked above
-        let top_docs = searcher.search(&query, &TopDocs::with_limit(100))?;
+        let top_docs = searcher.search(query, &TopDocs::with_limit(100))?;
         self.to_search_result(&searcher, top_docs)
     }
 }
@@ -106,12 +106,12 @@ impl TantivyRead {
 impl RepositoryRead for TantivyRead {
     #[instrument(skip(self))]
     fn search(&self, user: User, term: String) -> Result<SearchResult> {
-        self.search_for(user, self.make_query(term))
+        self.search_for(user, &self.make_query(term))
     }
 
     #[instrument(skip(self))]
     fn all_documents(&self, user: User) -> Result<SearchResult> {
-        self.search_for(user, AllQuery)
+        self.search_for(user, &AllQuery)
     }
 }
 

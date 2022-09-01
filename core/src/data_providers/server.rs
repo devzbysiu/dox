@@ -109,7 +109,7 @@ mod test {
         fn read_body(&mut self) -> Result<String> {
             let mut buffer = Vec::new();
             self.read_to_end(&mut buffer)?;
-            let res = String::from_utf8(buffer.to_vec())?;
+            let res = String::from_utf8(buffer)?;
             debug!("read the whole buffer: '{}'", res);
             Ok(res)
         }
