@@ -37,11 +37,6 @@ impl Bus for LocalBus {
     fn publisher(&self) -> EventPublisher {
         Box::new(LocalPublisher::new(self.eventador.publisher()))
     }
-
-    fn send(&self, event: Event) -> Result<()> {
-        self.eventador.publish(event);
-        Ok(())
-    }
 }
 
 /// Represents Subscriber of [`LocalBus`].

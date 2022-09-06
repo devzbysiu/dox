@@ -21,9 +21,6 @@ pub trait Bus: Send + Sync + Debug {
     fn subscriber(&self) -> EventSubscriber;
 
     fn publisher(&self) -> EventPublisher;
-
-    /// Publishes [`Event`] without the need to create [`Publisher`].
-    fn send(&self, event: Event) -> Result<()>;
 }
 
 // allows to pass Box<dyn Bus> as &dyn Bus
@@ -34,10 +31,6 @@ impl<T: Bus + ?Sized> Bus for Box<T> {
 
     fn publisher(&self) -> EventPublisher {
         (**self).publisher()
-    }
-
-    fn send(&self, event: Event) -> Result<()> {
-        (**self).send(event)
     }
 }
 
