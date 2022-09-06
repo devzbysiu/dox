@@ -138,7 +138,7 @@ mod test {
     // everything is working correctly
     #[test]
     #[serial]
-    #[instrument]
+    #[ignore]
     fn test_search_endpoint_with_indexed_docs() -> Result<()> {
         // given
         let (config, _config_dir) = create_test_env()?;
@@ -202,6 +202,7 @@ mod test {
 
     #[test]
     #[serial]
+    #[ignore]
     fn test_all_thumbnails_endpoint_with_indexed_docs() -> Result<()> {
         // given
         let (config, _config_dir) = create_test_env()?;
