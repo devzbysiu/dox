@@ -107,6 +107,9 @@ pub enum DoxErr {
 
     #[error("Failed encryption")]
     Encryption(#[from] chacha20poly1305::Error),
+
+    #[error("Failed to launch Rocket: '{0}'")]
+    Rocket(#[from] rocket::Error),
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;

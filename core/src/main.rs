@@ -19,7 +19,7 @@ use crate::use_cases::indexer::Indexer;
 use crate::use_cases::preprocessor::ThumbnailGenerator;
 use crate::use_cases::repository::RepoRead;
 
-use rocket::{launch, routes, Build, Rocket};
+use rocket::{routes, Build, Rocket};
 use std::env;
 use tracing::{debug, instrument};
 
@@ -31,15 +31,20 @@ mod use_cases;
 mod helpers;
 mod result;
 
-#[must_use]
-#[instrument]
-#[launch]
-pub fn launch() -> Rocket<Build> {
-    init_tracing();
-
+#[rocket::main]
+async fn main() -> Result<()> {
     let path_override = env::var("DOX_CONFIG_PATH")
         .ok()
         .or_else(|| env::args().nth(1));
+    let _rocket = rocket(path_override).launch().await?;
+
+    Ok(())
+}
+
+#[must_use]
+#[instrument]
+pub fn rocket(path_override: Option<String>) -> Rocket<Build> {
+    init_tracing();
 
     let resolver = config_resolver(config_loader());
 

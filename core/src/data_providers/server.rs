@@ -84,7 +84,7 @@ pub struct Document {
 
 #[cfg(test)]
 mod test {
-    use crate::launch;
+    use crate::rocket;
 
     use anyhow::Result;
     use rocket::local::blocking::LocalResponse;
@@ -93,6 +93,7 @@ mod test {
     use std::io::Read;
     use std::thread;
     use std::time::Duration;
+    use tempfile::TempDir;
     use testutils::{cp_docs, create_test_env, to_base64};
     use tracing::{debug, instrument};
 
@@ -119,8 +120,8 @@ mod test {
     #[serial]
     fn test_search_endpoint_with_empty_index() -> Result<()> {
         // given
-        let _env = create_test_env()?;
-        let client = Client::tracked(launch())?;
+        let (config, config_dir) = create_test_env()?;
+        let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
 
         // when
         let mut resp = client.get("/search?q=not-important").dispatch();
@@ -133,16 +134,23 @@ mod test {
         Ok(())
     }
 
+    fn config_dir_string(config_dir: &TempDir) -> String {
+        config_dir
+            .path()
+            .join("dox.toml")
+            .to_string_lossy()
+            .to_string()
+    }
+
     // TODO: when there are multiple active tests which require indexing,
     // then at least one test is failing - but only in cargo make, in cargo test
     // everything is working correctly
     #[test]
     #[serial]
-    #[ignore]
     fn test_search_endpoint_with_indexed_docs() -> Result<()> {
         // given
-        let (config, _config_dir) = create_test_env()?;
-        let client = Client::tracked(launch())?;
+        let (config, config_dir) = create_test_env()?;
+        let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
         thread::sleep(Duration::from_secs(5));
         let user_dir_name = base64::encode("some@email.com"); // TODO: it's repetition, think about this
         cp_docs(config.watched_dir_path().join(user_dir_name))?;
@@ -165,8 +173,8 @@ mod test {
     #[serial]
     fn test_search_endpoint_with_wrong_query() -> Result<()> {
         // given
-        let (config, _config_dir) = create_test_env()?;
-        let client = Client::tracked(launch())?;
+        let (config, config_dir) = create_test_env()?;
+        let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
         thread::sleep(Duration::from_secs(5));
         let user_dir_name = base64::encode("some@email.com");
         cp_docs(config.watched_dir_path().join(user_dir_name))?;
@@ -186,8 +194,8 @@ mod test {
     #[serial]
     fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
         // given
-        let _env = create_test_env()?;
-        let client = Client::tracked(launch())?;
+        let (config, config_dir) = create_test_env()?;
+        let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
 
         // when
         let mut resp = client.get("/thumbnails/all").dispatch();
@@ -202,11 +210,10 @@ mod test {
 
     #[test]
     #[serial]
-    #[ignore]
     fn test_all_thumbnails_endpoint_with_indexed_docs() -> Result<()> {
         // given
-        let (config, _config_dir) = create_test_env()?;
-        let client = Client::tracked(launch())?;
+        let (config, config_dir) = create_test_env()?;
+        let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
         thread::sleep(Duration::from_secs(5));
         let user_dir_name = base64::encode("some@email.com");
         cp_docs(config.watched_dir_path().join(user_dir_name))?;
@@ -227,11 +234,10 @@ mod test {
 
     #[test]
     #[serial]
-    #[ignore]
     fn test_receive_document_endpoint() -> Result<()> {
         // given
-        let _env = create_test_env()?;
-        let client = Client::tracked(launch())?;
+        let (config, config_dir) = create_test_env()?;
+        let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
 
         let mut resp = client.get("/search?q=Parlamentarny").dispatch();
         let body = resp.read_body()?;

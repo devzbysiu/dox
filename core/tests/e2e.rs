@@ -3,7 +3,6 @@ use serial_test::serial;
 use testutils::{config_path, cp_docs, create_test_env, ls, make_search, spawn_dox, SearchEntry};
 
 #[test]
-#[serial]
 fn it_allows_to_search_through_api() -> Result<()> {
     // given
     let (config, config_dir) = create_test_env()?;
