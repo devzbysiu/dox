@@ -7,7 +7,7 @@ use crate::entities::location::Location;
 use crate::result::Result;
 use crate::use_cases::user::User;
 
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 pub type EventBus = Box<dyn Bus>;
 pub type EventSubscriber = Box<dyn Subscriber>;
@@ -63,6 +63,23 @@ pub enum Event {
 
     /// Published when document processing is finished.
     PipelineFinished,
+}
+
+impl Display for Event {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Event::NewDocs(_) => "NewDocs",
+                Event::TextExtracted(_, _) => "TextExtracted",
+                Event::ThumbnailMade(_) => "ThumbnailMade",
+                Event::Indexed(_) => "Indexed",
+                Event::EncryptionRequest(_) => "EncryptionRequest",
+                Event::PipelineFinished => "PipelineFinished",
+            }
+        )
+    }
 }
 
 /// Represents abstraction for sending events.

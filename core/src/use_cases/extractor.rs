@@ -27,17 +27,19 @@ impl<'a> TxtExtractor<'a> {
         let mut publ = self.bus.publisher();
         thread::spawn(move || -> Result<()> {
             loop {
-                if let Event::NewDocs(location) = sub.recv()? {
-                    let extension = location.extension();
-                    let extractor = extractor_factory.make(&extension);
-                    publ.send(Event::TextExtracted(
-                        User::try_from(&location)?,
-                        extractor.extract_text(&location)?,
-                    ))?;
-                    debug!("sending encryption request");
-                    publ.send(Event::EncryptionRequest(location))?;
-                } else {
-                    debug!("event not supported here");
+                match sub.recv()? {
+                    Event::NewDocs(location) => {
+                        let extension = location.extension();
+
+                        let extractor = extractor_factory.make(&extension);
+                        publ.send(Event::TextExtracted(
+                            User::try_from(&location)?,
+                            extractor.extract_text(&location)?,
+                        ))?;
+                        debug!("sending encryption request");
+                        publ.send(Event::EncryptionRequest(location))?;
+                    }
+                    e => debug!("event not supported in TxtExtractor: {}", e.to_string()),
                 }
             }
         });

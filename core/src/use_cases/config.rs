@@ -42,6 +42,7 @@ pub trait ConfigResolver {
     fn handle_config(&self, path_override: Option<String>) -> Result<Config>;
 }
 
+// TODO: remove unused config fields (notifications_addr)
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
 pub struct Config {
     pub watched_dir: PathBuf,

@@ -33,15 +33,20 @@ impl<'a> ThumbnailGenerator<'a> {
         let mut publ = self.bus.publisher();
         thread::spawn(move || -> Result<()> {
             loop {
-                if let Event::NewDocs(location) = sub.recv()? {
-                    let extension = location.extension();
-                    let preprocessor = preprocessor_factory.make(&extension);
-                    let thumbnail_location = preprocessor.preprocess(&location, &thumbnails_dir)?;
-                    publ.send(Event::ThumbnailMade(thumbnail_location.clone()))?;
-                    debug!("sending encryption request");
-                    publ.send(Event::EncryptionRequest(thumbnail_location))?;
-                } else {
-                    debug!("event not supported here");
+                match sub.recv()? {
+                    Event::NewDocs(location) => {
+                        let extension = location.extension();
+                        let preprocessor = preprocessor_factory.make(&extension);
+                        let thumbnail_location =
+                            preprocessor.preprocess(&location, &thumbnails_dir)?;
+                        publ.send(Event::ThumbnailMade(thumbnail_location.clone()))?;
+                        debug!("sending encryption request");
+                        publ.send(Event::EncryptionRequest(thumbnail_location))?;
+                    }
+                    e => debug!(
+                        "event not supported in ThumbnailGenerator: {}",
+                        e.to_string()
+                    ),
                 }
             }
         });
