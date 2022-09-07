@@ -1,16 +1,19 @@
 #![allow(clippy::missing_errors_doc)]
 
 use anyhow::{bail, Result};
+use once_cell::sync::OnceCell;
 use rand::Rng;
 use rocket::serde::{Deserialize, Serialize};
 use serde::ser::SerializeStruct;
 use serde::Serializer;
+use std::collections::HashSet;
 use std::env;
 use std::fs::{self, create_dir_all, File};
 use std::io::{Read, Write};
 use std::net::SocketAddrV4;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
+use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 use tempfile::TempDir;
@@ -103,8 +106,20 @@ pub fn thumbnails_dir_path() -> Result<TempDir> {
     Ok(tempfile::tempdir()?)
 }
 
+fn tmp_dirs() -> &'static Mutex<HashSet<String>> {
+    static INSTANCE: OnceCell<Mutex<HashSet<String>>> = OnceCell::new();
+    INSTANCE.get_or_init(|| Mutex::new(HashSet::new()))
+}
+
 pub fn create_cfg_file(cfg: &TestConfig) -> Result<TempDir> {
+    let mut dirs = tmp_dirs().lock().expect("poisoned mutex");
     let config_dir = tempfile::tempdir()?;
+    let dir = config_dir.path().to_string_lossy().to_string();
+    if dirs.contains(&dir) {
+        panic!("Can't use the same directory");
+    }
+    dirs.insert(dir);
+    drop(dirs);
     let config_path = config_path(&config_dir);
     let config = toml::to_string(&cfg)?;
     let mut file = fs::File::create(&config_path)?;
