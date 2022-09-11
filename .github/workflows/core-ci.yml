@@ -27,6 +27,7 @@ jobs:
     - run: ls /usr/bin
     - run: echo $PATH
     - run: mold --version
+    - run: /usr/bin/mold --version
     - name: Checkout Repo
       uses: actions/checkout@v2
 
