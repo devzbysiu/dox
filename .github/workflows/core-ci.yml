@@ -24,6 +24,7 @@ jobs:
     - run: sudo apt install tesseract-ocr-pol
     - run: wget https://github.com/rui314/mold/releases/download/v1.4.2/mold-1.4.2-x86_64-linux.tar.gz && sudo tar -xf ./mold-1.4.2-x86_64-linux.tar.gz -C /usr/bin && sudo mv /usr/bin/mold-1.4.2-x86_64-linux /usr/bin/mold
     - run: mold --version
+    - run: which ls
     - name: Checkout Repo
       uses: actions/checkout@v2
 
