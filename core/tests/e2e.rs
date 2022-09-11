@@ -1,5 +1,4 @@
 use anyhow::Result;
-use serial_test::serial;
 use testutils::{config_path, cp_docs, create_test_env, ls, make_search, spawn_dox, SearchEntry};
 
 #[test]
