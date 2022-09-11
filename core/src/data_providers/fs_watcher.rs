@@ -40,6 +40,7 @@ impl<'a> FsWatcher<'a> {
                 debug!("waiting for event from watcher");
                 match watcher_rx.recv() {
                     Ok(DebouncedEvent::Create(path)) if path.is_file() => {
+                        debug!("got create file event on path: '{}'", path.display());
                         publ.send(new_docs_event(path))?;
                     }
                     Ok(e) => warn!("this FS event is not supported: {:?}", e),

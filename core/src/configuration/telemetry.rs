@@ -1,18 +1,16 @@
 use once_cell::sync::Lazy;
 use tracing::subscriber::set_global_default;
 use tracing_forest::ForestLayer;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
+use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
 static TRACING: Lazy<()> = Lazy::new(setup_global_subscriber);
 
 fn setup_global_subscriber() {
-    Registry::default().with(ForestLayer::default()).init();
-    let env_filter =
-        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("dox=debug"));
+    let env_filter = EnvFilter::from_default_env();
     let subscriber = Registry::default()
         .with(env_filter)
         .with(ForestLayer::default());
-    let _res = set_global_default(subscriber);
+    set_global_default(subscriber).expect("failed to set flobal default");
 }
 
 pub fn init_tracing() {

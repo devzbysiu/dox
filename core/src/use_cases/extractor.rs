@@ -29,14 +29,15 @@ impl<'a> TxtExtractor<'a> {
             loop {
                 match sub.recv()? {
                     Event::NewDocs(location) => {
+                        debug!("NewDocs in: '{:?}', starting extraction", location);
                         let extension = location.extension();
-
                         let extractor = extractor_factory.make(&extension);
                         publ.send(Event::TextExtracted(
                             User::try_from(&location)?,
                             extractor.extract_text(&location)?,
                         ))?;
-                        debug!("sending encryption request");
+                        debug!("extraction finished");
+                        debug!("sending encryption request for: '{:?}'", location);
                         publ.send(Event::EncryptionRequest(location))?;
                     }
                     e => debug!("event not supported in TxtExtractor: {}", e.to_string()),

@@ -26,11 +26,13 @@ impl<'a> Encrypter<'a> {
             loop {
                 match sub.recv()? {
                     Event::EncryptionRequest(location) => {
+                        debug!("encryption request: '{:?}', starting encryption", location);
                         let Location::FileSystem(paths) = location;
                         for path in paths {
                             let encrypted = cipher::encrypt(&fs::read(&path)?, key(), nonce())?;
                             fs::write(path, encrypted)?;
                         }
+                        debug!("encryption finished");
                         publ.send(Event::PipelineFinished)?;
                     }
                     // TODO: consider converting other if let parts to match to get the event and

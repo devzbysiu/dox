@@ -35,13 +35,14 @@ impl<'a> ThumbnailGenerator<'a> {
             loop {
                 match sub.recv()? {
                     Event::NewDocs(location) => {
+                        debug!("NewDocs in: '{:?}', starting preprocessing", location);
                         let extension = location.extension();
                         let preprocessor = preprocessor_factory.make(&extension);
-                        let thumbnail_location =
-                            preprocessor.preprocess(&location, &thumbnails_dir)?;
-                        publ.send(Event::ThumbnailMade(thumbnail_location.clone()))?;
-                        debug!("sending encryption request");
-                        publ.send(Event::EncryptionRequest(thumbnail_location))?;
+                        let thumbnail_loc = preprocessor.preprocess(&location, &thumbnails_dir)?;
+                        debug!("preprocessing finished");
+                        publ.send(Event::ThumbnailMade(thumbnail_loc.clone()))?;
+                        debug!("sending encryption request for: '{:?}'", thumbnail_loc);
+                        publ.send(Event::EncryptionRequest(thumbnail_loc))?;
                     }
                     e => debug!(
                         "event not supported in ThumbnailGenerator: {}",
