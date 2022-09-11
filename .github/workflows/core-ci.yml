@@ -26,8 +26,8 @@ jobs:
     - run: sudo mv /usr/bin/mold-1.4.2-x86_64-linux /usr/bin/mold
     - run: ls /usr/bin
     - run: echo $PATH
-    - run: mold --version
     - run: /usr/bin/mold --version
+    - run: mold --version
     - name: Checkout Repo
       uses: actions/checkout@v2
 
