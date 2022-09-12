@@ -22,13 +22,8 @@ jobs:
     - run: sudo apt install libpoppler-glib-dev
     - run: sudo apt install libleptonica-dev libtesseract-dev clang
     - run: sudo apt install tesseract-ocr-pol
-    - run: wget https://github.com/rui314/mold/releases/download/v1.4.2/mold-1.4.2-x86_64-linux.tar.gz && sudo tar -xf ./mold-1.4.2-x86_64-linux.tar.gz -C /tmp && sudo mv /tmp/mold-1.4.2-x86_64-linux/bin/mold /usr/bin/mold
-    - name: Set up Clang
-      uses: egor-tensin/setup-clang@v1
-      with:
-        version: latest
-        platform: x64
-    - run: clang --version
+    - uses: rui314/setup-mold@v1
+    - run: mold --version
     - name: Checkout Repo
       uses: actions/checkout@v2
 
