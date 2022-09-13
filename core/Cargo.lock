@@ -426,16 +426,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cooldown-buffer"
-version = "0.1.0"
-source = "git+https://github.com/devzbysiu/cooldown-buffer#100b1f0f200265a26fa84973ff8a4c964069e015"
-dependencies = [
- "doc-comment",
- "thiserror",
- "thread_timer",
-]
-
-[[package]]
 name = "core-foundation"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -689,12 +679,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
 
 [[package]]
-name = "doc-comment"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
-
-[[package]]
 name = "downcast-rs"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -709,7 +693,6 @@ dependencies = [
  "base64 0.13.0",
  "cairo-rs",
  "chacha20poly1305",
- "cooldown-buffer",
  "dashmap",
  "dirs",
  "eventador",
@@ -732,7 +715,6 @@ dependencies = [
  "thiserror",
  "toml",
  "tracing",
- "tracing-bunyan-formatter",
  "tracing-forest",
  "tracing-subscriber",
  "tungstenite",
@@ -1108,16 +1090,6 @@ checksum = "bff49e947297f3312447abdca79f45f4738097cc82b06e72054d2223f601f1b9"
 dependencies = [
  "typenum",
  "version_check",
-]
-
-[[package]]
-name = "gethostname"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1ebd34e35c46e00bb73e81363248d627782724609fe1b6396f553f68fe3862e"
-dependencies = [
- "libc",
- "winapi 0.3.9",
 ]
 
 [[package]]
@@ -3120,12 +3092,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "thread_timer"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e6bb16dcb33be66da43800a9b86bffce3b23cee8023bf3565ec4f693c127562"
-
-[[package]]
 name = "time"
 version = "0.2.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3300,23 +3266,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "tracing-bunyan-formatter"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a788f2119fde477cd33823330c14004fa8cdac6892fd6f12181bbda9dbf14fc9"
-dependencies = [
- "gethostname",
- "log",
- "serde",
- "serde_json",
- "time 0.3.14",
- "tracing",
- "tracing-core",
- "tracing-log",
- "tracing-subscriber",
 ]
 
 [[package]]
