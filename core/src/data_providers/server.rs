@@ -120,6 +120,31 @@ mod test {
         }
     }
 
+    trait ClientExt {
+        fn read_entries(&self, endpoint: &str) -> Result<(String, Status)>;
+    }
+
+    impl ClientExt for Client {
+        fn read_entries(&self, endpoint: &str) -> Result<(String, Status)> {
+            Ok(retry(Fixed::from_millis(1000).take(60), || {
+                let mut resp = self.get(endpoint).dispatch();
+                match resp.read_body() {
+                    Ok(body) if body == r#"{"entries":[]}"# => {
+                        OperationResult::Retry(("No entries", resp.status()))
+                    }
+                    Ok(body) if body.is_empty() => {
+                        OperationResult::Retry(("No entries", resp.status()))
+                    }
+                    Ok(body) => OperationResult::Ok((body, resp.status())),
+                    _ => {
+                        OperationResult::Err(("Failed to fetch body", Status::InternalServerError))
+                    }
+                }
+            })
+            .unwrap())
+        }
+    }
+
     #[test]
     #[serial]
     fn test_search_endpoint_with_empty_index() -> Result<()> {
@@ -160,9 +185,7 @@ mod test {
         cp_docs(config.watched_dir_path().join(user_dir_name))?;
 
         // when
-        // let mut resp = client.get("/search?q=Parlamentarny").dispatch();
-        // let body = resp.read_body()?;
-        let (body, status) = read_resp(&client, "/search?q=Parlamentarny")?;
+        let (body, status) = client.read_entries("/search?q=Parlamentarny")?;
 
         // then
         assert_eq!(status, Status::Ok);
@@ -172,24 +195,6 @@ mod test {
         );
 
         Ok(())
-    }
-
-    fn read_resp(client: &Client, endpoint: &str) -> Result<(String, Status)> {
-        // at most 60 seconds, check every 3 seconds
-        Ok(retry(Fixed::from_millis(3000).take(20), || {
-            let mut resp = client.get(endpoint).dispatch();
-            match resp.read_body() {
-                Ok(body) if body == r#"{"entries":[]}"# => {
-                    OperationResult::Retry(("No entries", resp.status()))
-                }
-                Ok(body) if body.is_empty() => {
-                    OperationResult::Retry(("No entries", resp.status()))
-                }
-                Ok(body) => OperationResult::Ok((body, resp.status())),
-                _ => OperationResult::Err(("Failed to fetch body", Status::InternalServerError)),
-            }
-        })
-        .unwrap())
     }
 
     #[test]
@@ -204,7 +209,6 @@ mod test {
 
         // when
         let mut resp = client.get("/search?q=not-existing-query").dispatch();
-        // let (body, status) = read_resp(&client, "/search?q=not-existing-query")?;
         let body = resp.read_body()?;
 
         // then
@@ -243,9 +247,7 @@ mod test {
         cp_docs(config.watched_dir_path().join(user_dir_name))?;
 
         // when
-        // let mut resp = client.get("/thumbnails/all").dispatch();
-        // let body = resp.read_body()?;
-        let (body, status) = read_resp(&client, "/thumbnails/all")?;
+        let (body, status) = client.read_entries("/thumbnails/all")?;
 
         // then
         assert_eq!(status, Status::Ok);
@@ -281,9 +283,7 @@ mod test {
 
         thread::sleep(Duration::from_secs(15)); // allow to index docs
 
-        // let mut resp = client.get("/search?q=Parlamentarny").dispatch();
-        // let body = resp.read_body()?;
-        let (body, status) = read_resp(&client, "/search?q=Parlamentarny")?;
+        let (body, status) = client.read_entries("/search?q=Parlamentarny")?;
 
         // then
         assert_eq!(status, Status::Ok);
