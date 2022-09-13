@@ -93,7 +93,6 @@ mod test {
     use retry::{retry, OperationResult};
     use rocket::local::blocking::LocalResponse;
     use rocket::{http::Status, local::blocking::Client};
-    use serial_test::serial;
     use std::io::Read;
     use std::thread;
     use std::time::Duration;
