@@ -1,3 +1,6 @@
+use std::thread;
+use std::time::Duration;
+
 use anyhow::Result;
 use testutils::{config_path, cp_docs, create_test_env, ls, make_search, spawn_dox, SearchEntry};
 
@@ -20,6 +23,7 @@ fn it_allows_to_search_through_api() -> Result<()> {
     // TODO: test should add documents via API
 
     cp_docs(user_dir)?; // then we copy documents and indexing starts
+    thread::sleep(Duration::from_secs(30));
 
     // then
     let top_dir_contents = ls(config.thumbnails_dir_path())?;

@@ -181,7 +181,6 @@ pub fn cp_docs<P: AsRef<Path>>(parent_dir: P) -> Result<()> {
     debug!("\tfrom {} to {}", from, to.display());
     fs::copy(from, to)?; // TODO: it should be just one file
     debug!("done");
-    thread::sleep(Duration::from_secs(45)); // allow to index doc
     Ok(())
 }
 
