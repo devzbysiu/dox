@@ -1,4 +1,5 @@
 pub mod bus;
+pub mod cipher;
 pub mod config;
 pub mod extractor;
 pub mod fs_watcher;

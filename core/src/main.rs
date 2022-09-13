@@ -2,8 +2,8 @@
 #![allow(clippy::module_name_repetitions)]
 
 use crate::configuration::factories::{
-    bus, config_loader, config_resolver, extractor_factory, persistence, preprocessor_factory,
-    repository,
+    bus, cipher, config_loader, config_resolver, extractor_factory, persistence,
+    preprocessor_factory, repository,
 };
 use crate::configuration::telemetry::init_tracing;
 use crate::data_providers::fs_watcher::FsWatcher;
@@ -22,6 +22,7 @@ use crate::use_cases::repository::RepoRead;
 use rocket::{routes, Build, Rocket};
 use std::env;
 use tracing::{debug, instrument};
+use use_cases::cipher::CipherRead;
 
 mod configuration;
 mod data_providers;
@@ -53,7 +54,7 @@ pub fn rocket(path_override: Option<String>) -> Rocket<Build> {
         .expect("failed to get config");
 
     let bus = bus().expect("failed to create bus");
-    let repository = setup_core(&cfg, &bus).expect("failed to setup core");
+    let (repo_read, cipher_read) = setup_core(&cfg, &bus).expect("failed to setup core");
 
     debug!("starting server...");
     rocket::build()
@@ -67,13 +68,14 @@ pub fn rocket(path_override: Option<String>) -> Rocket<Build> {
                 receive_document
             ],
         )
-        .manage(repository)
+        .manage(repo_read)
+        .manage(cipher_read)
         .manage(bus)
         .manage(persistence())
         .manage(cfg)
 }
 
-fn setup_core(cfg: &Config, bus: &dyn Bus) -> Result<RepoRead> {
+fn setup_core(cfg: &Config, bus: &dyn Bus) -> Result<(RepoRead, CipherRead)> {
     let watcher = FsWatcher::new(cfg, bus);
     let preprocessor = ThumbnailGenerator::new(cfg, bus);
     let extractor = TxtExtractor::new(bus);
@@ -85,7 +87,8 @@ fn setup_core(cfg: &Config, bus: &dyn Bus) -> Result<RepoRead> {
     extractor.run(extractor_factory());
     let (repo_read, repo_write) = repository(cfg)?;
     indexer.run(repo_write);
-    encrypter.run();
+    let (cipher_read, cipher_write) = cipher();
+    encrypter.run(cipher_write);
 
-    Ok(repo_read)
+    Ok((repo_read, cipher_read))
 }

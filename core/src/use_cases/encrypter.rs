@@ -1,7 +1,7 @@
 use crate::entities::location::Location;
-use crate::helpers::cipher::{self, key, nonce};
 use crate::result::Result;
 use crate::use_cases::bus::{Bus, Event};
+use crate::use_cases::cipher::CipherWrite;
 
 use std::fs;
 use std::thread;
@@ -16,8 +16,8 @@ impl<'a> Encrypter<'a> {
         Self { bus }
     }
 
-    #[instrument(skip(self))]
-    pub fn run(&self) {
+    #[instrument(skip(self, cipher))]
+    pub fn run(&self, cipher: CipherWrite) {
         let sub = self.bus.subscriber();
         let mut publ = self.bus.publisher();
         // TODO: improve tracing of threads somehow. Currently, it's hard to debug because threads
@@ -29,7 +29,7 @@ impl<'a> Encrypter<'a> {
                         debug!("encryption request: '{:?}', starting encryption", location);
                         let Location::FileSystem(paths) = location;
                         for path in paths {
-                            let encrypted = cipher::encrypt(&fs::read(&path)?, key(), nonce())?;
+                            let encrypted = cipher.encrypt(&fs::read(&path)?)?;
                             fs::write(path, encrypted)?;
                         }
                         debug!("encryption finished");

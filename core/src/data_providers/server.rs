@@ -1,5 +1,5 @@
-use crate::helpers::cipher::{self, key, nonce};
 use crate::result::Result;
+use crate::use_cases::cipher::CipherRead;
 use crate::use_cases::config::Config;
 use crate::use_cases::persistence::Persistence;
 use crate::use_cases::repository::{RepoRead, SearchResult};
@@ -11,23 +11,24 @@ use rocket::serde::Deserialize;
 use rocket::{get, post, State};
 use tracing::instrument;
 
-#[instrument(skip(repo))]
+#[instrument(skip(repo_read))]
 #[get("/search?<q>")]
-pub fn search(user: User, q: String, repo: &State<RepoRead>) -> Result<Json<SearchResult>> {
-    Ok(Json(repo.search(user, q)?))
+pub fn search(user: User, q: String, repo_read: &State<RepoRead>) -> Result<Json<SearchResult>> {
+    Ok(Json(repo_read.search(user, q)?))
 }
 
-#[instrument(skip(persistence))]
+#[instrument(skip(persistence, cipher_read))]
 #[get("/thumbnail/<filename>")]
 pub fn thumbnail(
     user: User,
     filename: String,
     cfg: &State<Config>,
     persistence: &State<Persistence>,
+    cipher_read: &State<CipherRead>,
 ) -> Result<Option<Vec<u8>>> {
     Ok(
         match persistence.load(cfg.thumbnails_dir.join(relative_path(&user, filename)))? {
-            Some(buf) => Some(cipher::decrypt(&buf, key(), nonce())?),
+            Some(buf) => Some(cipher_read.decrypt(&buf)?),
             None => None,
         },
     )
@@ -39,7 +40,7 @@ pub fn all_thumbnails(user: User, repo: &State<RepoRead>) -> Result<Json<SearchR
     Ok(Json(repo.all_documents(user)?))
 }
 
-#[instrument(skip(persistence))]
+#[instrument(skip(persistence, cipher_read))]
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[get("/document/<filename>")]
 pub fn document(
@@ -47,10 +48,11 @@ pub fn document(
     filename: String,
     cfg: &State<Config>,
     persistence: &State<Persistence>,
+    cipher_read: &State<CipherRead>,
 ) -> Result<Option<Vec<u8>>> {
     Ok(
         match persistence.load(cfg.watched_dir.join(relative_path(&user, filename)))? {
-            Some(buf) => Some(cipher::decrypt(&buf, key(), nonce())?),
+            Some(buf) => Some(cipher_read.decrypt(&buf)?),
             None => None,
         },
     )

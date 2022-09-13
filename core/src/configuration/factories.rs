@@ -1,4 +1,5 @@
 use crate::data_providers::bus::LocalBus;
+use crate::data_providers::cipher::Chacha20Poly1305Cipher;
 use crate::data_providers::config::{FsConfigLoader, FsConfigResolver};
 use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::persistence::FsPersistence;
@@ -6,6 +7,7 @@ use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::repository::TantivyRepository;
 use crate::result::Result;
 use crate::use_cases::bus::EventBus;
+use crate::use_cases::cipher::{CipherRead, CipherWrite};
 use crate::use_cases::config::{CfgLoader, CfgResolver, Config};
 use crate::use_cases::extractor::ExtractorCreator;
 use crate::use_cases::persistence::Persistence;
@@ -38,4 +40,8 @@ pub fn repository(cfg: &Config) -> Result<(RepoRead, RepoWrite)> {
 
 pub fn persistence() -> Persistence {
     Box::new(FsPersistence)
+}
+
+pub fn cipher() -> (CipherRead, CipherWrite) {
+    Chacha20Poly1305Cipher::create()
 }
