@@ -146,7 +146,6 @@ mod test {
     }
 
     #[test]
-    #[serial]
     fn test_search_endpoint_with_empty_index() -> Result<()> {
         // given
         let (_, config_dir) = create_test_env()?;
@@ -171,11 +170,7 @@ mod test {
             .to_string()
     }
 
-    // TODO: when there are multiple active tests which require indexing,
-    // then at least one test is failing - but only in cargo make, in cargo test
-    // everything is working correctly
     #[test]
-    #[serial]
     fn test_search_endpoint_with_indexed_docs() -> Result<()> {
         // given
         let (config, config_dir) = create_test_env()?;
@@ -198,7 +193,6 @@ mod test {
     }
 
     #[test]
-    #[serial]
     fn test_search_endpoint_with_wrong_query() -> Result<()> {
         // given
         let (config, config_dir) = create_test_env()?;
@@ -219,7 +213,6 @@ mod test {
     }
 
     #[test]
-    #[serial]
     fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
         // given
         let (_, config_dir) = create_test_env()?;
@@ -237,7 +230,6 @@ mod test {
     }
 
     #[test]
-    #[serial]
     fn test_all_thumbnails_endpoint_with_indexed_docs() -> Result<()> {
         // given
         let (config, config_dir) = create_test_env()?;
@@ -260,7 +252,6 @@ mod test {
     }
 
     #[test]
-    #[serial]
     fn test_receive_document_endpoint() -> Result<()> {
         // given
         let (_, config_dir) = create_test_env()?;
