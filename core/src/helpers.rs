@@ -1,8 +1,48 @@
 use crate::entities::extension::Ext;
 use crate::result::Result;
 
+use retry::delay::Fixed;
+use retry::{retry, OperationResult};
+use rocket::local::blocking::LocalResponse;
+use rocket::{http::Status, local::blocking::Client};
 use std::fs::DirEntry;
+use std::io::Read;
 use std::path::Path;
+use tracing::{debug, instrument};
+
+pub trait LocalResponseExt {
+    fn read_body(&mut self) -> Result<String>;
+}
+
+impl LocalResponseExt for LocalResponse<'_> {
+    #[instrument]
+    fn read_body(&mut self) -> Result<String> {
+        let mut buffer = Vec::new();
+        self.read_to_end(&mut buffer)?;
+        let res = String::from_utf8(buffer)?;
+        debug!("read the whole buffer: '{}'", res);
+        Ok(res)
+    }
+}
+
+pub trait ClientExt {
+    fn read_entries(&self, endpoint: &str) -> Result<(String, Status)>;
+}
+
+impl ClientExt for Client {
+    fn read_entries(&self, endpoint: &str) -> Result<(String, Status)> {
+        Ok(retry(Fixed::from_millis(1000).take(60), || {
+            let mut r = self.get(endpoint).dispatch();
+            match r.read_body() {
+                Ok(b) if b == r#"{"entries":[]}"# => OperationResult::Retry(("Empty", r.status())),
+                Ok(b) if b.is_empty() => OperationResult::Retry(("Empty", r.status())),
+                Ok(b) => OperationResult::Ok((b, r.status())),
+                _ => OperationResult::Err(("Failed to fetch body", Status::InternalServerError)),
+            }
+        })
+        .unwrap())
+    }
+}
 
 pub trait DirEntryExt {
     fn filename(&self) -> String;

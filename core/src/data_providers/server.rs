@@ -86,63 +86,15 @@ pub struct Document {
 
 #[cfg(test)]
 mod test {
+    use crate::helpers::{ClientExt, LocalResponseExt};
     use crate::rocket;
 
     use anyhow::Result;
-    use retry::delay::Fixed;
-    use retry::{retry, OperationResult};
-    use rocket::local::blocking::LocalResponse;
     use rocket::{http::Status, local::blocking::Client};
-    use std::io::Read;
     use std::thread;
     use std::time::Duration;
     use tempfile::TempDir;
     use testutils::{cp_docs, create_test_env, to_base64};
-    use tracing::{debug, instrument};
-
-    // TODO: this trait WAS also defined here [`testutils::LocalResponseExt`], but for some reason
-    // it's not visible by rust compiler. However, when rocket is set to version 0.5.0-rc.1, it's
-    // working properly, but for 0.5.0-rc.2 it's not working - no idea why. For now, I'm leaving
-    // the definition of LocalResponseExt here
-    trait LocalResponseExt {
-        fn read_body(&mut self) -> Result<String>;
-    }
-
-    impl LocalResponseExt for LocalResponse<'_> {
-        #[instrument]
-        fn read_body(&mut self) -> Result<String> {
-            let mut buffer = Vec::new();
-            self.read_to_end(&mut buffer)?;
-            let res = String::from_utf8(buffer)?;
-            debug!("read the whole buffer: '{}'", res);
-            Ok(res)
-        }
-    }
-
-    trait ClientExt {
-        fn read_entries(&self, endpoint: &str) -> Result<(String, Status)>;
-    }
-
-    impl ClientExt for Client {
-        fn read_entries(&self, endpoint: &str) -> Result<(String, Status)> {
-            Ok(retry(Fixed::from_millis(1000).take(60), || {
-                let mut resp = self.get(endpoint).dispatch();
-                match resp.read_body() {
-                    Ok(body) if body == r#"{"entries":[]}"# => {
-                        OperationResult::Retry(("No entries", resp.status()))
-                    }
-                    Ok(body) if body.is_empty() => {
-                        OperationResult::Retry(("No entries", resp.status()))
-                    }
-                    Ok(body) => OperationResult::Ok((body, resp.status())),
-                    _ => {
-                        OperationResult::Err(("Failed to fetch body", Status::InternalServerError))
-                    }
-                }
-            })
-            .unwrap())
-        }
-    }
 
     #[test]
     fn test_search_endpoint_with_empty_index() -> Result<()> {
