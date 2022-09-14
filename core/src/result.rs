@@ -34,6 +34,9 @@ pub enum DoxErr {
     #[error("Error from fs watcher: '{0}'")]
     FsWatcher(#[from] notify::Error),
 
+    #[error("Error from watcher: '{0}'")]
+    Watcher(#[from] std::sync::mpsc::RecvError),
+
     #[error("Error when deserializing from TOML: '{0}'")]
     TomlDe(#[from] toml::de::Error),
 

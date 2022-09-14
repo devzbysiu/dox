@@ -2,7 +2,7 @@
 #![allow(clippy::module_name_repetitions)]
 
 use crate::configuration::factories::{
-    bus, cipher, config_loader, config_resolver, extractor_factory, persistence,
+    bus, cipher, config_loader, config_resolver, event_watcher, extractor_factory, persistence,
     preprocessor_factory, repository,
 };
 use crate::configuration::telemetry::init_tracing;
@@ -76,13 +76,13 @@ pub fn rocket(path_override: Option<String>) -> Rocket<Build> {
 }
 
 fn setup_core(cfg: &Config, bus: &dyn Bus) -> Result<(RepoRead, CipherRead)> {
-    let watcher = FsWatcher::new(cfg, bus);
+    let watcher = FsWatcher::new(bus);
     let preprocessor = ThumbnailGenerator::new(cfg, bus);
     let extractor = TxtExtractor::new(bus);
     let indexer = Indexer::new(bus);
     let encrypter = Encrypter::new(bus);
 
-    watcher.run();
+    watcher.run(event_watcher(cfg)?);
     preprocessor.run(preprocessor_factory());
     extractor.run(extractor_factory());
     let (repo_read, repo_write) = repository(cfg)?;

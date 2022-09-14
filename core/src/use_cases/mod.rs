@@ -8,3 +8,4 @@ pub mod persistence;
 pub mod preprocessor;
 pub mod repository;
 pub mod user;
+pub mod watcher;

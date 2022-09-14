@@ -8,3 +8,4 @@ pub mod preprocessor;
 pub mod prompt;
 pub mod repository;
 pub mod server;
+pub mod watcher;

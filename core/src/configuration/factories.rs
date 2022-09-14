@@ -5,6 +5,7 @@ use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::persistence::FsPersistence;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::repository::TantivyRepository;
+use crate::data_providers::watcher::FsEventWatcher;
 use crate::result::Result;
 use crate::use_cases::bus::EventBus;
 use crate::use_cases::cipher::{CipherRead, CipherWrite};
@@ -13,6 +14,7 @@ use crate::use_cases::extractor::ExtractorCreator;
 use crate::use_cases::persistence::Persistence;
 use crate::use_cases::preprocessor::PreprocessorCreator;
 use crate::use_cases::repository::{RepoRead, RepoWrite};
+use crate::use_cases::watcher::Watcher;
 
 pub fn config_resolver(config_loader: CfgLoader) -> CfgResolver {
     Box::new(FsConfigResolver::new(config_loader))
@@ -44,4 +46,9 @@ pub fn persistence() -> Persistence {
 
 pub fn cipher() -> (CipherRead, CipherWrite) {
     Chacha20Poly1305Cipher::create()
+}
+
+pub fn event_watcher(cfg: &Config) -> Result<Watcher> {
+    let watched_dir = cfg.watched_dir.clone();
+    Ok(Box::new(FsEventWatcher::new(watched_dir)?))
 }
