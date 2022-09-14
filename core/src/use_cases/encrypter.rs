@@ -35,8 +35,6 @@ impl<'a> Encrypter<'a> {
                         debug!("encryption finished");
                         publ.send(Event::PipelineFinished)?;
                     }
-                    // TODO: consider converting other if let parts to match to get the event and
-                    // log it
                     e => debug!("event not supported in encrypter: {}", e.to_string()),
                 }
             }
