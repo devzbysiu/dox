@@ -3,7 +3,7 @@ use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
-use crate::use_cases::extractor::TextExtractor;
+use crate::use_cases::services::extractor::TextExtractor;
 
 use pdf_extract::extract_text;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};

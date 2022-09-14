@@ -12,12 +12,12 @@ use crate::data_providers::server::{
 use crate::result::Result;
 use crate::use_cases::bus::Bus;
 use crate::use_cases::config::Config;
-use crate::use_cases::encrypter::Encrypter;
-use crate::use_cases::extractor::TxtExtractor;
-use crate::use_cases::indexer::Indexer;
-use crate::use_cases::preprocessor::ThumbnailGenerator;
 use crate::use_cases::repository::RepoRead;
-use crate::use_cases::watcher::DocsWatcher;
+use crate::use_cases::services::encrypter::Encrypter;
+use crate::use_cases::services::extractor::TxtExtractor;
+use crate::use_cases::services::indexer::Indexer;
+use crate::use_cases::services::preprocessor::ThumbnailGenerator;
+use crate::use_cases::services::watcher::DocsWatcher;
 
 use rocket::{routes, Build, Rocket};
 use std::env;

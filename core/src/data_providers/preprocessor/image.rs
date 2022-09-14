@@ -1,7 +1,7 @@
 use crate::entities::location::Location;
 use crate::helpers::PathRefExt;
 use crate::result::Result;
-use crate::use_cases::preprocessor::FilePreprocessor;
+use crate::use_cases::services::preprocessor::FilePreprocessor;
 use std::fs::{self, create_dir_all};
 
 use std::path::Path;

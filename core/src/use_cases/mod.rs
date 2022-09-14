@@ -1,12 +1,9 @@
 pub mod bus;
 pub mod cipher;
 pub mod config;
-pub mod encrypter;
-pub mod receiver;
-pub mod extractor;
-pub mod indexer;
 pub mod persistence;
-pub mod preprocessor;
+pub mod receiver;
 pub mod repository;
 pub mod user;
-pub mod watcher;
+
+pub mod services;

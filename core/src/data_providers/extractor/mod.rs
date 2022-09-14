@@ -1,7 +1,7 @@
 use crate::data_providers::extractor::image::FromImage;
 use crate::data_providers::extractor::pdf::FromPdf;
 use crate::entities::extension::Ext;
-use crate::use_cases::extractor::{Extractor, ExtractorFactory};
+use crate::use_cases::services::extractor::{Extractor, ExtractorFactory};
 
 pub mod image;
 pub mod pdf;

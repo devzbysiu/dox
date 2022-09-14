@@ -4,17 +4,17 @@ use crate::data_providers::config::{FsConfigLoader, FsConfigResolver};
 use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::persistence::FsPersistence;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
-use crate::data_providers::repository::TantivyRepository;
 use crate::data_providers::receiver::FsEventReceiver;
+use crate::data_providers::repository::TantivyRepository;
 use crate::result::Result;
 use crate::use_cases::bus::EventBus;
 use crate::use_cases::cipher::{CipherRead, CipherWrite};
 use crate::use_cases::config::{CfgLoader, CfgResolver, Config};
-use crate::use_cases::extractor::ExtractorCreator;
 use crate::use_cases::persistence::Persistence;
-use crate::use_cases::preprocessor::PreprocessorCreator;
-use crate::use_cases::repository::{RepoRead, RepoWrite};
 use crate::use_cases::receiver::EventRecv;
+use crate::use_cases::repository::{RepoRead, RepoWrite};
+use crate::use_cases::services::extractor::ExtractorCreator;
+use crate::use_cases::services::preprocessor::PreprocessorCreator;
 
 pub fn config_resolver(config_loader: CfgLoader) -> CfgResolver {
     Box::new(FsConfigResolver::new(config_loader))
