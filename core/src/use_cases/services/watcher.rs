@@ -30,7 +30,7 @@ impl<'a> DocsWatcher<'a> {
             loop {
                 debug!("waiting for event from watcher");
                 match receiver.recv() {
-                    Ok(DocsEvent::Created(path)) if path.is_file() => {
+                    Ok(DocsEvent::Created(path)) => {
                         debug!("got create file event on path: '{}'", path.display());
                         publ.send(new_docs_event(path))?;
                     }
@@ -44,49 +44,55 @@ impl<'a> DocsWatcher<'a> {
 
 fn new_docs_event(path: PathBuf) -> BusEvent {
     debug!("new doc appeared, creating NewDocs event");
-    BusEvent::NewDocs(Location::FileSystem(vec![path]))
+    BusEvent::NewDocs(Location::FS(vec![path]))
 }
 
-// TODO: Fix this
-// #[cfg(test)]
-// mod test {
-//     use super::*;
+#[cfg(test)]
+mod test {
+    use super::*;
 
-//     use crate::configuration::telemetry::init_tracing;
-//     use crate::data_providers::bus::LocalBus;
+    use crate::configuration::telemetry::init_tracing;
+    use crate::data_providers::bus::LocalBus;
+    use crate::use_cases::receiver::EventReceiver;
 
-//     use anyhow::Result;
-//     use std::fs::File;
-//     use std::io::Write;
-//     use std::thread;
-//     use tempfile::tempdir;
+    use anyhow::Result;
+    use std::sync::mpsc::{channel, Receiver};
 
-// #[test]
-// fn test_fs_watcher_with_writing_to_file() -> Result<()> {
-//     // given
-//     init_tracing();
-//     let tmp_dir = tempdir()?;
-//     let bus = LocalBus::new()?;
-//     let cfg = Config {
-//         watched_dir: tmp_dir.path().into(),
-//         ..Config::default()
-//     };
-//     let watcher = FsWatcher::new(&bus);
-//     let sub = bus.subscriber();
-//     let file_path = tmp_dir.path().join("test-file");
+    #[test]
+    fn test_fs_watcher_with_writing_to_file() -> Result<()> {
+        // given
+        init_tracing();
+        let (tx, rx) = channel();
+        let mock_event_receiver = Box::new(MockEventReceiver::new(rx));
+        let bus = LocalBus::new()?;
 
-//     // when
-//     watcher.run();
-//     thread::sleep(Duration::from_secs(2));
-//     let mut file = File::create(&file_path)?;
-//     thread::sleep(Duration::from_secs(2)); // wait for Created event to be ignored
-//     file.write_all(b"test")?;
+        // when
+        let watcher = DocsWatcher::new(&bus);
+        watcher.run(mock_event_receiver);
+        tx.send(DocsEvent::Created("path".into()))?;
 
-//     let event = sub.recv()?;
+        let sub = bus.subscriber();
+        let event = sub.recv()?;
 
-//     // then
-//     assert_eq!(event, Event::NewDocs(Location::FileSystem(vec![file_path])));
+        // then
+        assert_eq!(event, BusEvent::NewDocs(Location::FS(vec!["path".into()])));
 
-//     Ok(())
-// }
-// }
+        Ok(())
+    }
+
+    struct MockEventReceiver {
+        rx: Receiver<DocsEvent>,
+    }
+
+    impl MockEventReceiver {
+        fn new(rx: Receiver<DocsEvent>) -> Self {
+            Self { rx }
+        }
+    }
+
+    impl EventReceiver for MockEventReceiver {
+        fn recv(&self) -> crate::result::Result<DocsEvent> {
+            Ok(self.rx.recv()?)
+        }
+    }
+}

@@ -21,7 +21,7 @@ pub struct FromPdf;
 impl TextExtractor for FromPdf {
     #[instrument(skip(self))]
     fn extract_text(&self, location: &Location) -> Result<Vec<DocDetails>> {
-        let Location::FileSystem(paths) = location;
+        let Location::FS(paths) = location;
         Ok(paths
             .par_iter()
             .map(extract)
@@ -53,7 +53,7 @@ mod test {
         let paths = vec![PathBuf::from("res/doc1.pdf"), PathBuf::from("res/doc2.pdf")];
 
         // when
-        let mut result = pdf.extract_text(&Location::FileSystem(paths))?;
+        let mut result = pdf.extract_text(&Location::FS(paths))?;
         result.sort();
 
         // then
@@ -81,7 +81,7 @@ mod test {
         ];
 
         // when
-        let result = pdf.extract_text(&Location::FileSystem(paths))?;
+        let result = pdf.extract_text(&Location::FS(paths))?;
 
         // then
         assert!(result.is_empty());

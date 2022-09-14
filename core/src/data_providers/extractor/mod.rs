@@ -52,7 +52,7 @@ mod test {
 
             // when
             let extractor = extractor_factory.make(&ext);
-            let docs = extractor.extract_text(&Location::FileSystem(paths))?;
+            let docs = extractor.extract_text(&Location::FS(paths))?;
             let doc = &docs[0];
 
             // then
@@ -71,7 +71,7 @@ mod test {
 
         // when
         let extractor = extractor_factory.make(&ext);
-        let docs = extractor.extract_text(&Location::FileSystem(paths))?;
+        let docs = extractor.extract_text(&Location::FS(paths))?;
 
         // then
         assert!(docs.is_empty());

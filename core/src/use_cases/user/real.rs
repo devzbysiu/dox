@@ -14,7 +14,7 @@ impl TryFrom<&Location> for User {
     type Error = DoxErr;
 
     fn try_from(location: &Location) -> std::result::Result<Self, Self::Error> {
-        let Location::FileSystem(paths) = location;
+        let Location::FS(paths) = location;
         let path = paths.get(0).ok_or(DoxErr::EmptyLocation)?;
         let parent_dir = path.parent().ok_or(DoxErr::InvalidPath)?;
         let parent_name = parent_dir.filename();

@@ -20,7 +20,7 @@ pub struct FromImage;
 impl TextExtractor for FromImage {
     #[instrument(skip(self))]
     fn extract_text(&self, location: &Location) -> Result<Vec<DocDetails>> {
-        let Location::FileSystem(paths) = location;
+        let Location::FS(paths) = location;
         Ok(paths
             .par_iter()
             .map(ocr)
@@ -51,7 +51,7 @@ mod test {
         let paths = vec![PathBuf::from("res/doc1.png"), PathBuf::from("res/doc3.jpg")];
 
         // when
-        let mut result = ocr.extract_text(&Location::FileSystem(paths))?;
+        let mut result = ocr.extract_text(&Location::FS(paths))?;
         result.sort();
 
         // then
@@ -79,7 +79,7 @@ mod test {
         ];
 
         // when
-        let result = ocr.extract_text(&Location::FileSystem(paths))?;
+        let result = ocr.extract_text(&Location::FS(paths))?;
 
         // then
         assert!(result.is_empty());

@@ -17,10 +17,10 @@ pub struct FsEventReceiver {
 impl FsEventReceiver {
     pub fn new<P: AsRef<Path>>(watched_dir: P) -> Result<Self> {
         let (watcher_tx, watcher_rx) = channel();
-        let mut _watcher = watcher(watcher_tx, Duration::from_millis(100))?;
-        _watcher.watch(watched_dir, RecursiveMode::Recursive)?;
+        let mut watcher = watcher(watcher_tx, Duration::from_millis(100))?;
+        watcher.watch(watched_dir, RecursiveMode::Recursive)?;
         Ok(Self {
-            _watcher,
+            _watcher: watcher,
             watcher_rx,
         })
     }
@@ -29,7 +29,7 @@ impl FsEventReceiver {
 impl EventReceiver for FsEventReceiver {
     fn recv(&self) -> Result<DocsEvent> {
         match self.watcher_rx.recv() {
-            Ok(DebouncedEvent::Create(path)) => Ok(DocsEvent::Created(path)),
+            Ok(DebouncedEvent::Create(path)) if path.is_file() => Ok(DocsEvent::Created(path)),
             Ok(e) => {
                 warn!("this FS event is not supported: {:?}", e);
                 Ok(DocsEvent::Other)

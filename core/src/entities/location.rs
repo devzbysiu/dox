@@ -11,7 +11,7 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Location {
     /// Represents local disk as a medium.
-    FileSystem(Vec<PathBuf>),
+    FS(Vec<PathBuf>),
 }
 
 impl Location {
@@ -21,7 +21,7 @@ impl Location {
     /// event, have the same extension. It's achieved by getting first path of the vector of paths
     /// and reading extension of this path.
     pub fn extension(&self) -> Ext {
-        let Location::FileSystem(paths) = self;
+        let Location::FS(paths) = self;
         paths
             .get(0)
             .unwrap_or_else(|| panic!("no new paths received, this shouldn't happen"))

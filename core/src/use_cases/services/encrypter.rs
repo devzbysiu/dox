@@ -27,7 +27,7 @@ impl<'a> Encrypter<'a> {
                 match sub.recv()? {
                     BusEvent::EncryptionRequest(location) => {
                         debug!("encryption request: '{:?}', starting encryption", location);
-                        let Location::FileSystem(paths) = location;
+                        let Location::FS(paths) = location;
                         for path in paths {
                             let encrypted = cipher.encrypt(&fs::read(&path)?)?;
                             fs::write(path, encrypted)?;

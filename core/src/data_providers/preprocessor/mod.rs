@@ -56,7 +56,7 @@ mod test {
 
             // when
             let extractor = preprocessor_factory.make(&ext);
-            extractor.preprocess(&Location::FileSystem(paths), tmp_dir.path())?;
+            extractor.preprocess(&Location::FS(paths), tmp_dir.path())?;
 
             // then
             assert_eq!(tmp_dir.path().first_filename()?, "res");

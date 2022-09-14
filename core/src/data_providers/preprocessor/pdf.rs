@@ -58,14 +58,14 @@ fn paint_background_and_scale(page: &PopplerPage) -> Result<ImageSurface> {
 impl FilePreprocessor for Pdf {
     #[instrument]
     fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<Location> {
-        let Location::FileSystem(paths) = location;
+        let Location::FS(paths) = location;
         let mut result_paths = Vec::new();
         for pdf_path in paths {
             let thumbnail_path = thumbnails_dir.join(format!("{}.png", pdf_path.rel_stem()));
             self.generate(pdf_path, &thumbnail_path)?;
             result_paths.push(thumbnail_path);
         }
-        Ok(Location::FileSystem(result_paths))
+        Ok(Location::FS(result_paths))
     }
 }
 
@@ -89,7 +89,7 @@ mod test {
 
         // when
         // TODO: now, preprocessors return Location, make sure to check it here as well
-        preprocessor.preprocess(&Location::FileSystem(paths), tmp_dir.path())?;
+        preprocessor.preprocess(&Location::FS(paths), tmp_dir.path())?;
         let user_dir = tmp_dir.path().read_dir()?.next().unwrap()?;
 
         // then
@@ -109,7 +109,7 @@ mod test {
 
         // then
         preprocessor
-            .preprocess(&Location::FileSystem(paths), tmp_dir.path())
+            .preprocess(&Location::FS(paths), tmp_dir.path())
             .unwrap(); // should panic
     }
 }
