@@ -1,6 +1,6 @@
 use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, Event};
+use crate::use_cases::bus::{Bus, BusEvent};
 use crate::use_cases::cipher::CipherWrite;
 
 use std::fs;
@@ -25,7 +25,7 @@ impl<'a> Encrypter<'a> {
         thread::spawn(move || -> Result<()> {
             loop {
                 match sub.recv()? {
-                    Event::EncryptionRequest(location) => {
+                    BusEvent::EncryptionRequest(location) => {
                         debug!("encryption request: '{:?}', starting encryption", location);
                         let Location::FileSystem(paths) = location;
                         for path in paths {
@@ -33,7 +33,7 @@ impl<'a> Encrypter<'a> {
                             fs::write(path, encrypted)?;
                         }
                         debug!("encryption finished");
-                        publ.send(Event::PipelineFinished)?;
+                        publ.send(BusEvent::PipelineFinished)?;
                     }
                     e => debug!("event not supported in encrypter: {}", e.to_string()),
                 }

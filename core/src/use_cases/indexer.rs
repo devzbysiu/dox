@@ -1,5 +1,5 @@
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, Event};
+use crate::use_cases::bus::{Bus, BusEvent};
 use crate::use_cases::repository::RepoWrite;
 
 use std::thread;
@@ -21,9 +21,9 @@ impl<'a> Indexer<'a> {
         thread::spawn(move || -> Result<()> {
             loop {
                 match sub.recv()? {
-                    Event::TextExtracted(user, doc_details) => {
+                    BusEvent::TextExtracted(user, doc_details) => {
                         repository.index(user, &doc_details)?;
-                        publ.send(Event::Indexed(doc_details))?;
+                        publ.send(BusEvent::Indexed(doc_details))?;
                     }
                     e => debug!("event not supported in indexer: {}", e.to_string()),
                 }

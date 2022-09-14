@@ -36,7 +36,7 @@ impl<T: Bus + ?Sized> Bus for Box<T> {
 
 /// Represents abstraction for receiving events.
 pub trait Subscriber: Send {
-    fn recv(&self) -> Result<Event>;
+    fn recv(&self) -> Result<BusEvent>;
 }
 
 // TODO: Think about splitting events to internal and external. Currently, it's not possible to
@@ -45,7 +45,7 @@ pub trait Subscriber: Send {
 ///
 /// It describes both - internal and external events.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Event {
+pub enum BusEvent {
     /// Represents new documents appearing in the system. External event.
     NewDocs(Location),
 
@@ -65,18 +65,18 @@ pub enum Event {
     PipelineFinished,
 }
 
-impl Display for Event {
+impl Display for BusEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "{}",
             match self {
-                Event::NewDocs(_) => "NewDocs",
-                Event::TextExtracted(_, _) => "TextExtracted",
-                Event::ThumbnailMade(_) => "ThumbnailMade",
-                Event::Indexed(_) => "Indexed",
-                Event::EncryptionRequest(_) => "EncryptionRequest",
-                Event::PipelineFinished => "PipelineFinished",
+                BusEvent::NewDocs(_) => "NewDocs",
+                BusEvent::TextExtracted(_, _) => "TextExtracted",
+                BusEvent::ThumbnailMade(_) => "ThumbnailMade",
+                BusEvent::Indexed(_) => "Indexed",
+                BusEvent::EncryptionRequest(_) => "EncryptionRequest",
+                BusEvent::PipelineFinished => "PipelineFinished",
             }
         )
     }
@@ -84,5 +84,5 @@ impl Display for Event {
 
 /// Represents abstraction for sending events.
 pub trait Publisher: Send {
-    fn send(&mut self, event: Event) -> Result<()>;
+    fn send(&mut self, event: BusEvent) -> Result<()>;
 }

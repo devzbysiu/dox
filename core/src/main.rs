@@ -6,7 +6,6 @@ use crate::configuration::factories::{
     preprocessor_factory, repository,
 };
 use crate::configuration::telemetry::init_tracing;
-use crate::data_providers::fs_watcher::FsWatcher;
 use crate::data_providers::server::{
     all_thumbnails, document, receive_document, search, thumbnail,
 };
@@ -18,6 +17,7 @@ use crate::use_cases::extractor::TxtExtractor;
 use crate::use_cases::indexer::Indexer;
 use crate::use_cases::preprocessor::ThumbnailGenerator;
 use crate::use_cases::repository::RepoRead;
+use crate::use_cases::watcher::DocsWatcher;
 
 use rocket::{routes, Build, Rocket};
 use std::env;
@@ -76,7 +76,7 @@ pub fn rocket(path_override: Option<String>) -> Rocket<Build> {
 }
 
 fn setup_core(cfg: &Config, bus: &dyn Bus) -> Result<(RepoRead, CipherRead)> {
-    let watcher = FsWatcher::new(bus);
+    let watcher = DocsWatcher::new(bus);
     let preprocessor = ThumbnailGenerator::new(cfg, bus);
     let extractor = TxtExtractor::new(bus);
     let indexer = Indexer::new(bus);

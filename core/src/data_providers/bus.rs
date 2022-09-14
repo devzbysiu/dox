@@ -4,7 +4,7 @@
 use std::fmt::Debug;
 
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, Event, EventPublisher, EventSubscriber, Publisher, Subscriber};
+use crate::use_cases::bus::{Bus, BusEvent, EventPublisher, EventSubscriber, Publisher, Subscriber};
 
 const BUS_CAPACITY: u64 = 1024; // TODO: take care of this `capacity`
 
@@ -43,17 +43,17 @@ impl Bus for LocalBus {
 ///
 /// It allows to receive [`Event`]s.
 pub struct LocalSubscriber {
-    sub: eventador::Subscriber<Event>,
+    sub: eventador::Subscriber<BusEvent>,
 }
 
 impl LocalSubscriber {
-    fn new(sub: eventador::Subscriber<Event>) -> Self {
+    fn new(sub: eventador::Subscriber<BusEvent>) -> Self {
         Self { sub }
     }
 }
 
 impl Subscriber for LocalSubscriber {
-    fn recv(&self) -> Result<Event> {
+    fn recv(&self) -> Result<BusEvent> {
         Ok(self.sub.recv().to_owned())
     }
 }
@@ -72,7 +72,7 @@ impl LocalPublisher {
 }
 
 impl Publisher for LocalPublisher {
-    fn send(&mut self, event: Event) -> Result<()> {
+    fn send(&mut self, event: BusEvent) -> Result<()> {
         self.publ.send(event);
         Ok(())
     }

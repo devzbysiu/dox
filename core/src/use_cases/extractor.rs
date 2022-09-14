@@ -3,7 +3,7 @@ use crate::entities::document::DocDetails;
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, Event};
+use crate::use_cases::bus::{Bus, BusEvent};
 use crate::use_cases::user::User;
 
 use std::convert::TryFrom;
@@ -28,17 +28,17 @@ impl<'a> TxtExtractor<'a> {
         thread::spawn(move || -> Result<()> {
             loop {
                 match sub.recv()? {
-                    Event::NewDocs(location) => {
+                    BusEvent::NewDocs(location) => {
                         debug!("NewDocs in: '{:?}', starting extraction", location);
                         let extension = location.extension();
                         let extractor = extractor_factory.make(&extension);
-                        publ.send(Event::TextExtracted(
+                        publ.send(BusEvent::TextExtracted(
                             User::try_from(&location)?,
                             extractor.extract_text(&location)?,
                         ))?;
                         debug!("extraction finished");
                         debug!("sending encryption request for: '{:?}'", location);
-                        publ.send(Event::EncryptionRequest(location))?;
+                        publ.send(BusEvent::EncryptionRequest(location))?;
                     }
                     e => debug!("event not supported in TxtExtractor: {}", e.to_string()),
                 }

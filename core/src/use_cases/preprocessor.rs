@@ -2,7 +2,7 @@
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, Event};
+use crate::use_cases::bus::{Bus, BusEvent};
 use crate::use_cases::config::Config;
 
 use std::path::Path;
@@ -34,15 +34,15 @@ impl<'a> ThumbnailGenerator<'a> {
         thread::spawn(move || -> Result<()> {
             loop {
                 match sub.recv()? {
-                    Event::NewDocs(location) => {
+                    BusEvent::NewDocs(location) => {
                         debug!("NewDocs in: '{:?}', starting preprocessing", location);
                         let extension = location.extension();
                         let preprocessor = preprocessor_factory.make(&extension);
                         let thumbnail_loc = preprocessor.preprocess(&location, &thumbnails_dir)?;
                         debug!("preprocessing finished");
-                        publ.send(Event::ThumbnailMade(thumbnail_loc.clone()))?;
+                        publ.send(BusEvent::ThumbnailMade(thumbnail_loc.clone()))?;
                         debug!("sending encryption request for: '{:?}'", thumbnail_loc);
-                        publ.send(Event::EncryptionRequest(thumbnail_loc))?;
+                        publ.send(BusEvent::EncryptionRequest(thumbnail_loc))?;
                     }
                     e => debug!(
                         "event not supported in ThumbnailGenerator: {}",
