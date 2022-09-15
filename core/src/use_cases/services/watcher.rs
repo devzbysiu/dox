@@ -5,7 +5,7 @@ use crate::use_cases::receiver::{DocsEvent, EventRecv};
 
 use std::path::PathBuf;
 use std::thread;
-use tracing::{debug, error, warn};
+use tracing::{debug, trace, warn};
 
 /// Watches for the event comming from [`Watcher`] and publishes appropriate event on the event bus.
 ///
@@ -35,7 +35,7 @@ impl<'a> DocsWatcher<'a> {
                         publ.send(new_docs_event(path))?;
                     }
                     Ok(e) => warn!("this event is not supported: {:?}", e),
-                    Err(e) => error!("watcher error: {:?}", e),
+                    Err(e) => trace!("watcher error: {:?}", e),
                 }
             }
         });
@@ -53,13 +53,15 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
+    use crate::use_cases::bus::EventSubscriber;
     use crate::use_cases::receiver::EventReceiver;
 
-    use anyhow::Result;
+    use anyhow::{anyhow, Result};
     use std::sync::mpsc::{channel, Receiver};
+    use std::time::Duration;
 
     #[test]
-    fn test_fs_watcher_with_writing_to_file() -> Result<()> {
+    fn created_docs_event_puts_new_docs_event_on_bus() -> Result<()> {
         // given
         init_tracing();
         let (tx, rx) = channel();
@@ -78,6 +80,44 @@ mod test {
         assert_eq!(event, BusEvent::NewDocs(Location::FS(vec!["path".into()])));
 
         Ok(())
+    }
+
+    #[test]
+    #[should_panic(expected = "timed out waiting on channel")]
+    fn other_docs_event_is_ignored() {
+        // given
+        init_tracing();
+        let (tx, rx) = channel();
+        let mock_event_receiver = Box::new(MockEventReceiver::new(rx));
+        let bus = LocalBus::new().unwrap();
+
+        // when
+        let watcher = DocsWatcher::new(&bus);
+        watcher.run(mock_event_receiver);
+        tx.send(DocsEvent::Other).unwrap();
+        let sub = bus.subscriber();
+
+        // then
+        try_recv(Duration::from_secs(2), sub).unwrap(); // should panic
+    }
+
+    fn try_recv(d: Duration, sub: EventSubscriber) -> Result<BusEvent> {
+        let (done_tx, done_rx) = channel();
+        let handle = thread::spawn(move || -> Result<()> {
+            let event = sub.recv()?;
+            done_tx.send(event)?;
+            Ok(())
+        });
+
+        match done_rx.recv_timeout(d) {
+            Ok(event) => {
+                if let Err(e) = handle.join() {
+                    panic!("failed to join thread: {:?}", e);
+                }
+                Ok(event)
+            }
+            Err(e) => Err(anyhow!(e)),
+        }
     }
 
     struct MockEventReceiver {
