@@ -53,11 +53,12 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
+    use crate::result::DoxErr;
     use crate::use_cases::bus::EventSubscriber;
     use crate::use_cases::receiver::EventReceiver;
 
     use anyhow::{anyhow, Result};
-    use std::sync::mpsc::{channel, Receiver};
+    use std::sync::mpsc::{channel, Receiver, RecvError};
     use std::time::Duration;
 
     #[test]
@@ -95,6 +96,23 @@ mod test {
         let watcher = DocsWatcher::new(&bus);
         watcher.run(mock_event_receiver);
         tx.send(DocsEvent::Other).unwrap();
+        let sub = bus.subscriber();
+
+        // then
+        sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
+    }
+
+    #[test]
+    #[should_panic(expected = "timed out waiting on channel")]
+    fn errors_in_receiver_are_not_propagated_to_event_bus() {
+        // given
+        init_tracing();
+        let erroneous_event_receiver = Box::new(ErroneousEventReceiver);
+        let bus = LocalBus::new().unwrap();
+
+        // when
+        let watcher = DocsWatcher::new(&bus);
+        watcher.run(erroneous_event_receiver); // error ignored here
         let sub = bus.subscriber();
 
         // then
@@ -139,6 +157,14 @@ mod test {
     impl EventReceiver for MockEventReceiver {
         fn recv(&self) -> crate::result::Result<DocsEvent> {
             Ok(self.rx.recv()?)
+        }
+    }
+
+    struct ErroneousEventReceiver;
+
+    impl EventReceiver for ErroneousEventReceiver {
+        fn recv(&self) -> crate::result::Result<DocsEvent> {
+            Err(DoxErr::Watcher(RecvError))
         }
     }
 }
