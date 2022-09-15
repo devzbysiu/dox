@@ -65,12 +65,37 @@ mod test {
         let tmp_dir = tempdir()?;
         let tmp_file_path = tmp_dir.path().join("tmp_file");
         fs::write(&tmp_file_path, "anything")?;
+        let bus = LocalBus::new()?;
 
         // when
         let encrypter = Encrypter::new(&bus);
         encrypter.run(cipher_writer);
 
+        let mut publ = bus.publisher();
+        publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
+            tmp_file_path,
+        ])))?;
+
+        // then
+        assert!(cipher_spy.cipher_has_been_called());
+
+        Ok(())
+    }
+
+    #[test]
+    fn pipeline_finished_message_appears_after_encryption() -> Result<()> {
+        // given
+        init_tracing();
+        let cipher_writer = Box::new(NoOpCipher);
+        let tmp_dir = tempdir()?;
+        let tmp_file_path = tmp_dir.path().join("tmp_file");
+        fs::write(&tmp_file_path, "anything")?;
         let bus = LocalBus::new()?;
+
+        // when
+        let encrypter = Encrypter::new(&bus);
+        encrypter.run(cipher_writer);
+
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
@@ -80,7 +105,6 @@ mod test {
         let _ = sub.recv()?; // ignore EncryptionRequest message sent earliner
 
         // then
-        assert!(cipher_spy.cipher_has_been_called());
         assert_eq!(sub.recv()?, BusEvent::PipelineFinished);
 
         Ok(())
@@ -119,6 +143,15 @@ mod test {
 
         fn cipher_has_been_called(&self) -> bool {
             self.rx.recv_timeout(Duration::from_secs(2)).is_ok()
+        }
+    }
+
+    struct NoOpCipher;
+
+    impl CipherWriteStrategy for NoOpCipher {
+        fn encrypt(&self, _src_buf: &[u8]) -> crate::result::Result<Vec<u8>> {
+            // nothing to do
+            Ok(Vec::new())
         }
     }
 }
