@@ -49,7 +49,9 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
     use crate::result::DoxErr;
+    use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
+    use crate::use_cases::user::User;
 
     use anyhow::Result;
     use std::sync::mpsc::{channel, Receiver, Sender};
@@ -86,7 +88,7 @@ mod test {
     fn pipeline_finished_message_appears_after_encryption() -> Result<()> {
         // given
         init_tracing();
-        let cipher_writer = Box::new(NoOpCipher);
+        let noop_cipher = Box::new(NoOpCipher);
         let tmp_dir = tempdir()?;
         let tmp_file_path = tmp_dir.path().join("tmp_file");
         fs::write(&tmp_file_path, "anything")?;
@@ -94,7 +96,7 @@ mod test {
 
         // when
         let encrypter = Encrypter::new(&bus);
-        encrypter.run(cipher_writer);
+        encrypter.run(noop_cipher);
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -106,6 +108,44 @@ mod test {
 
         // then
         assert_eq!(sub.recv()?, BusEvent::PipelineFinished);
+
+        Ok(())
+    }
+
+    #[test]
+    fn other_bus_events_are_ignored() -> Result<()> {
+        // given
+        init_tracing();
+        let noop_cipher = Box::new(NoOpCipher);
+        let tmp_dir = tempdir()?;
+        let tmp_file_path = tmp_dir.path().join("tmp_file");
+        fs::write(&tmp_file_path, "anything")?;
+        let bus = LocalBus::new()?;
+        let location = Location::FS(Vec::new());
+        let ignored_events = [
+            BusEvent::NewDocs(location.clone()),
+            BusEvent::TextExtracted(User::new(""), Vec::new()),
+            BusEvent::ThumbnailMade(location),
+            BusEvent::Indexed(Vec::new()),
+            BusEvent::PipelineFinished,
+        ];
+
+        // when
+        let encrypter = Encrypter::new(&bus);
+        encrypter.run(noop_cipher);
+
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+        for event in &ignored_events {
+            publ.send((*event).clone())?;
+        }
+
+        // then
+        // all events are still on the bus - not consumed by encrypter
+        for sent_event in ignored_events {
+            let event = sub.recv()?;
+            assert_eq!(event, sent_event); // ignore EncryptionRequest message sent earliner
+        }
 
         Ok(())
     }
