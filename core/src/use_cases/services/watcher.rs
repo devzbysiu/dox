@@ -98,25 +98,31 @@ mod test {
         let sub = bus.subscriber();
 
         // then
-        try_recv(Duration::from_secs(2), sub).unwrap(); // should panic
+        sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
     }
 
-    fn try_recv(d: Duration, sub: EventSubscriber) -> Result<BusEvent> {
-        let (done_tx, done_rx) = channel();
-        let handle = thread::spawn(move || -> Result<()> {
-            let event = sub.recv()?;
-            done_tx.send(event)?;
-            Ok(())
-        });
+    trait SubscriberExt {
+        fn try_recv(self, timeout: Duration) -> Result<BusEvent>;
+    }
 
-        match done_rx.recv_timeout(d) {
-            Ok(event) => {
-                if let Err(e) = handle.join() {
-                    panic!("failed to join thread: {:?}", e);
+    impl SubscriberExt for EventSubscriber {
+        fn try_recv(self, timeout: Duration) -> Result<BusEvent> {
+            let (done_tx, done_rx) = channel();
+            let handle = thread::spawn(move || -> Result<()> {
+                let event = self.recv()?;
+                done_tx.send(event)?;
+                Ok(())
+            });
+
+            match done_rx.recv_timeout(timeout) {
+                Ok(event) => {
+                    if let Err(e) = handle.join() {
+                        panic!("failed to join thread: {:?}", e);
+                    }
+                    Ok(event)
                 }
-                Ok(event)
+                Err(e) => Err(anyhow!(e)),
             }
-            Err(e) => Err(anyhow!(e)),
         }
     }
 
