@@ -54,10 +54,10 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
     use crate::result::DoxErr;
-    use crate::use_cases::bus::EventSubscriber;
+    use crate::testutils::SubscriberExt;
     use crate::use_cases::receiver::EventReceiver;
 
-    use anyhow::{anyhow, Result};
+    use anyhow::Result;
     use std::sync::mpsc::{channel, Receiver, RecvError};
     use std::time::Duration;
 
@@ -117,31 +117,6 @@ mod test {
 
         // then
         sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
-    }
-
-    trait SubscriberExt {
-        fn try_recv(self, timeout: Duration) -> Result<BusEvent>;
-    }
-
-    impl SubscriberExt for EventSubscriber {
-        fn try_recv(self, timeout: Duration) -> Result<BusEvent> {
-            let (done_tx, done_rx) = channel();
-            let handle = thread::spawn(move || -> Result<()> {
-                let event = self.recv()?;
-                done_tx.send(event)?;
-                Ok(())
-            });
-
-            match done_rx.recv_timeout(timeout) {
-                Ok(event) => {
-                    if let Err(e) = handle.join() {
-                        panic!("failed to join thread: {:?}", e);
-                    }
-                    Ok(event)
-                }
-                Err(e) => Err(anyhow!(e)),
-            }
-        }
     }
 
     struct MockEventReceiver {

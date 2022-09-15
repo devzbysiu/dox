@@ -31,6 +31,8 @@ mod use_cases;
 
 mod helpers;
 mod result;
+#[cfg(test)]
+mod testutils;
 
 #[rocket::main]
 async fn main() -> Result<()> {
