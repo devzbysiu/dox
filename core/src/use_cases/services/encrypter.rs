@@ -49,6 +49,7 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
     use crate::result::DoxErr;
+    use crate::testutils::SubscriberExt;
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
     use crate::use_cases::user::User;
@@ -113,21 +114,21 @@ mod test {
     }
 
     #[test]
-    fn other_bus_events_are_ignored() -> Result<()> {
+    #[should_panic(expected = "timed out waiting on channel")]
+    fn other_bus_events_are_ignored() {
         // given
         init_tracing();
         let noop_cipher = Box::new(NoOpCipher);
-        let tmp_dir = tempdir()?;
+        let tmp_dir = tempdir().unwrap();
         let tmp_file_path = tmp_dir.path().join("tmp_file");
-        fs::write(&tmp_file_path, "anything")?;
-        let bus = LocalBus::new()?;
+        fs::write(&tmp_file_path, "anything").unwrap();
+        let bus = LocalBus::new().unwrap();
         let location = Location::FS(Vec::new());
         let ignored_events = [
             BusEvent::NewDocs(location.clone()),
             BusEvent::TextExtracted(User::new(""), Vec::new()),
-            BusEvent::ThumbnailMade(location),
+            BusEvent::ThumbnailMade(location.clone()),
             BusEvent::Indexed(Vec::new()),
-            BusEvent::PipelineFinished,
         ];
 
         // when
@@ -137,17 +138,16 @@ mod test {
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
         for event in &ignored_events {
-            publ.send((*event).clone())?;
+            publ.send(event.clone()).unwrap();
         }
+        std::thread::sleep(std::time::Duration::from_secs(2));
 
         // then
-        // all events are still on the bus - not consumed by encrypter
-        for sent_event in ignored_events {
-            let event = sub.recv()?;
-            assert_eq!(event, sent_event); // ignore EncryptionRequest message sent earliner
+        // all events are still on the bus, no PipelineFinished emitted
+        for _ in ignored_events {
+            assert_ne!(sub.recv().unwrap(), BusEvent::PipelineFinished);
         }
-
-        Ok(())
+        sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
     }
 
     struct CipherSpy {
