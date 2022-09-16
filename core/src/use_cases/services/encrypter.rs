@@ -140,7 +140,6 @@ mod test {
         for event in &ignored_events {
             publ.send(event.clone()).unwrap();
         }
-        std::thread::sleep(std::time::Duration::from_secs(2));
 
         // then
         // all events are still on the bus, no PipelineFinished emitted
