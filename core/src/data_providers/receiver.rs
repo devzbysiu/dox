@@ -29,7 +29,9 @@ impl FsEventReceiver {
 impl EventReceiver for FsEventReceiver {
     fn recv(&self) -> Result<DocsEvent> {
         match self.watcher_rx.recv() {
-            Ok(DebouncedEvent::Create(path)) if path.is_file() => Ok(DocsEvent::Created(path)),
+            Ok(DebouncedEvent::Create(path)) if path.is_file() => {
+                Ok(DocsEvent::Created(path.into()))
+            }
             Ok(e) => {
                 warn!("this FS event is not supported: {:?}", e);
                 Ok(DocsEvent::Other)

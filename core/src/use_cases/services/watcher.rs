@@ -1,9 +1,8 @@
-use crate::entities::location::Location;
+use crate::entities::location::{Location, SafePathBuf};
 use crate::result::Result;
 use crate::use_cases::bus::{Bus, BusEvent};
 use crate::use_cases::receiver::{DocsEvent, EventRecv};
 
-use std::path::PathBuf;
 use std::thread;
 use tracing::{debug, trace, warn};
 
@@ -31,7 +30,7 @@ impl<'a> DocsWatcher<'a> {
                 debug!("waiting for event from watcher");
                 match receiver.recv() {
                     Ok(DocsEvent::Created(path)) => {
-                        debug!("got create file event on path: '{}'", path.display());
+                        debug!("got create file event on path: '{:?}'", path);
                         publ.send(new_docs_event(path))?;
                     }
                     Ok(e) => warn!("this event is not supported: {:?}", e),
@@ -42,7 +41,7 @@ impl<'a> DocsWatcher<'a> {
     }
 }
 
-fn new_docs_event(path: PathBuf) -> BusEvent {
+fn new_docs_event(path: SafePathBuf) -> BusEvent {
     debug!("new doc appeared, creating NewDocs event");
     BusEvent::NewDocs(Location::FS(vec![path]))
 }
@@ -59,8 +58,10 @@ mod test {
     use crate::use_cases::receiver::EventReceiver;
 
     use anyhow::Result;
+    use std::fs;
     use std::sync::mpsc::{channel, Receiver, RecvError};
     use std::time::Duration;
+    use tempfile::tempdir;
 
     #[test]
     fn created_docs_event_puts_new_docs_event_on_bus() -> Result<()> {
@@ -69,17 +70,25 @@ mod test {
         let (tx, rx) = channel();
         let mock_event_receiver = Box::new(MockEventReceiver::new(rx));
         let bus = LocalBus::new()?;
+        // TODO: think about this - now it's required to create file to get actual path (maybe make
+        // it prettier at least?)
+        let tmp_dir = tempdir()?;
+        let temp_file = tmp_dir.path().join("some-file");
+        fs::write(&temp_file, "anything")?;
 
         // when
         let watcher = DocsWatcher::new(&bus);
         watcher.run(mock_event_receiver);
-        tx.send(DocsEvent::Created("path".into()))?;
+        tx.send(DocsEvent::Created(SafePathBuf::new(&temp_file)))?;
 
         let sub = bus.subscriber();
         let event = sub.recv()?;
 
         // then
-        assert_eq!(event, BusEvent::NewDocs(Location::FS(vec!["path".into()])));
+        assert_eq!(
+            event,
+            BusEvent::NewDocs(Location::FS(vec![temp_file.into()]))
+        );
 
         Ok(())
     }

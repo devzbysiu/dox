@@ -76,7 +76,7 @@ mod test {
 
         let mut publ = bus.publisher();
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
-            tmp_file_path,
+            tmp_file_path.into(),
         ])))?;
 
         // then
@@ -102,7 +102,7 @@ mod test {
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
-            tmp_file_path,
+            tmp_file_path.into(),
         ])))?;
 
         let _event = sub.recv()?; // ignore EncryptionRequest message sent earliner

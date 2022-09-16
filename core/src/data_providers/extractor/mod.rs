@@ -30,10 +30,8 @@ impl ExtractorFactory for ExtractorFactoryImpl {
 mod test {
     use super::*;
 
-    use crate::entities::location::Location;
+    use crate::entities::location::{Location, SafePathBuf};
     use crate::result::Result;
-
-    use std::path::PathBuf;
 
     #[test]
     fn test_extractor_factory_with_correct_file() -> Result<()> {
@@ -48,7 +46,7 @@ mod test {
 
         for test_case in test_cases {
             let ext = test_case.0;
-            let paths = vec![PathBuf::from(test_case.1)];
+            let paths = vec![SafePathBuf::from(test_case.1)];
 
             // when
             let extractor = extractor_factory.make(&ext);
@@ -67,7 +65,7 @@ mod test {
         // given
         let ext = Ext::Pdf;
         let extractor_factory = ExtractorFactoryImpl;
-        let paths = vec![PathBuf::from("res/doc1.png")];
+        let paths = vec![SafePathBuf::from("res/doc1.png")];
 
         // when
         let extractor = extractor_factory.make(&ext);

@@ -5,13 +5,14 @@
 use crate::entities::extension::Ext;
 use crate::helpers::PathRefExt;
 
-use std::path::PathBuf;
+use std::fmt::Display;
+use std::path::{Path, PathBuf};
 
 /// Represents abstraction of the location on some medium.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Location {
     /// Represents local disk as a medium.
-    FS(Vec<PathBuf>),
+    FS(Vec<SafePathBuf>),
 }
 
 impl Location {
@@ -26,5 +27,52 @@ impl Location {
             .get(0)
             .unwrap_or_else(|| panic!("no new paths received, this shouldn't happen"))
             .ext()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SafePathBuf(PathBuf);
+
+impl SafePathBuf {
+    pub fn new<P: AsRef<Path>>(path: P) -> Self {
+        let path = path.as_ref();
+        if !path.exists() {
+            panic!("You can't create not existing path: '{}'", path.display());
+        }
+        Self(path.into())
+    }
+
+    pub fn ext(&self) -> Ext {
+        self.0.ext()
+    }
+}
+
+impl AsRef<PathBuf> for SafePathBuf {
+    fn as_ref(&self) -> &PathBuf {
+        &self.0
+    }
+}
+
+impl AsRef<Path> for SafePathBuf {
+    fn as_ref(&self) -> &Path {
+        self.0.as_ref()
+    }
+}
+
+impl From<PathBuf> for SafePathBuf {
+    fn from(path: PathBuf) -> Self {
+        Self::new(path)
+    }
+}
+
+impl From<&str> for SafePathBuf {
+    fn from(path: &str) -> Self {
+        Self::new(PathBuf::from(path))
+    }
+}
+
+impl Display for SafePathBuf {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.display())
     }
 }

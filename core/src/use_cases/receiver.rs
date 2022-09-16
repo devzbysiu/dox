@@ -1,6 +1,5 @@
+use crate::entities::location::SafePathBuf;
 use crate::result::Result;
-
-use std::path::PathBuf;
 
 pub type EventRecv = Box<dyn EventReceiver>;
 
@@ -10,6 +9,6 @@ pub trait EventReceiver: Send {
 
 #[derive(Debug)]
 pub enum DocsEvent {
-    Created(PathBuf),
+    Created(SafePathBuf),
     Other,
 }

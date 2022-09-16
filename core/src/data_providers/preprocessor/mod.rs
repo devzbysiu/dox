@@ -30,11 +30,10 @@ impl PreprocessorFactory for PreprocessorFactoryImpl {
 mod test {
     use super::*;
 
-    use crate::entities::location::Location;
+    use crate::entities::location::{Location, SafePathBuf};
     use crate::helpers::PathRefExt;
     use crate::result::Result;
 
-    use std::path::PathBuf;
     use tempfile::tempdir;
 
     #[test]
@@ -52,7 +51,7 @@ mod test {
             let ext = test_case.0;
 
             let tmp_dir = tempdir()?;
-            let paths = vec![PathBuf::from(test_case.1)];
+            let paths = vec![SafePathBuf::from(test_case.1)];
 
             // when
             let extractor = preprocessor_factory.make(&ext);

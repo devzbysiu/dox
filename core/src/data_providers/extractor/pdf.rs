@@ -44,13 +44,16 @@ fn thumbnail<P: AsRef<Path>>(path: P) -> String {
 mod test {
     use super::*;
 
-    use std::path::PathBuf;
+    use crate::entities::location::SafePathBuf;
 
     #[test]
     fn test_extract_text() -> Result<()> {
         // given
         let pdf = FromPdf;
-        let paths = vec![PathBuf::from("res/doc1.pdf"), PathBuf::from("res/doc2.pdf")];
+        let paths = vec![
+            SafePathBuf::from("res/doc1.pdf"),
+            SafePathBuf::from("res/doc2.pdf"),
+        ];
 
         // when
         let mut result = pdf.extract_text(&Location::FS(paths))?;
@@ -67,24 +70,6 @@ mod test {
         assert!(second_doc_details.body.contains("Podmiot powierzający"));
         assert_eq!(second_doc_details.filename, "doc2.pdf");
         assert_eq!(second_doc_details.thumbnail, "doc2.png");
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_extract_text_with_non_existing_paths() -> Result<()> {
-        // given
-        let pdf = FromPdf;
-        let paths = vec![
-            PathBuf::from("not/existing-1"),
-            PathBuf::from("not/existing-2"),
-        ];
-
-        // when
-        let result = pdf.extract_text(&Location::FS(paths))?;
-
-        // then
-        assert!(result.is_empty());
 
         Ok(())
     }

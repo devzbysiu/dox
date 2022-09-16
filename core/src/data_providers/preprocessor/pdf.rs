@@ -1,4 +1,4 @@
-use crate::entities::location::Location;
+use crate::entities::location::{Location, SafePathBuf};
 use crate::helpers::PathRefExt;
 use crate::result::Result;
 use crate::use_cases::services::preprocessor::FilePreprocessor;
@@ -21,7 +21,7 @@ pub struct Pdf;
 
 impl Pdf {
     #[instrument(skip(self))]
-    fn generate(&self, pdf_path: &Path, out_path: &Path) -> Result<()> {
+    fn generate(&self, pdf_path: &SafePathBuf, out_path: &Path) -> Result<()> {
         create_dir_all(out_path.parent_path())?;
         let page = first_page(&pdf_path)?;
         let surface = paint_background_and_scale(&page)?;
@@ -63,7 +63,7 @@ impl FilePreprocessor for Pdf {
         for pdf_path in paths {
             let thumbnail_path = thumbnails_dir.join(format!("{}.png", pdf_path.rel_stem()));
             self.generate(pdf_path, &thumbnail_path)?;
-            result_paths.push(thumbnail_path);
+            result_paths.push(thumbnail_path.into());
         }
         Ok(Location::FS(result_paths))
     }
@@ -75,7 +75,6 @@ mod test {
 
     use crate::helpers::DirEntryExt;
 
-    use std::path::PathBuf;
     use tempfile::tempdir;
 
     #[test]
@@ -83,7 +82,7 @@ mod test {
         // given
         let tmp_dir = tempdir()?;
         let preprocessor = Pdf;
-        let paths = vec![PathBuf::from("res/doc1.pdf")];
+        let paths = vec![SafePathBuf::from("res/doc1.pdf")];
         let is_empty = tmp_dir.path().read_dir()?.next().is_none();
         assert!(is_empty);
 
@@ -105,7 +104,7 @@ mod test {
         // given
         let tmp_dir = tempdir().unwrap();
         let preprocessor = Pdf;
-        let paths = vec![PathBuf::from("res/doc8.jpg")];
+        let paths = vec![SafePathBuf::from("res/doc8.jpg")];
 
         // then
         preprocessor

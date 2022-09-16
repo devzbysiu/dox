@@ -22,9 +22,9 @@ impl FilePreprocessor for Image {
         for p in paths {
             let target_path = thumbnails_dir.join(p.rel_path());
             create_dir_all(target_path.parent_path())?;
-            debug!("moving '{}' to '{}'", p.display(), target_path.display());
+            debug!("moving '{:?}' to '{}'", p, target_path.display());
             fs::copy(p, &target_path)?;
-            result_paths.push(target_path);
+            result_paths.push(target_path.into());
         }
         Ok(Location::FS(result_paths))
     }
@@ -32,11 +32,11 @@ impl FilePreprocessor for Image {
 
 #[cfg(test)]
 mod test {
-    use crate::helpers::DirEntryExt;
-
     use super::*;
 
-    use std::path::PathBuf;
+    use crate::entities::location::SafePathBuf;
+    use crate::helpers::DirEntryExt;
+
     use tempfile::tempdir;
 
     #[test]
@@ -44,7 +44,7 @@ mod test {
         // given
         let tmp_dir = tempdir()?;
         let preprocessor = Image;
-        let paths = vec![PathBuf::from("res/doc1.png")];
+        let paths = vec![SafePathBuf::from("res/doc1.png")];
         let is_empty = tmp_dir.path().read_dir()?.next().is_none();
         assert!(is_empty);
 
@@ -64,7 +64,7 @@ mod test {
         // given
         let tmp_dir = tempdir()?;
         let preprocessor = Image;
-        let paths = vec![PathBuf::from("res/doc1.png")];
+        let paths = vec![SafePathBuf::from("res/doc1.png")];
         let is_empty = tmp_dir.path().read_dir()?.next().is_none();
         assert!(is_empty);
 

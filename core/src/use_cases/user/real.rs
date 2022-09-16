@@ -8,6 +8,7 @@ use jwks_client::keyset::KeyStore;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 use std::convert::TryFrom;
+use std::path::PathBuf;
 use tracing::{debug, error};
 
 impl TryFrom<&Location> for User {
@@ -16,6 +17,7 @@ impl TryFrom<&Location> for User {
     fn try_from(location: &Location) -> std::result::Result<Self, Self::Error> {
         let Location::FS(paths) = location;
         let path = paths.get(0).ok_or(DoxErr::EmptyLocation)?;
+        let path: &PathBuf = path.as_ref();
         let parent_dir = path.parent().ok_or(DoxErr::InvalidPath)?;
         let parent_name = parent_dir.filename();
         let user_email = base64::decode(parent_name)?;
