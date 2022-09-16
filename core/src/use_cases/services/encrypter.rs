@@ -64,7 +64,7 @@ mod test {
     fn cipher_is_used_when_encryption_request_appears() -> Result<()> {
         // given
         init_tracing();
-        let (cipher_spy, cipher_writer) = CipherSpy::new();
+        let (cipher_spy, cipher_writer) = CipherSpy::create();
         let tmp_dir = tempdir()?;
         let tmp_file_path = tmp_dir.path().join("tmp_file");
         fs::write(&tmp_file_path, "anything")?;
@@ -105,7 +105,7 @@ mod test {
             tmp_file_path,
         ])))?;
 
-        let _ = sub.recv()?; // ignore EncryptionRequest message sent earliner
+        let _event = sub.recv()?; // ignore EncryptionRequest message sent earliner
 
         // then
         assert_eq!(sub.recv()?, BusEvent::PipelineFinished);
@@ -127,7 +127,7 @@ mod test {
         let ignored_events = [
             BusEvent::NewDocs(location.clone()),
             BusEvent::TextExtracted(User::new(""), Vec::new()),
-            BusEvent::ThumbnailMade(location.clone()),
+            BusEvent::ThumbnailMade(location),
             BusEvent::Indexed(Vec::new()),
         ];
 
@@ -155,7 +155,7 @@ mod test {
     }
 
     impl CipherSpy {
-        fn new() -> (Spy, CipherWrite) {
+        fn create() -> (Spy, CipherWrite) {
             let (tx, rx) = channel();
             (Spy::new(rx), Box::new(Self { tx: Mutex::new(tx) }))
         }
