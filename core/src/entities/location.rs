@@ -36,14 +36,20 @@ pub struct SafePathBuf(PathBuf);
 impl SafePathBuf {
     pub fn new<P: AsRef<Path>>(path: P) -> Self {
         let path = path.as_ref();
-        if !path.exists() {
-            panic!("You can't create not existing path: '{}'", path.display());
-        }
+        assert!(path.exists(), "Can't create not existing path '{:?}'", path);
+        assert!(path.parent().is_some(), "Can't use '{:?}' as path", path);
         Self(path.into())
     }
 
     pub fn ext(&self) -> Ext {
         self.0.ext()
+    }
+
+    // unused is allowed because this fn is used in #[cfg(not(test))]
+    // see: https://github.com/rust-lang/rust-analyzer/issues/3860
+    #[allow(unused)]
+    pub fn parent(&self) -> &Path {
+        self.0.parent().unwrap() // can unwrap because it's checked during construction
     }
 }
 

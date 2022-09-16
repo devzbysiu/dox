@@ -89,10 +89,6 @@ pub enum DoxErr {
     #[error("Error while extracting location - there should be at least one path")]
     EmptyLocation,
 
-    #[cfg(not(test))]
-    #[error("Error while reading parent directory")]
-    InvalidPath,
-
     #[error("Invalid utf characters: '{0}'")]
     InvalidUtf8(#[from] FromUtf8Error),
 
