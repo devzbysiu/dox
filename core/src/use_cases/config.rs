@@ -5,9 +5,7 @@
 use crate::result::Result;
 
 use serde::{Deserialize, Serialize};
-use std::net::SocketAddrV4;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
 
 pub type CfgResolver = Box<dyn ConfigResolver>;
 
@@ -42,15 +40,11 @@ pub trait ConfigResolver {
     fn handle_config(&self, path_override: Option<String>) -> Result<Config>;
 }
 
-// TODO: remove unused config fields (notifications_addr)
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
 pub struct Config {
     pub watched_dir: PathBuf,
     pub thumbnails_dir: PathBuf,
     pub index_dir: PathBuf,
-    pub notifications_addr: SocketAddrV4,
-    pub cooldown_time: Duration,
-    pub websocket_cleanup_time: Duration,
 }
 
 impl Default for Config {
@@ -59,9 +53,6 @@ impl Default for Config {
             watched_dir: PathBuf::from(""),
             thumbnails_dir: thumbnails_dir_default(),
             index_dir: index_dir_default(),
-            cooldown_time: Duration::from_secs(60),
-            notifications_addr: "0.0.0.0:8001".parse().unwrap(),
-            websocket_cleanup_time: Duration::from_secs(10),
         }
     }
 }
@@ -91,9 +82,6 @@ mod test {
             watched_dir: PathBuf::from(""),
             thumbnails_dir: dirs::data_dir().unwrap().join("dox/thumbnails"),
             index_dir: dirs::data_dir().unwrap().join("dox/index"),
-            cooldown_time: Duration::from_secs(60),
-            notifications_addr: "0.0.0.0:8001".parse()?,
-            websocket_cleanup_time: Duration::from_secs(10),
         };
 
         // when

@@ -41,9 +41,6 @@ pub struct TestConfig {
     watched_dir: TempDir,
     thumbnails_dir: TempDir,
     index_dir: TempDir,
-    notifications_addr: SocketAddrV4,
-    cooldown_time: Duration,
-    websocket_cleanup_time: Duration,
 }
 
 impl TestConfig {
@@ -52,9 +49,6 @@ impl TestConfig {
             watched_dir: watched_dir_path()?,
             thumbnails_dir: thumbnails_dir_path()?,
             index_dir: index_dir_path()?,
-            notifications_addr: random_addr(),
-            cooldown_time: Duration::from_secs(1),
-            websocket_cleanup_time: Duration::from_secs(10),
         })
     }
 
@@ -76,9 +70,6 @@ impl Serialize for TestConfig {
         state.serialize_field("watched_dir", self.watched_dir.path())?;
         state.serialize_field("thumbnails_dir", self.thumbnails_dir.path())?;
         state.serialize_field("index_dir", self.index_dir.path())?;
-        state.serialize_field("notifications_addr", &self.notifications_addr)?;
-        state.serialize_field("cooldown_time", &self.cooldown_time)?;
-        state.serialize_field("websocket_cleanup_time", &self.websocket_cleanup_time)?;
         state.end()
     }
 }

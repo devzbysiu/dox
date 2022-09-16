@@ -142,7 +142,6 @@ mod test {
     use anyhow::Result;
     use std::fs::read_to_string;
     use std::path::Path;
-    use std::time::Duration;
     use tempfile::tempdir;
 
     #[test]
@@ -156,24 +155,12 @@ mod test {
             watched_dir = "/home/zbyniu/Tests/notify"
             thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
             index_dir = "/home/zbyniu/.local/share/dox/index"
-            notifications_addr = "0.0.0.0:8001"
-
-            [cooldown_time]
-            secs = 1
-            nanos = 0
-
-            [websocket_cleanup_time]
-            secs = 10
-            nanos = 0
             "#,
         )?;
         let expected = Config {
             watched_dir: PathBuf::from("/home/zbyniu/Tests/notify"),
             thumbnails_dir: PathBuf::from("/home/zbyniu/.local/share/dox/thumbnails"),
             index_dir: PathBuf::from("/home/zbyniu/.local/share/dox/index"),
-            cooldown_time: Duration::from_secs(1),
-            notifications_addr: "0.0.0.0:8001".parse()?,
-            websocket_cleanup_time: Duration::from_secs(10),
         };
         let loader = FsConfigLoader;
 
@@ -204,15 +191,6 @@ mod test {
             r#"
                 thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
                 index_dir = "/home/zbyniu/.local/share/dox/index"
-                notifications_addr = "0.0.0.0:8001"
-
-                [cooldown_time]
-                secs = 1
-                nanos = 0
-
-                [websocket_cleanup_time]
-                secs = 10
-                nanos = 0
                 "#,
         )
         .unwrap();
@@ -233,15 +211,6 @@ mod test {
             r#"
                 watched_dir = "/home/zbyniu/Tests/notify"
                 index_dir = "/home/zbyniu/.local/share/dox/index"
-                notifications_addr = "0.0.0.0:8001"
-
-                [cooldown_time]
-                secs = 1
-                nanos = 0
-
-                [websocket_cleanup_time]
-                secs = 10
-                nanos = 0
                 "#,
         )
         .unwrap();
@@ -262,96 +231,6 @@ mod test {
             r#"
                 watched_dir = "/home/zbyniu/Tests/notify"
                 thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
-                notifications_addr = "0.0.0.0:8001"
-
-                [cooldown_time]
-                secs = 1
-                nanos = 0
-
-                [websocket_cleanup_time]
-                secs = 10
-                nanos = 0
-                "#,
-        )
-        .unwrap();
-        let loader = FsConfigLoader;
-
-        // then
-        loader.load(&cfg_path).unwrap(); // should panic
-    }
-
-    #[test]
-    #[should_panic(expected = "missing field `notifications_addr`")]
-    fn test_load_config_when_missing_notifications_addr() {
-        // given
-        let tmp_cfg = tempdir().unwrap();
-        let cfg_path = tmp_cfg.path().join("dox.toml");
-        create_config(
-            &cfg_path,
-            r#"
-                watched_dir = "/home/zbyniu/Tests/notify"
-                thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
-                index_dir = "/home/zbyniu/.local/share/dox/index"
-
-                [cooldown_time]
-                secs = 1
-                nanos = 0
-
-                [websocket_cleanup_time]
-                secs = 10
-                nanos = 0
-                "#,
-        )
-        .unwrap();
-        let loader = FsConfigLoader;
-
-        // then
-        loader.load(&cfg_path).unwrap(); // should panic
-    }
-
-    #[test]
-    #[should_panic(expected = "missing field `cooldown_time`")]
-    fn test_load_config_when_missing_cooldown_time() {
-        // given
-        let tmp_cfg = tempdir().unwrap();
-        let cfg_path = tmp_cfg.path().join("dox.toml");
-        create_config(
-            &cfg_path,
-            r#"
-                watched_dir = "/home/zbyniu/Tests/notify"
-                thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
-                index_dir = "/home/zbyniu/.local/share/dox/index"
-                notifications_addr = "0.0.0.0:8001"
-
-                [websocket_cleanup_time]
-                secs = 10
-                nanos = 0
-                "#,
-        )
-        .unwrap();
-        let loader = FsConfigLoader;
-
-        // then
-        loader.load(&cfg_path).unwrap(); // should panic
-    }
-
-    #[test]
-    #[should_panic(expected = "missing field `websocket_cleanup_time`")]
-    fn test_load_config_when_missing_websocket_cleanup_time() {
-        // given
-        let tmp_cfg = tempdir().unwrap();
-        let cfg_path = tmp_cfg.path().join("dox.toml");
-        create_config(
-            &cfg_path,
-            r#"
-                watched_dir = "/home/zbyniu/Tests/notify"
-                thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
-                index_dir = "/home/zbyniu/.local/share/dox/index"
-                notifications_addr = "0.0.0.0:8001"
-
-                [cooldown_time]
-                secs = 1
-                nanos = 0
                 "#,
         )
         .unwrap();
@@ -382,9 +261,6 @@ mod test {
             watched_dir: PathBuf::from("/watched_dir"),
             thumbnails_dir: PathBuf::from("/thumbnails_dir"),
             index_dir: PathBuf::from("/index_dir"),
-            cooldown_time: Duration::from_secs(60),
-            notifications_addr: "0.0.0.0:8001".parse()?,
-            websocket_cleanup_time: Duration::from_secs(10),
         };
         let loader = FsConfigLoader;
 
@@ -397,15 +273,6 @@ mod test {
             r#"watched_dir = "/watched_dir"
 thumbnails_dir = "/thumbnails_dir"
 index_dir = "/index_dir"
-notifications_addr = "0.0.0.0:8001"
-
-[cooldown_time]
-secs = 60
-nanos = 0
-
-[websocket_cleanup_time]
-secs = 10
-nanos = 0
 "#
         );
 
