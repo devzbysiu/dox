@@ -66,13 +66,14 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
+    use crate::entities::location::SafePathBuf;
 
     use anyhow::Result;
     use std::fs::{self, create_dir_all};
     use std::sync::mpsc::{channel, Receiver, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
-    use tempfile::tempdir;
+    use tempfile::{tempdir, TempDir};
 
     #[test]
     fn extractor_is_used_to_extract_text() -> Result<()> {
@@ -80,24 +81,37 @@ mod test {
         init_tracing();
         let (spy, extractor) = ExtractorSpy::create();
         let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
-        let tmp_dir = tempdir()?;
-        let user_dir_name = base64::encode("some@email.com");
-        let user_dir = tmp_dir.path().join(user_dir_name);
-        create_dir_all(&user_dir)?;
-        let new_file_path = user_dir.join("some-file.jpg");
-        fs::write(&new_file_path, "anything")?;
+        let new_file = make_new_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
         // when
         let txt_extractor = TxtExtractor::new(&bus);
         txt_extractor.run(factory_stub);
         let mut publ = bus.publisher();
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file_path.into()])))?;
+        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
 
         // then
         assert!(spy.extract_called());
 
         Ok(())
+    }
+
+    fn make_new_file(user_dir_name: String, filename: String) -> Result<NewFile> {
+        let tmp_dir = tempdir()?;
+        let user_dir = tmp_dir.path().join(user_dir_name);
+        create_dir_all(&user_dir)?;
+        let path = user_dir.join(filename);
+        fs::write(&path, "anything")?;
+        let path = SafePathBuf::new(path);
+        Ok(NewFile {
+            _temp_dir: tmp_dir,
+            path,
+        })
+    }
+
+    struct NewFile {
+        _temp_dir: TempDir,
+        path: SafePathBuf,
     }
 
     #[test]
@@ -107,12 +121,7 @@ mod test {
         let docs_details = vec![DocDetails::new("path", "body", "thumbnail")];
         let extractor = Box::new(ExtractorStub::new(docs_details.clone()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
-        let tmp_dir = tempdir()?;
-        let user_dir_name = base64::encode("some@email.com");
-        let user_dir = tmp_dir.path().join(user_dir_name);
-        create_dir_all(&user_dir)?;
-        let new_file_path = user_dir.join("some-file.jpg");
-        fs::write(&new_file_path, "anything")?;
+        let new_file = make_new_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
         // when
@@ -121,7 +130,7 @@ mod test {
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file_path.into()])))?;
+        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
 
         let _event = sub.recv()?; // ignore NewDocs event
 
@@ -142,12 +151,7 @@ mod test {
         init_tracing();
         let extractor = Box::new(ExtractorStub::new(Vec::new()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
-        let tmp_dir = tempdir()?;
-        let user_dir_name = base64::encode("some@email.com");
-        let user_dir = tmp_dir.path().join(user_dir_name);
-        create_dir_all(&user_dir)?;
-        let new_file_path = user_dir.join("some-file.jpg");
-        fs::write(&new_file_path, "anything")?;
+        let new_file = make_new_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
         // when
@@ -156,16 +160,14 @@ mod test {
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file_path
-            .clone()
-            .into()])))?;
+        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path.clone()])))?;
 
         let _event = sub.recv()?; // ignore NewDocs event
         let _event = sub.recv()?; // ignore TextExtracted event
 
         // then
         if let BusEvent::EncryptionRequest(location) = sub.recv()? {
-            assert_eq!(location, Location::FS(vec![new_file_path.into()]));
+            assert_eq!(location, Location::FS(vec![new_file.path]));
         } else {
             panic!("invalid event appeared");
         }
