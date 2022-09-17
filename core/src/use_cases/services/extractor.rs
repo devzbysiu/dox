@@ -80,13 +80,13 @@ mod test {
         init_tracing();
         let (spy, extractor) = ExtractorSpy::create();
         let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
-        let bus = Box::new(LocalBus::new()?);
         let tmp_dir = tempdir()?;
         let user_dir_name = base64::encode("some@email.com");
         let user_dir = tmp_dir.path().join(user_dir_name);
         create_dir_all(&user_dir)?;
         let new_file_path = user_dir.join("some-file.jpg");
         fs::write(&new_file_path, "anything")?;
+        let bus = Box::new(LocalBus::new()?);
 
         // when
         let txt_extractor = TxtExtractor::new(&bus);
@@ -129,6 +129,43 @@ mod test {
         if let BusEvent::TextExtracted(user, details) = sub.recv()? {
             assert_eq!(user, User::new("some@email.com"));
             assert_eq!(details, docs_details);
+        } else {
+            panic!("invalid event appeared");
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn encryption_request_event_appears_on_success() -> Result<()> {
+        // given
+        init_tracing();
+        let extractor = Box::new(ExtractorStub::new(Vec::new()));
+        let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
+        let tmp_dir = tempdir()?;
+        let user_dir_name = base64::encode("some@email.com");
+        let user_dir = tmp_dir.path().join(user_dir_name);
+        create_dir_all(&user_dir)?;
+        let new_file_path = user_dir.join("some-file.jpg");
+        fs::write(&new_file_path, "anything")?;
+        let bus = Box::new(LocalBus::new()?);
+
+        // when
+        let txt_extractor = TxtExtractor::new(&bus);
+        txt_extractor.run(factory_stub);
+
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file_path
+            .clone()
+            .into()])))?;
+
+        let _event = sub.recv()?; // ignore NewDocs event
+        let _event = sub.recv()?; // ignore TextExtracted event
+
+        // then
+        if let BusEvent::EncryptionRequest(location) = sub.recv()? {
+            assert_eq!(location, Location::FS(vec![new_file_path.into()]));
         } else {
             panic!("invalid event appeared");
         }
