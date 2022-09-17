@@ -100,6 +100,42 @@ mod test {
         Ok(())
     }
 
+    #[test]
+    fn text_extracted_event_appears_on_success() -> Result<()> {
+        // given
+        init_tracing();
+        let docs_details = vec![DocDetails::new("path", "body", "thumbnail")];
+        let extractor = Box::new(ExtractorStub::new(docs_details.clone()));
+        let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
+        let tmp_dir = tempdir()?;
+        let user_dir_name = base64::encode("some@email.com");
+        let user_dir = tmp_dir.path().join(user_dir_name);
+        create_dir_all(&user_dir)?;
+        let new_file_path = user_dir.join("some-file.jpg");
+        fs::write(&new_file_path, "anything")?;
+        let bus = Box::new(LocalBus::new()?);
+
+        // when
+        let txt_extractor = TxtExtractor::new(&bus);
+        txt_extractor.run(factory_stub);
+
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file_path.into()])))?;
+
+        let _event = sub.recv()?; // ignore NewDocs event
+
+        // then
+        if let BusEvent::TextExtracted(user, details) = sub.recv()? {
+            assert_eq!(user, User::new("some@email.com"));
+            assert_eq!(details, docs_details);
+        } else {
+            panic!("invalid event appeared");
+        }
+
+        Ok(())
+    }
+
     struct ExtractorFactoryStub {
         extractor_stub: Mutex<Option<Extractor>>,
     }
@@ -155,6 +191,23 @@ mod test {
 
         fn extract_called(&self) -> bool {
             self.rx.recv_timeout(Duration::from_secs(2)).is_ok()
+        }
+    }
+
+    struct ExtractorStub {
+        docs_details: Vec<DocDetails>,
+    }
+
+    impl ExtractorStub {
+        fn new(docs_details: Vec<DocDetails>) -> Self {
+            Self { docs_details }
+        }
+    }
+
+    impl TextExtractor for ExtractorStub {
+        fn extract_text(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
+            // nothing to do
+            Ok(self.docs_details.clone())
         }
     }
 }
