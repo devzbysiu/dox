@@ -1,9 +1,13 @@
+use crate::entities::location::SafePathBuf;
 use crate::use_cases::bus::{BusEvent, EventSubscriber};
 
 use anyhow::{anyhow, Result};
+use std::fs;
+use std::fs::create_dir_all;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::Duration;
+use tempfile::{tempdir, TempDir};
 
 pub trait SubscriberExt {
     fn try_recv(self, timeout: Duration) -> Result<BusEvent>;
@@ -28,4 +32,22 @@ impl SubscriberExt for EventSubscriber {
             Err(e) => Err(anyhow!(e)),
         }
     }
+}
+
+pub fn mk_file(user_dir_name: String, filename: String) -> Result<NewFile> {
+    let tmp_dir = tempdir()?;
+    let user_dir = tmp_dir.path().join(user_dir_name);
+    create_dir_all(&user_dir)?;
+    let path = user_dir.join(filename);
+    fs::write(&path, "anything")?;
+    let path = SafePathBuf::new(path);
+    Ok(NewFile {
+        _temp_dir: tmp_dir,
+        path,
+    })
+}
+
+pub struct NewFile {
+    _temp_dir: TempDir,
+    pub path: SafePathBuf,
 }

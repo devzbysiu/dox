@@ -48,7 +48,7 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
-    use crate::testutils::SubscriberExt;
+    use crate::testutils::{mk_file, SubscriberExt};
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
     use crate::use_cases::user::User;
@@ -57,16 +57,13 @@ mod test {
     use std::sync::mpsc::{channel, Receiver, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
-    use tempfile::tempdir;
 
     #[test]
     fn cipher_is_used_when_encryption_request_appears() -> Result<()> {
         // given
         init_tracing();
         let (cipher_spy, cipher_writer) = CipherSpy::create();
-        let tmp_dir = tempdir()?;
-        let tmp_file_path = tmp_dir.path().join("tmp_file");
-        fs::write(&tmp_file_path, "anything")?;
+        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = LocalBus::new()?;
 
         // when
@@ -75,7 +72,7 @@ mod test {
 
         let mut publ = bus.publisher();
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
-            tmp_file_path.into(),
+            new_file.path,
         ])))?;
 
         // then
@@ -89,9 +86,7 @@ mod test {
         // given
         init_tracing();
         let noop_cipher = Box::new(NoOpCipher);
-        let tmp_dir = tempdir()?;
-        let tmp_file_path = tmp_dir.path().join("tmp_file");
-        fs::write(&tmp_file_path, "anything")?;
+        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = LocalBus::new()?;
 
         // when
@@ -101,7 +96,7 @@ mod test {
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
-            tmp_file_path.into(),
+            new_file.path,
         ])))?;
 
         let _event = sub.recv()?; // ignore EncryptionRequest message sent earliner
@@ -118,9 +113,7 @@ mod test {
         // given
         init_tracing();
         let noop_cipher = Box::new(NoOpCipher);
-        let tmp_dir = tempdir().unwrap();
-        let tmp_file_path = tmp_dir.path().join("tmp_file");
-        fs::write(&tmp_file_path, "anything").unwrap();
+        let _new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into()).unwrap();
         let bus = LocalBus::new().unwrap();
         let location = Location::FS(Vec::new());
         let ignored_events = [

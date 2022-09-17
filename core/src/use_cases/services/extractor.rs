@@ -66,14 +66,12 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
-    use crate::entities::location::SafePathBuf;
+    use crate::testutils::mk_file;
 
     use anyhow::Result;
-    use std::fs::{self, create_dir_all};
     use std::sync::mpsc::{channel, Receiver, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
-    use tempfile::{tempdir, TempDir};
 
     #[test]
     fn extractor_is_used_to_extract_text() -> Result<()> {
@@ -81,7 +79,7 @@ mod test {
         init_tracing();
         let (spy, extractor) = ExtractorSpy::create();
         let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
-        let new_file = make_new_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
         // when
@@ -96,24 +94,6 @@ mod test {
         Ok(())
     }
 
-    fn make_new_file(user_dir_name: String, filename: String) -> Result<NewFile> {
-        let tmp_dir = tempdir()?;
-        let user_dir = tmp_dir.path().join(user_dir_name);
-        create_dir_all(&user_dir)?;
-        let path = user_dir.join(filename);
-        fs::write(&path, "anything")?;
-        let path = SafePathBuf::new(path);
-        Ok(NewFile {
-            _temp_dir: tmp_dir,
-            path,
-        })
-    }
-
-    struct NewFile {
-        _temp_dir: TempDir,
-        path: SafePathBuf,
-    }
-
     #[test]
     fn text_extracted_event_appears_on_success() -> Result<()> {
         // given
@@ -121,7 +101,7 @@ mod test {
         let docs_details = vec![DocDetails::new("path", "body", "thumbnail")];
         let extractor = Box::new(ExtractorStub::new(docs_details.clone()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
-        let new_file = make_new_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
         // when
@@ -151,7 +131,7 @@ mod test {
         init_tracing();
         let extractor = Box::new(ExtractorStub::new(Vec::new()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
-        let new_file = make_new_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
         // when
