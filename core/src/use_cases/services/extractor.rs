@@ -11,6 +11,7 @@ use std::thread;
 use tracing::{debug, instrument, warn};
 
 pub type ExtractorCreator = Box<dyn ExtractorFactory>;
+pub type Extractor = Box<dyn TextExtractor>;
 
 pub struct TxtExtractor<'a> {
     bus: &'a dyn Bus,
@@ -48,7 +49,7 @@ impl<'a> TxtExtractor<'a> {
 }
 
 /// Extracts text.
-pub trait TextExtractor {
+pub trait TextExtractor: Send {
     /// Given the [`Location`], extracts text from all documents contained in it.
     fn extract_text(&self, location: &Location) -> Result<Vec<DocDetails>>;
 }
@@ -59,4 +60,101 @@ pub trait ExtractorFactory: Sync + Send {
     fn make(&self, ext: &Ext) -> Extractor;
 }
 
-pub type Extractor = Box<dyn TextExtractor>;
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use crate::configuration::telemetry::init_tracing;
+    use crate::data_providers::bus::LocalBus;
+
+    use anyhow::Result;
+    use std::fs::{self, create_dir_all};
+    use std::sync::mpsc::{channel, Receiver, Sender};
+    use std::sync::Mutex;
+    use std::time::Duration;
+    use tempfile::tempdir;
+
+    #[test]
+    fn extractor_is_used_to_extract_text() -> Result<()> {
+        // given
+        init_tracing();
+        let (spy, extractor) = ExtractorSpy::create();
+        let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
+        let bus = Box::new(LocalBus::new()?);
+        let tmp_dir = tempdir()?;
+        let user_dir_name = base64::encode("some@email.com");
+        let user_dir = tmp_dir.path().join(user_dir_name);
+        create_dir_all(&user_dir)?;
+        let new_file_path = user_dir.join("some-file.jpg");
+        fs::write(&new_file_path, "anything")?;
+
+        // when
+        let txt_extractor = TxtExtractor::new(&bus);
+        txt_extractor.run(factory_stub);
+        let mut publ = bus.publisher();
+        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file_path.into()])))?;
+
+        // then
+        assert!(spy.extract_called());
+
+        Ok(())
+    }
+
+    struct ExtractorFactoryStub {
+        extractor_stub: Mutex<Option<Extractor>>,
+    }
+
+    impl ExtractorFactoryStub {
+        fn new(extractor_stub: Extractor) -> Self {
+            Self {
+                extractor_stub: Mutex::new(Some(extractor_stub)),
+            }
+        }
+    }
+
+    impl ExtractorFactory for ExtractorFactoryStub {
+        fn make(&self, _ext: &Ext) -> Extractor {
+            self.extractor_stub
+                .lock()
+                .expect("poisoned mutex")
+                .take()
+                .unwrap()
+        }
+    }
+
+    struct ExtractorSpy {
+        tx: Mutex<Sender<()>>,
+    }
+
+    impl ExtractorSpy {
+        fn create() -> (Spy, Extractor) {
+            let (tx, rx) = channel();
+            (Spy::new(rx), Box::new(Self { tx: Mutex::new(tx) }))
+        }
+    }
+
+    impl TextExtractor for ExtractorSpy {
+        fn extract_text(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
+            self.tx
+                .lock()
+                .expect("poisoned mutex")
+                .send(())
+                .expect("failed to send message");
+            Ok(Vec::new())
+        }
+    }
+
+    struct Spy {
+        rx: Receiver<()>,
+    }
+
+    impl Spy {
+        fn new(rx: Receiver<()>) -> Self {
+            Self { rx }
+        }
+
+        fn extract_called(&self) -> bool {
+            self.rx.recv_timeout(Duration::from_secs(2)).is_ok()
+        }
+    }
+}

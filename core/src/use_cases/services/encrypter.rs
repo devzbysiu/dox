@@ -48,7 +48,6 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
-    use crate::result::DoxErr;
     use crate::testutils::SubscriberExt;
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
@@ -166,7 +165,7 @@ mod test {
                 .lock()
                 .expect("poisoned mutex")
                 .send(())
-                .map_err(|_| DoxErr::Encryption(chacha20poly1305::Error))?;
+                .expect("failed to send message");
             Ok(Vec::new())
         }
     }
