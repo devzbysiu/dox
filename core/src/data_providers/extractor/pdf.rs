@@ -1,12 +1,14 @@
 //! Allows to extract text from PDF.
 use crate::entities::document::DocDetails;
-use crate::entities::location::Location;
+use crate::entities::location::{Location, SafePathBuf};
 use crate::helpers::PathRefExt;
 use crate::result::Result;
-use crate::use_cases::services::extractor::TextExtractor;
+use crate::use_cases::services::extractor::DataExtractor;
+use crate::use_cases::user::User;
 
 use pdf_extract::extract_text;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use std::convert::TryFrom;
 use std::fmt::Debug;
 use std::path::Path;
 use tracing::instrument;
@@ -18,9 +20,9 @@ use tracing::instrument;
 #[derive(Debug, Default)]
 pub struct FromPdf;
 
-impl TextExtractor for FromPdf {
+impl DataExtractor for FromPdf {
     #[instrument(skip(self))]
-    fn extract_text(&self, location: &Location) -> Result<Vec<DocDetails>> {
+    fn extract_data(&self, location: &Location) -> Result<Vec<DocDetails>> {
         let Location::FS(paths) = location;
         Ok(paths
             .par_iter()
@@ -31,9 +33,14 @@ impl TextExtractor for FromPdf {
 }
 
 #[instrument]
-fn extract<P: AsRef<Path> + Debug>(path: P) -> Result<DocDetails> {
-    let path = path.as_ref();
-    Ok(DocDetails::new(path, extract_text(path)?, thumbnail(path)))
+fn extract(path: &SafePathBuf) -> Result<DocDetails> {
+    let user = User::try_from(path)?;
+    Ok(DocDetails::new(
+        user,
+        path,
+        extract_text(path)?,
+        thumbnail(path),
+    ))
 }
 
 fn thumbnail<P: AsRef<Path>>(path: P) -> String {
@@ -56,7 +63,7 @@ mod test {
         ];
 
         // when
-        let mut result = pdf.extract_text(&Location::FS(paths))?;
+        let mut result = pdf.extract_data(&Location::FS(paths))?;
         result.sort();
 
         // then

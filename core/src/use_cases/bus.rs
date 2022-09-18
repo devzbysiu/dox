@@ -5,7 +5,6 @@
 use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::user::User;
 
 use std::fmt::{Debug, Display};
 
@@ -50,7 +49,7 @@ pub enum BusEvent {
     NewDocs(Location),
 
     /// Published when text extraction is finished.
-    TextExtracted(User, Vec<DocDetails>),
+    DataExtracted(Vec<DocDetails>),
 
     /// Published when thumbnail generation is finished.
     ThumbnailMade(Location),
@@ -72,7 +71,7 @@ impl Display for BusEvent {
             "{}",
             match self {
                 BusEvent::NewDocs(_) => "NewDocs",
-                BusEvent::TextExtracted(_, _) => "TextExtracted",
+                BusEvent::DataExtracted(_) => "DataExtracted",
                 BusEvent::ThumbnailMade(_) => "ThumbnailMade",
                 BusEvent::Indexed(_) => "Indexed",
                 BusEvent::EncryptionRequest(_) => "EncryptionRequest",

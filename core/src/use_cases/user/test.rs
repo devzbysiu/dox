@@ -1,14 +1,14 @@
-use crate::entities::location::Location;
+use crate::entities::location::SafePathBuf;
 use crate::result::DoxErr;
 use crate::use_cases::user::User;
 
 use rocket::request::{FromRequest, Outcome, Request};
 use std::convert::TryFrom;
 
-impl TryFrom<&Location> for User {
+impl TryFrom<&SafePathBuf> for User {
     type Error = DoxErr;
 
-    fn try_from(_location: &Location) -> std::result::Result<Self, Self::Error> {
+    fn try_from(_location: &SafePathBuf) -> std::result::Result<Self, Self::Error> {
         Ok(User::new("some@email.com"))
     }
 }

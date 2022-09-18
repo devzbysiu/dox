@@ -3,7 +3,7 @@ mod real;
 #[cfg(test)]
 mod test;
 
-#[derive(Debug, Clone, PartialEq, Eq, Default, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
 pub struct User {
     pub email: String,
 }

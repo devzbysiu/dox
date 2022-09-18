@@ -1,5 +1,5 @@
-use crate::result::DoxErr;
-use crate::result::Result;
+use crate::helpers::PathRefExt;
+use crate::result::{DoxErr, Result};
 use crate::use_cases::receiver::{DocsEvent, EventReceiver};
 
 use notify::RecommendedWatcher;
@@ -29,7 +29,7 @@ impl FsEventReceiver {
 impl EventReceiver for FsEventReceiver {
     fn recv(&self) -> Result<DocsEvent> {
         match self.watcher_rx.recv() {
-            Ok(DebouncedEvent::Create(path)) if path.is_file() => {
+            Ok(DebouncedEvent::Create(path)) if path.is_file() && path.is_in_user_dir() => {
                 Ok(DocsEvent::Created(path.into()))
             }
             Ok(e) => {

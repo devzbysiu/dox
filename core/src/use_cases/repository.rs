@@ -20,7 +20,7 @@ pub trait RepositoryRead: Sync + Send {
 /// Allows to index documents.
 pub trait RepositoryWrite: Sync + Send {
     /// Indexes documents.
-    fn index(&self, user: User, docs_details: &[DocDetails]) -> Result<()>;
+    fn index(&self, docs_details: &[DocDetails]) -> Result<()>;
 }
 
 /// Holds list of basic document details.

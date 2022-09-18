@@ -1,4 +1,4 @@
-use crate::entities::location::{Location, SafePathBuf};
+use crate::entities::location::Location;
 use crate::result::Result;
 use crate::use_cases::bus::{Bus, BusEvent};
 use crate::use_cases::receiver::{DocsEvent, EventRecv};
@@ -31,7 +31,7 @@ impl<'a> DocsWatcher<'a> {
                 match receiver.recv() {
                     Ok(DocsEvent::Created(path)) => {
                         debug!("got create file event on path: '{:?}'", path);
-                        publ.send(new_docs_event(path))?;
+                        publ.send(BusEvent::NewDocs(Location::FS(vec![path])))?;
                     }
                     Ok(e) => warn!("this event is not supported: {:?}", e),
                     Err(e) => trace!("watcher error: {:?}", e),
@@ -41,17 +41,13 @@ impl<'a> DocsWatcher<'a> {
     }
 }
 
-fn new_docs_event(path: SafePathBuf) -> BusEvent {
-    debug!("new doc appeared, creating NewDocs event");
-    BusEvent::NewDocs(Location::FS(vec![path]))
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
+    use crate::entities::location::SafePathBuf;
     use crate::result::DoxErr;
     use crate::testutils::SubscriberExt;
     use crate::use_cases::bus::BusEvent;

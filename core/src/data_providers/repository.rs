@@ -151,17 +151,18 @@ impl TantivyWrite {
 
 impl RepositoryWrite for TantivyWrite {
     #[instrument(skip(self, docs_details))]
-    fn index(&self, user: User, docs_details: &[DocDetails]) -> Result<()> {
-        self.insert_idx_if_missing(&user)?;
-        let index = self.indexes.get(&user).unwrap(); // can unwrap because it's added above
-        let schema = &self.schema;
-        // NOTE: IndexWriter is already multithreaded and
-        // cannot be shared between external threads
-        let mut index_writer = index.writer(50_000_000)?;
-        let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
-        let body = schema.get_field(&Fields::Body.to_string()).unwrap();
-        let thumbnail = schema.get_field(&Fields::Thumbnail.to_string()).unwrap();
+    fn index(&self, docs_details: &[DocDetails]) -> Result<()> {
         for doc_detail in docs_details {
+            let user = &doc_detail.user;
+            self.insert_idx_if_missing(user)?;
+            let index = self.indexes.get(user).unwrap(); // can unwrap because it's added above
+            let schema = &self.schema;
+            // NOTE: IndexWriter is already multithreaded and
+            // cannot be shared between external threads
+            let mut index_writer = index.writer(50_000_000)?;
+            let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
+            let body = schema.get_field(&Fields::Body.to_string()).unwrap();
+            let thumbnail = schema.get_field(&Fields::Thumbnail.to_string()).unwrap();
             debug!("indexing {}", doc_detail.filename);
             index_writer.add_document(doc!(
                     filename => doc_detail.filename.clone(),
@@ -265,18 +266,18 @@ mod test {
         // given
         let config = create_config()?;
         let (repo_read, repo_write) = TantivyRepository::create(&config)?;
-        let tuples_to_index = vec![
-            DocDetails::new("filename1", "body1", "thumbnail1"),
-            DocDetails::new("filename2", "body2", "thumbnail2"),
-            DocDetails::new("filename3", "body3", "thumbnail3"),
-            DocDetails::new("filename4", "body4", "thumbnail4"),
-            DocDetails::new("filename5", "body5", "thumbnail5"),
-        ];
         let user_email = "some@email.com";
         let user = User::new(user_email);
+        let tuples_to_index = vec![
+            DocDetails::new(user.clone(), "filename1", "body1", "thumbnail1"),
+            DocDetails::new(user.clone(), "filename2", "body2", "thumbnail2"),
+            DocDetails::new(user.clone(), "filename3", "body3", "thumbnail3"),
+            DocDetails::new(user.clone(), "filename4", "body4", "thumbnail4"),
+            DocDetails::new(user.clone(), "filename5", "body5", "thumbnail5"),
+        ];
 
         // when
-        repo_write.index(user.clone(), &tuples_to_index)?;
+        repo_write.index(&tuples_to_index)?;
         // TODO: this test should check only indexing but it's also
         // searching via all_documents
         let all_docs = repo_read.all_documents(user)?;
@@ -301,18 +302,18 @@ mod test {
         // given
         let config = create_config()?;
         let (repo_read, repo_write) = TantivyRepository::create(&config)?;
-        let tuples_to_index = vec![
-            DocDetails::new("filename1", "some document body", "thumbnail1"),
-            DocDetails::new("filename2", "another text here", "thumbnail2"),
-            DocDetails::new("filename3", "important information", "thumbnail3"),
-            DocDetails::new("filename4", "this is not so important", "thumbnail4"),
-            DocDetails::new("filename5", "and this is last line", "thumbnail5"),
-        ];
         let user_email = "some@email.com";
         let user = User::new(user_email);
+        let tuples_to_index = vec![
+            DocDetails::new(user.clone(), "filename1", "body", "thumbnail1"),
+            DocDetails::new(user.clone(), "filename2", "text", "thumbnail2"),
+            DocDetails::new(user.clone(), "filename3", "information", "thumbnail3"),
+            DocDetails::new(user.clone(), "filename4", "not important", "thumbnail4"),
+            DocDetails::new(user.clone(), "filename5", "and last line", "thumbnail5"),
+        ];
 
         // when
-        repo_write.index(user.clone(), &tuples_to_index)?;
+        repo_write.index(&tuples_to_index)?;
         let results = repo_read.search(user, "line".into())?;
 
         // then
@@ -332,16 +333,16 @@ mod test {
         // given
         let config = create_config()?;
         let (repo_read, repo_write) = TantivyRepository::create(&config)?;
-        let tuples_to_index = vec![
-            DocDetails::new("filename1", "some document body", "thumbnail1"),
-            DocDetails::new("filename2", "another text here", "thumbnail2"),
-            DocDetails::new("filename3", "this is unique word: 9fZX", "thumbnail3"),
-        ];
         let user_email = "some@email.com";
         let user = User::new(user_email);
+        let tuples_to_index = vec![
+            DocDetails::new(user.clone(), "filename1", "some body", "thumbnail1"),
+            DocDetails::new(user.clone(), "filename2", "another text here", "thumbnail2"),
+            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
+        ];
 
         // when
-        repo_write.index(user.clone(), &tuples_to_index)?;
+        repo_write.index(&tuples_to_index)?;
         // NOTE: it's not the same word as above, two letters of fuzziness is fine
         let first_results = repo_read.search(user.clone(), "9fAB".into())?;
         // NOTE: three letters is too much

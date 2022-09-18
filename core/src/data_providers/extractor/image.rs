@@ -1,13 +1,14 @@
 //! Allows to extract text from image using OCR.
 use crate::entities::document::DocDetails;
-use crate::entities::location::Location;
+use crate::entities::location::{Location, SafePathBuf};
 use crate::helpers::PathRefExt;
 use crate::result::Result;
-use crate::use_cases::services::extractor::TextExtractor;
+use crate::use_cases::services::extractor::DataExtractor;
+use crate::use_cases::user::User;
 
 use leptess::LepTess;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use std::path::Path;
+use std::convert::TryFrom;
 use tracing::{debug, instrument};
 
 /// Extracts text from the image.
@@ -17,25 +18,31 @@ use tracing::{debug, instrument};
 #[derive(Debug, Default)]
 pub struct FromImage;
 
-impl TextExtractor for FromImage {
+impl DataExtractor for FromImage {
     #[instrument(skip(self))]
-    fn extract_text(&self, location: &Location) -> Result<Vec<DocDetails>> {
+    fn extract_data(&self, location: &Location) -> Result<Vec<DocDetails>> {
         let Location::FS(paths) = location;
         Ok(paths
             .par_iter()
-            .map(ocr)
+            .map(extract_details)
             .filter_map(Result::ok)
             .collect::<Vec<DocDetails>>())
     }
 }
 
-fn ocr<P: AsRef<Path>>(path: P) -> Result<DocDetails> {
-    debug!("executing OCR on {}", path.as_ref().display());
+fn extract_details(path: &SafePathBuf) -> Result<DocDetails> {
+    debug!("executing OCR on {:?}", path);
     // NOTE: it's actually more efficient to create LepTess
     // each time than sharing it between threads
     let mut lt = LepTess::new(None, "pol")?;
-    lt.set_image(path.as_ref())?;
-    Ok(DocDetails::new(&path, lt.get_utf8_text()?, path.filename()))
+    lt.set_image(path)?;
+    let user = User::try_from(path)?;
+    Ok(DocDetails::new(
+        user,
+        path,
+        lt.get_utf8_text()?,
+        path.filename(),
+    ))
 }
 
 #[cfg(test)]
@@ -54,7 +61,7 @@ mod test {
         ];
 
         // when
-        let mut result = ocr.extract_text(&Location::FS(paths))?;
+        let mut result = ocr.extract_data(&Location::FS(paths))?;
         result.sort();
 
         // then

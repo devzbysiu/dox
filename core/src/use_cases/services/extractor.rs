@@ -4,14 +4,12 @@ use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
 use crate::use_cases::bus::{Bus, BusEvent};
-use crate::use_cases::user::User;
 
-use std::convert::TryFrom;
 use std::thread;
 use tracing::{debug, instrument, warn};
 
 pub type ExtractorCreator = Box<dyn ExtractorFactory>;
-pub type Extractor = Box<dyn TextExtractor>;
+pub type Extractor = Box<dyn DataExtractor>;
 
 pub struct TxtExtractor<'a> {
     bus: &'a dyn Bus,
@@ -33,10 +31,7 @@ impl<'a> TxtExtractor<'a> {
                         debug!("NewDocs in: '{:?}', starting extraction", location);
                         let extension = location.extension();
                         let extractor = extractor_factory.make(&extension);
-                        publ.send(BusEvent::TextExtracted(
-                            User::try_from(&location)?,
-                            extractor.extract_text(&location)?,
-                        ))?;
+                        publ.send(BusEvent::DataExtracted(extractor.extract_data(&location)?))?;
                         debug!("extraction finished");
                         debug!("sending encryption request for: '{:?}'", location);
                         publ.send(BusEvent::EncryptionRequest(location))?;
@@ -49,9 +44,9 @@ impl<'a> TxtExtractor<'a> {
 }
 
 /// Extracts text.
-pub trait TextExtractor: Send {
+pub trait DataExtractor: Send {
     /// Given the [`Location`], extracts text from all documents contained in it.
-    fn extract_text(&self, location: &Location) -> Result<Vec<DocDetails>>;
+    fn extract_data(&self, location: &Location) -> Result<Vec<DocDetails>>;
 }
 
 /// Creates extractor.
@@ -67,6 +62,7 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
     use crate::testutils::mk_file;
+    use crate::use_cases::user::User;
 
     use anyhow::Result;
     use std::sync::mpsc::{channel, Receiver, Sender};
@@ -98,7 +94,12 @@ mod test {
     fn text_extracted_event_appears_on_success() -> Result<()> {
         // given
         init_tracing();
-        let docs_details = vec![DocDetails::new("path", "body", "thumbnail")];
+        let docs_details = vec![DocDetails::new(
+            User::new("some@email.com"),
+            "path",
+            "body",
+            "thumbnail",
+        )];
         let extractor = Box::new(ExtractorStub::new(docs_details.clone()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
@@ -115,8 +116,7 @@ mod test {
         let _event = sub.recv()?; // ignore NewDocs event
 
         // then
-        if let BusEvent::TextExtracted(user, details) = sub.recv()? {
-            assert_eq!(user, User::new("some@email.com"));
+        if let BusEvent::DataExtracted(details) = sub.recv()? {
             assert_eq!(details, docs_details);
         } else {
             panic!("invalid event appeared");
@@ -188,8 +188,8 @@ mod test {
         }
     }
 
-    impl TextExtractor for ExtractorSpy {
-        fn extract_text(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
+    impl DataExtractor for ExtractorSpy {
+        fn extract_data(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
             self.tx
                 .lock()
                 .expect("poisoned mutex")
@@ -223,8 +223,8 @@ mod test {
         }
     }
 
-    impl TextExtractor for ExtractorStub {
-        fn extract_text(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
+    impl DataExtractor for ExtractorStub {
+        fn extract_data(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
             // nothing to do
             Ok(self.docs_details.clone())
         }

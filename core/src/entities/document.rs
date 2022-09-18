@@ -1,5 +1,6 @@
 //! Abstraction of the document data used to index the document.
 use crate::helpers::PathRefExt;
+use crate::use_cases::user::User;
 
 use std::path::Path;
 
@@ -11,14 +12,21 @@ pub struct DocDetails {
     pub filename: String,
     pub body: String,
     pub thumbnail: String,
+    pub user: User,
 }
 
 impl DocDetails {
-    pub fn new<P: AsRef<Path>, S: Into<String>>(path: P, body: S, thumbnail: S) -> Self {
+    pub fn new<P: AsRef<Path>, S: Into<String>>(
+        user: User,
+        path: P,
+        body: S,
+        thumbnail: S,
+    ) -> Self {
         Self {
             filename: path.filename(),
             body: body.into(),
             thumbnail: thumbnail.into(),
+            user,
         }
     }
 }

@@ -65,6 +65,7 @@ pub trait PathRefExt {
     fn parent_path(&self) -> &Path;
     fn rel_path(&self) -> String;
     fn rel_stem(&self) -> String;
+    fn is_in_user_dir(&self) -> bool;
 }
 
 impl<T: AsRef<Path>> PathRefExt for T {
@@ -114,6 +115,12 @@ impl<T: AsRef<Path>> PathRefExt for T {
 
     fn rel_stem(&self) -> String {
         format!("{}/{}", self.parent_name(), self.filestem())
+    }
+
+    fn is_in_user_dir(&self) -> bool {
+        // TODO: Add email validation and confirmation that the path is utf8 encoded
+        let dir_name = self.parent_name();
+        base64::decode(dir_name).is_ok()
     }
 }
 

@@ -51,7 +51,6 @@ mod test {
     use crate::testutils::{mk_file, SubscriberExt};
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
-    use crate::use_cases::user::User;
 
     use anyhow::Result;
     use std::sync::mpsc::{channel, Receiver, Sender};
@@ -118,7 +117,7 @@ mod test {
         let location = Location::FS(Vec::new());
         let ignored_events = [
             BusEvent::NewDocs(location.clone()),
-            BusEvent::TextExtracted(User::new(""), Vec::new()),
+            BusEvent::DataExtracted(Vec::new()),
             BusEvent::ThumbnailMade(location),
             BusEvent::Indexed(Vec::new()),
         ];

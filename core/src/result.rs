@@ -85,10 +85,6 @@ pub enum DoxErr {
     #[error("Generic error occured: '{0}'")]
     GenericAnyhow(#[from] anyhow::Error),
 
-    #[cfg(not(test))]
-    #[error("Error while extracting location - there should be at least one path")]
-    EmptyLocation,
-
     #[error("Invalid utf characters: '{0}'")]
     InvalidUtf8(#[from] FromUtf8Error),
 

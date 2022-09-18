@@ -21,8 +21,8 @@ impl<'a> Indexer<'a> {
         thread::spawn(move || -> Result<()> {
             loop {
                 match sub.recv()? {
-                    BusEvent::TextExtracted(user, doc_details) => {
-                        repository.index(user, &doc_details)?;
+                    BusEvent::DataExtracted(doc_details) => {
+                        repository.index(&doc_details)?;
                         publ.send(BusEvent::Indexed(doc_details))?;
                     }
                     e => debug!("event not supported in indexer: {}", e.to_string()),

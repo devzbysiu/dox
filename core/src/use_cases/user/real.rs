@@ -1,4 +1,4 @@
-use crate::entities::location::Location;
+use crate::entities::location::SafePathBuf;
 use crate::helpers::PathRefExt;
 use crate::result::DoxErr;
 use crate::use_cases::user::User;
@@ -10,12 +10,10 @@ use rocket::request::{FromRequest, Outcome, Request};
 use std::convert::TryFrom;
 use tracing::{debug, error};
 
-impl TryFrom<&Location> for User {
+impl TryFrom<&SafePathBuf> for User {
     type Error = DoxErr;
 
-    fn try_from(location: &Location) -> std::result::Result<Self, Self::Error> {
-        let Location::FS(paths) = location;
-        let path = paths.get(0).ok_or(DoxErr::EmptyLocation)?;
+    fn try_from(path: &SafePathBuf) -> std::result::Result<Self, Self::Error> {
         let parent_dir = path.parent();
         let parent_name = parent_dir.filename();
         let user_email = base64::decode(parent_name)?;
