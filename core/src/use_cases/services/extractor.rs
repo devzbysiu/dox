@@ -61,10 +61,12 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
-    use crate::testutils::mk_file;
+    use crate::result::DoxErr;
+    use crate::testutils::{mk_file, SubscriberExt};
     use crate::use_cases::user::User;
 
     use anyhow::Result;
+    use leptess::tesseract::TessInitError;
     use std::sync::mpsc::{channel, Receiver, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
@@ -155,6 +157,31 @@ mod test {
         Ok(())
     }
 
+    #[test]
+    fn no_event_appears_when_extractor_fails() -> Result<()> {
+        // given
+        init_tracing();
+        let extractor = Box::new(ErroneousExtractor);
+        let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
+        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let bus = Box::new(LocalBus::new()?);
+
+        // when
+        let txt_extractor = TxtExtractor::new(&bus);
+        txt_extractor.run(factory_stub);
+
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
+
+        let _event = sub.recv()?; // ignore NewDocs event
+
+        // then
+        assert!(sub.try_recv(Duration::from_secs(2)).is_err()); // no more events on the bus
+
+        Ok(())
+    }
+
     struct ExtractorFactoryStub {
         extractor_stub: Mutex<Option<Extractor>>,
     }
@@ -227,6 +254,14 @@ mod test {
         fn extract_data(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
             // nothing to do
             Ok(self.docs_details.clone())
+        }
+    }
+
+    struct ErroneousExtractor;
+
+    impl DataExtractor for ErroneousExtractor {
+        fn extract_data(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
+            Err(DoxErr::OcrExtract(TessInitError { code: 0 }))
         }
     }
 }
