@@ -25,7 +25,7 @@ impl<'a> Indexer<'a> {
                         repository.index(&doc_details)?;
                         publ.send(BusEvent::Indexed(doc_details))?;
                     }
-                    e => debug!("event not supported in indexer: {}", e.to_string()),
+                    e => debug!("event not supported in indexer: {}", e),
                 }
             }
         });

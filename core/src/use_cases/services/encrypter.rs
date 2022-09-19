@@ -35,7 +35,7 @@ impl<'a> Encrypter<'a> {
                         debug!("encryption finished");
                         publ.send(BusEvent::PipelineFinished)?;
                     }
-                    e => debug!("event not supported in encrypter: {}", e.to_string()),
+                    e => debug!("event not supported in encrypter: {}", e),
                 }
             }
         });

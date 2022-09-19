@@ -36,7 +36,7 @@ impl<'a> TxtExtractor<'a> {
                         debug!("sending encryption request for: '{:?}'", location);
                         publ.send(BusEvent::EncryptionRequest(location))?;
                     }
-                    e => debug!("event not supported in TxtExtractor: {}", e.to_string()),
+                    e => debug!("event not supported in TxtExtractor: {}", e),
                 }
             }
         });
