@@ -52,12 +52,12 @@ mod test {
     #[test]
     fn repo_write_is_used_to_index_data() -> Result<()> {
         // given
-        let (spy, repo_write) = RepoWriteSpy::new();
+        let (spy, working_repo_write) = RepoWriteSpy::working();
         let bus = LocalBus::new()?;
 
         // when
         let indexer = Indexer::new(&bus);
-        indexer.run(repo_write);
+        indexer.run(working_repo_write);
         let mut publ = bus.publisher();
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
 
@@ -136,18 +136,53 @@ mod test {
         Ok(())
     }
 
-    struct RepoWriteSpy {
-        tx: Mutex<Sender<()>>,
+    #[test]
+    #[ignore] // TODO: for now, the failure kills the thread, fix it
+    fn failure_during_indexing_do_not_kill_service() -> Result<()> {
+        // given
+        let (spy, failing_repo_write) = RepoWriteSpy::failing();
+        let bus = LocalBus::new()?;
+
+        let indexer = Indexer::new(&bus);
+        indexer.run(failing_repo_write);
+        let mut publ = bus.publisher();
+        publ.send(BusEvent::DataExtracted(Vec::new()))?;
+        assert!(spy.index_called());
+
+        // when
+        publ.send(BusEvent::DataExtracted(Vec::new()))?;
+
+        // then
+        assert!(spy.index_called());
+
+        Ok(())
     }
 
+    struct RepoWriteSpy;
+
     impl RepoWriteSpy {
-        fn new() -> (Spy, Box<Self>) {
+        fn working() -> (Spy, RepoWrite) {
             let (tx, rx) = channel();
-            (Spy::new(rx), Box::new(Self { tx: Mutex::new(tx) }))
+            (Spy::new(rx), WorkingRepoWrite::make(tx))
+        }
+
+        fn failing() -> (Spy, RepoWrite) {
+            let (tx, rx) = channel();
+            (Spy::new(rx), FailingRepoWrite::make(tx))
         }
     }
 
-    impl RepositoryWrite for RepoWriteSpy {
+    struct WorkingRepoWrite {
+        tx: Mutex<Sender<()>>,
+    }
+
+    impl WorkingRepoWrite {
+        fn make(tx: Sender<()>) -> Box<Self> {
+            Box::new(Self { tx: Mutex::new(tx) })
+        }
+    }
+
+    impl RepositoryWrite for WorkingRepoWrite {
         fn index(&self, _docs_details: &[DocDetails]) -> crate::result::Result<()> {
             self.tx
                 .lock()
@@ -155,6 +190,27 @@ mod test {
                 .send(())
                 .expect("failed to send message");
             Ok(())
+        }
+    }
+
+    struct FailingRepoWrite {
+        tx: Mutex<Sender<()>>,
+    }
+
+    impl FailingRepoWrite {
+        fn make(tx: Sender<()>) -> Box<Self> {
+            Box::new(Self { tx: Mutex::new(tx) })
+        }
+    }
+
+    impl RepositoryWrite for FailingRepoWrite {
+        fn index(&self, _docs_details: &[DocDetails]) -> crate::result::Result<()> {
+            self.tx
+                .lock()
+                .expect("poisoned mutex")
+                .send(())
+                .expect("failed to send message");
+            Err(DoxErr::Indexing(TantivyError::Poisoned))
         }
     }
 
