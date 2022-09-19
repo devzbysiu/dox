@@ -31,3 +31,71 @@ impl<'a> Indexer<'a> {
         });
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use crate::data_providers::bus::LocalBus;
+    use crate::entities::document::DocDetails;
+    use crate::use_cases::repository::RepositoryWrite;
+
+    use anyhow::Result;
+    use std::sync::mpsc::{channel, Receiver, Sender};
+    use std::sync::Mutex;
+    use std::time::Duration;
+
+    #[test]
+    fn repo_write_is_used_to_index_data() -> Result<()> {
+        // given
+        let (spy, repo_write) = RepoWriteSpy::new();
+        let bus = LocalBus::new()?;
+
+        // when
+        let indexer = Indexer::new(&bus);
+        indexer.run(repo_write);
+        let mut publ = bus.publisher();
+        publ.send(BusEvent::DataExtracted(Vec::new()))?;
+
+        // then
+        assert!(spy.index_called());
+
+        Ok(())
+    }
+
+    struct RepoWriteSpy {
+        tx: Mutex<Sender<()>>,
+    }
+
+    impl RepoWriteSpy {
+        fn new() -> (Spy, Box<Self>) {
+            let (tx, rx) = channel();
+            (Spy::new(rx), Box::new(Self { tx: Mutex::new(tx) }))
+        }
+    }
+
+    impl RepositoryWrite for RepoWriteSpy {
+        fn index(&self, _docs_details: &[DocDetails]) -> crate::result::Result<()> {
+            self.tx
+                .lock()
+                .expect("poisoned mutex")
+                .send(())
+                .expect("failed to send message");
+            Ok(())
+        }
+    }
+
+    struct Spy {
+        rx: Receiver<()>,
+    }
+
+    impl Spy {
+        fn new(rx: Receiver<()>) -> Self {
+            Self { rx }
+        }
+
+        fn index_called(&self) -> bool {
+            self.rx.recv_timeout(Duration::from_secs(2)).is_ok()
+        }
+    }
+}
