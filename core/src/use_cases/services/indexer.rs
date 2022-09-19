@@ -38,6 +38,8 @@ mod test {
 
     use crate::data_providers::bus::LocalBus;
     use crate::entities::document::DocDetails;
+    use crate::result::DoxErr;
+    use crate::testutils::SubscriberExt;
     use crate::use_cases::repository::RepositoryWrite;
     use crate::use_cases::user::User;
 
@@ -45,6 +47,7 @@ mod test {
     use std::sync::mpsc::{channel, Receiver, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
+    use tantivy::TantivyError;
 
     #[test]
     fn repo_write_is_used_to_index_data() -> Result<()> {
@@ -112,6 +115,27 @@ mod test {
         Ok(())
     }
 
+    #[test]
+    fn no_event_is_send_when_indexing_error_occurs() -> Result<()> {
+        // given
+        let repo_write = Box::new(ErroneousRepoWrite);
+        let bus = LocalBus::new()?;
+
+        // when
+        let indexer = Indexer::new(&bus);
+        indexer.run(repo_write);
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+        publ.send(BusEvent::DataExtracted(Vec::new()))?;
+
+        let _event = sub.recv()?; // ignore DataExtracted event
+
+        // then
+        assert!(sub.try_recv(Duration::from_secs(2)).is_err());
+
+        Ok(())
+    }
+
     struct RepoWriteSpy {
         tx: Mutex<Sender<()>>,
     }
@@ -154,6 +178,14 @@ mod test {
         fn index(&self, _docs_details: &[DocDetails]) -> crate::result::Result<()> {
             // nothing to do here
             Ok(())
+        }
+    }
+
+    struct ErroneousRepoWrite;
+
+    impl RepositoryWrite for ErroneousRepoWrite {
+        fn index(&self, _docs_details: &[DocDetails]) -> crate::result::Result<()> {
+            Err(DoxErr::Indexing(TantivyError::Poisoned))
         }
     }
 }
