@@ -63,6 +63,27 @@ mod test {
         Ok(())
     }
 
+    #[test]
+    fn indexed_event_is_send_on_success() -> Result<()> {
+        // given
+        let repo_write = Box::new(NoOpRepoWrite);
+        let bus = LocalBus::new()?;
+
+        // when
+        let indexer = Indexer::new(&bus);
+        indexer.run(repo_write);
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+        publ.send(BusEvent::DataExtracted(Vec::new()))?;
+
+        let _event = sub.recv()?; // ignore DataExtracted event
+
+        // then
+        assert_eq!(sub.recv()?, BusEvent::Indexed(Vec::new()));
+
+        Ok(())
+    }
+
     struct RepoWriteSpy {
         tx: Mutex<Sender<()>>,
     }
@@ -96,6 +117,15 @@ mod test {
 
         fn index_called(&self) -> bool {
             self.rx.recv_timeout(Duration::from_secs(2)).is_ok()
+        }
+    }
+
+    struct NoOpRepoWrite;
+
+    impl RepositoryWrite for NoOpRepoWrite {
+        fn index(&self, _docs_details: &[DocDetails]) -> crate::result::Result<()> {
+            // nothing to do here
+            Ok(())
         }
     }
 }
