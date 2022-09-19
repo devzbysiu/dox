@@ -93,7 +93,7 @@ mod test {
     }
 
     #[test]
-    fn text_extracted_event_appears_on_success() -> Result<()> {
+    fn data_extracted_event_appears_on_success() -> Result<()> {
         // given
         init_tracing();
         let docs_details = vec![DocDetails::new(
