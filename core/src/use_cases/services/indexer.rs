@@ -39,6 +39,7 @@ mod test {
     use crate::data_providers::bus::LocalBus;
     use crate::entities::document::DocDetails;
     use crate::use_cases::repository::RepositoryWrite;
+    use crate::use_cases::user::User;
 
     use anyhow::Result;
     use std::sync::mpsc::{channel, Receiver, Sender};
@@ -80,6 +81,33 @@ mod test {
 
         // then
         assert_eq!(sub.recv()?, BusEvent::Indexed(Vec::new()));
+
+        Ok(())
+    }
+
+    #[test]
+    fn indexed_event_contains_docs_details_received_from_data_extracted_event() -> Result<()> {
+        // given
+        let repo_write = Box::new(NoOpRepoWrite);
+        let bus = LocalBus::new()?;
+        let docs_details = vec![DocDetails::new(
+            User::new("some@email.com"),
+            "path",
+            "body",
+            "thumbnail",
+        )];
+
+        // when
+        let indexer = Indexer::new(&bus);
+        indexer.run(repo_write);
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+        publ.send(BusEvent::DataExtracted(docs_details.clone()))?;
+
+        let _event = sub.recv()?; // ignore DataExtracted event
+
+        // then
+        assert_eq!(sub.recv()?, BusEvent::Indexed(docs_details));
 
         Ok(())
     }
