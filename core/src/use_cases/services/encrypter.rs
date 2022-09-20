@@ -48,6 +48,7 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
+    use crate::result::DoxErr;
     use crate::testutils::{mk_file, SubscriberExt};
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
@@ -61,7 +62,7 @@ mod test {
     fn cipher_is_used_when_encryption_request_appears() -> Result<()> {
         // given
         init_tracing();
-        let (cipher_spy, cipher_writer) = CipherSpy::create();
+        let (cipher_spy, cipher_writer) = CipherSpy::working();
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = LocalBus::new()?;
 
@@ -75,7 +76,7 @@ mod test {
         ])))?;
 
         // then
-        assert!(cipher_spy.cipher_has_been_called());
+        assert!(cipher_spy.encrypt_called());
 
         Ok(())
     }
@@ -140,18 +141,58 @@ mod test {
         sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
     }
 
-    struct CipherSpy {
-        tx: Mutex<Sender<()>>,
+    #[test]
+    #[ignore] // TODO: currently, failure kills the thread, fix it
+    fn failure_during_encryption_do_not_kill_service() -> Result<()> {
+        // given
+        let (spy, failing_repo_write) = CipherSpy::failing();
+        let bus = LocalBus::new()?;
+        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+
+        let encrypter = Encrypter::new(&bus);
+        encrypter.run(failing_repo_write);
+        let mut publ = bus.publisher();
+        publ.send(BusEvent::EncryptionRequest(Location::FS(vec![new_file
+            .path
+            .clone()])))?;
+        assert!(spy.encrypt_called());
+
+        // when
+        publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
+            new_file.path,
+        ])))?;
+
+        // then
+        assert!(spy.encrypt_called());
+
+        Ok(())
     }
 
+    struct CipherSpy;
+
     impl CipherSpy {
-        fn create() -> (Spy, CipherWrite) {
+        fn working() -> (Spy, CipherWrite) {
             let (tx, rx) = channel();
-            (Spy::new(rx), Box::new(Self { tx: Mutex::new(tx) }))
+            (Spy::new(rx), WorkingCipher::new(tx))
+        }
+
+        fn failing() -> (Spy, CipherWrite) {
+            let (tx, rx) = channel();
+            (Spy::new(rx), FailingCipher::new(tx))
         }
     }
 
-    impl CipherWriteStrategy for CipherSpy {
+    struct WorkingCipher {
+        tx: Mutex<Sender<()>>,
+    }
+
+    impl WorkingCipher {
+        fn new(tx: Sender<()>) -> Box<Self> {
+            Box::new(Self { tx: Mutex::new(tx) })
+        }
+    }
+
+    impl CipherWriteStrategy for WorkingCipher {
         fn encrypt(&self, _src_buf: &[u8]) -> crate::result::Result<Vec<u8>> {
             self.tx
                 .lock()
@@ -159,6 +200,27 @@ mod test {
                 .send(())
                 .expect("failed to send message");
             Ok(Vec::new())
+        }
+    }
+
+    struct FailingCipher {
+        tx: Mutex<Sender<()>>,
+    }
+
+    impl FailingCipher {
+        fn new(tx: Sender<()>) -> Box<Self> {
+            Box::new(Self { tx: Mutex::new(tx) })
+        }
+    }
+
+    impl CipherWriteStrategy for FailingCipher {
+        fn encrypt(&self, _src_buf: &[u8]) -> crate::result::Result<Vec<u8>> {
+            self.tx
+                .lock()
+                .expect("poisoned mutex")
+                .send(())
+                .expect("failed to send message");
+            Err(DoxErr::Encryption(chacha20poly1305::Error))
         }
     }
 
@@ -171,7 +233,7 @@ mod test {
             Self { rx }
         }
 
-        fn cipher_has_been_called(&self) -> bool {
+        fn encrypt_called(&self) -> bool {
             self.rx.recv_timeout(Duration::from_secs(2)).is_ok()
         }
     }
