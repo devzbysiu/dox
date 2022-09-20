@@ -4,7 +4,7 @@ use crate::use_cases::bus::{BusEvent, EventSubscriber};
 use anyhow::{anyhow, Result};
 use std::fs;
 use std::fs::create_dir_all;
-use std::sync::mpsc::channel;
+use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 use std::time::Duration;
 use tempfile::{tempdir, TempDir};
@@ -50,4 +50,18 @@ pub fn mk_file(user_dir_name: String, filename: String) -> Result<NewFile> {
 pub struct NewFile {
     _temp_dir: TempDir,
     pub path: SafePathBuf,
+}
+
+pub struct Spy {
+    rx: Receiver<()>,
+}
+
+impl Spy {
+    pub fn new(rx: Receiver<()>) -> Self {
+        Self { rx }
+    }
+
+    pub fn method_called(&self) -> bool {
+        self.rx.recv_timeout(Duration::from_secs(2)).is_ok()
+    }
 }

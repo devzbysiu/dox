@@ -57,12 +57,12 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
     use crate::result::DoxErr;
-    use crate::testutils::{mk_file, SubscriberExt};
+    use crate::testutils::{mk_file, Spy, SubscriberExt};
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
 
     use anyhow::Result;
-    use std::sync::mpsc::{channel, Receiver, Sender};
+    use std::sync::mpsc::{channel, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
 
@@ -84,7 +84,7 @@ mod test {
         ])))?;
 
         // then
-        assert!(cipher_spy.encrypt_called());
+        assert!(cipher_spy.method_called());
 
         Ok(())
     }
@@ -162,7 +162,7 @@ mod test {
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![new_file
             .path
             .clone()])))?;
-        assert!(spy.encrypt_called());
+        assert!(spy.method_called());
 
         // when
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
@@ -170,7 +170,7 @@ mod test {
         ])))?;
 
         // then
-        assert!(spy.encrypt_called());
+        assert!(spy.method_called());
 
         Ok(())
     }
@@ -228,20 +228,6 @@ mod test {
                 .send(())
                 .expect("failed to send message");
             Err(DoxErr::Encryption(chacha20poly1305::Error))
-        }
-    }
-
-    struct Spy {
-        rx: Receiver<()>,
-    }
-
-    impl Spy {
-        fn new(rx: Receiver<()>) -> Self {
-            Self { rx }
-        }
-
-        fn encrypt_called(&self) -> bool {
-            self.rx.recv_timeout(Duration::from_secs(2)).is_ok()
         }
     }
 

@@ -51,12 +51,12 @@ mod test {
     use crate::data_providers::bus::LocalBus;
     use crate::entities::document::DocDetails;
     use crate::result::DoxErr;
-    use crate::testutils::SubscriberExt;
+    use crate::testutils::{Spy, SubscriberExt};
     use crate::use_cases::repository::RepositoryWrite;
     use crate::use_cases::user::User;
 
     use anyhow::Result;
-    use std::sync::mpsc::{channel, Receiver, Sender};
+    use std::sync::mpsc::{channel, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
     use tantivy::TantivyError;
@@ -74,7 +74,7 @@ mod test {
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
 
         // then
-        assert!(spy.index_called());
+        assert!(spy.method_called());
 
         Ok(())
     }
@@ -158,14 +158,14 @@ mod test {
         indexer.run(failing_repo_write)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
-        assert!(spy.index_called());
+        assert!(spy.method_called());
 
         // TODO: think about what should be in given and when
         // when
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
 
         // then
-        assert!(spy.index_called());
+        assert!(spy.method_called());
 
         Ok(())
     }
@@ -223,20 +223,6 @@ mod test {
                 .send(())
                 .expect("failed to send message");
             Err(DoxErr::Indexing(TantivyError::Poisoned))
-        }
-    }
-
-    struct Spy {
-        rx: Receiver<()>,
-    }
-
-    impl Spy {
-        fn new(rx: Receiver<()>) -> Self {
-            Self { rx }
-        }
-
-        fn index_called(&self) -> bool {
-            self.rx.recv_timeout(Duration::from_secs(2)).is_ok()
         }
     }
 
