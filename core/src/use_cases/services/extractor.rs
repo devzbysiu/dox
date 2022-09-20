@@ -62,12 +62,12 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
     use crate::result::DoxErr;
-    use crate::testutils::{mk_file, SubscriberExt};
+    use crate::testutils::{mk_file, Spy, SubscriberExt};
     use crate::use_cases::user::User;
 
     use anyhow::Result;
     use leptess::tesseract::TessInitError;
-    use std::sync::mpsc::{channel, Receiver, Sender};
+    use std::sync::mpsc::{channel, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
 
@@ -87,7 +87,7 @@ mod test {
         publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
 
         // then
-        assert!(spy.extract_called());
+        assert!(spy.method_called());
 
         Ok(())
     }
@@ -223,20 +223,6 @@ mod test {
                 .send(())
                 .expect("failed to send message");
             Ok(Vec::new())
-        }
-    }
-
-    struct Spy {
-        rx: Receiver<()>,
-    }
-
-    impl Spy {
-        fn new(rx: Receiver<()>) -> Self {
-            Self { rx }
-        }
-
-        fn extract_called(&self) -> bool {
-            self.rx.recv_timeout(Duration::from_secs(2)).is_ok()
         }
     }
 
