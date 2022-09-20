@@ -3,9 +3,10 @@ use crate::result::Result;
 use crate::use_cases::bus::{Bus, BusEvent};
 use crate::use_cases::cipher::CipherWrite;
 
+use rayon::ThreadPoolBuilder;
 use std::fs;
 use std::thread;
-use tracing::{debug, instrument, warn};
+use tracing::{debug, error, instrument, warn};
 
 pub struct Encrypter<'a> {
     bus: &'a dyn Bus,
@@ -17,7 +18,8 @@ impl<'a> Encrypter<'a> {
     }
 
     #[instrument(skip(self, cipher))]
-    pub fn run(&self, cipher: CipherWrite) {
+    pub fn run(&self, cipher: CipherWrite) -> Result<()> {
+        let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
         let sub = self.bus.subscriber();
         let mut publ = self.bus.publisher();
         // TODO: improve tracing of threads somehow. Currently, it's hard to debug because threads
@@ -29,8 +31,13 @@ impl<'a> Encrypter<'a> {
                         debug!("encryption request: '{:?}', starting encryption", location);
                         let Location::FS(paths) = location;
                         for path in paths {
-                            let encrypted = cipher.encrypt(&fs::read(&path)?)?;
-                            fs::write(path, encrypted)?;
+                            if let Err(e) = tp.install(|| -> Result<()> {
+                                let encrypted = cipher.encrypt(&fs::read(&path)?)?;
+                                fs::write(path, encrypted)?;
+                                Ok(())
+                            }) {
+                                error!("failed to encrypt: '{}'", e);
+                            }
                         }
                         debug!("encryption finished");
                         publ.send(BusEvent::PipelineFinished)?;
@@ -39,6 +46,7 @@ impl<'a> Encrypter<'a> {
                 }
             }
         });
+        Ok(())
     }
 }
 
@@ -68,7 +76,7 @@ mod test {
 
         // when
         let encrypter = Encrypter::new(&bus);
-        encrypter.run(cipher_writer);
+        encrypter.run(cipher_writer)?;
 
         let mut publ = bus.publisher();
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
@@ -91,7 +99,7 @@ mod test {
 
         // when
         let encrypter = Encrypter::new(&bus);
-        encrypter.run(noop_cipher);
+        encrypter.run(noop_cipher)?;
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -125,7 +133,7 @@ mod test {
 
         // when
         let encrypter = Encrypter::new(&bus);
-        encrypter.run(noop_cipher);
+        encrypter.run(noop_cipher).unwrap();
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -142,7 +150,6 @@ mod test {
     }
 
     #[test]
-    #[ignore] // TODO: currently, failure kills the thread, fix it
     fn failure_during_encryption_do_not_kill_service() -> Result<()> {
         // given
         let (spy, failing_repo_write) = CipherSpy::failing();
@@ -150,7 +157,7 @@ mod test {
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
 
         let encrypter = Encrypter::new(&bus);
-        encrypter.run(failing_repo_write);
+        encrypter.run(failing_repo_write)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![new_file
             .path
