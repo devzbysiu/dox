@@ -2,8 +2,9 @@ use crate::result::Result;
 use crate::use_cases::bus::{Bus, BusEvent};
 use crate::use_cases::repository::RepoWrite;
 
+use rayon::ThreadPoolBuilder;
 use std::thread;
-use tracing::{debug, instrument, warn};
+use tracing::{debug, error, instrument, warn};
 
 pub struct Indexer<'a> {
     bus: &'a dyn Bus,
@@ -15,20 +16,31 @@ impl<'a> Indexer<'a> {
     }
 
     #[instrument(skip(self, repository))]
-    pub fn run(&self, repository: RepoWrite) {
+    pub fn run(&self, repository: RepoWrite) -> Result<()> {
+        // TODO: add threadpool to other services
+        // TODO: think about num_threads
+        // TODO: should threadpool be shared between services?
+        // TODO: should threadpool have it's own abstraction here?
+        let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
         let sub = self.bus.subscriber();
         let mut publ = self.bus.publisher();
         thread::spawn(move || -> Result<()> {
             loop {
                 match sub.recv()? {
                     BusEvent::DataExtracted(doc_details) => {
-                        repository.index(&doc_details)?;
-                        publ.send(BusEvent::Indexed(doc_details))?;
+                        if let Err(e) = tp.install(|| -> Result<()> {
+                            repository.index(&doc_details)?;
+                            publ.send(BusEvent::Indexed(doc_details))?;
+                            Ok(())
+                        }) {
+                            error!("indexing failed: '{}'", e);
+                        }
                     }
                     e => debug!("event not supported in indexer: {}", e),
                 }
             }
         });
+        Ok(())
     }
 }
 
@@ -57,7 +69,7 @@ mod test {
 
         // when
         let indexer = Indexer::new(&bus);
-        indexer.run(working_repo_write);
+        indexer.run(working_repo_write)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
 
@@ -75,7 +87,7 @@ mod test {
 
         // when
         let indexer = Indexer::new(&bus);
-        indexer.run(repo_write);
+        indexer.run(repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
@@ -102,7 +114,7 @@ mod test {
 
         // when
         let indexer = Indexer::new(&bus);
-        indexer.run(repo_write);
+        indexer.run(repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
         publ.send(BusEvent::DataExtracted(docs_details.clone()))?;
@@ -123,7 +135,7 @@ mod test {
 
         // when
         let indexer = Indexer::new(&bus);
-        indexer.run(repo_write);
+        indexer.run(repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
@@ -137,18 +149,18 @@ mod test {
     }
 
     #[test]
-    #[ignore] // TODO: for now, the failure kills the thread, fix it
     fn failure_during_indexing_do_not_kill_service() -> Result<()> {
         // given
         let (spy, failing_repo_write) = RepoWriteSpy::failing();
         let bus = LocalBus::new()?;
 
         let indexer = Indexer::new(&bus);
-        indexer.run(failing_repo_write);
+        indexer.run(failing_repo_write)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
         assert!(spy.index_called());
 
+        // TODO: think about what should be in given and when
         // when
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
 

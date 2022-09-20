@@ -105,6 +105,9 @@ pub enum DoxErr {
 
     #[error("Failed to launch Rocket: '{0}'")]
     Rocket(#[from] rocket::Error),
+
+    #[error("Failed to build threadpool: '{0}'")]
+    ThreadPool(#[from] rayon::ThreadPoolBuildError),
 }
 
 pub type Result<T> = std::result::Result<T, DoxErr>;
