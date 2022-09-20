@@ -48,8 +48,10 @@ impl<'a> Indexer<'a> {
 mod test {
     use super::*;
 
+    use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
     use crate::entities::document::DocDetails;
+    use crate::entities::location::Location;
     use crate::result::DoxErr;
     use crate::testutils::{Spy, SubscriberExt};
     use crate::use_cases::repository::RepositoryWrite;
@@ -64,6 +66,7 @@ mod test {
     #[test]
     fn repo_write_is_used_to_index_data() -> Result<()> {
         // given
+        init_tracing();
         let (spy, working_repo_write) = RepoWriteSpy::working();
         let bus = LocalBus::new()?;
 
@@ -82,12 +85,13 @@ mod test {
     #[test]
     fn indexed_event_is_send_on_success() -> Result<()> {
         // given
-        let repo_write = Box::new(NoOpRepoWrite);
+        init_tracing();
+        let noop_repo_write = Box::new(NoOpRepoWrite);
         let bus = LocalBus::new()?;
 
         // when
         let indexer = Indexer::new(&bus);
-        indexer.run(repo_write)?;
+        indexer.run(noop_repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
@@ -103,6 +107,7 @@ mod test {
     #[test]
     fn indexed_event_contains_docs_details_received_from_data_extracted_event() -> Result<()> {
         // given
+        init_tracing();
         let repo_write = Box::new(NoOpRepoWrite);
         let bus = LocalBus::new()?;
         let docs_details = vec![DocDetails::new(
@@ -130,6 +135,7 @@ mod test {
     #[test]
     fn no_event_is_send_when_indexing_error_occurs() -> Result<()> {
         // given
+        init_tracing();
         let repo_write = Box::new(ErroneousRepoWrite);
         let bus = LocalBus::new()?;
 
@@ -149,8 +155,42 @@ mod test {
     }
 
     #[test]
+    #[should_panic(expected = "timed out waiting on channel")]
+    fn indexer_ignores_other_bus_events() {
+        // given
+        init_tracing();
+        let noop_repo_write = Box::new(NoOpRepoWrite);
+        let bus = LocalBus::new().unwrap();
+        let location = Location::FS(Vec::new());
+        let ignored_events = [
+            BusEvent::NewDocs(location.clone()),
+            BusEvent::EncryptionRequest(location.clone()),
+            BusEvent::ThumbnailMade(location),
+            BusEvent::PipelineFinished,
+        ];
+
+        // when
+        let indexer = Indexer::new(&bus);
+        indexer.run(noop_repo_write).unwrap();
+
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+        for event in &ignored_events {
+            publ.send(event.clone()).unwrap();
+        }
+
+        // then
+        // all events are still on the bus, no Indexed emitted
+        for _ in ignored_events {
+            assert_ne!(sub.recv().unwrap(), BusEvent::Indexed(Vec::new()));
+        }
+        sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
+    }
+
+    #[test]
     fn failure_during_indexing_do_not_kill_service() -> Result<()> {
         // given
+        init_tracing();
         let (spy, failing_repo_write) = RepoWriteSpy::failing();
         let bus = LocalBus::new()?;
 

@@ -40,6 +40,7 @@ impl<'a> Encrypter<'a> {
                             }
                         }
                         debug!("encryption finished");
+                        // TODO: this should be emitted after all encryption finishes
                         publ.send(BusEvent::PipelineFinished)?;
                     }
                     e => debug!("event not supported in encrypter: {}", e),
@@ -117,7 +118,7 @@ mod test {
 
     #[test]
     #[should_panic(expected = "timed out waiting on channel")]
-    fn other_bus_events_are_ignored() {
+    fn encrypter_ignores_other_bus_events() {
         // given
         init_tracing();
         let noop_cipher = Box::new(NoOpCipher);
