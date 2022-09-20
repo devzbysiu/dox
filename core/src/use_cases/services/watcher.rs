@@ -47,17 +47,14 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::bus::LocalBus;
-    use crate::entities::location::SafePathBuf;
     use crate::result::DoxErr;
-    use crate::testutils::SubscriberExt;
+    use crate::testutils::{mk_file, SubscriberExt};
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::receiver::EventReceiver;
 
     use anyhow::Result;
-    use std::fs;
     use std::sync::mpsc::{channel, Receiver, RecvError};
     use std::time::Duration;
-    use tempfile::tempdir;
 
     #[test]
     fn created_docs_event_puts_new_docs_event_on_bus() -> Result<()> {
@@ -66,25 +63,18 @@ mod test {
         let (tx, rx) = channel();
         let mock_event_receiver = Box::new(MockEventReceiver::new(rx));
         let bus = LocalBus::new()?;
-        // TODO: think about this - now it's required to create file to get actual path (maybe make
-        // it prettier at least?)
-        let tmp_dir = tempdir()?;
-        let temp_file = tmp_dir.path().join("some-file");
-        fs::write(&temp_file, "anything")?;
+        let new_file = mk_file("parent-dir".into(), "some-file.jpg".into())?;
 
         // when
         let watcher = DocsWatcher::new(&bus);
         watcher.run(mock_event_receiver);
-        tx.send(DocsEvent::Created(SafePathBuf::new(&temp_file)))?;
+        tx.send(DocsEvent::Created(new_file.path.clone()))?;
 
         let sub = bus.subscriber();
         let event = sub.recv()?;
 
         // then
-        assert_eq!(
-            event,
-            BusEvent::NewDocs(Location::FS(vec![temp_file.into()]))
-        );
+        assert_eq!(event, BusEvent::NewDocs(Location::FS(vec![new_file.path])));
 
         Ok(())
     }
