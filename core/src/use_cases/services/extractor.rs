@@ -75,7 +75,7 @@ mod test {
     fn extractor_is_used_to_extract_text() -> Result<()> {
         // given
         init_tracing();
-        let (spy, extractor) = ExtractorSpy::create();
+        let (spy, extractor) = ExtractorSpy::working();
         let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
@@ -158,6 +158,30 @@ mod test {
     }
 
     #[test]
+    #[ignore] // TODO: currently, failure kills the thread, fix it
+    fn failure_during_extraction_do_not_kill_service() -> Result<()> {
+        // given
+        let (spy, failing_extractor) = ExtractorSpy::failing();
+        let factory_stub = Box::new(ExtractorFactoryStub::new(failing_extractor));
+        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let bus = LocalBus::new()?;
+
+        let extractor = TxtExtractor::new(&bus);
+        extractor.run(factory_stub);
+        let mut publ = bus.publisher();
+        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path.clone()])))?;
+        assert!(spy.method_called());
+
+        // when
+        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
+
+        // then
+        assert!(spy.method_called());
+
+        Ok(())
+    }
+
+    #[test]
     fn no_event_appears_when_extractor_fails() -> Result<()> {
         // given
         init_tracing();
@@ -204,18 +228,31 @@ mod test {
         }
     }
 
-    struct ExtractorSpy {
-        tx: Mutex<Sender<()>>,
-    }
+    struct ExtractorSpy;
 
     impl ExtractorSpy {
-        fn create() -> (Spy, Extractor) {
+        fn working() -> (Spy, Extractor) {
             let (tx, rx) = channel();
-            (Spy::new(rx), Box::new(Self { tx: Mutex::new(tx) }))
+            (Spy::new(rx), WorkingExtractor::new(tx))
+        }
+
+        fn failing() -> (Spy, Extractor) {
+            let (tx, rx) = channel();
+            (Spy::new(rx), FailingExtractor::new(tx))
         }
     }
 
-    impl DataExtractor for ExtractorSpy {
+    struct WorkingExtractor {
+        tx: Mutex<Sender<()>>,
+    }
+
+    impl WorkingExtractor {
+        fn new(tx: Sender<()>) -> Box<Self> {
+            Box::new(Self { tx: Mutex::new(tx) })
+        }
+    }
+
+    impl DataExtractor for WorkingExtractor {
         fn extract_data(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
             self.tx
                 .lock()
@@ -223,6 +260,27 @@ mod test {
                 .send(())
                 .expect("failed to send message");
             Ok(Vec::new())
+        }
+    }
+
+    struct FailingExtractor {
+        tx: Mutex<Sender<()>>,
+    }
+
+    impl FailingExtractor {
+        fn new(tx: Sender<()>) -> Box<Self> {
+            Box::new(Self { tx: Mutex::new(tx) })
+        }
+    }
+
+    impl DataExtractor for FailingExtractor {
+        fn extract_data(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
+            self.tx
+                .lock()
+                .expect("poisoned mutex")
+                .send(())
+                .expect("failed to send message");
+            Err(DoxErr::OcrExtract(TessInitError { code: 0 }))
         }
     }
 
