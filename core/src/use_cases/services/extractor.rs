@@ -5,8 +5,9 @@ use crate::entities::location::Location;
 use crate::result::Result;
 use crate::use_cases::bus::{Bus, BusEvent};
 
+use rayon::ThreadPoolBuilder;
 use std::thread;
-use tracing::{debug, instrument, warn};
+use tracing::{debug, error, instrument, warn};
 
 pub type ExtractorCreator = Box<dyn ExtractorFactory>;
 pub type Extractor = Box<dyn DataExtractor>;
@@ -21,25 +22,32 @@ impl<'a> TxtExtractor<'a> {
     }
 
     #[instrument(skip(self, extractor_factory))]
-    pub fn run(&self, extractor_factory: ExtractorCreator) {
+    pub fn run(&self, extractor_factory: ExtractorCreator) -> Result<()> {
+        let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
         let sub = self.bus.subscriber();
         let mut publ = self.bus.publisher();
         thread::spawn(move || -> Result<()> {
             loop {
                 match sub.recv()? {
                     BusEvent::NewDocs(location) => {
-                        debug!("NewDocs in: '{:?}', starting extraction", location);
-                        let extension = location.extension();
-                        let extractor = extractor_factory.make(&extension);
-                        publ.send(BusEvent::DataExtracted(extractor.extract_data(&location)?))?;
-                        debug!("extraction finished");
-                        debug!("sending encryption request for: '{:?}'", location);
-                        publ.send(BusEvent::EncryptionRequest(location))?;
+                        if let Err(e) = tp.install(|| -> Result<()> {
+                            debug!("NewDocs in: '{:?}', starting extraction", location);
+                            let extension = location.extension();
+                            let extractor = extractor_factory.make(&extension);
+                            publ.send(BusEvent::DataExtracted(extractor.extract_data(&location)?))?;
+                            debug!("extraction finished");
+                            debug!("sending encryption request for: '{:?}'", location);
+                            publ.send(BusEvent::EncryptionRequest(location))?;
+                            Ok(())
+                        }) {
+                            error!("extraction failed: '{}'", e);
+                        }
                     }
                     e => debug!("event not supported in TxtExtractor: {}", e),
                 }
             }
         });
+        Ok(())
     }
 }
 
@@ -67,6 +75,7 @@ mod test {
 
     use anyhow::Result;
     use leptess::tesseract::TessInitError;
+    use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::{channel, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
@@ -76,13 +85,13 @@ mod test {
         // given
         init_tracing();
         let (spy, extractor) = ExtractorSpy::working();
-        let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
+        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![Some(extractor)]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
         // when
         let txt_extractor = TxtExtractor::new(&bus);
-        txt_extractor.run(factory_stub);
+        txt_extractor.run(factory_stub)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
 
@@ -103,13 +112,13 @@ mod test {
             "thumbnail",
         )];
         let extractor = Box::new(ExtractorStub::new(docs_details.clone()));
-        let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
+        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![Some(extractor)]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
         // when
         let txt_extractor = TxtExtractor::new(&bus);
-        txt_extractor.run(factory_stub);
+        txt_extractor.run(factory_stub)?;
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -132,13 +141,13 @@ mod test {
         // given
         init_tracing();
         let extractor = Box::new(ExtractorStub::new(Vec::new()));
-        let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
+        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![Some(extractor)]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
         // when
         let txt_extractor = TxtExtractor::new(&bus);
-        txt_extractor.run(factory_stub);
+        txt_extractor.run(factory_stub)?;
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -158,25 +167,28 @@ mod test {
     }
 
     #[test]
-    #[ignore] // TODO: currently, failure kills the thread, fix it
     fn failure_during_extraction_do_not_kill_service() -> Result<()> {
         // given
-        let (spy, failing_extractor) = ExtractorSpy::failing();
-        let factory_stub = Box::new(ExtractorFactoryStub::new(failing_extractor));
+        let (spy1, failing_extractor1) = ExtractorSpy::failing();
+        let (spy2, failing_extractor2) = ExtractorSpy::failing();
+        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![
+            Some(failing_extractor1),
+            Some(failing_extractor2),
+        ]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = LocalBus::new()?;
 
-        let extractor = TxtExtractor::new(&bus);
-        extractor.run(factory_stub);
+        let txt_extractor = TxtExtractor::new(&bus);
+        txt_extractor.run(factory_stub)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path.clone()])))?;
-        assert!(spy.method_called());
+        assert!(spy1.method_called());
 
         // when
         publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
 
         // then
-        assert!(spy.method_called());
+        assert!(spy2.method_called());
 
         Ok(())
     }
@@ -186,13 +198,13 @@ mod test {
         // given
         init_tracing();
         let extractor = Box::new(ErroneousExtractor);
-        let factory_stub = Box::new(ExtractorFactoryStub::new(extractor));
+        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![Some(extractor)]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
         // when
         let txt_extractor = TxtExtractor::new(&bus);
-        txt_extractor.run(factory_stub);
+        txt_extractor.run(factory_stub)?;
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -207,24 +219,31 @@ mod test {
     }
 
     struct ExtractorFactoryStub {
-        extractor_stub: Mutex<Option<Extractor>>,
+        extractor_stubs: Mutex<Vec<Option<Extractor>>>,
+        current: AtomicUsize,
     }
 
     impl ExtractorFactoryStub {
-        fn new(extractor_stub: Extractor) -> Self {
+        // NOTE: this bizzare `Vec` of `Extractor`s is required because every time the extractor is
+        // used, it's `take`n from the extractor stub. It has to be taken because it's not possible
+        // to extract it from withing a `Mutex` without using `Option`. It has to be inside `Mutex`
+        // because it has to be `Sync`, otherwise it won't compile. And finally, it has to be taken
+        // because the trait `ExtractorFactory` is supposed to return owned value.
+        fn new(extractor_stubs: Vec<Option<Extractor>>) -> Self {
             Self {
-                extractor_stub: Mutex::new(Some(extractor_stub)),
+                extractor_stubs: Mutex::new(extractor_stubs),
+                current: AtomicUsize::new(0),
             }
         }
     }
 
     impl ExtractorFactory for ExtractorFactoryStub {
         fn make(&self, _ext: &Ext) -> Extractor {
-            self.extractor_stub
-                .lock()
-                .expect("poisoned mutex")
-                .take()
-                .unwrap()
+            let current = self.current.load(Ordering::SeqCst);
+            let mut stubs = self.extractor_stubs.lock().expect("poisoned mutex");
+            let extractor = stubs[current].take().unwrap();
+            self.current.swap(current + 1, Ordering::SeqCst);
+            extractor
         }
     }
 
