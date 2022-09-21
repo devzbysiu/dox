@@ -85,7 +85,7 @@ mod test {
         // given
         init_tracing();
         let (spy, extractor) = ExtractorSpy::working();
-        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![Some(extractor)]));
+        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
@@ -112,7 +112,7 @@ mod test {
             "thumbnail",
         )];
         let extractor = Box::new(ExtractorStub::new(docs_details.clone()));
-        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![Some(extractor)]));
+        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
@@ -141,7 +141,7 @@ mod test {
         // given
         init_tracing();
         let extractor = Box::new(ExtractorStub::new(Vec::new()));
-        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![Some(extractor)]));
+        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
@@ -172,8 +172,8 @@ mod test {
         let (spy1, failing_extractor1) = ExtractorSpy::failing();
         let (spy2, failing_extractor2) = ExtractorSpy::failing();
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![
-            Some(failing_extractor1),
-            Some(failing_extractor2),
+            failing_extractor1,
+            failing_extractor2,
         ]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = LocalBus::new()?;
@@ -198,7 +198,7 @@ mod test {
         // given
         init_tracing();
         let extractor = Box::new(ErroneousExtractor);
-        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![Some(extractor)]));
+        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = Box::new(LocalBus::new()?);
 
@@ -229,7 +229,8 @@ mod test {
         // to extract it from withing a `Mutex` without using `Option`. It has to be inside `Mutex`
         // because it has to be `Sync`, otherwise it won't compile. And finally, it has to be taken
         // because the trait `ExtractorFactory` is supposed to return owned value.
-        fn new(extractor_stubs: Vec<Option<Extractor>>) -> Self {
+        fn new(extractor_stubs: Vec<Extractor>) -> Self {
+            let extractor_stubs = extractor_stubs.into_iter().map(|e| Some(e)).collect();
             Self {
                 extractor_stubs: Mutex::new(extractor_stubs),
                 current: AtomicUsize::new(0),
