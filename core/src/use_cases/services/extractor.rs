@@ -230,7 +230,7 @@ mod test {
         // because it has to be `Sync`, otherwise it won't compile. And finally, it has to be taken
         // because the trait `ExtractorFactory` is supposed to return owned value.
         fn new(extractor_stubs: Vec<Extractor>) -> Self {
-            let extractor_stubs = extractor_stubs.into_iter().map(|e| Some(e)).collect();
+            let extractor_stubs = extractor_stubs.into_iter().map(Option::Some).collect();
             Self {
                 extractor_stubs: Mutex::new(extractor_stubs),
                 current: AtomicUsize::new(0),
