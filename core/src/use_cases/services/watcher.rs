@@ -33,7 +33,7 @@ impl<'a> DocsWatcher<'a> {
                         debug!("got create file event on path: '{:?}'", path);
                         publ.send(BusEvent::NewDocs(Location::FS(vec![path])))?;
                     }
-                    Ok(e) => warn!("this event is not supported: {}", e),
+                    Ok(e) => warn!("event not supported in Watcher: '{}'", e),
                     Err(e) => trace!("watcher error: {:?}", e),
                 }
             }

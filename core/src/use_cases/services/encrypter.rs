@@ -43,7 +43,7 @@ impl<'a> Encrypter<'a> {
                         // TODO: this should be emitted after all encryption finishes
                         publ.send(BusEvent::PipelineFinished)?;
                     }
-                    e => debug!("event not supported in encrypter: {}", e),
+                    e => debug!("event not supported in encrypter: '{}'", e),
                 }
             }
         });

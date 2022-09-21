@@ -43,7 +43,7 @@ impl<'a> TxtExtractor<'a> {
                             error!("extraction failed: '{}'", e);
                         }
                     }
-                    e => debug!("event not supported in TxtExtractor: {}", e),
+                    e => debug!("event not supported in TxtExtractor: '{}'", e),
                 }
             }
         });
@@ -167,6 +167,32 @@ mod test {
     }
 
     #[test]
+    fn no_event_appears_when_extractor_fails() -> Result<()> {
+        // given
+        init_tracing();
+        let (spy, failing_extractor) = ExtractorSpy::failing();
+        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![failing_extractor]));
+        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let bus = Box::new(LocalBus::new()?);
+
+        // when
+        let txt_extractor = TxtExtractor::new(&bus);
+        txt_extractor.run(factory_stub)?;
+
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
+
+        let _event = sub.recv()?; // ignore NewDocs event
+
+        // then
+        assert!(spy.method_called());
+        assert!(sub.try_recv(Duration::from_secs(2)).is_err()); // no more events on the bus
+
+        Ok(())
+    }
+
+    #[test]
     fn failure_during_extraction_do_not_kill_service() -> Result<()> {
         // given
         let (spy1, failing_extractor1) = ExtractorSpy::failing();
@@ -189,31 +215,6 @@ mod test {
 
         // then
         assert!(spy2.method_called());
-
-        Ok(())
-    }
-
-    #[test]
-    fn no_event_appears_when_extractor_fails() -> Result<()> {
-        // given
-        init_tracing();
-        let extractor = Box::new(ErroneousExtractor);
-        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
-        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = Box::new(LocalBus::new()?);
-
-        // when
-        let txt_extractor = TxtExtractor::new(&bus);
-        txt_extractor.run(factory_stub)?;
-
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
-
-        let _event = sub.recv()?; // ignore NewDocs event
-
-        // then
-        assert!(sub.try_recv(Duration::from_secs(2)).is_err()); // no more events on the bus
 
         Ok(())
     }
@@ -318,14 +319,6 @@ mod test {
         fn extract_data(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
             // nothing to do
             Ok(self.docs_details.clone())
-        }
-    }
-
-    struct ErroneousExtractor;
-
-    impl DataExtractor for ErroneousExtractor {
-        fn extract_data(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
-            Err(DoxErr::OcrExtract(TessInitError { code: 0 }))
         }
     }
 }

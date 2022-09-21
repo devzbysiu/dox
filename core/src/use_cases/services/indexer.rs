@@ -36,7 +36,7 @@ impl<'a> Indexer<'a> {
                             error!("indexing failed: '{}'", e);
                         }
                     }
-                    e => debug!("event not supported in indexer: {}", e),
+                    e => debug!("event not supported in indexer: '{}'", e),
                 }
             }
         });

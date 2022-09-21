@@ -44,7 +44,7 @@ impl<'a> ThumbnailGenerator<'a> {
                         debug!("sending encryption request for: '{:?}'", thumbnail_loc);
                         publ.send(BusEvent::EncryptionRequest(thumbnail_loc))?;
                     }
-                    e => debug!("event not supported in ThumbnailGenerator: {}", e),
+                    e => debug!("event not supported in ThumbnailGenerator: '{}'", e),
                 }
             }
         });
