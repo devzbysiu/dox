@@ -85,7 +85,7 @@ fn setup_core(cfg: &Config, bus: EventBus) -> Result<(RepoRead, CipherRead)> {
 
     watcher.run(event_watcher(cfg)?);
     preprocessor.run(preprocessor_factory());
-    extractor.run(extractor_factory())?;
+    extractor.run(extractor_factory());
     let (repo_read, repo_write) = repository(cfg)?;
     indexer.run(repo_write)?;
     let (cipher_read, cipher_write) = cipher();

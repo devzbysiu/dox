@@ -22,7 +22,7 @@ impl TxtExtractor {
     }
 
     #[instrument(skip(self, extractor_factory))]
-    pub fn run(self, extractor_factory: ExtractorCreator) -> Result<()> {
+    pub fn run(self, extractor_factory: ExtractorCreator) {
         thread::spawn(move || -> Result<()> {
             let sub = self.bus.subscriber();
             let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
@@ -34,7 +34,7 @@ impl TxtExtractor {
                         let extractor = extractor_factory.make(&extension);
                         let publ = self.bus.publisher();
                         tp.spawn(move || {
-                            if let Err(e) = extract(location, extractor, publ) {
+                            if let Err(e) = extract(location, &extractor, publ) {
                                 error!("extraction failed: '{}'", e);
                             }
                         });
@@ -43,11 +43,10 @@ impl TxtExtractor {
                 }
             }
         });
-        Ok(())
     }
 }
 
-fn extract(location: Location, extractor: Extractor, mut publ: EventPublisher) -> Result<()> {
+fn extract(location: Location, extractor: &Extractor, mut publ: EventPublisher) -> Result<()> {
     publ.send(BusEvent::DataExtracted(extractor.extract_data(&location)?))?;
     debug!("extraction finished");
     debug!("sending encryption request for: '{:?}'", location);
@@ -95,7 +94,7 @@ mod test {
 
         // when
         let txt_extractor = TxtExtractor::new(bus.share());
-        txt_extractor.run(factory_stub)?;
+        txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
         let mut publ = bus.publisher();
         publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
@@ -123,7 +122,7 @@ mod test {
 
         // when
         let txt_extractor = TxtExtractor::new(bus.share());
-        txt_extractor.run(factory_stub)?;
+        txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         let mut publ = bus.publisher();
@@ -153,7 +152,7 @@ mod test {
 
         // when
         let txt_extractor = TxtExtractor::new(bus.share());
-        txt_extractor.run(factory_stub)?;
+        txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         let mut publ = bus.publisher();
@@ -184,7 +183,7 @@ mod test {
 
         // when
         let txt_extractor = TxtExtractor::new(bus.share());
-        txt_extractor.run(factory_stub)?;
+        txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         let mut publ = bus.publisher();
@@ -213,7 +212,7 @@ mod test {
         let bus = LocalBus::new()?;
 
         let txt_extractor = TxtExtractor::new(bus.share());
-        txt_extractor.run(factory_stub)?;
+        txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
         let mut publ = bus.publisher();
         publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path.clone()])))?;
