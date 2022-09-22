@@ -1,6 +1,6 @@
 use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, BusEvent};
+use crate::use_cases::bus::{Bus, BusEvent, EventBus};
 use crate::use_cases::receiver::{DocsEvent, EventRecv};
 
 use std::thread;
@@ -12,12 +12,12 @@ use tracing::{debug, trace, warn};
 /// [`WatcherEvent::Created`], then [`Event::NewDocs`] is created out of it and published on the
 /// bus.
 #[derive(Debug)]
-pub struct DocsWatcher<'a> {
-    bus: &'a dyn Bus,
+pub struct DocsWatcher {
+    bus: EventBus,
 }
 
-impl<'a> DocsWatcher<'a> {
-    pub fn new(bus: &'a dyn Bus) -> Self {
+impl DocsWatcher {
+    pub fn new(bus: EventBus) -> Self {
         Self { bus }
     }
 
@@ -27,7 +27,7 @@ impl<'a> DocsWatcher<'a> {
         thread::spawn(move || -> Result<()> {
             debug!("watching thread spawned");
             loop {
-                debug!("waiting for event from watcher");
+                trace!("waiting for event from watcher");
                 match receiver.recv() {
                     Ok(DocsEvent::Created(path)) => {
                         debug!("got create file event on path: '{:?}'", path);
@@ -66,7 +66,7 @@ mod test {
         let new_file = mk_file("parent-dir".into(), "some-file.jpg".into())?;
 
         // when
-        let watcher = DocsWatcher::new(&bus);
+        let watcher = DocsWatcher::new(bus.share());
         watcher.run(mock_event_receiver);
         tx.send(DocsEvent::Created(new_file.path.clone()))?;
 
@@ -89,7 +89,7 @@ mod test {
         let bus = LocalBus::new().unwrap();
 
         // when
-        let watcher = DocsWatcher::new(&bus);
+        let watcher = DocsWatcher::new(bus.share());
         watcher.run(mock_event_receiver);
         tx.send(DocsEvent::Other).unwrap();
         let sub = bus.subscriber();
@@ -107,7 +107,7 @@ mod test {
         let bus = LocalBus::new().unwrap();
 
         // when
-        let watcher = DocsWatcher::new(&bus);
+        let watcher = DocsWatcher::new(bus.share());
         watcher.run(erroneous_event_receiver); // error ignored here
         let sub = bus.subscriber();
 

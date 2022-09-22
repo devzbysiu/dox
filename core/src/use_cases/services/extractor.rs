@@ -3,7 +3,7 @@ use crate::entities::document::DocDetails;
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, BusEvent};
+use crate::use_cases::bus::{Bus, BusEvent, EventBus, EventPublisher};
 
 use rayon::ThreadPoolBuilder;
 use std::thread;
@@ -12,36 +12,32 @@ use tracing::{debug, error, instrument, warn};
 pub type ExtractorCreator = Box<dyn ExtractorFactory>;
 pub type Extractor = Box<dyn DataExtractor>;
 
-pub struct TxtExtractor<'a> {
-    bus: &'a dyn Bus,
+pub struct TxtExtractor {
+    bus: EventBus,
 }
 
-impl<'a> TxtExtractor<'a> {
-    pub fn new(bus: &'a dyn Bus) -> Self {
+impl TxtExtractor {
+    pub fn new(bus: EventBus) -> Self {
         Self { bus }
     }
 
     #[instrument(skip(self, extractor_factory))]
-    pub fn run(&self, extractor_factory: ExtractorCreator) -> Result<()> {
-        let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
-        let sub = self.bus.subscriber();
-        let mut publ = self.bus.publisher();
+    pub fn run(self, extractor_factory: ExtractorCreator) -> Result<()> {
         thread::spawn(move || -> Result<()> {
+            let sub = self.bus.subscriber();
+            let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
             loop {
                 match sub.recv()? {
                     BusEvent::NewDocs(location) => {
-                        if let Err(e) = tp.install(|| -> Result<()> {
-                            debug!("NewDocs in: '{:?}', starting extraction", location);
-                            let extension = location.extension();
-                            let extractor = extractor_factory.make(&extension);
-                            publ.send(BusEvent::DataExtracted(extractor.extract_data(&location)?))?;
-                            debug!("extraction finished");
-                            debug!("sending encryption request for: '{:?}'", location);
-                            publ.send(BusEvent::EncryptionRequest(location))?;
-                            Ok(())
-                        }) {
-                            error!("extraction failed: '{}'", e);
-                        }
+                        debug!("NewDocs in: '{:?}', starting extraction", location);
+                        let extension = location.extension();
+                        let extractor = extractor_factory.make(&extension);
+                        let publ = self.bus.publisher();
+                        tp.spawn(move || {
+                            if let Err(e) = extract(location, extractor, publ) {
+                                error!("extraction failed: '{}'", e);
+                            }
+                        });
                     }
                     e => debug!("event not supported in TxtExtractor: '{}'", e),
                 }
@@ -49,6 +45,14 @@ impl<'a> TxtExtractor<'a> {
         });
         Ok(())
     }
+}
+
+fn extract(location: Location, extractor: Extractor, mut publ: EventPublisher) -> Result<()> {
+    publ.send(BusEvent::DataExtracted(extractor.extract_data(&location)?))?;
+    debug!("extraction finished");
+    debug!("sending encryption request for: '{:?}'", location);
+    publ.send(BusEvent::EncryptionRequest(location))?;
+    Ok(())
 }
 
 /// Extracts text.
@@ -87,11 +91,12 @@ mod test {
         let (spy, extractor) = ExtractorSpy::working();
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = Box::new(LocalBus::new()?);
+        let bus = LocalBus::new()?;
 
         // when
-        let txt_extractor = TxtExtractor::new(&bus);
+        let txt_extractor = TxtExtractor::new(bus.share());
         txt_extractor.run(factory_stub)?;
+        thread::sleep(Duration::from_secs(1)); // allow to start extractor
         let mut publ = bus.publisher();
         publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
 
@@ -114,11 +119,12 @@ mod test {
         let extractor = Box::new(ExtractorStub::new(docs_details.clone()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = Box::new(LocalBus::new()?);
+        let bus = LocalBus::new()?;
 
         // when
-        let txt_extractor = TxtExtractor::new(&bus);
+        let txt_extractor = TxtExtractor::new(bus.share());
         txt_extractor.run(factory_stub)?;
+        thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -143,11 +149,12 @@ mod test {
         let extractor = Box::new(ExtractorStub::new(Vec::new()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = Box::new(LocalBus::new()?);
+        let bus = LocalBus::new()?;
 
         // when
-        let txt_extractor = TxtExtractor::new(&bus);
+        let txt_extractor = TxtExtractor::new(bus.share());
         txt_extractor.run(factory_stub)?;
+        thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -173,11 +180,12 @@ mod test {
         let (spy, failing_extractor) = ExtractorSpy::failing();
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![failing_extractor]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = Box::new(LocalBus::new()?);
+        let bus = LocalBus::new()?;
 
         // when
-        let txt_extractor = TxtExtractor::new(&bus);
+        let txt_extractor = TxtExtractor::new(bus.share());
         txt_extractor.run(factory_stub)?;
+        thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -204,8 +212,9 @@ mod test {
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
         let bus = LocalBus::new()?;
 
-        let txt_extractor = TxtExtractor::new(&bus);
+        let txt_extractor = TxtExtractor::new(bus.share());
         txt_extractor.run(factory_stub)?;
+        thread::sleep(Duration::from_secs(1)); // allow to start extractor
         let mut publ = bus.publisher();
         publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path.clone()])))?;
         assert!(spy1.method_called());

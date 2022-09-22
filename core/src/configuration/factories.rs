@@ -24,7 +24,7 @@ pub fn config_loader() -> CfgLoader {
     Box::new(FsConfigLoader)
 }
 
-pub fn bus() -> Result<EventBus> {
+pub fn event_bus() -> Result<EventBus> {
     Ok(Box::new(LocalBus::new()?))
 }
 

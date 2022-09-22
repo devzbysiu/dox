@@ -1,6 +1,6 @@
 use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, BusEvent};
+use crate::use_cases::bus::{Bus, BusEvent, EventBus};
 use crate::use_cases::cipher::CipherWrite;
 
 use rayon::ThreadPoolBuilder;
@@ -8,12 +8,12 @@ use std::fs;
 use std::thread;
 use tracing::{debug, error, instrument, warn};
 
-pub struct Encrypter<'a> {
-    bus: &'a dyn Bus,
+pub struct Encrypter {
+    bus: EventBus,
 }
 
-impl<'a> Encrypter<'a> {
-    pub fn new(bus: &'a dyn Bus) -> Self {
+impl Encrypter {
+    pub fn new(bus: EventBus) -> Self {
         Self { bus }
     }
 
@@ -76,7 +76,7 @@ mod test {
         let bus = LocalBus::new()?;
 
         // when
-        let encrypter = Encrypter::new(&bus);
+        let encrypter = Encrypter::new(bus.share());
         encrypter.run(cipher_writer)?;
 
         let mut publ = bus.publisher();
@@ -99,7 +99,7 @@ mod test {
         let bus = LocalBus::new()?;
 
         // when
-        let encrypter = Encrypter::new(&bus);
+        let encrypter = Encrypter::new(bus.share());
         encrypter.run(noop_cipher)?;
 
         let mut publ = bus.publisher();
@@ -133,7 +133,7 @@ mod test {
         ];
 
         // when
-        let encrypter = Encrypter::new(&bus);
+        let encrypter = Encrypter::new(bus.share());
         encrypter.run(noop_cipher).unwrap();
 
         let mut publ = bus.publisher();
@@ -157,7 +157,7 @@ mod test {
         let bus = LocalBus::new()?;
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
 
-        let encrypter = Encrypter::new(&bus);
+        let encrypter = Encrypter::new(bus.share());
         encrypter.run(failing_repo_write)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![new_file

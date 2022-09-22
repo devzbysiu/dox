@@ -2,7 +2,7 @@
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, BusEvent};
+use crate::use_cases::bus::{Bus, BusEvent, EventBus};
 use crate::use_cases::config::Config;
 
 use std::path::Path;
@@ -18,11 +18,11 @@ pub type PreprocessorCreator = Box<dyn PreprocessorFactory>;
 /// [`FilePreprocessor`]). It then calls [`FilePreprocessor::preprocess`] method.
 pub struct ThumbnailGenerator<'a> {
     cfg: &'a Config,
-    bus: &'a dyn Bus,
+    bus: EventBus,
 }
 
 impl<'a> ThumbnailGenerator<'a> {
-    pub fn new(cfg: &'a Config, bus: &'a dyn Bus) -> Self {
+    pub fn new(cfg: &'a Config, bus: EventBus) -> Self {
         Self { cfg, bus }
     }
 

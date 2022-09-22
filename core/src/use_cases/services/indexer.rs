@@ -1,17 +1,17 @@
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, BusEvent};
+use crate::use_cases::bus::{Bus, BusEvent, EventBus};
 use crate::use_cases::repository::RepoWrite;
 
 use rayon::ThreadPoolBuilder;
 use std::thread;
 use tracing::{debug, error, instrument, warn};
 
-pub struct Indexer<'a> {
-    bus: &'a dyn Bus,
+pub struct Indexer {
+    bus: EventBus,
 }
 
-impl<'a> Indexer<'a> {
-    pub fn new(bus: &'a dyn Bus) -> Self {
+impl Indexer {
+    pub fn new(bus: EventBus) -> Self {
         Self { bus }
     }
 
@@ -71,7 +71,7 @@ mod test {
         let bus = LocalBus::new()?;
 
         // when
-        let indexer = Indexer::new(&bus);
+        let indexer = Indexer::new(bus.share());
         indexer.run(working_repo_write)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
@@ -90,7 +90,7 @@ mod test {
         let bus = LocalBus::new()?;
 
         // when
-        let indexer = Indexer::new(&bus);
+        let indexer = Indexer::new(bus.share());
         indexer.run(noop_repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -118,7 +118,7 @@ mod test {
         )];
 
         // when
-        let indexer = Indexer::new(&bus);
+        let indexer = Indexer::new(bus.share());
         indexer.run(repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -140,7 +140,7 @@ mod test {
         let bus = LocalBus::new()?;
 
         // when
-        let indexer = Indexer::new(&bus);
+        let indexer = Indexer::new(bus.share());
         indexer.run(repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -170,7 +170,7 @@ mod test {
         ];
 
         // when
-        let indexer = Indexer::new(&bus);
+        let indexer = Indexer::new(bus.share());
         indexer.run(noop_repo_write).unwrap();
 
         let mut publ = bus.publisher();
@@ -194,7 +194,7 @@ mod test {
         let (spy, failing_repo_write) = RepoWriteSpy::failing();
         let bus = LocalBus::new()?;
 
-        let indexer = Indexer::new(&bus);
+        let indexer = Indexer::new(bus.share());
         indexer.run(failing_repo_write)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::DataExtracted(Vec::new()))?;

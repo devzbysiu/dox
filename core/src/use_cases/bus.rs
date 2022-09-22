@@ -20,6 +20,8 @@ pub trait Bus: Send + Sync + Debug {
     fn subscriber(&self) -> EventSubscriber;
 
     fn publisher(&self) -> EventPublisher;
+
+    fn share(&self) -> EventBus;
 }
 
 // Allows to pass Box<dyn Bus> as &dyn Bus
@@ -30,6 +32,10 @@ impl<T: Bus + ?Sized> Bus for Box<T> {
 
     fn publisher(&self) -> EventPublisher {
         (**self).publisher()
+    }
+
+    fn share(&self) -> EventBus {
+        (**self).share()
     }
 }
 

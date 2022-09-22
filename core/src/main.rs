@@ -2,8 +2,8 @@
 #![allow(clippy::module_name_repetitions)]
 
 use crate::configuration::factories::{
-    bus, cipher, config_loader, config_resolver, event_watcher, extractor_factory, persistence,
-    preprocessor_factory, repository,
+    cipher, config_loader, config_resolver, event_bus, event_watcher, extractor_factory,
+    persistence, preprocessor_factory, repository,
 };
 use crate::configuration::telemetry::init_tracing;
 use crate::data_providers::server::{
@@ -22,6 +22,7 @@ use crate::use_cases::services::watcher::DocsWatcher;
 use rocket::{routes, Build, Rocket};
 use std::env;
 use tracing::{debug, instrument};
+use use_cases::bus::EventBus;
 use use_cases::cipher::CipherRead;
 
 mod configuration;
@@ -36,6 +37,7 @@ mod testutils;
 
 #[rocket::main]
 async fn main() -> Result<()> {
+    init_tracing();
     let path_override = env::var("DOX_CONFIG_PATH")
         .ok()
         .or_else(|| env::args().nth(1));
@@ -47,16 +49,14 @@ async fn main() -> Result<()> {
 #[must_use]
 #[instrument]
 pub fn rocket(path_override: Option<String>) -> Rocket<Build> {
-    init_tracing();
-
     let resolver = config_resolver(config_loader());
 
     let cfg = resolver
         .handle_config(path_override)
         .expect("failed to get config");
 
-    let bus = bus().expect("failed to create bus");
-    let (repo_read, cipher_read) = setup_core(&cfg, &bus).expect("failed to setup core");
+    let bus = event_bus().expect("failed to create bus");
+    let (repo_read, cipher_read) = setup_core(&cfg, bus).expect("failed to setup core");
 
     debug!("starting server...");
     rocket::build()
@@ -72,16 +72,15 @@ pub fn rocket(path_override: Option<String>) -> Rocket<Build> {
         )
         .manage(repo_read)
         .manage(cipher_read)
-        .manage(bus)
         .manage(persistence())
         .manage(cfg)
 }
 
-fn setup_core(cfg: &Config, bus: &dyn Bus) -> Result<(RepoRead, CipherRead)> {
-    let watcher = DocsWatcher::new(bus);
-    let preprocessor = ThumbnailGenerator::new(cfg, bus);
-    let extractor = TxtExtractor::new(bus);
-    let indexer = Indexer::new(bus);
+fn setup_core(cfg: &Config, bus: EventBus) -> Result<(RepoRead, CipherRead)> {
+    let watcher = DocsWatcher::new(bus.share());
+    let preprocessor = ThumbnailGenerator::new(cfg, bus.share());
+    let extractor = TxtExtractor::new(bus.share());
+    let indexer = Indexer::new(bus.share());
     let encrypter = Encrypter::new(bus);
 
     watcher.run(event_watcher(cfg)?);
