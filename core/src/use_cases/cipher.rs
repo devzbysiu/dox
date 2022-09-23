@@ -1,7 +1,9 @@
+use std::sync::Arc;
+
 use crate::result::Result;
 
-pub type CipherRead = Box<dyn CipherReadStrategy>;
-pub type CipherWrite = Box<dyn CipherWriteStrategy>;
+pub type CipherRead = Arc<dyn CipherReadStrategy>;
+pub type CipherWrite = Arc<dyn CipherWriteStrategy>;
 
 pub trait CipherReadStrategy: Sync + Send {
     fn decrypt(&self, src_buf: &[u8]) -> Result<Vec<u8>>;

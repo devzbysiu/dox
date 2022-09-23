@@ -1,4 +1,4 @@
-use crate::entities::location::Location;
+use crate::entities::location::{Location, SafePathBuf};
 use crate::result::Result;
 use crate::use_cases::bus::{Bus, BusEvent, EventBus};
 use crate::use_cases::cipher::CipherWrite;
@@ -18,26 +18,25 @@ impl Encrypter {
     }
 
     #[instrument(skip(self, cipher))]
-    pub fn run(&self, cipher: CipherWrite) -> Result<()> {
+    pub fn run(self, cipher: CipherWrite) -> Result<()> {
         let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
         let sub = self.bus.subscriber();
-        let mut publ = self.bus.publisher();
         // TODO: improve tracing of threads somehow. Currently, it's hard to debug because threads
         // do not appear as separate tracing's scopes
         thread::spawn(move || -> Result<()> {
+            let mut publ = self.bus.publisher();
             loop {
                 match sub.recv()? {
                     BusEvent::EncryptionRequest(location) => {
                         debug!("encryption request: '{:?}', starting encryption", location);
                         let Location::FS(paths) = location;
                         for path in paths {
-                            if let Err(e) = tp.install(|| -> Result<()> {
-                                let encrypted = cipher.encrypt(&fs::read(&path)?)?;
-                                fs::write(path, encrypted)?;
-                                Ok(())
-                            }) {
-                                error!("failed to encrypt: '{}'", e);
-                            }
+                            let cipher = cipher.clone();
+                            tp.spawn(move || {
+                                if let Err(e) = encrypt(cipher, &path) {
+                                    error!("failed to encrypt path '{}': '{}'", path, e);
+                                }
+                            });
                         }
                         debug!("encryption finished");
                         // TODO: this should be emitted after all encryption finishes
@@ -49,6 +48,12 @@ impl Encrypter {
         });
         Ok(())
     }
+}
+
+fn encrypt(cipher: CipherWrite, path: &SafePathBuf) -> Result<()> {
+    let encrypted = cipher.encrypt(&fs::read(path)?)?;
+    fs::write(path, encrypted)?;
+    Ok(())
 }
 
 #[cfg(test)]

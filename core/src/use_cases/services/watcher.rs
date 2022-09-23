@@ -21,11 +21,11 @@ impl DocsWatcher {
         Self { bus }
     }
 
-    pub fn run(&self, receiver: EventRecv) {
+    pub fn run(self, receiver: EventRecv) {
         debug!("spawning watching thread");
-        let mut publ = self.bus.publisher();
         thread::spawn(move || -> Result<()> {
             debug!("watching thread spawned");
+            let mut publ = self.bus.publisher();
             loop {
                 trace!("waiting for event from watcher");
                 match receiver.recv() {

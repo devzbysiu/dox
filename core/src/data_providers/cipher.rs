@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::result::Result;
 use crate::use_cases::cipher::{CipherRead, CipherReadStrategy, CipherWrite, CipherWriteStrategy};
 
@@ -10,8 +12,8 @@ pub struct Chacha20Poly1305Cipher;
 impl Chacha20Poly1305Cipher {
     pub fn create() -> (CipherRead, CipherWrite) {
         (
-            Box::new(Chacha20Poly1305Read),
-            Box::new(Chacha20Poly1305Write),
+            Arc::new(Chacha20Poly1305Read),
+            Arc::new(Chacha20Poly1305Write),
         )
     }
 }
