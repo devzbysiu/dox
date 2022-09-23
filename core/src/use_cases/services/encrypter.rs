@@ -33,7 +33,7 @@ impl Encrypter {
                         for path in paths {
                             let cipher = cipher.clone();
                             tp.spawn(move || {
-                                if let Err(e) = encrypt(cipher, &path) {
+                                if let Err(e) = encrypt(&cipher, &path) {
                                     error!("failed to encrypt path '{}': '{}'", path, e);
                                 }
                             });
@@ -50,7 +50,7 @@ impl Encrypter {
     }
 }
 
-fn encrypt(cipher: CipherWrite, path: &SafePathBuf) -> Result<()> {
+fn encrypt(cipher: &CipherWrite, path: &SafePathBuf) -> Result<()> {
     let encrypted = cipher.encrypt(&fs::read(path)?)?;
     fs::write(path, encrypted)?;
     Ok(())
