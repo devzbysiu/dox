@@ -60,11 +60,11 @@ fn encrypt(cipher: CipherWrite, path: &SafePathBuf) -> Result<()> {
 mod test {
     use super::*;
 
+    use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
-    use crate::data_providers::bus::LocalBus;
     use crate::result::DoxErr;
     use crate::testutils::{mk_file, Spy, SubscriberExt};
-    use crate::use_cases::bus::{Bus, BusEvent};
+    use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
 
     use anyhow::Result;
@@ -78,7 +78,7 @@ mod test {
         init_tracing();
         let (cipher_spy, cipher_writer) = CipherSpy::working();
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = Arc::new(LocalBus::new()?);
+        let bus = event_bus()?;
 
         // when
         let encrypter = Encrypter::new(bus.clone());
@@ -101,7 +101,7 @@ mod test {
         init_tracing();
         let noop_cipher = Arc::new(NoOpCipher);
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = Arc::new(LocalBus::new()?);
+        let bus = event_bus()?;
 
         // when
         let encrypter = Encrypter::new(bus.clone());
@@ -128,7 +128,7 @@ mod test {
         init_tracing();
         let noop_cipher = Arc::new(NoOpCipher);
         let _new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into()).unwrap();
-        let bus = Arc::new(LocalBus::new().unwrap());
+        let bus = event_bus().unwrap();
         let location = Location::FS(Vec::new());
         let ignored_events = [
             BusEvent::NewDocs(location.clone()),
@@ -159,7 +159,7 @@ mod test {
     fn failure_during_encryption_do_not_kill_service() -> Result<()> {
         // given
         let (spy, failing_repo_write) = CipherSpy::failing();
-        let bus = Arc::new(LocalBus::new()?);
+        let bus = event_bus()?;
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
 
         let encrypter = Encrypter::new(bus.clone());

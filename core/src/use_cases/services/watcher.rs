@@ -45,16 +45,15 @@ impl DocsWatcher {
 mod test {
     use super::*;
 
+    use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
-    use crate::data_providers::bus::LocalBus;
     use crate::result::DoxErr;
     use crate::testutils::{mk_file, SubscriberExt};
-    use crate::use_cases::bus::{Bus, BusEvent};
+    use crate::use_cases::bus::BusEvent;
     use crate::use_cases::receiver::EventReceiver;
 
     use anyhow::Result;
     use std::sync::mpsc::{channel, Receiver, RecvError};
-    use std::sync::Arc;
     use std::time::Duration;
 
     #[test]
@@ -63,7 +62,7 @@ mod test {
         init_tracing();
         let (tx, rx) = channel();
         let mock_event_receiver = Box::new(MockEventReceiver::new(rx));
-        let bus = Arc::new(LocalBus::new()?);
+        let bus = event_bus()?;
         let new_file = mk_file("parent-dir".into(), "some-file.jpg".into())?;
 
         // when
@@ -87,7 +86,7 @@ mod test {
         init_tracing();
         let (tx, rx) = channel();
         let mock_event_receiver = Box::new(MockEventReceiver::new(rx));
-        let bus = Arc::new(LocalBus::new().unwrap());
+        let bus = event_bus().unwrap();
 
         // when
         let watcher = DocsWatcher::new(bus.clone());
@@ -105,7 +104,7 @@ mod test {
         // given
         init_tracing();
         let erroneous_event_receiver = Box::new(ErroneousEventReceiver);
-        let bus = Arc::new(LocalBus::new().unwrap());
+        let bus = event_bus().unwrap();
 
         // when
         let watcher = DocsWatcher::new(bus.clone());

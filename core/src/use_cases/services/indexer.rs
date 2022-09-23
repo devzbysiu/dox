@@ -48,19 +48,18 @@ impl Indexer {
 mod test {
     use super::*;
 
+    use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
-    use crate::data_providers::bus::LocalBus;
     use crate::entities::document::DocDetails;
     use crate::entities::location::Location;
     use crate::result::DoxErr;
     use crate::testutils::{Spy, SubscriberExt};
-    use crate::use_cases::bus::Bus;
     use crate::use_cases::repository::RepositoryWrite;
     use crate::use_cases::user::User;
 
     use anyhow::Result;
     use std::sync::mpsc::{channel, Sender};
-    use std::sync::{Arc, Mutex};
+    use std::sync::{Mutex};
     use std::time::Duration;
     use tantivy::TantivyError;
 
@@ -69,7 +68,7 @@ mod test {
         // given
         init_tracing();
         let (spy, working_repo_write) = RepoWriteSpy::working();
-        let bus = Arc::new(LocalBus::new()?);
+        let bus = event_bus()?;
 
         // when
         let indexer = Indexer::new(bus.clone());
@@ -88,7 +87,7 @@ mod test {
         // given
         init_tracing();
         let noop_repo_write = Box::new(NoOpRepoWrite);
-        let bus = Arc::new(LocalBus::new()?);
+        let bus = event_bus()?;
 
         // when
         let indexer = Indexer::new(bus.clone());
@@ -110,7 +109,7 @@ mod test {
         // given
         init_tracing();
         let repo_write = Box::new(NoOpRepoWrite);
-        let bus = Arc::new(LocalBus::new()?);
+        let bus = event_bus()?;
         let docs_details = vec![DocDetails::new(
             User::new("some@email.com"),
             "path",
@@ -138,7 +137,7 @@ mod test {
         // given
         init_tracing();
         let repo_write = Box::new(ErroneousRepoWrite);
-        let bus = Arc::new(LocalBus::new()?);
+        let bus = event_bus()?;
 
         // when
         let indexer = Indexer::new(bus.clone());
@@ -161,7 +160,7 @@ mod test {
         // given
         init_tracing();
         let noop_repo_write = Box::new(NoOpRepoWrite);
-        let bus = Arc::new(LocalBus::new().unwrap());
+        let bus = event_bus().unwrap();
         let location = Location::FS(Vec::new());
         let ignored_events = [
             BusEvent::NewDocs(location.clone()),
@@ -193,7 +192,7 @@ mod test {
         // given
         init_tracing();
         let (spy, failing_repo_write) = RepoWriteSpy::failing();
-        let bus = Arc::new(LocalBus::new()?);
+        let bus = event_bus()?;
 
         let indexer = Indexer::new(bus.clone());
         indexer.run(failing_repo_write)?;
