@@ -46,16 +46,15 @@ impl<'r> FromRequest<'r> for User {
         let token = token.unwrap(); // can unwrap, because checked earlier
         let key_store = key_store().await;
         match key_store.verify(token) {
-            Ok(jwt) => match jwt.payload().get_str("email") {
-                Some(email) => {
+            Ok(jwt) => {
+                if let Some(email) = jwt.payload().get_str("email") {
                     debug!("name={:?}", email);
                     Outcome::Success(User::new(email))
-                }
-                None => {
+                } else {
                     error!("Invalid idToken, missing 'email' field");
                     Outcome::Failure((Status::BadRequest, DoxErr::InvalidIdToken))
                 }
-            },
+            }
             Err(e) => {
                 error!("Could not verify token. Reason: {:?}", e);
                 Outcome::Failure((Status::Unauthorized, DoxErr::TokenVerification))
