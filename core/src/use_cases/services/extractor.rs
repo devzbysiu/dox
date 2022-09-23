@@ -3,7 +3,7 @@ use crate::entities::document::DocDetails;
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, BusEvent, EventBus, EventPublisher};
+use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher};
 
 use rayon::ThreadPoolBuilder;
 use std::thread;
@@ -74,13 +74,14 @@ mod test {
     use crate::data_providers::bus::LocalBus;
     use crate::result::DoxErr;
     use crate::testutils::{mk_file, Spy, SubscriberExt};
+    use crate::use_cases::bus::Bus;
     use crate::use_cases::user::User;
 
     use anyhow::Result;
     use leptess::tesseract::TessInitError;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::{channel, Sender};
-    use std::sync::Mutex;
+    use std::sync::{Arc, Mutex};
     use std::time::Duration;
 
     #[test]
@@ -90,10 +91,10 @@ mod test {
         let (spy, extractor) = ExtractorSpy::working();
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
 
         // when
-        let txt_extractor = TxtExtractor::new(bus.share());
+        let txt_extractor = TxtExtractor::new(bus.clone());
         txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
         let mut publ = bus.publisher();
@@ -118,10 +119,10 @@ mod test {
         let extractor = Box::new(ExtractorStub::new(docs_details.clone()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
 
         // when
-        let txt_extractor = TxtExtractor::new(bus.share());
+        let txt_extractor = TxtExtractor::new(bus.clone());
         txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
@@ -148,10 +149,10 @@ mod test {
         let extractor = Box::new(ExtractorStub::new(Vec::new()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
 
         // when
-        let txt_extractor = TxtExtractor::new(bus.share());
+        let txt_extractor = TxtExtractor::new(bus.clone());
         txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
@@ -179,10 +180,10 @@ mod test {
         let (spy, failing_extractor) = ExtractorSpy::failing();
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![failing_extractor]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
 
         // when
-        let txt_extractor = TxtExtractor::new(bus.share());
+        let txt_extractor = TxtExtractor::new(bus.clone());
         txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
@@ -209,9 +210,9 @@ mod test {
             failing_extractor2,
         ]));
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
 
-        let txt_extractor = TxtExtractor::new(bus.share());
+        let txt_extractor = TxtExtractor::new(bus.clone());
         txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
         let mut publ = bus.publisher();

@@ -1,6 +1,6 @@
 use crate::entities::location::{Location, SafePathBuf};
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, BusEvent, EventBus};
+use crate::use_cases::bus::{BusEvent, EventBus};
 use crate::use_cases::cipher::CipherWrite;
 
 use rayon::ThreadPoolBuilder;
@@ -64,12 +64,12 @@ mod test {
     use crate::data_providers::bus::LocalBus;
     use crate::result::DoxErr;
     use crate::testutils::{mk_file, Spy, SubscriberExt};
-    use crate::use_cases::bus::BusEvent;
+    use crate::use_cases::bus::{Bus, BusEvent};
     use crate::use_cases::cipher::CipherWriteStrategy;
 
     use anyhow::Result;
     use std::sync::mpsc::{channel, Sender};
-    use std::sync::Mutex;
+    use std::sync::{Arc, Mutex};
     use std::time::Duration;
 
     #[test]
@@ -78,10 +78,10 @@ mod test {
         init_tracing();
         let (cipher_spy, cipher_writer) = CipherSpy::working();
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
 
         // when
-        let encrypter = Encrypter::new(bus.share());
+        let encrypter = Encrypter::new(bus.clone());
         encrypter.run(cipher_writer)?;
 
         let mut publ = bus.publisher();
@@ -99,12 +99,12 @@ mod test {
     fn pipeline_finished_message_appears_after_encryption() -> Result<()> {
         // given
         init_tracing();
-        let noop_cipher = Box::new(NoOpCipher);
+        let noop_cipher = Arc::new(NoOpCipher);
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
 
         // when
-        let encrypter = Encrypter::new(bus.share());
+        let encrypter = Encrypter::new(bus.clone());
         encrypter.run(noop_cipher)?;
 
         let mut publ = bus.publisher();
@@ -126,9 +126,9 @@ mod test {
     fn encrypter_ignores_other_bus_events() {
         // given
         init_tracing();
-        let noop_cipher = Box::new(NoOpCipher);
+        let noop_cipher = Arc::new(NoOpCipher);
         let _new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into()).unwrap();
-        let bus = LocalBus::new().unwrap();
+        let bus = Arc::new(LocalBus::new().unwrap());
         let location = Location::FS(Vec::new());
         let ignored_events = [
             BusEvent::NewDocs(location.clone()),
@@ -138,7 +138,7 @@ mod test {
         ];
 
         // when
-        let encrypter = Encrypter::new(bus.share());
+        let encrypter = Encrypter::new(bus.clone());
         encrypter.run(noop_cipher).unwrap();
 
         let mut publ = bus.publisher();
@@ -159,10 +159,10 @@ mod test {
     fn failure_during_encryption_do_not_kill_service() -> Result<()> {
         // given
         let (spy, failing_repo_write) = CipherSpy::failing();
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
         let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
 
-        let encrypter = Encrypter::new(bus.share());
+        let encrypter = Encrypter::new(bus.clone());
         encrypter.run(failing_repo_write)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![new_file
@@ -200,8 +200,8 @@ mod test {
     }
 
     impl WorkingCipher {
-        fn new(tx: Sender<()>) -> Box<Self> {
-            Box::new(Self { tx: Mutex::new(tx) })
+        fn new(tx: Sender<()>) -> Arc<Self> {
+            Arc::new(Self { tx: Mutex::new(tx) })
         }
     }
 
@@ -221,8 +221,8 @@ mod test {
     }
 
     impl FailingCipher {
-        fn new(tx: Sender<()>) -> Box<Self> {
-            Box::new(Self { tx: Mutex::new(tx) })
+        fn new(tx: Sender<()>) -> Arc<Self> {
+            Arc::new(Self { tx: Mutex::new(tx) })
         }
     }
 

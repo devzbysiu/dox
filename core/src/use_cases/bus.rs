@@ -7,8 +7,9 @@ use crate::entities::location::Location;
 use crate::result::Result;
 
 use std::fmt::{Debug, Display};
+use std::sync::Arc;
 
-pub type EventBus = Box<dyn Bus>;
+pub type EventBus = Arc<dyn Bus>;
 pub type EventSubscriber = Box<dyn Subscriber>;
 pub type EventPublisher = Box<dyn Publisher>;
 
@@ -20,8 +21,6 @@ pub trait Bus: Send + Sync + Debug {
     fn subscriber(&self) -> EventSubscriber;
 
     fn publisher(&self) -> EventPublisher;
-
-    fn share(&self) -> EventBus;
 }
 
 // Allows to pass Box<dyn Bus> as &dyn Bus
@@ -32,10 +31,6 @@ impl<T: Bus + ?Sized> Bus for Box<T> {
 
     fn publisher(&self) -> EventPublisher {
         (**self).publisher()
-    }
-
-    fn share(&self) -> EventBus {
-        (**self).share()
     }
 }
 

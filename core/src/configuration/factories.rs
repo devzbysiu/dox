@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::data_providers::bus::LocalBus;
 use crate::data_providers::cipher::Chacha20Poly1305Cipher;
 use crate::data_providers::config::{FsConfigLoader, FsConfigResolver};
@@ -25,7 +27,7 @@ pub fn config_loader() -> CfgLoader {
 }
 
 pub fn event_bus() -> Result<EventBus> {
-    Ok(Box::new(LocalBus::new()?))
+    Ok(Arc::new(LocalBus::new()?))
 }
 
 pub fn preprocessor_factory() -> PreprocessorCreator {

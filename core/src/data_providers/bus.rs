@@ -5,7 +5,7 @@ use std::fmt::Debug;
 
 use crate::result::Result;
 use crate::use_cases::bus::{
-    Bus, BusEvent, EventBus, EventPublisher, EventSubscriber, Publisher, Subscriber,
+    Bus, BusEvent, EventPublisher, EventSubscriber, Publisher, Subscriber,
 };
 
 const BUS_CAPACITY: u64 = 1024; // TODO: take care of this `capacity`
@@ -38,12 +38,6 @@ impl Bus for LocalBus {
 
     fn publisher(&self) -> EventPublisher {
         Box::new(LocalPublisher::new(self.eventador.publisher()))
-    }
-
-    fn share(&self) -> EventBus {
-        Box::new(Self {
-            eventador: self.eventador.clone(),
-        })
     }
 }
 

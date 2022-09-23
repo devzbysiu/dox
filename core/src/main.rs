@@ -10,7 +10,6 @@ use crate::data_providers::server::{
     all_thumbnails, document, receive_document, search, thumbnail,
 };
 use crate::result::Result;
-use crate::use_cases::bus::Bus;
 use crate::use_cases::config::Config;
 use crate::use_cases::repository::RepoRead;
 use crate::use_cases::services::encrypter::Encrypter;
@@ -77,10 +76,10 @@ pub fn rocket(path_override: Option<String>) -> Rocket<Build> {
 }
 
 fn setup_core(cfg: &Config, bus: EventBus) -> Result<(RepoRead, CipherRead)> {
-    let watcher = DocsWatcher::new(bus.share());
-    let preprocessor = ThumbnailGenerator::new(cfg, bus.share());
-    let extractor = TxtExtractor::new(bus.share());
-    let indexer = Indexer::new(bus.share());
+    let watcher = DocsWatcher::new(bus.clone());
+    let preprocessor = ThumbnailGenerator::new(cfg, bus.clone());
+    let extractor = TxtExtractor::new(bus.clone());
+    let indexer = Indexer::new(bus.clone());
     let encrypter = Encrypter::new(bus);
 
     watcher.run(event_watcher(cfg)?);

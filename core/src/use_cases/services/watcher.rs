@@ -1,6 +1,6 @@
 use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, BusEvent, EventBus};
+use crate::use_cases::bus::{BusEvent, EventBus};
 use crate::use_cases::receiver::{DocsEvent, EventRecv};
 
 use std::thread;
@@ -49,11 +49,12 @@ mod test {
     use crate::data_providers::bus::LocalBus;
     use crate::result::DoxErr;
     use crate::testutils::{mk_file, SubscriberExt};
-    use crate::use_cases::bus::BusEvent;
+    use crate::use_cases::bus::{Bus, BusEvent};
     use crate::use_cases::receiver::EventReceiver;
 
     use anyhow::Result;
     use std::sync::mpsc::{channel, Receiver, RecvError};
+    use std::sync::Arc;
     use std::time::Duration;
 
     #[test]
@@ -62,11 +63,11 @@ mod test {
         init_tracing();
         let (tx, rx) = channel();
         let mock_event_receiver = Box::new(MockEventReceiver::new(rx));
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
         let new_file = mk_file("parent-dir".into(), "some-file.jpg".into())?;
 
         // when
-        let watcher = DocsWatcher::new(bus.share());
+        let watcher = DocsWatcher::new(bus.clone());
         watcher.run(mock_event_receiver);
         tx.send(DocsEvent::Created(new_file.path.clone()))?;
 
@@ -86,10 +87,10 @@ mod test {
         init_tracing();
         let (tx, rx) = channel();
         let mock_event_receiver = Box::new(MockEventReceiver::new(rx));
-        let bus = LocalBus::new().unwrap();
+        let bus = Arc::new(LocalBus::new().unwrap());
 
         // when
-        let watcher = DocsWatcher::new(bus.share());
+        let watcher = DocsWatcher::new(bus.clone());
         watcher.run(mock_event_receiver);
         tx.send(DocsEvent::Other).unwrap();
         let sub = bus.subscriber();
@@ -104,10 +105,10 @@ mod test {
         // given
         init_tracing();
         let erroneous_event_receiver = Box::new(ErroneousEventReceiver);
-        let bus = LocalBus::new().unwrap();
+        let bus = Arc::new(LocalBus::new().unwrap());
 
         // when
-        let watcher = DocsWatcher::new(bus.share());
+        let watcher = DocsWatcher::new(bus.clone());
         watcher.run(erroneous_event_receiver); // error ignored here
         let sub = bus.subscriber();
 

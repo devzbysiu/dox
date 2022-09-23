@@ -1,5 +1,5 @@
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, BusEvent, EventBus};
+use crate::use_cases::bus::{BusEvent, EventBus};
 use crate::use_cases::repository::RepoWrite;
 
 use rayon::ThreadPoolBuilder;
@@ -54,12 +54,13 @@ mod test {
     use crate::entities::location::Location;
     use crate::result::DoxErr;
     use crate::testutils::{Spy, SubscriberExt};
+    use crate::use_cases::bus::Bus;
     use crate::use_cases::repository::RepositoryWrite;
     use crate::use_cases::user::User;
 
     use anyhow::Result;
     use std::sync::mpsc::{channel, Sender};
-    use std::sync::Mutex;
+    use std::sync::{Arc, Mutex};
     use std::time::Duration;
     use tantivy::TantivyError;
 
@@ -68,10 +69,10 @@ mod test {
         // given
         init_tracing();
         let (spy, working_repo_write) = RepoWriteSpy::working();
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
 
         // when
-        let indexer = Indexer::new(bus.share());
+        let indexer = Indexer::new(bus.clone());
         indexer.run(working_repo_write)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
@@ -87,10 +88,10 @@ mod test {
         // given
         init_tracing();
         let noop_repo_write = Box::new(NoOpRepoWrite);
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
 
         // when
-        let indexer = Indexer::new(bus.share());
+        let indexer = Indexer::new(bus.clone());
         indexer.run(noop_repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -109,7 +110,7 @@ mod test {
         // given
         init_tracing();
         let repo_write = Box::new(NoOpRepoWrite);
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
         let docs_details = vec![DocDetails::new(
             User::new("some@email.com"),
             "path",
@@ -118,7 +119,7 @@ mod test {
         )];
 
         // when
-        let indexer = Indexer::new(bus.share());
+        let indexer = Indexer::new(bus.clone());
         indexer.run(repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -137,10 +138,10 @@ mod test {
         // given
         init_tracing();
         let repo_write = Box::new(ErroneousRepoWrite);
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
 
         // when
-        let indexer = Indexer::new(bus.share());
+        let indexer = Indexer::new(bus.clone());
         indexer.run(repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -160,7 +161,7 @@ mod test {
         // given
         init_tracing();
         let noop_repo_write = Box::new(NoOpRepoWrite);
-        let bus = LocalBus::new().unwrap();
+        let bus = Arc::new(LocalBus::new().unwrap());
         let location = Location::FS(Vec::new());
         let ignored_events = [
             BusEvent::NewDocs(location.clone()),
@@ -170,7 +171,7 @@ mod test {
         ];
 
         // when
-        let indexer = Indexer::new(bus.share());
+        let indexer = Indexer::new(bus.clone());
         indexer.run(noop_repo_write).unwrap();
 
         let mut publ = bus.publisher();
@@ -192,9 +193,9 @@ mod test {
         // given
         init_tracing();
         let (spy, failing_repo_write) = RepoWriteSpy::failing();
-        let bus = LocalBus::new()?;
+        let bus = Arc::new(LocalBus::new()?);
 
-        let indexer = Indexer::new(bus.share());
+        let indexer = Indexer::new(bus.clone());
         indexer.run(failing_repo_write)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::DataExtracted(Vec::new()))?;

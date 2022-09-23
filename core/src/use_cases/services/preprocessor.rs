@@ -2,7 +2,7 @@
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::Result;
-use crate::use_cases::bus::{Bus, BusEvent, EventBus};
+use crate::use_cases::bus::{BusEvent, EventBus};
 use crate::use_cases::config::Config;
 
 use std::path::Path;
