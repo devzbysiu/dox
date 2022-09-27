@@ -2,7 +2,7 @@
 //!
 //! It uses [`tantivy`] as full text search library.
 use crate::entities::document::DocDetails;
-use crate::result::{DoxErr, Result};
+use crate::result::{DoxErr, Result as MyRes, SearchErr};
 use crate::use_cases::config::Config;
 use crate::use_cases::repository::{
     RepoRead, RepoWrite, RepositoryRead, RepositoryWrite, SearchEntry, SearchResult,
@@ -26,7 +26,7 @@ use tracing::{debug, instrument};
 pub struct TantivyRepository;
 
 impl TantivyRepository {
-    pub fn create(cfg: &Config) -> Result<(RepoRead, RepoWrite)> {
+    pub fn create(cfg: &Config) -> MyRes<(RepoRead, RepoWrite)> {
         if cfg.index_dir.exists() && cfg.index_dir.is_file() {
             return Err(DoxErr::InvalidIndexPath(format!(
                 "It needs to be a directory: '{}'",
@@ -58,7 +58,7 @@ impl TantivyRead {
         Self { indexes, schema }
     }
 
-    fn create_searcher(&self, user: User) -> Result<Searcher> {
+    fn create_searcher(&self, user: User) -> MyRes<Searcher> {
         Ok(self
             .indexes
             .get(&user)
@@ -80,7 +80,11 @@ impl TantivyRead {
         self.schema.get_field(&field.to_string()).unwrap()
     }
 
-    fn to_search_result(&self, searcher: &Searcher, docs: TantivyDocs) -> Result<SearchResult> {
+    fn to_search_result(
+        &self,
+        searcher: &Searcher,
+        docs: TantivyDocs,
+    ) -> Result<SearchResult, SearchErr> {
         let mut results = Vec::new();
         for (_score, doc_address) in docs {
             let retrieved_doc = searcher.doc(doc_address)?;
@@ -91,7 +95,7 @@ impl TantivyRead {
         Ok(SearchResult::from_vec(results))
     }
 
-    fn search_for(&self, user: User, query: &impl Query) -> Result<SearchResult> {
+    fn search_for(&self, user: User, query: &impl Query) -> Result<SearchResult, SearchErr> {
         let searcher = self.create_searcher(user);
         if let Err(DoxErr::MissingIndex(email)) = searcher {
             debug!("No index for user: '{}'", email);
@@ -105,12 +109,12 @@ impl TantivyRead {
 
 impl RepositoryRead for TantivyRead {
     #[instrument(skip(self))]
-    fn search(&self, user: User, term: String) -> Result<SearchResult> {
+    fn search(&self, user: User, term: String) -> Result<SearchResult, SearchErr> {
         self.search_for(user, &self.make_query(term))
     }
 
     #[instrument(skip(self))]
-    fn all_documents(&self, user: User) -> Result<SearchResult> {
+    fn all_documents(&self, user: User) -> Result<SearchResult, SearchErr> {
         self.search_for(user, &AllQuery)
     }
 }
@@ -131,7 +135,7 @@ impl TantivyWrite {
         }
     }
 
-    fn insert_idx_if_missing(&self, user: &User) -> Result<()> {
+    fn insert_idx_if_missing(&self, user: &User) -> MyRes<()> {
         if !self.indexes.contains_key(user) {
             let idx_dir = self.idx_root.join(base64::encode(&user.email));
             debug!(
@@ -151,7 +155,7 @@ impl TantivyWrite {
 
 impl RepositoryWrite for TantivyWrite {
     #[instrument(skip(self, docs_details))]
-    fn index(&self, docs_details: &[DocDetails]) -> Result<()> {
+    fn index(&self, docs_details: &[DocDetails]) -> MyRes<()> {
         for doc_detail in docs_details {
             let user = &doc_detail.user;
             self.insert_idx_if_missing(user)?;

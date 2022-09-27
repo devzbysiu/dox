@@ -2,7 +2,7 @@
 //!
 //! It uses just regular File System primitives to provide persistence.
 use crate::helpers::PathRefExt;
-use crate::result::Result;
+use crate::result::PersistenceErr;
 use crate::use_cases::persistence::DataPersistence;
 
 use std::fs::{self, create_dir_all, File};
@@ -16,7 +16,7 @@ pub struct FsPersistence;
 
 impl DataPersistence for FsPersistence {
     #[instrument(skip(self, buf))]
-    fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<()> {
+    fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<(), PersistenceErr> {
         let parent_dir = uri.parent_path();
         if !parent_dir.exists() {
             create_dir_all(parent_dir)?;
@@ -31,7 +31,7 @@ impl DataPersistence for FsPersistence {
     }
 
     #[instrument(skip(self))]
-    fn load(&self, uri: PathBuf) -> Result<Option<Vec<u8>>> {
+    fn load(&self, uri: PathBuf) -> Result<Option<Vec<u8>>, PersistenceErr> {
         if !uri.exists() {
             debug!("uri: '{}' don't exist", uri.display());
             return Ok(None);

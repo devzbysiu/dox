@@ -1,6 +1,6 @@
 //! Abstraction for indexing and searching documents.
 use crate::entities::document::DocDetails;
-use crate::result::Result;
+use crate::result::{Result as MyRes, SearchErr};
 use crate::use_cases::user::User;
 
 use serde::Serialize;
@@ -12,15 +12,15 @@ pub type RepoWrite = Box<dyn RepositoryWrite>;
 /// Allows to search and list all indexed documents .
 pub trait RepositoryRead: Sync + Send {
     /// Returns list of documents mathing passed query.
-    fn search(&self, user: User, q: String) -> Result<SearchResult>;
+    fn search(&self, user: User, q: String) -> Result<SearchResult, SearchErr>;
     /// Returns list of all indexed documents.
-    fn all_documents(&self, user: User) -> Result<SearchResult>;
+    fn all_documents(&self, user: User) -> Result<SearchResult, SearchErr>;
 }
 
 /// Allows to index documents.
 pub trait RepositoryWrite: Sync + Send {
     /// Indexes documents.
-    fn index(&self, docs_details: &[DocDetails]) -> Result<()>;
+    fn index(&self, docs_details: &[DocDetails]) -> MyRes<()>;
 }
 
 /// Holds list of basic document details.

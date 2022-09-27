@@ -6,6 +6,69 @@ use tungstenite::handshake::server::{NoCallback, ServerHandshake};
 use tungstenite::handshake::HandshakeError;
 
 #[derive(Debug, Error)]
+pub enum ThumbnailReadErr {
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
+}
+
+impl<'r, 'o: 'r> Responder<'r, 'o> for ThumbnailReadErr {
+    fn respond_to(self, _request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
+        Err(Status::new(500))
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum PersistenceErr {
+    #[error("Failed to make IO operation.")]
+    IoErr(#[from] std::io::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum DocumentReadErr {
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
+}
+
+impl<'r, 'o: 'r> Responder<'r, 'o> for DocumentReadErr {
+    fn respond_to(self, _request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
+        Err(Status::new(500))
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum CipherErr {
+    #[error("Failed to decrypt")]
+    DecryptErr(#[from] chacha20poly1305::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum DocumentSaveErr {
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
+}
+
+impl<'r, 'o: 'r> Responder<'r, 'o> for DocumentSaveErr {
+    fn respond_to(self, _request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
+        Err(Status::new(500))
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum SearchErr {
+    #[error("Indexer failure: '{0}'")]
+    DocumentFetchError(#[from] tantivy::TantivyError),
+
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
+}
+
+impl<'r, 'o: 'r> Responder<'r, 'o> for SearchErr {
+    fn respond_to(self, _request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
+        Err(Status::new(500))
+    }
+}
+
+#[derive(Debug, Error)]
 pub enum DoxErr {
     #[error("Invalid watched directory: '{0}'")]
     InvalidWatchedDirPath(String),

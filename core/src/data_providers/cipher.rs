@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::result::Result;
+use crate::result::{CipherErr, Result};
 use crate::use_cases::cipher::{CipherRead, CipherReadStrategy, CipherWrite, CipherWriteStrategy};
 
 use chacha20poly1305::aead::{Aead, OsRng};
@@ -21,7 +21,7 @@ impl Chacha20Poly1305Cipher {
 pub struct Chacha20Poly1305Read;
 
 impl CipherReadStrategy for Chacha20Poly1305Read {
-    fn decrypt(&self, src_buf: &[u8]) -> Result<Vec<u8>> {
+    fn decrypt(&self, src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
         decrypt(src_buf, key(), nonce())
     }
 }
@@ -51,7 +51,7 @@ fn encrypt(src_buf: &[u8], key: &Key, nonce: &XNonce) -> Result<Vec<u8>> {
     Ok(cipher.encrypt(nonce, src_buf)?)
 }
 
-fn decrypt(src_buf: &[u8], key: &Key, nonce: &XNonce) -> Result<Vec<u8>> {
+fn decrypt(src_buf: &[u8], key: &Key, nonce: &XNonce) -> std::result::Result<Vec<u8>, CipherErr> {
     let cipher = XChaCha20Poly1305::new(key);
     Ok(cipher.decrypt(nonce, src_buf)?)
 }
