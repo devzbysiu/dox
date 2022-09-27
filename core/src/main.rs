@@ -1,5 +1,6 @@
 #![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 #![allow(clippy::module_name_repetitions)]
+#![allow(clippy::enum_variant_names)]
 
 use crate::configuration::factories::{
     cipher, config_loader, config_resolver, event_bus, event_watcher, extractor_factory,
