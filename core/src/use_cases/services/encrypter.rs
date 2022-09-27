@@ -1,5 +1,5 @@
 use crate::entities::location::{Location, SafePathBuf};
-use crate::result::Result;
+use crate::result::EncrypterErr;
 use crate::use_cases::bus::{BusEvent, EventBus};
 use crate::use_cases::cipher::CipherWrite;
 
@@ -18,12 +18,12 @@ impl Encrypter {
     }
 
     #[instrument(skip(self, cipher))]
-    pub fn run(self, cipher: CipherWrite) -> Result<()> {
+    pub fn run(self, cipher: CipherWrite) -> Result<(), EncrypterErr> {
         let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
         let sub = self.bus.subscriber();
         // TODO: improve tracing of threads somehow. Currently, it's hard to debug because threads
         // do not appear as separate tracing's scopes
-        thread::spawn(move || -> Result<()> {
+        thread::spawn(move || -> Result<(), EncrypterErr> {
             let mut publ = self.bus.publisher();
             loop {
                 match sub.recv()? {
@@ -50,7 +50,7 @@ impl Encrypter {
     }
 }
 
-fn encrypt(cipher: &CipherWrite, path: &SafePathBuf) -> Result<()> {
+fn encrypt(cipher: &CipherWrite, path: &SafePathBuf) -> Result<(), EncrypterErr> {
     let encrypted = cipher.encrypt(&fs::read(path)?)?;
     fs::write(path, encrypted)?;
     Ok(())
@@ -62,7 +62,7 @@ mod test {
 
     use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
-    use crate::result::DoxErr;
+    use crate::result::CipherErr;
     use crate::testutils::{mk_file, Spy, SubscriberExt};
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
@@ -207,7 +207,7 @@ mod test {
     }
 
     impl CipherWriteStrategy for WorkingCipher {
-        fn encrypt(&self, _src_buf: &[u8]) -> crate::result::Result<Vec<u8>> {
+        fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
             self.tx
                 .lock()
                 .expect("poisoned mutex")
@@ -228,20 +228,20 @@ mod test {
     }
 
     impl CipherWriteStrategy for FailingCipher {
-        fn encrypt(&self, _src_buf: &[u8]) -> crate::result::Result<Vec<u8>> {
+        fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
             self.tx
                 .lock()
                 .expect("poisoned mutex")
                 .send(())
                 .expect("failed to send message");
-            Err(DoxErr::Encryption(chacha20poly1305::Error))
+            Err(CipherErr::ChachaError(chacha20poly1305::Error))
         }
     }
 
     struct NoOpCipher;
 
     impl CipherWriteStrategy for NoOpCipher {
-        fn encrypt(&self, _src_buf: &[u8]) -> crate::result::Result<Vec<u8>> {
+        fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
             // nothing to do
             Ok(Vec::new())
         }

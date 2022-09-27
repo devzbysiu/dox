@@ -1,7 +1,7 @@
 //! Abstraction for preprocessing received document.
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
-use crate::result::Result;
+use crate::result::PreprocessorErr;
 use crate::use_cases::bus::{BusEvent, EventBus};
 use crate::use_cases::config::Config;
 
@@ -31,7 +31,7 @@ impl<'a> ThumbnailGenerator<'a> {
         let thumbnails_dir = self.cfg.thumbnails_dir.clone();
         let sub = self.bus.subscriber();
         let mut publ = self.bus.publisher();
-        thread::spawn(move || -> Result<()> {
+        thread::spawn(move || -> Result<(), PreprocessorErr> {
             loop {
                 match sub.recv()? {
                     BusEvent::NewDocs(location) => {
@@ -58,7 +58,11 @@ impl<'a> ThumbnailGenerator<'a> {
 pub trait FilePreprocessor {
     /// Take source location as the input and the parent directory for the output.
     /// Returns the final location of the preprocessing.
-    fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<Location>;
+    fn preprocess(
+        &self,
+        location: &Location,
+        thumbnails_dir: &Path,
+    ) -> Result<Location, PreprocessorErr>;
 }
 
 /// Creates [`Preprocessor`].

@@ -1,6 +1,6 @@
 use crate::entities::location::SafePathBuf;
 use crate::helpers::PathRefExt;
-use crate::result::DoxErr;
+use crate::result::UserConvErr;
 use crate::use_cases::user::User;
 
 use async_once_cell::OnceCell;
@@ -11,9 +11,9 @@ use std::convert::TryFrom;
 use tracing::{debug, error};
 
 impl TryFrom<&SafePathBuf> for User {
-    type Error = DoxErr;
+    type Error = UserConvErr;
 
-    fn try_from(path: &SafePathBuf) -> std::result::Result<Self, Self::Error> {
+    fn try_from(path: &SafePathBuf) -> Result<Self, Self::Error> {
         let parent_dir = path.parent();
         let parent_name = parent_dir.filename();
         let user_email = base64::decode(parent_name)?;
@@ -36,12 +36,12 @@ async fn key_store() -> &'static KeyStore {
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for User {
-    type Error = DoxErr;
+    type Error = UserConvErr;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let token = req.headers().get("authorization").next();
         if token.is_none() {
-            return Outcome::Failure((Status::Unauthorized, DoxErr::MissingToken));
+            return Outcome::Failure((Status::Unauthorized, UserConvErr::MissingToken));
         }
         let token = token.unwrap(); // can unwrap, because checked earlier
         let key_store = key_store().await;
@@ -52,12 +52,12 @@ impl<'r> FromRequest<'r> for User {
                     Outcome::Success(User::new(email))
                 } else {
                     error!("Invalid idToken, missing 'email' field");
-                    Outcome::Failure((Status::BadRequest, DoxErr::InvalidIdToken))
+                    Outcome::Failure((Status::BadRequest, UserConvErr::InvalidIdToken))
                 }
             }
             Err(e) => {
                 error!("Could not verify token. Reason: {:?}", e);
-                Outcome::Failure((Status::Unauthorized, DoxErr::TokenVerification))
+                Outcome::Failure((Status::Unauthorized, UserConvErr::TokenVerification))
             }
         }
     }

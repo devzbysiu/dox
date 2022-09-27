@@ -1,7 +1,7 @@
 //! This module allows to gather configuration data from the user. It displays interactive prompt
 //! in the terminal which asks the user for the data.
 use crate::helpers::PathRefExt;
-use crate::result::Result;
+use crate::result::PromptErr;
 use crate::use_cases::config::Config;
 
 use inquire::{required, CustomUserError, Text};
@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 ///
 /// The prompt will get all the fields needed in the [`Config`] struct. It uses [`inquire`] to
 /// render the prompt.
-pub fn show() -> Result<Config> {
+pub fn show() -> Result<Config, PromptErr> {
     let config = Config::default();
     Ok(Config {
         watched_dir: watched_dir_prompt()?,
@@ -21,7 +21,7 @@ pub fn show() -> Result<Config> {
     })
 }
 
-fn watched_dir_prompt() -> Result<PathBuf> {
+fn watched_dir_prompt() -> Result<PathBuf, PromptErr> {
     Ok(PathBuf::from(
         Text::new("Path to a directory you want to watch for changes:")
             .with_autocomplete(&path_autocomplete)
@@ -49,7 +49,7 @@ fn path_autocomplete(input: &str) -> std::result::Result<Vec<String>, CustomUser
         .collect())
 }
 
-fn thumbnails_dir_prompt(config: &Config) -> Result<PathBuf> {
+fn thumbnails_dir_prompt(config: &Config) -> Result<PathBuf, PromptErr> {
     Ok(PathBuf::from(
         Text::new("Path to a directory for storing thumbnails:")
             .with_autocomplete(&path_autocomplete)
@@ -58,7 +58,7 @@ fn thumbnails_dir_prompt(config: &Config) -> Result<PathBuf> {
     ))
 }
 
-fn index_dir_prompt(config: &Config) -> Result<PathBuf> {
+fn index_dir_prompt(config: &Config) -> Result<PathBuf, PromptErr> {
     Ok(PathBuf::from(
         Text::new("Path to a directory for storing index files:")
             .with_autocomplete(&path_autocomplete)

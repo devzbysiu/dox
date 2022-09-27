@@ -3,7 +3,7 @@
 //! It uses [`eventador`] library to build local event bus implementation.
 use std::fmt::Debug;
 
-use crate::result::Result;
+use crate::result::BusErr;
 use crate::use_cases::bus::{
     Bus, BusEvent, EventPublisher, EventSubscriber, Publisher, Subscriber,
 };
@@ -24,7 +24,7 @@ impl Debug for LocalBus {
 }
 
 impl LocalBus {
-    pub fn new() -> Result<Self> {
+    pub fn new() -> Result<Self, BusErr> {
         Ok(Self {
             eventador: eventador::Eventador::new(BUS_CAPACITY)?,
         })
@@ -55,7 +55,7 @@ impl LocalSubscriber {
 }
 
 impl Subscriber for LocalSubscriber {
-    fn recv(&self) -> Result<BusEvent> {
+    fn recv(&self) -> Result<BusEvent, BusErr> {
         Ok(self.sub.recv().to_owned())
     }
 }
@@ -74,7 +74,7 @@ impl LocalPublisher {
 }
 
 impl Publisher for LocalPublisher {
-    fn send(&mut self, event: BusEvent) -> Result<()> {
+    fn send(&mut self, event: BusEvent) -> Result<(), BusErr> {
         self.publ.send(event);
         Ok(())
     }

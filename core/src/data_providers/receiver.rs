@@ -1,5 +1,5 @@
 use crate::helpers::PathRefExt;
-use crate::result::{DoxErr, Result};
+use crate::result::EventReceiverErr;
 use crate::use_cases::receiver::{DocsEvent, EventReceiver};
 
 use notify::RecommendedWatcher;
@@ -15,7 +15,7 @@ pub struct FsEventReceiver {
 }
 
 impl FsEventReceiver {
-    pub fn new<P: AsRef<Path>>(watched_dir: P) -> Result<Self> {
+    pub fn new<P: AsRef<Path>>(watched_dir: P) -> Result<Self, EventReceiverErr> {
         let (watcher_tx, watcher_rx) = channel();
         let mut watcher = watcher(watcher_tx, Duration::from_millis(100))?;
         watcher.watch(watched_dir, RecursiveMode::Recursive)?;
@@ -27,7 +27,7 @@ impl FsEventReceiver {
 }
 
 impl EventReceiver for FsEventReceiver {
-    fn recv(&self) -> Result<DocsEvent> {
+    fn recv(&self) -> Result<DocsEvent, EventReceiverErr> {
         match self.watcher_rx.recv() {
             Ok(DebouncedEvent::Create(path)) if path.is_file() && path.is_in_user_dir() => {
                 Ok(DocsEvent::Created(path.into()))
@@ -38,7 +38,7 @@ impl EventReceiver for FsEventReceiver {
             }
             Err(e) => {
                 error!("watch error: {:?}", e);
-                Err(DoxErr::Watcher(e))
+                Err(EventReceiverErr::ReceiveError(e))
             }
         }
     }

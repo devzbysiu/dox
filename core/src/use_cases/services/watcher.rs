@@ -1,5 +1,5 @@
 use crate::entities::location::Location;
-use crate::result::Result;
+use crate::result::WatcherErr;
 use crate::use_cases::bus::{BusEvent, EventBus};
 use crate::use_cases::receiver::{DocsEvent, EventRecv};
 
@@ -23,7 +23,7 @@ impl DocsWatcher {
 
     pub fn run(self, receiver: EventRecv) {
         debug!("spawning watching thread");
-        thread::spawn(move || -> Result<()> {
+        thread::spawn(move || -> Result<(), WatcherErr> {
             debug!("watching thread spawned");
             let mut publ = self.bus.publisher();
             loop {
@@ -47,7 +47,7 @@ mod test {
 
     use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
-    use crate::result::DoxErr;
+    use crate::result::EventReceiverErr;
     use crate::testutils::{mk_file, SubscriberExt};
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::receiver::EventReceiver;
@@ -126,7 +126,7 @@ mod test {
     }
 
     impl EventReceiver for MockEventReceiver {
-        fn recv(&self) -> crate::result::Result<DocsEvent> {
+        fn recv(&self) -> std::result::Result<DocsEvent, EventReceiverErr> {
             Ok(self.rx.recv()?)
         }
     }
@@ -134,8 +134,8 @@ mod test {
     struct ErroneousEventReceiver;
 
     impl EventReceiver for ErroneousEventReceiver {
-        fn recv(&self) -> crate::result::Result<DocsEvent> {
-            Err(DoxErr::Watcher(RecvError))
+        fn recv(&self) -> std::result::Result<DocsEvent, EventReceiverErr> {
+            Err(EventReceiverErr::ReceiveError(RecvError))
         }
     }
 }

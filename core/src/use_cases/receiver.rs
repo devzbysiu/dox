@@ -1,12 +1,12 @@
 use crate::entities::location::SafePathBuf;
-use crate::result::Result;
+use crate::result::EventReceiverErr;
 
 use std::fmt::Display;
 
 pub type EventRecv = Box<dyn EventReceiver>;
 
 pub trait EventReceiver: Send {
-    fn recv(&self) -> Result<DocsEvent>;
+    fn recv(&self) -> Result<DocsEvent, EventReceiverErr>;
 }
 
 #[derive(Debug)]

@@ -2,7 +2,7 @@
 //!
 //! It uses [`tantivy`] as full text search library.
 use crate::entities::document::DocDetails;
-use crate::result::{DoxErr, Result as MyRes, SearchErr};
+use crate::result::{IndexerErr, RepositoryErr, SearchErr};
 use crate::use_cases::config::Config;
 use crate::use_cases::repository::{
     RepoRead, RepoWrite, RepositoryRead, RepositoryWrite, SearchEntry, SearchResult,
@@ -26,9 +26,9 @@ use tracing::{debug, instrument};
 pub struct TantivyRepository;
 
 impl TantivyRepository {
-    pub fn create(cfg: &Config) -> MyRes<(RepoRead, RepoWrite)> {
+    pub fn create(cfg: &Config) -> Result<(RepoRead, RepoWrite), RepositoryErr> {
         if cfg.index_dir.exists() && cfg.index_dir.is_file() {
-            return Err(DoxErr::InvalidIndexPath(format!(
+            return Err(RepositoryErr::InvalidIndexPath(format!(
                 "It needs to be a directory: '{}'",
                 cfg.index_dir.display()
             )));
@@ -58,11 +58,11 @@ impl TantivyRead {
         Self { indexes, schema }
     }
 
-    fn create_searcher(&self, user: User) -> MyRes<Searcher> {
+    fn create_searcher(&self, user: User) -> Result<Searcher, SearchErr> {
         Ok(self
             .indexes
             .get(&user)
-            .ok_or(DoxErr::MissingIndex(user.email))?
+            .ok_or(SearchErr::MissingIndex(user.email))?
             .reader_builder()
             .reload_policy(ReloadPolicy::OnCommit)
             .try_into()?
@@ -97,7 +97,7 @@ impl TantivyRead {
 
     fn search_for(&self, user: User, query: &impl Query) -> Result<SearchResult, SearchErr> {
         let searcher = self.create_searcher(user);
-        if let Err(DoxErr::MissingIndex(email)) = searcher {
+        if let Err(SearchErr::MissingIndex(email)) = searcher {
             debug!("No index for user: '{}'", email);
             return Ok(SearchResult::default());
         }
@@ -135,7 +135,7 @@ impl TantivyWrite {
         }
     }
 
-    fn insert_idx_if_missing(&self, user: &User) -> MyRes<()> {
+    fn insert_idx_if_missing(&self, user: &User) -> Result<(), IndexerErr> {
         if !self.indexes.contains_key(user) {
             let idx_dir = self.idx_root.join(base64::encode(&user.email));
             debug!(
@@ -155,7 +155,7 @@ impl TantivyWrite {
 
 impl RepositoryWrite for TantivyWrite {
     #[instrument(skip(self, docs_details))]
-    fn index(&self, docs_details: &[DocDetails]) -> MyRes<()> {
+    fn index(&self, docs_details: &[DocDetails]) -> Result<(), IndexerErr> {
         for doc_detail in docs_details {
             let user = &doc_detail.user;
             self.insert_idx_if_missing(user)?;

@@ -2,7 +2,7 @@
 //!
 //! The actual place where the config will be saved to or read from is not tight to this interface
 //! and it's considered to be implementation detail.
-use crate::result::Result;
+use crate::result::ConfigurationErr;
 
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -19,13 +19,13 @@ pub trait ConfigLoader {
     ///
     /// This reads the configuration pointed by `PathBuf`. The `path` argument doesn't need to
     /// represent the location on the File System, this is the implementation detail.
-    fn load(&self, path: &Path) -> Result<Config>;
+    fn load(&self, path: &Path) -> Result<Config, ConfigurationErr>;
 
     /// Saves the configuration.
     ///
     /// This saves the configuration in the place pointed by `PathBuf`. It doesn't mean that this
     /// should be saved on the disk, the medium is the detail of the implementation.
-    fn store(&self, path: &Path, cfg: &Config) -> Result<()>;
+    fn store(&self, path: &Path, cfg: &Config) -> Result<(), ConfigurationErr>;
 }
 
 /// Handles config override.
@@ -37,7 +37,7 @@ pub trait ConfigResolver {
     /// This method should read the configuration using the path specified as an argument.
     /// If the path is `None`, then no override takes place and configuration should be loaded from
     /// original path.
-    fn handle_config(&self, path_override: Option<String>) -> Result<Config>;
+    fn handle_config(&self, path_override: Option<String>) -> Result<Config, ConfigurationErr>;
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]

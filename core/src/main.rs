@@ -9,7 +9,7 @@ use crate::configuration::telemetry::init_tracing;
 use crate::data_providers::server::{
     all_thumbnails, document, receive_document, search, thumbnail,
 };
-use crate::result::Result;
+use crate::result::SetupErr;
 use crate::use_cases::config::Config;
 use crate::use_cases::repository::RepoRead;
 use crate::use_cases::services::encrypter::Encrypter;
@@ -35,7 +35,7 @@ mod result;
 mod testutils;
 
 #[rocket::main]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), SetupErr> {
     init_tracing();
     let path_override = env::var("DOX_CONFIG_PATH")
         .ok()
@@ -75,7 +75,7 @@ pub fn rocket(path_override: Option<String>) -> Rocket<Build> {
         .manage(cfg)
 }
 
-fn setup_core(cfg: &Config, bus: EventBus) -> Result<(RepoRead, CipherRead)> {
+fn setup_core(cfg: &Config, bus: EventBus) -> Result<(RepoRead, CipherRead), SetupErr> {
     let watcher = DocsWatcher::new(bus.clone());
     let preprocessor = ThumbnailGenerator::new(cfg, bus.clone());
     let extractor = TxtExtractor::new(bus.clone());

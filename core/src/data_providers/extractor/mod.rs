@@ -31,7 +31,8 @@ mod test {
     use super::*;
 
     use crate::entities::location::{Location, SafePathBuf};
-    use crate::result::Result;
+
+    use anyhow::Result;
 
     #[test]
     fn test_extractor_factory_with_correct_file() -> Result<()> {

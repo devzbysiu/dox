@@ -8,7 +8,7 @@ use crate::data_providers::persistence::FsPersistence;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::receiver::FsEventReceiver;
 use crate::data_providers::repository::TantivyRepository;
-use crate::result::Result;
+use crate::result::{BusErr, EventReceiverErr, RepositoryErr};
 use crate::use_cases::bus::EventBus;
 use crate::use_cases::cipher::{CipherRead, CipherWrite};
 use crate::use_cases::config::{CfgLoader, CfgResolver, Config};
@@ -26,7 +26,7 @@ pub fn config_loader() -> CfgLoader {
     Box::new(FsConfigLoader)
 }
 
-pub fn event_bus() -> Result<EventBus> {
+pub fn event_bus() -> Result<EventBus, BusErr> {
     Ok(Arc::new(LocalBus::new()?))
 }
 
@@ -38,7 +38,7 @@ pub fn extractor_factory() -> ExtractorCreator {
     Box::new(ExtractorFactoryImpl)
 }
 
-pub fn repository(cfg: &Config) -> Result<(RepoRead, RepoWrite)> {
+pub fn repository(cfg: &Config) -> Result<(RepoRead, RepoWrite), RepositoryErr> {
     TantivyRepository::create(cfg)
 }
 
@@ -50,7 +50,7 @@ pub fn cipher() -> (CipherRead, CipherWrite) {
     Chacha20Poly1305Cipher::create()
 }
 
-pub fn event_watcher(cfg: &Config) -> Result<EventRecv> {
+pub fn event_watcher(cfg: &Config) -> Result<EventRecv, EventReceiverErr> {
     let watched_dir = cfg.watched_dir.clone();
     Ok(Box::new(FsEventReceiver::new(watched_dir)?))
 }

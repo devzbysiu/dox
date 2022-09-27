@@ -2,7 +2,7 @@
 use crate::entities::document::DocDetails;
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
-use crate::result::Result;
+use crate::result::ExtractorErr;
 use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher};
 
 use rayon::ThreadPoolBuilder;
@@ -23,7 +23,7 @@ impl TxtExtractor {
 
     #[instrument(skip(self, extractor_factory))]
     pub fn run(self, extractor_factory: ExtractorCreator) {
-        thread::spawn(move || -> Result<()> {
+        thread::spawn(move || -> Result<(), ExtractorErr> {
             let sub = self.bus.subscriber();
             let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
             loop {
@@ -46,7 +46,11 @@ impl TxtExtractor {
     }
 }
 
-fn extract(location: Location, extractor: &Extractor, mut publ: EventPublisher) -> Result<()> {
+fn extract(
+    location: Location,
+    extractor: &Extractor,
+    mut publ: EventPublisher,
+) -> Result<(), ExtractorErr> {
     publ.send(BusEvent::DataExtracted(extractor.extract_data(&location)?))?;
     debug!("extraction finished");
     debug!("sending encryption request for: '{:?}'", location);
@@ -57,7 +61,7 @@ fn extract(location: Location, extractor: &Extractor, mut publ: EventPublisher) 
 /// Extracts text.
 pub trait DataExtractor: Send {
     /// Given the [`Location`], extracts text from all documents contained in it.
-    fn extract_data(&self, location: &Location) -> Result<Vec<DocDetails>>;
+    fn extract_data(&self, location: &Location) -> Result<Vec<DocDetails>, ExtractorErr>;
 }
 
 /// Creates extractor.
@@ -72,7 +76,7 @@ mod test {
 
     use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
-    use crate::result::DoxErr;
+    use crate::result::ExtractorErr;
     use crate::testutils::{mk_file, Spy, SubscriberExt};
     use crate::use_cases::user::{User, FAKE_USER_EMAIL};
 
@@ -282,7 +286,10 @@ mod test {
     }
 
     impl DataExtractor for WorkingExtractor {
-        fn extract_data(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
+        fn extract_data(
+            &self,
+            _location: &Location,
+        ) -> std::result::Result<Vec<DocDetails>, ExtractorErr> {
             self.tx
                 .lock()
                 .expect("poisoned mutex")
@@ -303,13 +310,16 @@ mod test {
     }
 
     impl DataExtractor for FailingExtractor {
-        fn extract_data(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
+        fn extract_data(
+            &self,
+            _location: &Location,
+        ) -> std::result::Result<Vec<DocDetails>, ExtractorErr> {
             self.tx
                 .lock()
                 .expect("poisoned mutex")
                 .send(())
                 .expect("failed to send message");
-            Err(DoxErr::OcrExtract(TessInitError { code: 0 }))
+            Err(ExtractorErr::OcrExtractError(TessInitError { code: 0 }))
         }
     }
 
@@ -324,7 +334,10 @@ mod test {
     }
 
     impl DataExtractor for ExtractorStub {
-        fn extract_data(&self, _location: &Location) -> crate::result::Result<Vec<DocDetails>> {
+        fn extract_data(
+            &self,
+            _location: &Location,
+        ) -> std::result::Result<Vec<DocDetails>, ExtractorErr> {
             // nothing to do
             Ok(self.docs_details.clone())
         }

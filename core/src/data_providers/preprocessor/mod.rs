@@ -32,8 +32,8 @@ mod test {
 
     use crate::entities::location::{Location, SafePathBuf};
     use crate::helpers::PathRefExt;
-    use crate::result::Result;
 
+    use anyhow::Result;
     use tempfile::tempdir;
 
     #[test]

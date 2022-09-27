@@ -1,6 +1,6 @@
 //! Abstraction for indexing and searching documents.
 use crate::entities::document::DocDetails;
-use crate::result::{Result as MyRes, SearchErr};
+use crate::result::{IndexerErr, SearchErr};
 use crate::use_cases::user::User;
 
 use serde::Serialize;
@@ -20,7 +20,7 @@ pub trait RepositoryRead: Sync + Send {
 /// Allows to index documents.
 pub trait RepositoryWrite: Sync + Send {
     /// Indexes documents.
-    fn index(&self, docs_details: &[DocDetails]) -> MyRes<()>;
+    fn index(&self, docs_details: &[DocDetails]) -> Result<(), IndexerErr>;
 }
 
 /// Holds list of basic document details.

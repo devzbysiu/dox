@@ -4,7 +4,7 @@
 //! to be indexed by dox' core.
 use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
-use crate::result::Result;
+use crate::result::BusErr;
 
 use std::fmt::{Debug, Display};
 use std::sync::Arc;
@@ -25,7 +25,7 @@ pub trait Bus: Send + Sync + Debug {
 
 /// Represents abstraction for receiving events.
 pub trait Subscriber: Send {
-    fn recv(&self) -> Result<BusEvent>;
+    fn recv(&self) -> Result<BusEvent, BusErr>;
 }
 
 // TODO: Think about splitting events to internal and external. Currently, it's not possible to
@@ -73,5 +73,5 @@ impl Display for BusEvent {
 
 /// Represents abstraction for sending events.
 pub trait Publisher: Send {
-    fn send(&mut self, event: BusEvent) -> Result<()>;
+    fn send(&mut self, event: BusEvent) -> Result<(), BusErr>;
 }

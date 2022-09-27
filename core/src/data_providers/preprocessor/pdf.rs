@@ -1,6 +1,6 @@
 use crate::entities::location::{Location, SafePathBuf};
 use crate::helpers::PathRefExt;
-use crate::result::Result;
+use crate::result::PreprocessorErr;
 use crate::use_cases::services::preprocessor::FilePreprocessor;
 
 use cairo::{Context, Format, ImageSurface};
@@ -21,7 +21,7 @@ pub struct Pdf;
 
 impl Pdf {
     #[instrument(skip(self))]
-    fn generate(&self, pdf_path: &SafePathBuf, out_path: &Path) -> Result<()> {
+    fn generate(&self, pdf_path: &SafePathBuf, out_path: &Path) -> Result<(), PreprocessorErr> {
         create_dir_all(out_path.parent_path())?;
         let page = first_page(&pdf_path)?;
         let surface = paint_background_and_scale(&page)?;
@@ -32,7 +32,7 @@ impl Pdf {
     }
 }
 
-fn first_page<P: AsRef<Path>>(pdf_path: P) -> Result<PopplerPage> {
+fn first_page<P: AsRef<Path>>(pdf_path: P) -> Result<PopplerPage, PreprocessorErr> {
     debug!("getting first page of PDF '{}'", pdf_path.as_ref().string());
     let doc: PopplerDocument = PopplerDocument::new_from_file(pdf_path, "")?;
     Ok(doc
@@ -40,7 +40,7 @@ fn first_page<P: AsRef<Path>>(pdf_path: P) -> Result<PopplerPage> {
         .unwrap_or_else(|| panic!("failed to get page")))
 }
 
-fn paint_background_and_scale(page: &PopplerPage) -> Result<ImageSurface> {
+fn paint_background_and_scale(page: &PopplerPage) -> Result<ImageSurface, PreprocessorErr> {
     debug!("painting while backgroud and scaling");
     let (width, height) = page.get_size();
     #[allow(clippy::cast_possible_truncation)]
@@ -57,7 +57,11 @@ fn paint_background_and_scale(page: &PopplerPage) -> Result<ImageSurface> {
 
 impl FilePreprocessor for Pdf {
     #[instrument]
-    fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<Location> {
+    fn preprocess(
+        &self,
+        location: &Location,
+        thumbnails_dir: &Path,
+    ) -> Result<Location, PreprocessorErr> {
         let Location::FS(paths) = location;
         let mut result_paths = Vec::new();
         for pdf_path in paths {
@@ -75,6 +79,7 @@ mod test {
 
     use crate::helpers::DirEntryExt;
 
+    use anyhow::Result;
     use tempfile::tempdir;
 
     #[test]

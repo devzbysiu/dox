@@ -1,7 +1,7 @@
 //! This is a concrete implementation of [`crate::use_cases::config`] mod.
 use crate::data_providers::prompt;
 use crate::helpers::PathRefExt;
-use crate::result::{DoxErr, Result};
+use crate::result::{ConfigurationErr, PromptErr};
 use crate::use_cases::config::{CfgLoader, Config, ConfigLoader, ConfigResolver};
 
 use inquire::error::InquireError;
@@ -18,14 +18,14 @@ pub struct FsConfigLoader;
 /// It reads a toml file from the filesystem and decodes it into [`Config`] structure.
 impl ConfigLoader for FsConfigLoader {
     #[instrument(skip(self))]
-    fn load(&self, path: &Path) -> Result<Config> {
+    fn load(&self, path: &Path) -> Result<Config, ConfigurationErr> {
         Ok(toml::from_str(&read_to_string(path)?)?)
     }
 
     #[instrument(skip(self))]
-    fn store(&self, path: &Path, cfg: &Config) -> Result<()> {
+    fn store(&self, path: &Path, cfg: &Config) -> Result<(), ConfigurationErr> {
         let config_dir = path.parent().ok_or_else(|| {
-            DoxErr::InvalidConfigPath("Can't use '/' as a configuration path".into())
+            ConfigurationErr::InvalidConfigPath("Can't use '/' as a configuration path".into())
         })?;
         create_dir_all(config_dir)?;
         let mut file = File::create(path)?;
@@ -53,7 +53,7 @@ impl FsConfigResolver {
 
 impl ConfigResolver for FsConfigResolver {
     #[instrument(skip(self))]
-    fn handle_config(&self, path_override: Option<String>) -> Result<Config> {
+    fn handle_config(&self, path_override: Option<String>) -> Result<Config, ConfigurationErr> {
         let config_path = path_override.map_or(config_path(), PathBuf::from);
         let cfg = if config_path.exists() {
             debug!("loading config from '{}'", config_path.str());
@@ -75,10 +75,10 @@ pub fn config_path() -> PathBuf {
         .join("dox/dox.toml")
 }
 
-fn config_from_user() -> Result<Config> {
+fn config_from_user() -> Result<Config, ConfigurationErr> {
     match prompt::show() {
         Ok(cfg) => Ok(cfg),
-        Err(DoxErr::Prompt(InquireError::OperationCanceled)) => exit_process(),
+        Err(PromptErr::Prompt(InquireError::OperationCanceled)) => exit_process(),
         Err(e) => panic!("failed while showing prompt: {}", e),
     }
 }
@@ -88,23 +88,23 @@ fn exit_process() -> ! {
     std::process::exit(0);
 }
 
-fn prepare_directories(config: &Config) -> Result<()> {
+fn prepare_directories(config: &Config) -> Result<(), ConfigurationErr> {
     check_thumnbails_dir(config)?;
     check_watched_dir(config)?;
     check_index_dir(config)?;
     Ok(())
 }
 
-fn check_thumnbails_dir(config: &Config) -> Result<()> {
+fn check_thumnbails_dir(config: &Config) -> Result<(), ConfigurationErr> {
     if config.thumbnails_dir.exists() && !config.thumbnails_dir.is_dir() {
-        return Err(DoxErr::InvalidThumbnailPath(format!(
+        return Err(ConfigurationErr::InvalidIndexPath(format!(
             "It needs to be a directory: '{}'",
             config.thumbnails_dir.str()
         )));
     }
     create_dir_all(&config.thumbnails_dir)?;
     if config.thumbnails_dir.read_dir()?.next().is_some() {
-        return Err(DoxErr::InvalidThumbnailPath(format!(
+        return Err(ConfigurationErr::InvalidThumbnailPath(format!(
             "Directory needs to be empty: '{}'",
             config.thumbnails_dir.str()
         )));
@@ -112,9 +112,9 @@ fn check_thumnbails_dir(config: &Config) -> Result<()> {
     Ok(())
 }
 
-fn check_watched_dir(config: &Config) -> Result<()> {
+fn check_watched_dir(config: &Config) -> Result<(), ConfigurationErr> {
     if config.watched_dir.exists() && !config.watched_dir.is_dir() {
-        return Err(DoxErr::InvalidWatchedDirPath(format!(
+        return Err(ConfigurationErr::InvalidWatchedDirPath(format!(
             "It needs to be a directory: '{}'",
             config.watched_dir.str()
         )));
@@ -123,9 +123,9 @@ fn check_watched_dir(config: &Config) -> Result<()> {
     Ok(())
 }
 
-fn check_index_dir(config: &Config) -> Result<()> {
+fn check_index_dir(config: &Config) -> Result<(), ConfigurationErr> {
     if config.index_dir.exists() && !config.index_dir.is_dir() {
-        return Err(DoxErr::InvalidIndexPath(format!(
+        return Err(ConfigurationErr::InvalidIndexPath(format!(
             "It needs to be a directory: '{}'",
             config.index_dir.str()
         )));

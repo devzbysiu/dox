@@ -2,7 +2,7 @@
 use crate::entities::document::DocDetails;
 use crate::entities::location::{Location, SafePathBuf};
 use crate::helpers::PathRefExt;
-use crate::result::Result;
+use crate::result::ExtractorErr;
 use crate::use_cases::services::extractor::DataExtractor;
 use crate::use_cases::user::User;
 
@@ -20,7 +20,7 @@ pub struct FromImage;
 
 impl DataExtractor for FromImage {
     #[instrument(skip(self))]
-    fn extract_data(&self, location: &Location) -> Result<Vec<DocDetails>> {
+    fn extract_data(&self, location: &Location) -> Result<Vec<DocDetails>, ExtractorErr> {
         let Location::FS(paths) = location;
         Ok(paths
             .par_iter()
@@ -30,7 +30,7 @@ impl DataExtractor for FromImage {
     }
 }
 
-fn extract_details(path: &SafePathBuf) -> Result<DocDetails> {
+fn extract_details(path: &SafePathBuf) -> Result<DocDetails, ExtractorErr> {
     debug!("executing OCR on {:?}", path);
     // NOTE: it's actually more efficient to create LepTess
     // each time than sharing it between threads
@@ -50,6 +50,7 @@ mod test {
     use super::*;
 
     use crate::entities::location::SafePathBuf;
+    use anyhow::Result;
 
     #[test]
     fn test_extract_text() -> Result<()> {

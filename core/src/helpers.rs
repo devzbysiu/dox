@@ -1,5 +1,5 @@
 use crate::entities::extension::Ext;
-use crate::result::Result;
+use crate::result::HelperErr;
 
 use retry::delay::Fixed;
 use retry::{retry, OperationResult};
@@ -11,12 +11,12 @@ use std::path::Path;
 use tracing::{debug, instrument};
 
 pub trait LocalResponseExt {
-    fn read_body(&mut self) -> Result<String>;
+    fn read_body(&mut self) -> Result<String, HelperErr>;
 }
 
 impl LocalResponseExt for LocalResponse<'_> {
     #[instrument]
-    fn read_body(&mut self) -> Result<String> {
+    fn read_body(&mut self) -> Result<String, HelperErr> {
         let mut buffer = Vec::new();
         self.read_to_end(&mut buffer)?;
         let res = String::from_utf8(buffer)?;
@@ -26,11 +26,11 @@ impl LocalResponseExt for LocalResponse<'_> {
 }
 
 pub trait ClientExt {
-    fn read_entries(&self, endpoint: &str) -> Result<(String, Status)>;
+    fn read_entries(&self, endpoint: &str) -> Result<(String, Status), HelperErr>;
 }
 
 impl ClientExt for Client {
-    fn read_entries(&self, endpoint: &str) -> Result<(String, Status)> {
+    fn read_entries(&self, endpoint: &str) -> Result<(String, Status), HelperErr> {
         Ok(retry(Fixed::from_millis(1000).take(60), || {
             let mut r = self.get(endpoint).dispatch();
             match r.read_body() {
@@ -60,7 +60,7 @@ pub trait PathRefExt {
     fn string(&self) -> String;
     fn filestem(&self) -> String;
     fn filename(&self) -> String;
-    fn first_filename(&self) -> Result<String>;
+    fn first_filename(&self) -> Result<String, HelperErr>;
     fn parent_name(&self) -> String;
     fn parent_path(&self) -> &Path;
     fn rel_path(&self) -> String;
@@ -97,7 +97,7 @@ impl<T: AsRef<Path>> PathRefExt for T {
             .to_string()
     }
 
-    fn first_filename(&self) -> Result<String> {
+    fn first_filename(&self) -> Result<String, HelperErr> {
         Ok(self.as_ref().read_dir()?.next().unwrap()?.filename())
     }
 
@@ -127,6 +127,7 @@ impl<T: AsRef<Path>> PathRefExt for T {
 #[cfg(test)]
 mod test {
     use super::*;
+
     use anyhow::Result;
     use std::fs::{read_dir, File};
     use std::path::PathBuf;

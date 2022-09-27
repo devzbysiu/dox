@@ -1,6 +1,6 @@
 use crate::entities::location::Location;
 use crate::helpers::PathRefExt;
-use crate::result::Result;
+use crate::result::PreprocessorErr;
 use crate::use_cases::services::preprocessor::FilePreprocessor;
 use std::fs::{self, create_dir_all};
 
@@ -16,7 +16,11 @@ pub struct Image;
 
 impl FilePreprocessor for Image {
     #[instrument(skip(self))]
-    fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<Location> {
+    fn preprocess(
+        &self,
+        location: &Location,
+        thumbnails_dir: &Path,
+    ) -> Result<Location, PreprocessorErr> {
         let Location::FS(paths) = location;
         let mut result_paths = Vec::new();
         for p in paths {
@@ -37,6 +41,7 @@ mod test {
     use crate::entities::location::SafePathBuf;
     use crate::helpers::DirEntryExt;
 
+    use anyhow::Result;
     use tempfile::tempdir;
 
     #[test]

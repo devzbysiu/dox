@@ -1,4 +1,4 @@
-use crate::result::Result;
+use crate::result::IndexerErr;
 use crate::use_cases::bus::{BusEvent, EventBus};
 use crate::use_cases::repository::RepoWrite;
 
@@ -16,7 +16,7 @@ impl Indexer {
     }
 
     #[instrument(skip(self, repository))]
-    pub fn run(&self, repository: RepoWrite) -> Result<()> {
+    pub fn run(&self, repository: RepoWrite) -> Result<(), IndexerErr> {
         // TODO: add threadpool to other services
         // TODO: think about num_threads
         // TODO: should threadpool be shared between services?
@@ -24,11 +24,11 @@ impl Indexer {
         let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
         let sub = self.bus.subscriber();
         let mut publ = self.bus.publisher();
-        thread::spawn(move || -> Result<()> {
+        thread::spawn(move || -> Result<(), IndexerErr> {
             loop {
                 match sub.recv()? {
                     BusEvent::DataExtracted(doc_details) => {
-                        if let Err(e) = tp.install(|| -> Result<()> {
+                        if let Err(e) = tp.install(|| -> Result<(), IndexerErr> {
                             repository.index(&doc_details)?;
                             publ.send(BusEvent::Indexed(doc_details))?;
                             Ok(())
@@ -52,16 +52,15 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::entities::document::DocDetails;
     use crate::entities::location::Location;
-    use crate::result::DoxErr;
+    use crate::result::{BusErr, IndexerErr};
     use crate::testutils::{Spy, SubscriberExt};
     use crate::use_cases::repository::RepositoryWrite;
     use crate::use_cases::user::{User, FAKE_USER_EMAIL};
 
-    use anyhow::Result;
+    use anyhow::{anyhow, Result};
     use std::sync::mpsc::{channel, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
-    use tantivy::TantivyError;
 
     #[test]
     fn repo_write_is_used_to_index_data() -> Result<()> {
@@ -235,7 +234,7 @@ mod test {
     }
 
     impl RepositoryWrite for WorkingRepoWrite {
-        fn index(&self, _docs_details: &[DocDetails]) -> crate::result::Result<()> {
+        fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
             self.tx
                 .lock()
                 .expect("poisoned mutex")
@@ -256,20 +255,20 @@ mod test {
     }
 
     impl RepositoryWrite for FailingRepoWrite {
-        fn index(&self, _docs_details: &[DocDetails]) -> crate::result::Result<()> {
+        fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
             self.tx
                 .lock()
                 .expect("poisoned mutex")
                 .send(())
                 .expect("failed to send message");
-            Err(DoxErr::Indexing(TantivyError::Poisoned))
+            Err(IndexerErr::BusError(BusErr::GenericError(anyhow!("error"))))
         }
     }
 
     struct NoOpRepoWrite;
 
     impl RepositoryWrite for NoOpRepoWrite {
-        fn index(&self, _docs_details: &[DocDetails]) -> crate::result::Result<()> {
+        fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
             // nothing to do here
             Ok(())
         }
@@ -278,8 +277,8 @@ mod test {
     struct ErroneousRepoWrite;
 
     impl RepositoryWrite for ErroneousRepoWrite {
-        fn index(&self, _docs_details: &[DocDetails]) -> crate::result::Result<()> {
-            Err(DoxErr::Indexing(TantivyError::Poisoned))
+        fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
+            Err(IndexerErr::BusError(BusErr::GenericError(anyhow!("error"))))
         }
     }
 }
