@@ -48,7 +48,7 @@ tungstenite = "0.17.3"
 once_cell = "1.13.1"
 eventador = "0.0.18"
 anyhow = "1.0.62"
-retry = "1.3.1"
+retry = "2.0.0"
 jwks-client = { git = "https://github.com/jfbilodeau/jwks-client" }
 async-once-cell = "0.4.2"
 dashmap = "5.3.4"
@@ -61,6 +61,5 @@ tempfile = "3.3.0"
 ureq = { version = "2.5.0", features = ["json"] }
 testutils = { path = "testutils" }
 serial_test = "0.9.0"
-retry = "1.3.1"
 fake = "2.5.0"
 rand = "0.8.5"
