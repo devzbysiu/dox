@@ -24,13 +24,13 @@ pub fn show() -> Result<Config> {
 fn watched_dir_prompt() -> Result<PathBuf> {
     Ok(PathBuf::from(
         Text::new("Path to a directory you want to watch for changes:")
-            .with_suggester(&path_suggester)
+            .with_autocomplete(&path_autocomplete)
             .with_validator(required!())
             .prompt()?,
     ))
 }
 
-fn path_suggester(input: &str) -> std::result::Result<Vec<String>, CustomUserError> {
+fn path_autocomplete(input: &str) -> std::result::Result<Vec<String>, CustomUserError> {
     let path = Path::new(input);
     if path.is_dir() {
         return Ok(vec![input.to_string()]);
@@ -52,7 +52,7 @@ fn path_suggester(input: &str) -> std::result::Result<Vec<String>, CustomUserErr
 fn thumbnails_dir_prompt(config: &Config) -> Result<PathBuf> {
     Ok(PathBuf::from(
         Text::new("Path to a directory for storing thumbnails:")
-            .with_suggester(&path_suggester)
+            .with_autocomplete(&path_autocomplete)
             .with_default(config.thumbnails_dir.str())
             .prompt()?,
     ))
@@ -61,7 +61,7 @@ fn thumbnails_dir_prompt(config: &Config) -> Result<PathBuf> {
 fn index_dir_prompt(config: &Config) -> Result<PathBuf> {
     Ok(PathBuf::from(
         Text::new("Path to a directory for storing index files:")
-            .with_suggester(&path_suggester)
+            .with_autocomplete(&path_autocomplete)
             .with_default(config.index_dir.str())
             .prompt()?,
     ))
