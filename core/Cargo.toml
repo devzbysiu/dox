@@ -62,3 +62,5 @@ ureq = { version = "2.5.0", features = ["json"] }
 testutils = { path = "testutils" }
 serial_test = "0.9.0"
 retry = "1.3.1"
+fake = "2.5.0"
+rand = "0.8.5"

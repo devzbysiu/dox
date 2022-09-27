@@ -224,6 +224,9 @@ impl ValueExt for Value {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    use crate::use_cases::user::FAKE_USER_EMAIL;
+
     use anyhow::Result;
     use std::fs::File;
     use testutils::{index_dir_path, thumbnails_dir_path, watched_dir_path};
@@ -266,7 +269,7 @@ mod test {
         // given
         let config = create_config()?;
         let (repo_read, repo_write) = TantivyRepository::create(&config)?;
-        let user_email = "some@email.com";
+        let user_email = FAKE_USER_EMAIL;
         let user = User::new(user_email);
         let tuples_to_index = vec![
             DocDetails::new(user.clone(), "filename1", "body1", "thumbnail1"),
@@ -302,8 +305,7 @@ mod test {
         // given
         let config = create_config()?;
         let (repo_read, repo_write) = TantivyRepository::create(&config)?;
-        let user_email = "some@email.com";
-        let user = User::new(user_email);
+        let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
             DocDetails::new(user.clone(), "filename1", "body", "thumbnail1"),
             DocDetails::new(user.clone(), "filename2", "text", "thumbnail2"),
@@ -333,8 +335,7 @@ mod test {
         // given
         let config = create_config()?;
         let (repo_read, repo_write) = TantivyRepository::create(&config)?;
-        let user_email = "some@email.com";
-        let user = User::new(user_email);
+        let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
             DocDetails::new(user.clone(), "filename1", "some body", "thumbnail1"),
             DocDetails::new(user.clone(), "filename2", "another text here", "thumbnail2"),

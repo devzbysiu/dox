@@ -752,6 +752,7 @@ dependencies = [
  "dashmap",
  "dirs",
  "eventador",
+ "fake",
  "inquire",
  "jwks-client",
  "leptess",
@@ -760,6 +761,7 @@ dependencies = [
  "once_cell",
  "pdf-extract",
  "poppler",
+ "rand",
  "rayon",
  "retry",
  "rocket",
@@ -922,6 +924,15 @@ checksum = "ec3245a0ca564e7f3c797d20d833a6870f57a728ac967d5225b3ffdef4465011"
 dependencies = [
  "lazy_static",
  "log",
+ "rand",
+]
+
+[[package]]
+name = "fake"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d68f517805463f3a896a9d29c1d6ff09d3579ded64a7201b4069f8f9c0d52fd"
+dependencies = [
  "rand",
 ]
 

@@ -55,11 +55,11 @@ mod test {
     use crate::result::DoxErr;
     use crate::testutils::{Spy, SubscriberExt};
     use crate::use_cases::repository::RepositoryWrite;
-    use crate::use_cases::user::User;
+    use crate::use_cases::user::{User, FAKE_USER_EMAIL};
 
     use anyhow::Result;
     use std::sync::mpsc::{channel, Sender};
-    use std::sync::{Mutex};
+    use std::sync::Mutex;
     use std::time::Duration;
     use tantivy::TantivyError;
 
@@ -111,7 +111,7 @@ mod test {
         let repo_write = Box::new(NoOpRepoWrite);
         let bus = event_bus()?;
         let docs_details = vec![DocDetails::new(
-            User::new("some@email.com"),
+            User::new(FAKE_USER_EMAIL),
             "path",
             "body",
             "thumbnail",

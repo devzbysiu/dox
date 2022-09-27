@@ -66,6 +66,7 @@ mod test {
     use crate::testutils::{mk_file, Spy, SubscriberExt};
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
+    use crate::use_cases::user::FAKE_USER_EMAIL;
 
     use anyhow::Result;
     use std::sync::mpsc::{channel, Sender};
@@ -77,7 +78,7 @@ mod test {
         // given
         init_tracing();
         let (cipher_spy, cipher_writer) = CipherSpy::working();
-        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
 
         // when
@@ -100,7 +101,7 @@ mod test {
         // given
         init_tracing();
         let noop_cipher = Arc::new(NoOpCipher);
-        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
 
         // when
@@ -127,7 +128,7 @@ mod test {
         // given
         init_tracing();
         let noop_cipher = Arc::new(NoOpCipher);
-        let _new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into()).unwrap();
+        let _new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into()).unwrap();
         let bus = event_bus().unwrap();
         let location = Location::FS(Vec::new());
         let ignored_events = [
@@ -160,7 +161,7 @@ mod test {
         // given
         let (spy, failing_repo_write) = CipherSpy::failing();
         let bus = event_bus()?;
-        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
 
         let encrypter = Encrypter::new(bus.clone());
         encrypter.run(failing_repo_write)?;

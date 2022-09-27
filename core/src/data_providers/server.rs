@@ -88,6 +88,7 @@ pub struct Document {
 // mod test {
 //     use crate::helpers::{ClientExt, LocalResponseExt};
 //     use crate::rocket;
+//     use crate::use_cases::user::FAKE_USER_EMAIL;
 
 //     use anyhow::Result;
 //     use rocket::{http::Status, local::blocking::Client};
@@ -127,7 +128,7 @@ pub struct Document {
 //         let (config, config_dir) = create_test_env()?;
 //         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
 //         thread::sleep(Duration::from_secs(5));
-//         let user_dir_name = base64::encode("some@email.com"); // TODO: it's repetition, think about this
+//         let user_dir_name = base64::encode(FAKE_USER_EMAIL); // TODO: it's repetition, think about this
 //         cp_docs(config.watched_dir_path().join(user_dir_name))?;
 
 //         // when
@@ -149,7 +150,7 @@ pub struct Document {
 //         let (config, config_dir) = create_test_env()?;
 //         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
 //         thread::sleep(Duration::from_secs(5));
-//         let user_dir_name = base64::encode("some@email.com");
+//         let user_dir_name = base64::encode(FAKE_USER_EMAIL);
 //         cp_docs(config.watched_dir_path().join(user_dir_name))?;
 
 //         // when
@@ -186,7 +187,7 @@ pub struct Document {
 //         let (config, config_dir) = create_test_env()?;
 //         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
 //         thread::sleep(Duration::from_secs(5));
-//         let user_dir_name = base64::encode("some@email.com");
+//         let user_dir_name = base64::encode(FAKE_USER_EMAIL);
 //         cp_docs(config.watched_dir_path().join(user_dir_name))?;
 
 //         // when

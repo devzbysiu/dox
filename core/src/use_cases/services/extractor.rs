@@ -74,13 +74,13 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::result::DoxErr;
     use crate::testutils::{mk_file, Spy, SubscriberExt};
-    use crate::use_cases::user::User;
+    use crate::use_cases::user::{User, FAKE_USER_EMAIL};
 
     use anyhow::Result;
     use leptess::tesseract::TessInitError;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::{channel, Sender};
-    use std::sync::{Mutex};
+    use std::sync::Mutex;
     use std::time::Duration;
 
     #[test]
@@ -89,7 +89,7 @@ mod test {
         init_tracing();
         let (spy, extractor) = ExtractorSpy::working();
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
-        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
 
         // when
@@ -110,14 +110,14 @@ mod test {
         // given
         init_tracing();
         let docs_details = vec![DocDetails::new(
-            User::new("some@email.com"),
+            User::new(FAKE_USER_EMAIL),
             "path",
             "body",
             "thumbnail",
         )];
         let extractor = Box::new(ExtractorStub::new(docs_details.clone()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
-        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
 
         // when
@@ -147,7 +147,7 @@ mod test {
         init_tracing();
         let extractor = Box::new(ExtractorStub::new(Vec::new()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
-        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
 
         // when
@@ -178,7 +178,7 @@ mod test {
         init_tracing();
         let (spy, failing_extractor) = ExtractorSpy::failing();
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![failing_extractor]));
-        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
 
         // when
@@ -208,7 +208,7 @@ mod test {
             failing_extractor1,
             failing_extractor2,
         ]));
-        let new_file = mk_file(base64::encode("some@email.com"), "some-file.jpg".into())?;
+        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
 
         let txt_extractor = TxtExtractor::new(bus.clone());
