@@ -46,15 +46,11 @@ impl TxtExtractor {
     }
 }
 
-fn extract(
-    location: Location,
-    extractor: &Extractor,
-    mut publ: EventPublisher,
-) -> Result<(), ExtractorErr> {
-    publ.send(BusEvent::DataExtracted(extractor.extract_data(&location)?))?;
+fn extract(loc: Location, extr: &Extractor, mut publ: EventPublisher) -> Result<(), ExtractorErr> {
+    publ.send(BusEvent::DataExtracted(extr.extract_data(&loc)?))?;
     debug!("extraction finished");
-    debug!("sending encryption request for: '{:?}'", location);
-    publ.send(BusEvent::EncryptionRequest(location))?;
+    debug!("sending encryption request for: '{:?}'", loc);
+    publ.send(BusEvent::EncryptionRequest(loc))?;
     Ok(())
 }
 

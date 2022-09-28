@@ -114,6 +114,9 @@ pub enum PreprocessorErr {
 
     #[error("Failed to write PDF thumbnail to image surface.")]
     CarioIoError(#[from] cairo::IoError),
+
+    #[error("Failed to create threadpool.")]
+    ThreadPoolError(#[from] rayon::ThreadPoolBuildError),
 }
 
 #[derive(Debug, Error)]
