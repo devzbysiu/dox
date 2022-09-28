@@ -110,141 +110,141 @@ pub struct Document {
     body: String,
 }
 
-#[cfg(test)]
-mod test {
-    use crate::testingtools::create_test_app;
+// #[cfg(test)]
+// mod test {
+//     use crate::testingtools::create_test_app;
 
-    use anyhow::Result;
-    use rocket::http::Status;
+//     use anyhow::Result;
+//     use rocket::http::Status;
 
-    #[test]
-    fn empty_index_returns_200_and_empty_json_entries() -> Result<()> {
-        // given
-        let app = create_test_app()?;
+//     #[test]
+//     fn empty_index_returns_200_and_empty_json_entries() -> Result<()> {
+//         // given
+//         let app = create_test_app()?;
 
-        // when
-        let res = app.search("not-important")?;
+//         // when
+//         let res = app.search("not-important")?;
 
-        // then
-        assert_eq!(res.status, Status::Ok);
-        assert_eq!(res.body, r#"{"entries":[]}"#);
+//         // then
+//         assert_eq!(res.status, Status::Ok);
+//         assert_eq!(res.body, r#"{"entries":[]}"#);
 
-        Ok(())
-    }
+//         Ok(())
+//     }
 
-    //     #[test]
-    //     fn test_search_endpoint_with_indexed_docs() -> Result<()> {
-    //         // given
-    //         let (config, config_dir) = create_test_env()?;
-    //         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
-    //         thread::sleep(Duration::from_secs(5));
-    //         let user_dir_name = base64::encode(FAKE_USER_EMAIL); // TODO: it's repetition, think about this
-    //         cp_docs(config.watched_dir_path().join(user_dir_name))?;
+//     #[test]
+//     fn test_search_endpoint_with_indexed_docs() -> Result<()> {
+//         // given
+//         let (config, config_dir) = create_test_env()?;
+//         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
+//         thread::sleep(Duration::from_secs(5));
+//         let user_dir_name = base64::encode(FAKE_USER_EMAIL); // TODO: it's repetition, think about this
+//         cp_docs(config.watched_dir_path().join(user_dir_name))?;
 
-    //         // when
-    //         let (body, status) = client.read_entries("/search?q=Parlamentarny")?;
+//         // when
+//         let (body, status) = client.read_entries("/search?q=Parlamentarny")?;
 
-    //         // then
-    //         assert_eq!(status, Status::Ok);
-    //         assert_eq!(
-    //             body,
-    //             r#"{"entries":[{"filename":"doc1.png","thumbnail":"doc1.png"}]}"#
-    //         );
+//         // then
+//         assert_eq!(status, Status::Ok);
+//         assert_eq!(
+//             body,
+//             r#"{"entries":[{"filename":"doc1.png","thumbnail":"doc1.png"}]}"#
+//         );
 
-    //         Ok(())
-    //     }
+//         Ok(())
+//     }
 
-    //     #[test]
-    //     fn test_search_endpoint_with_wrong_query() -> Result<()> {
-    //         // given
-    //         let (config, config_dir) = create_test_env()?;
-    //         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
-    //         thread::sleep(Duration::from_secs(5));
-    //         let user_dir_name = base64::encode(FAKE_USER_EMAIL);
-    //         cp_docs(config.watched_dir_path().join(user_dir_name))?;
+//     #[test]
+//     fn test_search_endpoint_with_wrong_query() -> Result<()> {
+//         // given
+//         let (config, config_dir) = create_test_env()?;
+//         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
+//         thread::sleep(Duration::from_secs(5));
+//         let user_dir_name = base64::encode(FAKE_USER_EMAIL);
+//         cp_docs(config.watched_dir_path().join(user_dir_name))?;
 
-    //         // when
-    //         let mut resp = client.get("/search?q=not-existing-query").dispatch();
-    //         let body = resp.read_body()?;
+//         // when
+//         let mut resp = client.get("/search?q=not-existing-query").dispatch();
+//         let body = resp.read_body()?;
 
-    //         // then
-    //         assert_eq!(resp.status(), Status::Ok);
-    //         assert_eq!(body, r#"{"entries":[]}"#);
+//         // then
+//         assert_eq!(resp.status(), Status::Ok);
+//         assert_eq!(body, r#"{"entries":[]}"#);
 
-    //         Ok(())
-    //     }
+//         Ok(())
+//     }
 
-    //     #[test]
-    //     fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
-    //         // given
-    //         let (_, config_dir) = create_test_env()?;
-    //         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
+//     #[test]
+//     fn test_all_thumbnails_endpoint_with_empty_index() -> Result<()> {
+//         // given
+//         let (_, config_dir) = create_test_env()?;
+//         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
 
-    //         // when
-    //         let mut resp = client.get("/thumbnails/all").dispatch();
-    //         let body = resp.read_body()?;
+//         // when
+//         let mut resp = client.get("/thumbnails/all").dispatch();
+//         let body = resp.read_body()?;
 
-    //         // then
-    //         assert_eq!(resp.status(), Status::Ok);
-    //         assert_eq!(body, r#"{"entries":[]}"#);
+//         // then
+//         assert_eq!(resp.status(), Status::Ok);
+//         assert_eq!(body, r#"{"entries":[]}"#);
 
-    //         Ok(())
-    //     }
+//         Ok(())
+//     }
 
-    //     #[test]
-    //     fn test_all_thumbnails_endpoint_with_indexed_docs() -> Result<()> {
-    //         // given
-    //         let (config, config_dir) = create_test_env()?;
-    //         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
-    //         thread::sleep(Duration::from_secs(5));
-    //         let user_dir_name = base64::encode(FAKE_USER_EMAIL);
-    //         cp_docs(config.watched_dir_path().join(user_dir_name))?;
+//     #[test]
+//     fn test_all_thumbnails_endpoint_with_indexed_docs() -> Result<()> {
+//         // given
+//         let (config, config_dir) = create_test_env()?;
+//         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
+//         thread::sleep(Duration::from_secs(5));
+//         let user_dir_name = base64::encode(FAKE_USER_EMAIL);
+//         cp_docs(config.watched_dir_path().join(user_dir_name))?;
 
-    //         // when
-    //         let (body, status) = client.read_entries("/thumbnails/all")?;
+//         // when
+//         let (body, status) = client.read_entries("/thumbnails/all")?;
 
-    //         // then
-    //         assert_eq!(status, Status::Ok);
-    //         assert_eq!(
-    //             body,
-    //             r#"{"entries":[{"filename":"doc1.png","thumbnail":"doc1.png"}]}"#
-    //         );
+//         // then
+//         assert_eq!(status, Status::Ok);
+//         assert_eq!(
+//             body,
+//             r#"{"entries":[{"filename":"doc1.png","thumbnail":"doc1.png"}]}"#
+//         );
 
-    //         Ok(())
-    //     }
+//         Ok(())
+//     }
 
-    //     #[test]
-    //     fn test_receive_document_endpoint() -> Result<()> {
-    //         // given
-    //         let (_, config_dir) = create_test_env()?;
-    //         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
+//     #[test]
+//     fn test_receive_document_endpoint() -> Result<()> {
+//         // given
+//         let (_, config_dir) = create_test_env()?;
+//         let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
 
-    //         let mut resp = client.get("/search?q=Parlamentarny").dispatch();
-    //         let body = resp.read_body()?;
-    //         assert_eq!(resp.status(), Status::Ok);
-    //         assert_eq!(body, r#"{"entries":[]}"#);
+//         let mut resp = client.get("/search?q=Parlamentarny").dispatch();
+//         let body = resp.read_body()?;
+//         assert_eq!(resp.status(), Status::Ok);
+//         assert_eq!(body, r#"{"entries":[]}"#);
 
-    //         // when
-    //         let resp = client
-    //             .post("/document/upload")
-    //             .body(format!(
-    //                 r#"{{ "filename": "doc1.png", "body": "{}" }}"#,
-    //                 to_base64("res/doc1.png")?
-    //             ))
-    //             .dispatch();
-    //         assert_eq!(resp.status(), Status::Created);
+//         // when
+//         let resp = client
+//             .post("/document/upload")
+//             .body(format!(
+//                 r#"{{ "filename": "doc1.png", "body": "{}" }}"#,
+//                 to_base64("res/doc1.png")?
+//             ))
+//             .dispatch();
+//         assert_eq!(resp.status(), Status::Created);
 
-    //         thread::sleep(Duration::from_secs(15)); // allow to index docs
+//         thread::sleep(Duration::from_secs(15)); // allow to index docs
 
-    //         let (body, status) = client.read_entries("/search?q=Parlamentarny")?;
+//         let (body, status) = client.read_entries("/search?q=Parlamentarny")?;
 
-    //         // then
-    //         assert_eq!(status, Status::Ok);
-    //         assert_eq!(
-    //             body,
-    //             r#"{"entries":[{"filename":"doc1.png","thumbnail":"doc1.png"}]}"#
-    //         );
+//         // then
+//         assert_eq!(status, Status::Ok);
+//         assert_eq!(
+//             body,
+//             r#"{"entries":[{"filename":"doc1.png","thumbnail":"doc1.png"}]}"#
+//         );
 
-    //         Ok(())
-    //     }
-}
+//         Ok(())
+//     }
+// }
