@@ -62,7 +62,7 @@ fn preprocess<P: AsRef<Path>>(
     mut publ: EventPublisher,
 ) -> Result<(), PreprocessorErr> {
     let thumbnails_dir = thumbnails_dir.as_ref();
-    let thumbnail_loc = prepr.preprocess(loc, &thumbnails_dir)?;
+    let thumbnail_loc = prepr.preprocess(loc, thumbnails_dir)?;
     debug!("preprocessing finished");
     publ.send(BusEvent::ThumbnailMade(thumbnail_loc.clone()))?;
     debug!("sending encryption request for: '{:?}'", thumbnail_loc);
