@@ -1,15 +1,22 @@
 use rocket::{http::Status, response::Responder};
+use std::io::ErrorKind::NotFound;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ThumbnailReadErr {
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
+
+    #[error("Failed to load thumbnail.")]
+    LoadError(#[from] PersistenceErr),
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for ThumbnailReadErr {
     fn respond_to(self, _request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
-        Err(Status::new(500))
+        Err(match self {
+            Self::LoadError(PersistenceErr::IoError(e)) if e.kind() == NotFound => Status::NotFound,
+            Self::UnexpectedError(_) | Self::LoadError(_) => Status::InternalServerError,
+        })
     }
 }
 

@@ -36,9 +36,7 @@ pub fn thumbnail(
     cipher_read: &State<CipherRead>,
 ) -> Result<Option<Vec<u8>>, ThumbnailReadErr> {
     let thumbnail_path = cfg.thumbnails_dir.join(relative_path(&user, filename));
-    let buf = persistence
-        .load(thumbnail_path)
-        .context("Failed to read thumbnail.")?;
+    let buf = persistence.load(thumbnail_path)?;
     Ok(match buf {
         Some(buf) => Some(
             cipher_read

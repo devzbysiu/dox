@@ -8,7 +8,6 @@ use jwks_client::keyset::KeyStore;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 use std::convert::TryFrom;
-use tracing::{debug, error};
 
 impl TryFrom<&SafePathBuf> for User {
     type Error = UserConvErr;
@@ -20,18 +19,6 @@ impl TryFrom<&SafePathBuf> for User {
         let user_email = String::from_utf8(user_email)?;
         Ok(User::new(user_email))
     }
-}
-
-async fn key_store() -> &'static KeyStore {
-    static INSTANCE: OnceCell<KeyStore> = OnceCell::new();
-
-    INSTANCE
-        .get_or_init(async {
-            KeyStore::new_from("https://www.googleapis.com/oauth2/v3/certs".into())
-                .await
-                .expect("failed to create key store")
-        })
-        .await
 }
 
 #[rocket::async_trait]
@@ -48,17 +35,24 @@ impl<'r> FromRequest<'r> for User {
         match key_store.verify(token) {
             Ok(jwt) => {
                 if let Some(email) = jwt.payload().get_str("email") {
-                    debug!("name={:?}", email);
                     Outcome::Success(User::new(email))
                 } else {
-                    error!("Invalid idToken, missing 'email' field");
                     Outcome::Failure((Status::BadRequest, UserConvErr::InvalidIdToken))
                 }
             }
-            Err(e) => {
-                error!("Could not verify token. Reason: {:?}", e);
-                Outcome::Failure((Status::Unauthorized, UserConvErr::TokenVerification))
-            }
+            Err(_) => Outcome::Failure((Status::Unauthorized, UserConvErr::TokenVerification)),
         }
     }
+}
+
+async fn key_store() -> &'static KeyStore {
+    static INSTANCE: OnceCell<KeyStore> = OnceCell::new();
+
+    INSTANCE
+        .get_or_init(async {
+            KeyStore::new_from("https://www.googleapis.com/oauth2/v3/certs".into())
+                .await
+                .expect("failed to create key store")
+        })
+        .await
 }
