@@ -68,11 +68,11 @@ mod test {
         init_tracing();
         let (spy, working_repo_write) = RepoWriteSpy::working();
         let bus = event_bus()?;
-
-        // when
         let indexer = Indexer::new(bus.clone());
         indexer.run(working_repo_write)?;
         let mut publ = bus.publisher();
+
+        // when
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
 
         // then
@@ -87,17 +87,16 @@ mod test {
         init_tracing();
         let noop_repo_write = Box::new(NoOpRepoWrite);
         let bus = event_bus()?;
-
-        // when
         let indexer = Indexer::new(bus.clone());
         indexer.run(noop_repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
+
+        // when
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
 
-        let _event = sub.recv()?; // ignore DataExtracted event
-
         // then
+        let _event = sub.recv()?; // ignore DataExtracted event
         assert_eq!(sub.recv()?, BusEvent::Indexed(Vec::new()));
 
         Ok(())
@@ -115,17 +114,16 @@ mod test {
             "body",
             "thumbnail",
         )];
-
-        // when
         let indexer = Indexer::new(bus.clone());
         indexer.run(repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
+
+        // when
         publ.send(BusEvent::DataExtracted(docs_details.clone()))?;
 
-        let _event = sub.recv()?; // ignore DataExtracted event
-
         // then
+        let _event = sub.recv()?; // ignore DataExtracted event
         assert_eq!(sub.recv()?, BusEvent::Indexed(docs_details));
 
         Ok(())
@@ -137,17 +135,16 @@ mod test {
         init_tracing();
         let repo_write = Box::new(ErroneousRepoWrite);
         let bus = event_bus()?;
-
-        // when
         let indexer = Indexer::new(bus.clone());
         indexer.run(repo_write)?;
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
+
+        // when
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
 
-        let _event = sub.recv()?; // ignore DataExtracted event
-
         // then
+        let _event = sub.recv()?; // ignore DataExtracted event
         assert!(sub.try_recv(Duration::from_secs(2)).is_err());
 
         Ok(())
@@ -167,13 +164,12 @@ mod test {
             BusEvent::ThumbnailMade(location),
             BusEvent::PipelineFinished,
         ];
-
-        // when
         let indexer = Indexer::new(bus.clone());
         indexer.run(noop_repo_write).unwrap();
-
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
+
+        // when
         for event in &ignored_events {
             publ.send(event.clone()).unwrap();
         }
@@ -192,14 +188,12 @@ mod test {
         init_tracing();
         let (spy, failing_repo_write) = RepoWriteSpy::failing();
         let bus = event_bus()?;
-
         let indexer = Indexer::new(bus.clone());
         indexer.run(failing_repo_write)?;
         let mut publ = bus.publisher();
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
         assert!(spy.method_called());
 
-        // TODO: think about what should be in given and when
         // when
         publ.send(BusEvent::DataExtracted(Vec::new()))?;
 

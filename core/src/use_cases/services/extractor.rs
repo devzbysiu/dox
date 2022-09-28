@@ -95,12 +95,12 @@ mod test {
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
-
-        // when
         let txt_extractor = TxtExtractor::new(bus.clone());
         txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
         let mut publ = bus.publisher();
+
+        // when
         publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
 
         // then
@@ -123,19 +123,17 @@ mod test {
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
-
-        // when
         let txt_extractor = TxtExtractor::new(bus.clone());
         txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
+
+        // when
         publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
 
-        let _event = sub.recv()?; // ignore NewDocs event
-
         // then
+        let _event = sub.recv()?; // ignore NewDocs event
         if let BusEvent::DataExtracted(details) = sub.recv()? {
             assert_eq!(details, docs_details);
         } else {
@@ -153,20 +151,18 @@ mod test {
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
         let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
-
-        // when
         let txt_extractor = TxtExtractor::new(bus.clone());
         txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
+
+        // when
         publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path.clone()])))?;
 
+        // then
         let _event = sub.recv()?; // ignore NewDocs event
         let _event = sub.recv()?; // ignore TextExtracted event
-
-        // then
         if let BusEvent::EncryptionRequest(location) = sub.recv()? {
             assert_eq!(location, Location::FS(vec![new_file.path]));
         } else {
@@ -184,19 +180,17 @@ mod test {
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![failing_extractor]));
         let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
-
-        // when
         let txt_extractor = TxtExtractor::new(bus.clone());
         txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
+
+        // when
         publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
 
-        let _event = sub.recv()?; // ignore NewDocs event
-
         // then
+        let _event = sub.recv()?; // ignore NewDocs event
         assert!(spy.method_called());
         assert!(sub.try_recv(Duration::from_secs(2)).is_err()); // no more events on the bus
 
@@ -214,7 +208,6 @@ mod test {
         ]));
         let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
-
         let txt_extractor = TxtExtractor::new(bus.clone());
         txt_extractor.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor

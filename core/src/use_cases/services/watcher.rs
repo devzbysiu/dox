@@ -64,17 +64,18 @@ mod test {
         let mock_event_receiver = Box::new(MockEventReceiver::new(rx));
         let bus = event_bus()?;
         let new_file = mk_file("parent-dir".into(), "some-file.jpg".into())?;
-
-        // when
         let watcher = DocsWatcher::new(bus.clone());
         watcher.run(mock_event_receiver);
+        let sub = bus.subscriber();
+
+        // when
         tx.send(DocsEvent::Created(new_file.path.clone()))?;
 
-        let sub = bus.subscriber();
-        let event = sub.recv()?;
-
         // then
-        assert_eq!(event, BusEvent::NewDocs(Location::FS(vec![new_file.path])));
+        assert_eq!(
+            sub.recv()?,
+            BusEvent::NewDocs(Location::FS(vec![new_file.path]))
+        );
 
         Ok(())
     }
@@ -87,12 +88,12 @@ mod test {
         let (tx, rx) = channel();
         let mock_event_receiver = Box::new(MockEventReceiver::new(rx));
         let bus = event_bus().unwrap();
-
-        // when
         let watcher = DocsWatcher::new(bus.clone());
         watcher.run(mock_event_receiver);
-        tx.send(DocsEvent::Other).unwrap();
         let sub = bus.subscriber();
+
+        // when
+        tx.send(DocsEvent::Other).unwrap();
 
         // then
         sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
@@ -105,11 +106,11 @@ mod test {
         init_tracing();
         let erroneous_event_receiver = Box::new(ErroneousEventReceiver);
         let bus = event_bus().unwrap();
+        let watcher = DocsWatcher::new(bus.clone());
+        let sub = bus.subscriber();
 
         // when
-        let watcher = DocsWatcher::new(bus.clone());
         watcher.run(erroneous_event_receiver); // error ignored here
-        let sub = bus.subscriber();
 
         // then
         sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic

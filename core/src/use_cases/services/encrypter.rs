@@ -80,12 +80,11 @@ mod test {
         let (cipher_spy, cipher_writer) = CipherSpy::working();
         let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
-
-        // when
         let encrypter = Encrypter::new(bus.clone());
         encrypter.run(cipher_writer)?;
-
         let mut publ = bus.publisher();
+
+        // when
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
             new_file.path,
         ])))?;
@@ -103,13 +102,13 @@ mod test {
         let noop_cipher = Arc::new(NoOpCipher);
         let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
-
-        // when
         let encrypter = Encrypter::new(bus.clone());
         encrypter.run(noop_cipher)?;
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
+
+        // when
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
             new_file.path,
         ])))?;
@@ -137,13 +136,13 @@ mod test {
             BusEvent::ThumbnailMade(location),
             BusEvent::Indexed(Vec::new()),
         ];
-
-        // when
         let encrypter = Encrypter::new(bus.clone());
         encrypter.run(noop_cipher).unwrap();
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
+
+        // when
         for event in &ignored_events {
             publ.send(event.clone()).unwrap();
         }
