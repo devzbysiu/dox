@@ -769,7 +769,6 @@ dependencies = [
  "serial_test",
  "tantivy",
  "tempfile",
- "testutils",
  "thiserror",
  "toml",
  "tracing",
@@ -3149,22 +3148,6 @@ dependencies = [
  "leptonica-sys",
  "pkg-config",
  "vcpkg",
-]
-
-[[package]]
-name = "testutils"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.13.0",
- "once_cell",
- "rand",
- "rocket",
- "serde",
- "tempfile",
- "toml",
- "tracing",
- "ureq",
 ]
 
 [[package]]

@@ -98,7 +98,7 @@ mod test {
 
         // then
         assert_eq!(user_dir.filename(), "res");
-        assert_eq!(user_dir.path().first_filename()?, "doc1.png");
+        assert_eq!(user_dir.path().first_filename(), "doc1.png");
 
         Ok(())
     }

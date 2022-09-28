@@ -59,7 +59,7 @@ mod test {
 
         // then
         assert_eq!(user_dir.filename(), "res");
-        assert_eq!(user_dir.path().first_filename()?, "doc1.png");
+        assert_eq!(user_dir.path().first_filename(), "doc1.png");
 
         Ok(())
     }
@@ -80,8 +80,8 @@ mod test {
         preprocessor.preprocess(&Location::FS(paths), tmp_dir.path())?;
 
         // then
-        assert_eq!(tmp_dir.path().first_filename()?, "res");
-        assert_eq!(tmp_dir.path().join("res").first_filename()?, "doc1.png");
+        assert_eq!(tmp_dir.path().first_filename(), "res");
+        assert_eq!(tmp_dir.path().join("res").first_filename(), "doc1.png");
 
         Ok(())
     }

@@ -48,7 +48,7 @@ mod test {
     use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
     use crate::result::EventReceiverErr;
-    use crate::testutils::{mk_file, SubscriberExt};
+    use crate::testingtools::{mk_file, SubscriberExt};
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::receiver::EventReceiver;
 

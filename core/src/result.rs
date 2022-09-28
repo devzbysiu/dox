@@ -250,16 +250,9 @@ pub enum SetupErr {
     #[error("Failed to run indexer.")]
     IndexerError(#[from] IndexerErr),
 
+    #[error("Failed to get configuration.")]
+    ConfigurationError(#[from] ConfigurationErr),
+
     #[error("Failed to launch Rocket.")]
     RocketErr(#[from] rocket::Error),
-}
-
-// TODO: this probably shouldn't exist
-#[derive(Debug, Error)]
-pub enum HelperErr {
-    #[error("Failed to make IO operation.")]
-    IoError(#[from] std::io::Error),
-
-    #[error("Invalid utf characters.")]
-    Utf8Error(#[from] std::string::FromUtf8Error),
 }

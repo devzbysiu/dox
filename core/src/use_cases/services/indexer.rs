@@ -53,7 +53,7 @@ mod test {
     use crate::entities::document::DocDetails;
     use crate::entities::location::Location;
     use crate::result::{BusErr, IndexerErr};
-    use crate::testutils::{Spy, SubscriberExt};
+    use crate::testingtools::{Spy, SubscriberExt};
     use crate::use_cases::repository::RepositoryWrite;
     use crate::use_cases::user::{User, FAKE_USER_EMAIL};
 

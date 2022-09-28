@@ -58,8 +58,8 @@ mod test {
             extractor.preprocess(&Location::FS(paths), tmp_dir.path())?;
 
             // then
-            assert_eq!(tmp_dir.path().first_filename()?, "res");
-            assert_eq!(tmp_dir.path().join("res").first_filename()?, test_case.2);
+            assert_eq!(tmp_dir.path().first_filename(), "res");
+            assert_eq!(tmp_dir.path().join("res").first_filename(), test_case.2);
         }
 
         Ok(())

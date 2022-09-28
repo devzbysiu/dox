@@ -59,7 +59,6 @@ tracing-forest = "0.1.4"
 [dev-dependencies]
 tempfile = "3.3.0"
 ureq = { version = "2.5.0", features = ["json"] }
-testutils = { path = "testutils" }
 serial_test = "0.9.0"
 fake = "2.5.0"
 rand = "0.8.5"

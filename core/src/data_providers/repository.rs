@@ -229,11 +229,11 @@ impl ValueExt for Value {
 mod test {
     use super::*;
 
+    use crate::testingtools::{index_dir_path, thumbnails_dir_path, watched_dir_path};
     use crate::use_cases::user::FAKE_USER_EMAIL;
 
     use anyhow::Result;
     use std::fs::File;
-    use testutils::{index_dir_path, thumbnails_dir_path, watched_dir_path};
 
     #[test]
     fn test_mk_index_and_schema_when_index_dir_is_taken_by_file() -> Result<()> {
