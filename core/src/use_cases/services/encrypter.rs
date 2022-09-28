@@ -3,7 +3,7 @@ use crate::result::EncrypterErr;
 use crate::use_cases::bus::{BusEvent, EventBus};
 use crate::use_cases::cipher::CipherWrite;
 
-use rayon::ThreadPoolBuilder;
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use std::fs;
 use std::thread;
 use tracing::{debug, error, instrument, warn};
@@ -18,8 +18,7 @@ impl Encrypter {
     }
 
     #[instrument(skip(self, cipher))]
-    pub fn run(self, cipher: CipherWrite) -> Result<(), EncrypterErr> {
-        let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
+    pub fn run(self, cipher: CipherWrite) {
         let sub = self.bus.subscriber();
         // TODO: improve tracing of threads somehow. Currently, it's hard to debug because threads
         // do not appear as separate tracing's scopes
@@ -30,14 +29,11 @@ impl Encrypter {
                     BusEvent::EncryptionRequest(location) => {
                         debug!("encryption request: '{:?}', starting encryption", location);
                         let Location::FS(paths) = location;
-                        for path in paths {
-                            let cipher = cipher.clone();
-                            tp.spawn(move || {
-                                if let Err(e) = encrypt(&cipher, &path) {
-                                    error!("failed to encrypt path '{}': '{}'", path, e);
-                                }
-                            });
-                        }
+                        paths.par_iter().for_each(|path| {
+                            if let Err(e) = encrypt(&cipher, path) {
+                                error!("failed to encrypt path '{}': '{}'", path, e);
+                            }
+                        });
                         debug!("encryption finished");
                         // TODO: this should be emitted after all encryption finishes
                         publ.send(BusEvent::PipelineFinished)?;
@@ -46,7 +42,6 @@ impl Encrypter {
                 }
             }
         });
-        Ok(())
     }
 }
 
@@ -81,7 +76,7 @@ mod test {
         let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
         let encrypter = Encrypter::new(bus.clone());
-        encrypter.run(cipher_writer)?;
+        encrypter.run(cipher_writer);
         let mut publ = bus.publisher();
 
         // when
@@ -103,7 +98,7 @@ mod test {
         let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
         let encrypter = Encrypter::new(bus.clone());
-        encrypter.run(noop_cipher)?;
+        encrypter.run(noop_cipher);
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -137,7 +132,7 @@ mod test {
             BusEvent::Indexed(Vec::new()),
         ];
         let encrypter = Encrypter::new(bus.clone());
-        encrypter.run(noop_cipher).unwrap();
+        encrypter.run(noop_cipher);
 
         let mut publ = bus.publisher();
         let sub = bus.subscriber();
@@ -163,7 +158,7 @@ mod test {
         let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
 
         let encrypter = Encrypter::new(bus.clone());
-        encrypter.run(failing_repo_write)?;
+        encrypter.run(failing_repo_write);
         let mut publ = bus.publisher();
         publ.send(BusEvent::EncryptionRequest(Location::FS(vec![new_file
             .path

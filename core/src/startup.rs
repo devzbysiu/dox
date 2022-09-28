@@ -62,7 +62,7 @@ fn setup_core(cfg: &Config, bus: EventBus) -> Result<(RepoRead, CipherRead), Set
     let (repo_read, repo_write) = repository(cfg)?;
     indexer.run(repo_write)?;
     let (cipher_read, cipher_write) = cipher();
-    encrypter.run(cipher_write)?;
+    encrypter.run(cipher_write);
 
     Ok((repo_read, cipher_read))
 }
