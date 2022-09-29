@@ -17,17 +17,17 @@ pub struct LocalBus {
     eventador: eventador::Eventador,
 }
 
-impl Debug for LocalBus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("local bus")
-    }
-}
-
 impl LocalBus {
     pub fn new() -> Result<Self, BusErr> {
         Ok(Self {
             eventador: eventador::Eventador::new(BUS_CAPACITY)?,
         })
+    }
+}
+
+impl Debug for LocalBus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("local bus")
     }
 }
 
@@ -77,5 +77,21 @@ impl Publisher for LocalPublisher {
     fn send(&mut self, event: BusEvent) -> Result<(), BusErr> {
         self.publ.send(event);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use claim::assert_ok;
+
+    #[test]
+    fn event_bus_can_be_created_without_errors() {
+        // given
+        let res = LocalBus::new();
+
+        // then
+        assert_ok!(res);
     }
 }
