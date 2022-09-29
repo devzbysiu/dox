@@ -32,10 +32,6 @@ impl DataPersistence for FsPersistence {
 
     #[instrument(skip(self))]
     fn load(&self, uri: PathBuf) -> Result<Option<Vec<u8>>, PersistenceErr> {
-        if !uri.exists() {
-            debug!("uri: '{}' don't exist", uri.display());
-            return Ok(None);
-        }
         debug!("returning file under '{}'", uri.display());
         Ok(Some(fs::read(uri)?))
     }
@@ -46,10 +42,12 @@ mod test {
     use super::*;
 
     use anyhow::Result;
-    use claim::{assert_gt, assert_lt};
+    use claim::{assert_gt, assert_lt, assert_ok_eq};
+    use fake::faker::filesystem::en::FilePath;
     use fake::faker::lorem::en::Paragraph;
     use fake::Fake;
     use fs::read_to_string;
+    use std::io::ErrorKind;
     use std::time::Instant;
     use tempfile::tempdir;
 
@@ -132,6 +130,43 @@ mod test {
         // then
         let elapsed = now.elapsed();
         assert_lt!(elapsed, Duration::from_secs(1));
+
+        Ok(())
+    }
+
+    #[test]
+    fn load_correctly_loads_data_from_path() -> Result<()> {
+        // given
+        let data: String = Paragraph(1..2).fake();
+        let target_dir = tempdir()?;
+        let file_path = target_dir.path().join("file");
+        fs::write(&file_path, &data)?;
+        let persistence = FsPersistence;
+
+        // when
+        let res = persistence.load(file_path);
+
+        // then
+        assert_ok_eq!(res, Some(data.as_bytes().to_vec()));
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_returns_io_error_when_source_path_does_not_exist() -> Result<()> {
+        // given
+        let file_path = FilePath().fake();
+        let persistence = FsPersistence;
+
+        // when
+        let res = persistence.load(file_path);
+
+        // then
+        if let Err(PersistenceErr::IoError(e)) = res {
+            assert!(e.kind() == ErrorKind::NotFound);
+        } else {
+            panic!("Invalid result returned");
+        }
 
         Ok(())
     }
