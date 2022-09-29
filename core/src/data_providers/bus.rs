@@ -84,7 +84,11 @@ impl Publisher for LocalPublisher {
 mod test {
     use super::*;
 
-    use claim::assert_ok;
+    use crate::testingtools::SubscriberExt;
+
+    use anyhow::Result;
+    use claim::{assert_err, assert_ok, assert_ok_eq};
+    use std::time::Duration;
 
     #[test]
     fn event_bus_can_be_created_without_errors() {
@@ -93,5 +97,57 @@ mod test {
 
         // then
         assert_ok!(res);
+    }
+
+    #[test]
+    fn events_can_be_send_via_publisher() -> Result<()> {
+        // given
+        let bus = LocalBus::new()?;
+        let mut publ = bus.publisher();
+
+        // when
+        let res = publ.send(BusEvent::PipelineFinished);
+
+        // then
+        assert_ok!(res);
+
+        Ok(())
+    }
+
+    #[test]
+    fn event_sent_can_be_received_only_one_time_by_the_same_subscriber() -> Result<()> {
+        // given
+        let bus = LocalBus::new()?;
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+
+        // when
+        publ.send(BusEvent::PipelineFinished)?;
+
+        // then
+        assert_ok_eq!(sub.recv(), BusEvent::PipelineFinished);
+        assert_err!(sub.try_recv(Duration::from_secs(1)));
+
+        Ok(())
+    }
+
+    #[test]
+    fn each_subscriber_receive_its_own_copy_of_the_message() -> Result<()> {
+        // given
+        let bus = LocalBus::new()?;
+        let mut publ = bus.publisher();
+        let sub1 = bus.subscriber();
+        let sub2 = bus.subscriber();
+
+        // when
+        publ.send(BusEvent::PipelineFinished)?;
+
+        // then
+        assert_ok_eq!(sub1.recv(), BusEvent::PipelineFinished);
+        assert_err!(sub1.try_recv(Duration::from_secs(1)));
+        assert_ok_eq!(sub2.recv(), BusEvent::PipelineFinished);
+        assert_err!(sub2.try_recv(Duration::from_secs(1)));
+
+        Ok(())
     }
 }
