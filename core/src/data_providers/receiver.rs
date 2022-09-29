@@ -43,3 +43,28 @@ impl EventReceiver for FsEventReceiver {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use anyhow::Result;
+    use claim::assert_ok;
+    use fake::faker::filesystem::en::FilePath;
+    use fake::Fake;
+    use std::path::PathBuf;
+
+    #[test]
+    fn receiver_is_created_without_issues() -> Result<()> {
+        // given
+        let watched_dir: PathBuf = FilePath().fake();
+
+        // when
+        let receiver = FsEventReceiver::new(watched_dir);
+
+        // then
+        assert_ok!(receiver);
+
+        Ok(())
+    }
+}

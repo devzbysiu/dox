@@ -51,7 +51,7 @@ anyhow = "1.0.62"
 retry = "2.0.0"
 jwks-client = { git = "https://github.com/jfbilodeau/jwks-client" }
 async-once-cell = "0.4.2"
-dashmap = "5.3.4"
+dashmap = "5.2.0" # had to downgrade this because of conflicting versions with `claim` dep
 chacha20poly1305 = { version = "0.10.1", features = ["std"] }
 object = "0.29.0"
 tracing-forest = "0.1.4"
@@ -62,3 +62,4 @@ ureq = { version = "2.5.0", features = ["json"] }
 serial_test = "0.9.0"
 fake = "2.5.0"
 rand = "0.8.5"
+claim = "0.5.0"
