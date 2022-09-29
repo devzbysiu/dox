@@ -50,7 +50,7 @@ mod test {
 
     use anyhow::Result;
     use claim::{assert_ok, assert_ok_eq};
-    use fake::faker::filesystem::en::{FileName, FilePath};
+    use fake::faker::filesystem::en::FileName;
     use fake::faker::internet::en::SafeEmail;
     use fake::faker::lorem::en::Paragraph;
     use fake::Fake;
@@ -59,15 +59,17 @@ mod test {
     use tempfile::tempdir;
 
     #[test]
-    fn receiver_is_created_without_issues() {
+    fn receiver_is_created_without_issues() -> Result<()> {
         // given
-        let watched_dir: PathBuf = FilePath().fake();
+        let watched_dir = tempdir()?;
 
         // when
         let receiver = FsEventReceiver::new(watched_dir);
 
         // then
         assert_ok!(receiver);
+
+        Ok(())
     }
 
     #[test]
@@ -82,10 +84,9 @@ mod test {
 
         // when
         mk_file(&file_path)?;
-        let event = receiver.recv();
 
         // then
-        assert_ok_eq!(event, DocsEvent::Created(file_path.into()));
+        assert_ok_eq!(receiver.recv(), DocsEvent::Created(file_path.into()));
 
         Ok(())
     }
@@ -101,6 +102,100 @@ mod test {
     fn mk_file<P: AsRef<Path>>(path: P) -> Result<()> {
         let content: String = Paragraph(0..2).fake();
         fs::write(path, content)?;
+        Ok(())
+    }
+
+    #[test]
+    fn other_event_appears_when_directory_is_created_in_user_dir() -> Result<()> {
+        // given
+        let watched_dir = tempdir()?;
+        let user_email: String = SafeEmail().fake();
+        let user_dir = mk_user_dir(&watched_dir, user_email)?;
+        let receiver = FsEventReceiver::new(&watched_dir)?;
+        let created_dir: String = FileName().fake();
+        let dir_path = user_dir.join(created_dir);
+
+        // when
+        mk_dir(&dir_path)?;
+
+        // then
+        assert_ok_eq!(receiver.recv(), DocsEvent::Other);
+
+        Ok(())
+    }
+
+    fn mk_dir<P: AsRef<Path>>(path: P) -> Result<()> {
+        create_dir_all(path)?;
+        Ok(())
+    }
+
+    #[test]
+    fn other_event_appears_when_directory_is_created_in_watched_dir() -> Result<()> {
+        // given
+        let watched_dir = tempdir()?;
+        let receiver = FsEventReceiver::new(&watched_dir)?;
+        let created_dir: String = FileName().fake();
+        let dir_path = watched_dir.path().join(created_dir);
+
+        // when
+        mk_dir(&dir_path)?;
+
+        // then
+        assert_ok_eq!(receiver.recv(), DocsEvent::Other);
+
+        Ok(())
+    }
+
+    #[test]
+    fn other_event_appears_when_user_dir_file_has_been_accessed() -> Result<()> {
+        // given
+        let watched_dir = tempdir()?;
+        let user_email: String = SafeEmail().fake();
+        let user_dir = mk_user_dir(&watched_dir, user_email)?;
+        let receiver = FsEventReceiver::new(&watched_dir)?;
+        let created_file: String = FileName().fake();
+        let file_path = user_dir.join(created_file);
+        mk_file(&file_path)?;
+        let _event = receiver.recv(); // ignore Created event
+
+        // when
+        touch_file(file_path)?;
+
+        // then
+        assert_ok_eq!(receiver.recv(), DocsEvent::Other);
+
+        Ok(())
+    }
+
+    fn touch_file<P: AsRef<Path>>(path: P) -> Result<()> {
+        let content: String = Paragraph(0..2).fake();
+        fs::write(path, content)?;
+        Ok(())
+    }
+
+    #[test]
+    fn other_event_appears_when_user_dir_file_has_been_removed() -> Result<()> {
+        // given
+        let watched_dir = tempdir()?;
+        let user_email: String = SafeEmail().fake();
+        let user_dir = mk_user_dir(&watched_dir, user_email)?;
+        let receiver = FsEventReceiver::new(&watched_dir)?;
+        let created_file: String = FileName().fake();
+        let file_path = user_dir.join(created_file);
+        mk_file(&file_path)?;
+        let _event = receiver.recv(); // ignore Created event
+
+        // when
+        rm_file(file_path)?;
+
+        // then
+        assert_ok_eq!(receiver.recv(), DocsEvent::Other);
+
+        Ok(())
+    }
+
+    fn rm_file<P: AsRef<Path>>(path: P) -> Result<()> {
+        fs::remove_file(path)?;
         Ok(())
     }
 }
