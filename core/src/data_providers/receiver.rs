@@ -49,13 +49,17 @@ mod test {
     use super::*;
 
     use anyhow::Result;
-    use claim::assert_ok;
-    use fake::faker::filesystem::en::FilePath;
+    use claim::{assert_ok, assert_ok_eq};
+    use fake::faker::filesystem::en::{FileName, FilePath};
+    use fake::faker::internet::en::SafeEmail;
+    use fake::faker::lorem::en::Paragraph;
     use fake::Fake;
+    use std::fs::{self, create_dir_all};
     use std::path::PathBuf;
+    use tempfile::tempdir;
 
     #[test]
-    fn receiver_is_created_without_issues() -> Result<()> {
+    fn receiver_is_created_without_issues() {
         // given
         let watched_dir: PathBuf = FilePath().fake();
 
@@ -64,7 +68,39 @@ mod test {
 
         // then
         assert_ok!(receiver);
+    }
 
+    #[test]
+    fn created_event_appears_when_file_is_created_in_user_dir() -> Result<()> {
+        // given
+        let watched_dir = tempdir()?;
+        let user_email: String = SafeEmail().fake();
+        let user_dir = mk_user_dir(&watched_dir, user_email)?;
+        let receiver = FsEventReceiver::new(&watched_dir)?;
+        let created_file: String = FileName().fake();
+        let file_path = user_dir.join(created_file);
+
+        // when
+        mk_file(&file_path)?;
+        let event = receiver.recv();
+
+        // then
+        assert_ok_eq!(event, DocsEvent::Created(file_path.into()));
+
+        Ok(())
+    }
+
+    fn mk_user_dir<P: AsRef<Path>, S: Into<String>>(base_path: P, email: S) -> Result<PathBuf> {
+        let base_path = base_path.as_ref();
+        let email = email.into();
+        let user_dir = base_path.join(base64::encode(email));
+        create_dir_all(&user_dir)?;
+        Ok(user_dir)
+    }
+
+    fn mk_file<P: AsRef<Path>>(path: P) -> Result<()> {
+        let content: String = Paragraph(0..2).fake();
+        fs::write(path, content)?;
         Ok(())
     }
 }

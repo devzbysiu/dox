@@ -9,7 +9,7 @@ pub trait EventReceiver: Send {
     fn recv(&self) -> Result<DocsEvent, EventReceiverErr>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum DocsEvent {
     Created(SafePathBuf),
     Other,
