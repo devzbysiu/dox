@@ -27,25 +27,3 @@ impl<S: Into<String>> From<S> for Ext {
         }
     }
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn supported_extension_can_be_created_from_string() {
-        // given
-        let test_cases = [
-            ("png", Ext::Png),
-            ("jpg", Ext::Jpg),
-            ("jpeg", Ext::Jpg),
-            ("webp", Ext::Webp),
-            ("pdf", Ext::Pdf),
-        ];
-
-        for test_case in test_cases {
-            // then
-            assert_eq!(Ext::from(test_case.0), test_case.1);
-        }
-    }
-}
