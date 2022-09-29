@@ -46,23 +46,92 @@ mod test {
     use super::*;
 
     use anyhow::Result;
-    use fake::{faker::lorem::en::Paragraph, Fake};
+    use claim::{assert_gt, assert_lt};
+    use fake::faker::lorem::en::Paragraph;
+    use fake::Fake;
     use fs::read_to_string;
+    use std::time::Instant;
     use tempfile::tempdir;
 
     #[test]
     fn save_correctly_saves_the_data_to_path() -> Result<()> {
         // given
-        let persistence = FsPersistence;
         let data: String = Paragraph(1..2).fake();
-        let result_dir = tempdir()?;
-        let file_path = result_dir.path().join("file");
+        let target_dir = tempdir()?;
+        let file_path = target_dir.path().join("file");
+        let persistence = FsPersistence;
 
         // when
         persistence.save(file_path.clone(), data.as_ref())?;
 
         // then
         assert_eq!(read_to_string(file_path)?, data);
+
+        Ok(())
+    }
+
+    #[test]
+    fn parent_dir_is_first_created_if_not_exists() -> Result<()> {
+        // given
+        let data: String = Paragraph(1..2).fake();
+        let target_dir = tempdir()?;
+        let file_path = target_dir.path().join("not-existing-parent-dir/file");
+        let persistence = FsPersistence;
+
+        // when
+        persistence.save(file_path.clone(), data.as_ref())?;
+
+        // then
+        assert_eq!(read_to_string(file_path)?, data);
+
+        Ok(())
+    }
+
+    #[test]
+    #[should_panic(expected = "failed to get parent dir")]
+    fn it_panics_when_could_not_get_parent_dir() {
+        // given
+        let data: String = Paragraph(1..2).fake();
+        let persistence = FsPersistence;
+
+        // then
+        persistence.save(PathBuf::from("/"), data.as_ref()).unwrap(); // should panic
+    }
+
+    #[test]
+    fn it_takes_at_least_one_second_to_save_file_when_parent_dir_not_exists() -> Result<()> {
+        // given
+        let data: String = Paragraph(1..2).fake();
+        let target_dir = tempdir()?;
+        let file_path = target_dir.path().join("not-existing-parent-dir/file");
+        let persistence = FsPersistence;
+        let now = Instant::now();
+
+        // when
+        persistence.save(file_path.clone(), data.as_ref())?;
+
+        // then
+        let elapsed = now.elapsed();
+        assert_gt!(elapsed, Duration::from_secs(1));
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_takes_less_than_second_to_save_a_file_when_parent_dir_exists() -> Result<()> {
+        // given
+        let data: String = Paragraph(1..2).fake();
+        let target_dir = tempdir()?;
+        let file_path = target_dir.path().join("file");
+        let persistence = FsPersistence;
+        let now = Instant::now();
+
+        // when
+        persistence.save(file_path.clone(), data.as_ref())?;
+
+        // then
+        let elapsed = now.elapsed();
+        assert_lt!(elapsed, Duration::from_secs(1));
 
         Ok(())
     }
