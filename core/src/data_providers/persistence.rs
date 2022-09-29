@@ -40,3 +40,30 @@ impl DataPersistence for FsPersistence {
         Ok(Some(fs::read(uri)?))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use anyhow::Result;
+    use fake::{faker::lorem::en::Paragraph, Fake};
+    use fs::read_to_string;
+    use tempfile::tempdir;
+
+    #[test]
+    fn save_correctly_saves_the_data_to_path() -> Result<()> {
+        // given
+        let persistence = FsPersistence;
+        let data: String = Paragraph(1..2).fake();
+        let result_dir = tempdir()?;
+        let file_path = result_dir.path().join("file");
+
+        // when
+        persistence.save(file_path.clone(), data.as_ref())?;
+
+        // then
+        assert_eq!(read_to_string(file_path)?, data);
+
+        Ok(())
+    }
+}
