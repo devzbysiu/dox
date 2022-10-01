@@ -91,6 +91,17 @@ mod test {
     use std::time::Duration;
 
     #[test]
+    fn local_bus_implements_debug_trait() -> Result<()> {
+        // given
+        let bus = LocalBus::new()?;
+
+        // then
+        let _ = format!("it implements Debug trait: {:?}", bus);
+
+        Ok(())
+    }
+
+    #[test]
     fn event_bus_can_be_created_without_errors() {
         // given
         let res = LocalBus::new();
