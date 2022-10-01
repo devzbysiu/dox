@@ -106,7 +106,7 @@ mod test {
         let now = Instant::now();
 
         // when
-        persistence.save(file_path.clone(), data.as_ref())?;
+        persistence.save(file_path, data.as_ref())?;
 
         // then
         let elapsed = now.elapsed();
@@ -125,7 +125,7 @@ mod test {
         let now = Instant::now();
 
         // when
-        persistence.save(file_path.clone(), data.as_ref())?;
+        persistence.save(file_path, data.as_ref())?;
 
         // then
         let elapsed = now.elapsed();
@@ -153,7 +153,7 @@ mod test {
     }
 
     #[test]
-    fn it_returns_io_error_when_source_path_does_not_exist() -> Result<()> {
+    fn it_returns_io_error_when_source_path_does_not_exist() {
         // given
         let file_path = FilePath().fake();
         let persistence = FsPersistence;
@@ -167,7 +167,5 @@ mod test {
         } else {
             panic!("Invalid result returned");
         }
-
-        Ok(())
     }
 }

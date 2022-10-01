@@ -1,3 +1,5 @@
+#![allow(unused)] // TODO: remove this
+
 use crate::entities::location::SafePathBuf;
 use crate::startup::rocket;
 use crate::use_cases::bus::{BusEvent, EventSubscriber};
