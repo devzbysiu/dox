@@ -1,6 +1,6 @@
 use crate::entities::location::SafePathBuf;
 use crate::result::UserConvErr;
-use crate::use_cases::user::User;
+use crate::entities::user::User;
 
 use rocket::request::{FromRequest, Outcome, Request};
 use std::convert::TryFrom;

@@ -72,9 +72,9 @@ mod test {
 
     use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
+    use crate::entities::user::{User, FAKE_USER_EMAIL};
     use crate::result::ExtractorErr;
     use crate::testingtools::{mk_file, Spy, SubscriberExt};
-    use crate::use_cases::user::{User, FAKE_USER_EMAIL};
 
     use anyhow::Result;
     use leptess::tesseract::TessInitError;

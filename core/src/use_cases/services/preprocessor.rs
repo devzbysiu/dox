@@ -97,9 +97,9 @@ mod test {
 
     use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
+    use crate::entities::user::FAKE_USER_EMAIL;
     use crate::result::BusErr;
     use crate::testingtools::{mk_file, Spy, SubscriberExt};
-    use crate::use_cases::user::FAKE_USER_EMAIL;
 
     use anyhow::{anyhow, Result};
     use std::sync::atomic::{AtomicUsize, Ordering};

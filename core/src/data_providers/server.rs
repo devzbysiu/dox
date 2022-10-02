@@ -1,9 +1,9 @@
+use crate::entities::user::User;
 use crate::result::{DocumentReadErr, DocumentSaveErr, SearchErr, ThumbnailReadErr};
 use crate::use_cases::cipher::CipherRead;
 use crate::use_cases::config::Config;
 use crate::use_cases::persistence::Persistence;
 use crate::use_cases::repository::{RepoRead, SearchResult};
-use crate::use_cases::user::User;
 
 use anyhow::Context;
 use rocket::http::Status;

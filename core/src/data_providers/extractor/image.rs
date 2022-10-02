@@ -1,10 +1,10 @@
 //! Allows to extract text from image using OCR.
 use crate::entities::document::DocDetails;
 use crate::entities::location::{Location, SafePathBuf};
+use crate::entities::user::User;
 use crate::helpers::PathRefExt;
 use crate::result::ExtractorErr;
 use crate::use_cases::services::extractor::DataExtractor;
-use crate::use_cases::user::User;
 
 use leptess::LepTess;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};

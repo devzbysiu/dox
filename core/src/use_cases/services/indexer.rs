@@ -52,10 +52,10 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::entities::document::DocDetails;
     use crate::entities::location::Location;
+    use crate::entities::user::{User, FAKE_USER_EMAIL};
     use crate::result::{BusErr, IndexerErr};
     use crate::testingtools::{Spy, SubscriberExt};
     use crate::use_cases::repository::RepositoryWrite;
-    use crate::use_cases::user::{User, FAKE_USER_EMAIL};
 
     use anyhow::{anyhow, Result};
     use std::sync::mpsc::{channel, Sender};

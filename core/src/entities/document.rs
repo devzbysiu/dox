@@ -1,6 +1,6 @@
 //! Abstraction of the document data used to index the document.
+use crate::entities::user::User;
 use crate::helpers::PathRefExt;
-use crate::use_cases::user::User;
 
 use std::path::Path;
 

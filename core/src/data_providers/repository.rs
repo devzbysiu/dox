@@ -2,12 +2,12 @@
 //!
 //! It uses [`tantivy`] as full text search library.
 use crate::entities::document::DocDetails;
+use crate::entities::user::User;
 use crate::result::{IndexerErr, RepositoryErr, SearchErr};
 use crate::use_cases::config::Config;
 use crate::use_cases::repository::{
     RepoRead, RepoWrite, RepositoryRead, RepositoryWrite, SearchEntry, SearchResult,
 };
-use crate::use_cases::user::User;
 
 use core::fmt;
 use dashmap::DashMap;
@@ -229,8 +229,8 @@ impl ValueExt for Value {
 mod test {
     use super::*;
 
+    use crate::entities::user::FAKE_USER_EMAIL;
     use crate::testingtools::{index_dir_path, thumbnails_dir_path, watched_dir_path};
-    use crate::use_cases::user::FAKE_USER_EMAIL;
 
     use anyhow::Result;
     use std::fs::File;
