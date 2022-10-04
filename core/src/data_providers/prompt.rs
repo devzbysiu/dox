@@ -43,8 +43,8 @@ fn path_autocomplete(input: &str) -> std::result::Result<Vec<String>, CustomUser
     Ok(dir?
         .filter_map(std::result::Result::ok)
         .map(|entry| entry.path())
-        .filter(|path| path.as_path().is_dir())
-        .map(|path| path.as_path().string())
+        .filter(|path| path.is_dir())
+        .map(|path| path.string())
         .filter(|path| path.contains(input))
         .collect())
 }
