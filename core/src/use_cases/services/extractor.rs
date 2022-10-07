@@ -194,6 +194,44 @@ mod test {
     }
 
     #[test]
+    #[should_panic(expected = "timed out waiting on channel")]
+    fn extractor_ignores_other_bus_events() {
+        // given
+        init_tracing();
+        let noop_extractor = Box::new(NoOpExtractor);
+        let factory_stub = Box::new(ExtractorFactoryStub::new(vec![noop_extractor]));
+        let _new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into()).unwrap();
+        let bus = event_bus().unwrap();
+        let location = Location::FS(Vec::new());
+        let ignored_events = [
+            BusEvent::ThumbnailMade(location),
+            BusEvent::Indexed(Vec::new()),
+            BusEvent::PipelineFinished,
+        ];
+        let extractor = TxtExtractor::new(bus.clone());
+        extractor.run(factory_stub);
+
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+
+        // when
+        for event in &ignored_events {
+            publ.send(event.clone()).unwrap();
+        }
+
+        // then
+        // all events are still on the bus, no PipelineFinished emitted
+        for _ in ignored_events {
+            match sub.recv().unwrap() {
+                BusEvent::DataExtracted(_) => panic!("DataExtracted should not appear"),
+                BusEvent::EncryptionRequest(_) => panic!("EncryptionRequest should not appear"),
+                _ => {} // the rest of the events are fine
+            }
+        }
+        sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
+    }
+
+    #[test]
     fn failure_during_extraction_do_not_kill_service() -> Result<()> {
         // given
         let (spy1, failing_extractor1) = ExtractorSpy::failing();
@@ -329,6 +367,15 @@ mod test {
         ) -> std::result::Result<Vec<DocDetails>, ExtractorErr> {
             // nothing to do
             Ok(self.docs_details.clone())
+        }
+    }
+
+    struct NoOpExtractor;
+
+    impl DataExtractor for NoOpExtractor {
+        fn extract_data(&self, _location: &Location) -> Result<Vec<DocDetails>, ExtractorErr> {
+            // nothing to do
+            Ok(Vec::new())
         }
     }
 }
