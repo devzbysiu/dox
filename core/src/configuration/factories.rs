@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::data_providers::bus::LocalBus;
 use crate::data_providers::cipher::Chacha20Poly1305Cipher;
 use crate::data_providers::config::{FsConfigLoader, FsConfigResolver};
@@ -17,6 +15,8 @@ use crate::use_cases::receiver::EventRecv;
 use crate::use_cases::repository::{RepoRead, RepoWrite};
 use crate::use_cases::services::extractor::ExtractorCreator;
 use crate::use_cases::services::preprocessor::PreprocessorCreator;
+
+use std::sync::Arc;
 
 pub fn config_resolver(config_loader: CfgLoader) -> CfgResolver {
     Box::new(FsConfigResolver::new(config_loader))
