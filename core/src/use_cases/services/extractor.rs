@@ -220,7 +220,7 @@ mod test {
         }
 
         // then
-        // all events are still on the bus, no PipelineFinished emitted
+        // all events are still on the bus, no DataExtracted and EncryptionRequest emitted
         for _ in ignored_events {
             match sub.recv().unwrap() {
                 BusEvent::DataExtracted(_) => panic!("DataExtracted should not appear"),
