@@ -29,14 +29,15 @@ impl Encrypter {
                     BusEvent::EncryptionRequest(location) => {
                         debug!("encryption request: '{:?}', starting encryption", location);
                         let Location::FS(paths) = location;
-                        paths.par_iter().for_each(|path| {
-                            if let Err(e) = encrypt(&cipher, path) {
-                                error!("failed to encrypt path '{}': '{}'", path, e);
-                            }
-                        });
-                        debug!("encryption finished");
-                        // TODO: this should be emitted after all encryption finishes
-                        publ.send(BusEvent::PipelineFinished)?;
+                        let all_worked_out = paths
+                            .par_iter()
+                            .map(|path| encrypt(&cipher, path))
+                            .inspect(report_errors)
+                            .all(|r| r.is_ok());
+                        if all_worked_out {
+                            debug!("encryption finished");
+                            publ.send(BusEvent::PipelineFinished)?;
+                        }
                     }
                     e => debug!("event not supported in encrypter: '{}'", e),
                 }
@@ -49,6 +50,12 @@ fn encrypt(cipher: &CipherWrite, path: &SafePathBuf) -> Result<(), EncrypterErr>
     let encrypted = cipher.encrypt(&fs::read(path)?)?;
     fs::write(path, encrypted)?;
     Ok(())
+}
+
+fn report_errors(res: &Result<(), EncrypterErr>) {
+    if let Err(e) = res {
+        error!("failed to encrypt: {:?}", e);
+    }
 }
 
 #[cfg(test)]
@@ -64,6 +71,7 @@ mod test {
     use crate::use_cases::cipher::CipherWriteStrategy;
 
     use anyhow::Result;
+    use claim::assert_err;
     use std::sync::mpsc::{channel, Sender};
     use std::sync::{Arc, Mutex};
     use std::time::Duration;
@@ -112,6 +120,32 @@ mod test {
 
         // then
         assert_eq!(sub.recv()?, BusEvent::PipelineFinished);
+
+        Ok(())
+    }
+
+    #[test]
+    fn no_event_appears_when_encrypter_fails() -> Result<()> {
+        // given
+        init_tracing();
+        let (spy, failing_cipher) = CipherSpy::failing();
+        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
+        let bus = event_bus()?;
+        let encrypter = Encrypter::new(bus.clone());
+        encrypter.run(failing_cipher);
+        thread::sleep(Duration::from_secs(1)); // allow to start extractor
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+
+        // when
+        publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
+            new_file.path,
+        ])))?;
+
+        // then
+        let _event = sub.recv()?; // ignore NewDocs event
+        assert!(spy.method_called());
+        assert_err!(sub.try_recv(Duration::from_secs(2))); // no more events on the bus
 
         Ok(())
     }
