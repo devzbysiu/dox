@@ -134,7 +134,7 @@ mod test {
     fn thumbnail_made_event_appears_on_success() -> Result<()> {
         // given
         init_tracing();
-        let preprocessor = Box::new(PreprocessorStub);
+        let preprocessor = Box::new(NoOpPreprocessor);
         let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![preprocessor]));
         let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
@@ -163,7 +163,7 @@ mod test {
     fn thumbnail_generator_emits_encryption_request_event_success() -> Result<()> {
         // given
         init_tracing();
-        let preprocessor = Box::new(PreprocessorStub);
+        let preprocessor = Box::new(NoOpPreprocessor);
         let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![preprocessor]));
         let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
         let bus = event_bus()?;
@@ -213,6 +213,45 @@ mod test {
         assert!(sub.try_recv(Duration::from_secs(2)).is_err()); // no more events on the bus
 
         Ok(())
+    }
+
+    #[test]
+    #[should_panic(expected = "timed out waiting on channel")]
+    fn preprocessor_ignores_other_bus_events() {
+        // given
+        init_tracing();
+        let preprocessor = Box::new(NoOpPreprocessor);
+        let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![preprocessor]));
+        let _new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into()).unwrap();
+        let bus = event_bus().unwrap();
+        let cfg = Config::default();
+        let location = Location::FS(Vec::new());
+        let ignored_events = [
+            BusEvent::ThumbnailMade(location),
+            BusEvent::Indexed(Vec::new()),
+            BusEvent::PipelineFinished,
+        ];
+        let preprocessor = ThumbnailGenerator::new(cfg, bus.clone());
+        preprocessor.run(factory_stub);
+
+        let mut publ = bus.publisher();
+        let sub = bus.subscriber();
+
+        // when
+        for event in &ignored_events {
+            publ.send(event.clone()).unwrap();
+        }
+
+        // then
+        // all events are still on the bus, no DataExtracted and EncryptionRequest emitted
+        for _ in ignored_events {
+            match sub.recv().unwrap() {
+                BusEvent::DataExtracted(_) => panic!("DataExtracted should not appear"),
+                BusEvent::EncryptionRequest(_) => panic!("EncryptionRequest should not appear"),
+                _ => {} // the rest of the events are fine
+            }
+        }
+        sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
     }
 
     #[test]
@@ -339,9 +378,9 @@ mod test {
         }
     }
 
-    struct PreprocessorStub;
+    struct NoOpPreprocessor;
 
-    impl FilePreprocessor for PreprocessorStub {
+    impl FilePreprocessor for NoOpPreprocessor {
         fn preprocess(
             &self,
             location: &Location,
