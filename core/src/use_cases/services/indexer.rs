@@ -58,6 +58,7 @@ mod test {
     use crate::use_cases::repository::RepositoryWrite;
 
     use anyhow::{anyhow, Result};
+    use claim::assert_err;
     use std::sync::mpsc::{channel, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
@@ -145,7 +146,7 @@ mod test {
 
         // then
         let _event = sub.recv()?; // ignore DataExtracted event
-        assert!(sub.try_recv(Duration::from_secs(2)).is_err());
+        assert_err!(sub.try_recv(Duration::from_secs(2)));
 
         Ok(())
     }

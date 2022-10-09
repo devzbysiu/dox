@@ -102,6 +102,7 @@ mod test {
     use crate::testingtools::{mk_file, Spy, SubscriberExt};
 
     use anyhow::{anyhow, Result};
+    use claim::assert_err;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::{channel, Sender};
     use std::sync::Mutex;
@@ -210,7 +211,7 @@ mod test {
         // then
         let _event = sub.recv()?; // ignore NewDocs event
         assert!(spy.method_called());
-        assert!(sub.try_recv(Duration::from_secs(2)).is_err()); // no more events on the bus
+        assert_err!(sub.try_recv(Duration::from_secs(2))); // no more events on the bus
 
         Ok(())
     }
