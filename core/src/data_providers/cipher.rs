@@ -55,3 +55,78 @@ fn decrypt(src_buf: &[u8], key: &Key, nonce: &XNonce) -> Result<Vec<u8>, CipherE
     let cipher = XChaCha20Poly1305::new(key);
     Ok(cipher.decrypt(nonce, src_buf)?)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use anyhow::Result;
+    use claim::assert_ok;
+    use fake::faker::lorem::en::Paragraph;
+    use fake::Fake;
+
+    #[test]
+    fn encryption_return_success() -> Result<()> {
+        // given
+        let (_, cipher_write) = Chacha20Poly1305Cipher::create();
+        let buf: String = Paragraph(1..2).fake();
+
+        // when
+        let res = cipher_write.encrypt(buf.as_bytes());
+
+        // then
+        assert_ok!(res);
+
+        Ok(())
+    }
+
+    #[test]
+    fn cipher_write_uses_chacha20poly1305_encryption() -> Result<()> {
+        // given
+        let (_, cipher_write) = Chacha20Poly1305Cipher::create();
+        let buf: String = Paragraph(1..2).fake();
+        let cipher = XChaCha20Poly1305::new(key());
+        let expected = cipher.encrypt(nonce(), buf.as_bytes())?;
+
+        // when
+        let encrypted = cipher_write.encrypt(buf.as_bytes())?;
+
+        // then
+        assert_eq!(encrypted, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn cipher_read_uses_chacha20poly1305_encryption() -> Result<()> {
+        // given
+        let (cipher_read, _) = Chacha20Poly1305Cipher::create();
+        let buf: String = Paragraph(1..2).fake();
+        let cipher = XChaCha20Poly1305::new(key());
+        let encrypted = cipher.encrypt(nonce(), buf.as_bytes())?;
+
+        // when
+        let decrypted = cipher_read.decrypt(&encrypted)?;
+
+        // then
+        assert_eq!(decrypted, buf.as_bytes());
+
+        Ok(())
+    }
+
+    #[test]
+    fn cipher_read_can_read_output_of_cipher_write() -> Result<()> {
+        // given
+        let (cipher_read, cipher_write) = Chacha20Poly1305Cipher::create();
+        let buf: String = Paragraph(1..2).fake();
+        let encrypted = cipher_write.encrypt(buf.as_bytes())?;
+
+        // when
+        let decrypted = cipher_read.decrypt(&encrypted)?;
+
+        // then
+        assert_eq!(decrypted, buf.as_bytes());
+
+        Ok(())
+    }
+}
