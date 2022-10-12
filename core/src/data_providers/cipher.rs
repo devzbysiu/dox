@@ -66,7 +66,7 @@ mod test {
     use fake::Fake;
 
     #[test]
-    fn encryption_return_success() -> Result<()> {
+    fn encryption_return_success() {
         // given
         let (_, cipher_write) = Chacha20Poly1305Cipher::create();
         let buf: String = Paragraph(1..2).fake();
@@ -76,8 +76,6 @@ mod test {
 
         // then
         assert_ok!(res);
-
-        Ok(())
     }
 
     #[test]
