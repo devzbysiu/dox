@@ -145,7 +145,7 @@ mod test {
     use tempfile::tempdir;
 
     #[test]
-    fn test_load_config() -> Result<()> {
+    fn config_is_loaded_properly_from_a_file() -> Result<()> {
         // given
         let tmp_cfg = tempdir()?;
         let cfg_path = tmp_cfg.path().join("dox.toml");
@@ -182,7 +182,7 @@ mod test {
 
     #[test]
     #[should_panic(expected = "missing field `watched_dir`")]
-    fn test_load_config_when_missing_watched_dir() {
+    fn missing_watched_dir_in_config_causes_panic_in_config_loader() {
         // given
         let tmp_cfg = tempdir().unwrap();
         let cfg_path = tmp_cfg.path().join("dox.toml");
@@ -202,7 +202,7 @@ mod test {
 
     #[test]
     #[should_panic(expected = "missing field `thumbnails_dir`")]
-    fn test_load_config_when_missing_thumbnails_dir() {
+    fn missing_thumbnails_dir_causes_panic_in_config_loader() {
         // given
         let tmp_cfg = tempdir().unwrap();
         let cfg_path = tmp_cfg.path().join("dox.toml");
@@ -222,7 +222,7 @@ mod test {
 
     #[test]
     #[should_panic(expected = "missing field `index_dir`")]
-    fn test_load_config_when_missing_index_dir() {
+    fn missing_index_dir_causes_panic_in_config_loader() {
         // given
         let tmp_cfg = tempdir().unwrap();
         let cfg_path = tmp_cfg.path().join("dox.toml");
@@ -241,7 +241,7 @@ mod test {
     }
 
     #[test]
-    fn test_config_path() {
+    fn config_path_returns_correct_path() {
         // given
         let path = dirs::config_dir().unwrap().join("dox/dox.toml");
 
@@ -253,7 +253,7 @@ mod test {
     }
 
     #[test]
-    fn test_store_config() -> Result<()> {
+    fn config_is_saved_correctly_in_file() -> Result<()> {
         // given
         let tmp_cfg = tempdir().unwrap();
         let cfg_path = tmp_cfg.path().join("dox.toml");
@@ -281,7 +281,7 @@ index_dir = "/index_dir"
 
     #[test]
     #[should_panic(expected = "Can't use '/' as a configuration path")]
-    fn test_store_config_with_root_as_path() {
+    fn config_can_not_be_stored_directly_under_root() {
         // given
         let cfg_path = PathBuf::from("/");
         let cfg = Config::default();
