@@ -52,12 +52,15 @@ impl FsConfigResolver {
 }
 
 impl ConfigResolver for FsConfigResolver {
+    // TODO: path_override should be a PathBuf
     #[instrument(skip(self))]
     fn handle_config(&self, path_override: Option<String>) -> Result<Config, ConfigurationErr> {
         let config_path = path_override.map_or(config_path(), PathBuf::from);
         let cfg = if config_path.exists() {
             debug!("loading config from '{}'", config_path.str());
-            self.config_loader.load(&config_path)?
+            let cfg = self.config_loader.load(&config_path)?;
+            debug!("loaded config: {:?}", cfg);
+            cfg
         } else {
             debug!("config path '{}' doesn't exist", config_path.str());
             let cfg = config_from_user()?;
@@ -89,6 +92,7 @@ fn exit_process() -> ! {
 }
 
 fn prepare_directories(config: &Config) -> Result<(), ConfigurationErr> {
+    debug!("preparing directories");
     check_thumnbails_dir(config)?;
     check_watched_dir(config)?;
     check_index_dir(config)?;
@@ -96,6 +100,7 @@ fn prepare_directories(config: &Config) -> Result<(), ConfigurationErr> {
 }
 
 fn check_thumnbails_dir(config: &Config) -> Result<(), ConfigurationErr> {
+    debug!("checking thumbnails dir");
     if config.thumbnails_dir.exists() && !config.thumbnails_dir.is_dir() {
         return Err(ConfigurationErr::InvalidIndexPath(format!(
             "It needs to be a directory: '{}'",
@@ -113,6 +118,7 @@ fn check_thumnbails_dir(config: &Config) -> Result<(), ConfigurationErr> {
 }
 
 fn check_watched_dir(config: &Config) -> Result<(), ConfigurationErr> {
+    debug!("checking watched dir");
     if config.watched_dir.exists() && !config.watched_dir.is_dir() {
         return Err(ConfigurationErr::InvalidWatchedDirPath(format!(
             "It needs to be a directory: '{}'",
@@ -124,6 +130,7 @@ fn check_watched_dir(config: &Config) -> Result<(), ConfigurationErr> {
 }
 
 fn check_index_dir(config: &Config) -> Result<(), ConfigurationErr> {
+    debug!("checking index dir");
     if config.index_dir.exists() && !config.index_dir.is_dir() {
         return Err(ConfigurationErr::InvalidIndexPath(format!(
             "It needs to be a directory: '{}'",
@@ -137,11 +144,14 @@ fn check_index_dir(config: &Config) -> Result<(), ConfigurationErr> {
 mod test {
     use super::*;
 
+    use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::config::config_path;
+    use crate::testingtools::Spy;
 
     use anyhow::Result;
     use std::fs::read_to_string;
     use std::path::Path;
+    use std::sync::mpsc::{channel, Sender};
     use tempfile::tempdir;
 
     #[test]
@@ -173,7 +183,7 @@ mod test {
         Ok(())
     }
 
-    fn create_config<S: Into<String>, A: AsRef<Path>>(path: A, content: S) -> Result<()> {
+    fn create_config<A: AsRef<Path>, S: Into<String>>(path: A, content: S) -> Result<()> {
         let path = path.as_ref();
         let mut cfg_file = File::create(&path)?;
         cfg_file.write_all(content.into().as_bytes())?;
@@ -289,5 +299,63 @@ index_dir = "/index_dir"
 
         // then
         loader.store(&cfg_path, &cfg).unwrap();
+    }
+
+    #[test]
+    fn config_resolver_loads_config_from_path_override() -> Result<()> {
+        // given
+        init_tracing();
+        let tmp_cfg = tempdir()?;
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        let config = Config {
+            watched_dir: tmp_cfg.path().join("watched_dir"),
+            thumbnails_dir: tmp_cfg.path().join("thumbnails_dir"),
+            index_dir: tmp_cfg.path().join("index_dir"),
+        };
+        let config_content = toml::to_string(&config)?;
+        create_config(&cfg_path, &config_content)?;
+        let (spy, loader) = ConfigLoaderSpy::create(config);
+        let config_resolver = FsConfigResolver::new(loader);
+        let path_override = Some(cfg_path.string());
+
+        // when
+        let _cfg = config_resolver.handle_config(path_override)?;
+
+        // then
+        assert!(spy.method_called());
+
+        Ok(())
+    }
+
+    struct ConfigLoaderSpy;
+
+    impl ConfigLoaderSpy {
+        fn create(config: Config) -> (Spy, CfgLoader) {
+            let (tx, rx) = channel();
+            (Spy::new(rx), Loader::make(tx, config))
+        }
+    }
+
+    struct Loader {
+        tx: Sender<()>,
+        config: Config,
+    }
+
+    impl Loader {
+        fn make(tx: Sender<()>, config: Config) -> Box<Self> {
+            Box::new(Self { tx, config })
+        }
+    }
+
+    impl ConfigLoader for Loader {
+        fn load(&self, _path: &Path) -> Result<Config, ConfigurationErr> {
+            self.tx.send(()).expect("failed to send message");
+            Ok(self.config.clone())
+        }
+
+        fn store(&self, _path: &Path, _cfg: &Config) -> Result<(), ConfigurationErr> {
+            // nothing to do
+            Ok(())
+        }
     }
 }
