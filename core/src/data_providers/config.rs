@@ -149,6 +149,7 @@ mod test {
     use crate::testingtools::Spy;
 
     use anyhow::Result;
+    use claim::assert_matches;
     use fake::faker::lorem::en::Paragraph;
     use fake::Fake;
     use std::fs::{self, read_to_string};
@@ -348,19 +349,14 @@ index_dir = "/index_dir"
         let (spy, loader) = ConfigLoaderSpy::create(config);
         let config_resolver = FsConfigResolver::new(loader);
         let path_override = Some(cfg_path.string());
+        let err_msg = format!("It needs to be a directory: '{}'", watched_dir.string());
 
         // when
         let res = config_resolver.handle_config(path_override);
 
         // then
         assert!(spy.method_called());
-        match res {
-            Err(ConfigurationErr::InvalidWatchedDirPath(msg)) => assert_eq!(
-                msg,
-                format!("It needs to be a directory: '{}'", watched_dir.string())
-            ),
-            _ => panic!("Incorrect result"),
-        }
+        assert_matches!(res, Err(ConfigurationErr::InvalidWatchedDirPath(msg)) if msg == err_msg);
 
         Ok(())
     }
