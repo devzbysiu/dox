@@ -93,9 +93,21 @@ fn exit_process() -> ! {
 
 fn prepare_directories(config: &Config) -> Result<(), ConfigurationErr> {
     debug!("preparing directories");
-    check_thumnbails_dir(config)?;
     check_watched_dir(config)?;
+    check_thumnbails_dir(config)?;
     check_index_dir(config)?;
+    Ok(())
+}
+
+fn check_watched_dir(config: &Config) -> Result<(), ConfigurationErr> {
+    debug!("checking watched dir");
+    if config.watched_dir.exists() && !config.watched_dir.is_dir() {
+        return Err(ConfigurationErr::InvalidWatchedDirPath(format!(
+            "It needs to be a directory: '{}'",
+            config.watched_dir.str()
+        )));
+    }
+    create_dir_all(&config.watched_dir)?;
     Ok(())
 }
 
@@ -114,18 +126,6 @@ fn check_thumnbails_dir(config: &Config) -> Result<(), ConfigurationErr> {
             config.thumbnails_dir.str()
         )));
     }
-    Ok(())
-}
-
-fn check_watched_dir(config: &Config) -> Result<(), ConfigurationErr> {
-    debug!("checking watched dir");
-    if config.watched_dir.exists() && !config.watched_dir.is_dir() {
-        return Err(ConfigurationErr::InvalidWatchedDirPath(format!(
-            "It needs to be a directory: '{}'",
-            config.watched_dir.str()
-        )));
-    }
-    create_dir_all(&config.watched_dir)?;
     Ok(())
 }
 
@@ -149,7 +149,9 @@ mod test {
     use crate::testingtools::Spy;
 
     use anyhow::Result;
-    use std::fs::read_to_string;
+    use fake::faker::lorem::en::Paragraph;
+    use fake::Fake;
+    use std::fs::{self, read_to_string};
     use std::path::Path;
     use std::sync::mpsc::{channel, Sender};
     use tempfile::tempdir;
@@ -323,6 +325,42 @@ index_dir = "/index_dir"
 
         // then
         assert!(spy.method_called());
+
+        Ok(())
+    }
+
+    #[test]
+    fn config_resolver_returns_invalid_watched_dir_err_path_when_it_is_not_a_dir() -> Result<()> {
+        // given
+        init_tracing();
+        let tmp_cfg = tempdir()?;
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        let watched_dir = tmp_cfg.path().join("watched_dir");
+        let dummy_file_content: String = Paragraph(1..2).fake();
+        fs::write(&watched_dir, &dummy_file_content)?; // create file instead of directory
+        let config = Config {
+            watched_dir: watched_dir.clone(),
+            thumbnails_dir: tmp_cfg.path().join("thumbnails_dir"),
+            index_dir: tmp_cfg.path().join("index_dir"),
+        };
+        let config_content = toml::to_string(&config)?;
+        create_config(&cfg_path, &config_content)?;
+        let (spy, loader) = ConfigLoaderSpy::create(config);
+        let config_resolver = FsConfigResolver::new(loader);
+        let path_override = Some(cfg_path.string());
+
+        // when
+        let res = config_resolver.handle_config(path_override);
+
+        // then
+        assert!(spy.method_called());
+        match res {
+            Err(ConfigurationErr::InvalidWatchedDirPath(msg)) => assert_eq!(
+                msg,
+                format!("It needs to be a directory: '{}'", watched_dir.string())
+            ),
+            _ => panic!("Incorrect result"),
+        }
 
         Ok(())
     }
