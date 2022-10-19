@@ -42,7 +42,7 @@ mod test {
     use super::*;
 
     use anyhow::Result;
-    use claim::{assert_gt, assert_lt, assert_ok_eq};
+    use claim::{assert_gt, assert_lt, assert_matches, assert_ok_eq};
     use fake::faker::filesystem::en::FilePath;
     use fake::faker::lorem::en::Paragraph;
     use fake::Fake;
@@ -162,10 +162,6 @@ mod test {
         let res = persistence.load(file_path);
 
         // then
-        if let Err(PersistenceErr::IoError(e)) = res {
-            assert!(e.kind() == ErrorKind::NotFound);
-        } else {
-            panic!("Invalid result returned");
-        }
+        assert_matches!(res, Err(PersistenceErr::IoError(e)) if e.kind() == ErrorKind::NotFound);
     }
 }
