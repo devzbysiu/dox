@@ -140,6 +140,9 @@ fn check_index_dir(config: &Config) -> Result<(), ConfigurationErr> {
     Ok(())
 }
 
+// TODO: Cleanup tests
+// TODO: Add test for incorrect thumbnails_dir
+// TODO: Add test for incorrect index dir
 #[cfg(test)]
 mod test {
     use super::*;
