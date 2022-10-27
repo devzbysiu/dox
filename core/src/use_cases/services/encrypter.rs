@@ -62,35 +62,27 @@ fn report_errors(res: &Result<(), EncrypterErr>) {
 mod test {
     use super::*;
 
-    use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
-    use crate::entities::user::FAKE_USER_EMAIL;
     use crate::result::CipherErr;
-    use crate::testingtools::{mk_file, Spy, SubscriberExt};
+    use crate::testingtools::{create_test_shim, Spy};
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
 
     use anyhow::Result;
-    use claim::assert_err;
+    use fake::{Fake, Faker};
     use std::sync::mpsc::{channel, Sender};
     use std::sync::{Arc, Mutex};
-    use std::time::Duration;
 
     #[test]
     fn cipher_is_used_when_encryption_request_appears() -> Result<()> {
         // given
         init_tracing();
         let (cipher_spy, cipher_writer) = CipherSpy::working();
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let encrypter = Encrypter::new(bus.clone());
-        encrypter.run(cipher_writer);
-        let mut publ = bus.publisher();
+        let mut shim = create_test_shim()?;
+        Encrypter::new(shim.bus()).run(cipher_writer);
 
         // when
-        publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
-            new_file.path,
-        ])))?;
+        shim.trigger_encryption()?;
 
         // then
         assert!(cipher_spy.method_called());
@@ -103,23 +95,16 @@ mod test {
         // given
         init_tracing();
         let noop_cipher = Arc::new(NoOpCipher);
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let encrypter = Encrypter::new(bus.clone());
-        encrypter.run(noop_cipher);
-
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
+        let mut shim = create_test_shim()?;
+        Encrypter::new(shim.bus()).run(noop_cipher);
 
         // when
-        publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
-            new_file.path,
-        ])))?;
+        shim.trigger_encryption()?;
 
-        let _event = sub.recv()?; // ignore EncryptionRequest message sent earliner
+        shim.ignore_event()?; // ignore EncryptionRequest message sent earliner
 
         // then
-        assert_eq!(sub.recv()?, BusEvent::PipelineFinished);
+        assert!(shim.pipeline_finished()?);
 
         Ok(())
     }
@@ -129,80 +114,57 @@ mod test {
         // given
         init_tracing();
         let (spy, failing_cipher) = CipherSpy::failing();
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let encrypter = Encrypter::new(bus.clone());
-        encrypter.run(failing_cipher);
-        thread::sleep(Duration::from_secs(1)); // allow to start extractor
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
+        let mut shim = create_test_shim()?;
+        Encrypter::new(shim.bus()).run(failing_cipher);
 
         // when
-        publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
-            new_file.path,
-        ])))?;
+        shim.trigger_encryption()?;
+
+        shim.ignore_event()?; // ignore NewDocs event
 
         // then
-        let _event = sub.recv()?; // ignore NewDocs event
         assert!(spy.method_called());
-        assert_err!(sub.try_recv(Duration::from_secs(2))); // no more events on the bus
+        assert!(shim.no_events_on_bus()); // no more events on the bus
 
         Ok(())
     }
 
     #[test]
-    #[should_panic(expected = "timed out waiting on channel")]
-    fn encrypter_ignores_other_bus_events() {
+    fn encrypter_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
         let noop_cipher = Arc::new(NoOpCipher);
-        let _new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into()).unwrap();
-        let bus = event_bus().unwrap();
-        let location = Location::FS(Vec::new());
+        let mut shim = create_test_shim()?;
         let ignored_events = [
-            BusEvent::NewDocs(location.clone()),
+            BusEvent::NewDocs(Faker.fake()),
             BusEvent::DataExtracted(Vec::new()),
-            BusEvent::ThumbnailMade(location),
+            BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::Indexed(Vec::new()),
         ];
-        let encrypter = Encrypter::new(bus.clone());
-        encrypter.run(noop_cipher);
-
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
+        Encrypter::new(shim.bus()).run(noop_cipher);
 
         // when
-        for event in &ignored_events {
-            publ.send(event.clone()).unwrap();
-        }
+        shim.send_events(&ignored_events)?;
 
         // then
         // all events are still on the bus, no PipelineFinished emitted
-        for _ in ignored_events {
-            assert_ne!(sub.recv().unwrap(), BusEvent::PipelineFinished);
-        }
-        sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
+        assert!(shim.no_such_event(BusEvent::PipelineFinished, ignored_events.len())?);
+        assert!(shim.no_events_on_bus()); // no more events on the bus
+
+        Ok(())
     }
 
     #[test]
     fn failure_during_encryption_do_not_kill_service() -> Result<()> {
         // given
         let (spy, failing_repo_write) = CipherSpy::failing();
-        let bus = event_bus()?;
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-
-        let encrypter = Encrypter::new(bus.clone());
-        encrypter.run(failing_repo_write);
-        let mut publ = bus.publisher();
-        publ.send(BusEvent::EncryptionRequest(Location::FS(vec![new_file
-            .path
-            .clone()])))?;
+        let mut shim = create_test_shim()?;
+        Encrypter::new(shim.bus()).run(failing_repo_write);
+        shim.trigger_encryption()?;
         assert!(spy.method_called());
 
         // when
-        publ.send(BusEvent::EncryptionRequest(Location::FS(vec![
-            new_file.path,
-        ])))?;
+        shim.trigger_encryption()?;
 
         // then
         assert!(spy.method_called());

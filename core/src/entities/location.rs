@@ -5,11 +5,12 @@
 use crate::entities::extension::Ext;
 use crate::helpers::PathRefExt;
 
+use fake::{Dummy, Fake};
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
 /// Represents abstraction of the location on some medium.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Dummy)]
 pub enum Location {
     /// Represents local disk as a medium.
     FS(Vec<SafePathBuf>),
@@ -30,7 +31,7 @@ impl Location {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Dummy)]
 pub struct SafePathBuf(PathBuf);
 
 impl SafePathBuf {

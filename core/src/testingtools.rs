@@ -1,8 +1,10 @@
 #![allow(unused)] // TODO: remove this
 
-use crate::entities::location::SafePathBuf;
+use crate::configuration::factories::event_bus;
+use crate::entities::location::{Location, SafePathBuf};
+use crate::entities::user::FAKE_USER_EMAIL;
 use crate::startup::rocket;
-use crate::use_cases::bus::{BusEvent, EventSubscriber};
+use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher, EventSubscriber};
 
 use anyhow::{anyhow, Result};
 use once_cell::sync::OnceCell;
@@ -209,22 +211,86 @@ impl SubscriberExt for EventSubscriber {
     }
 }
 
-pub fn mk_file(user_dir_name: String, filename: String) -> Result<NewFile> {
+pub fn create_test_shim() -> Result<TestShim> {
+    let test_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
+    let bus = event_bus()?;
+    let publ = bus.publisher();
+    let sub = bus.subscriber();
+    Ok(TestShim {
+        test_file,
+        bus,
+        publ,
+        sub,
+    })
+}
+
+pub struct TestShim {
+    test_file: TestFile,
+    bus: EventBus,
+    publ: EventPublisher,
+    sub: EventSubscriber,
+}
+
+impl TestShim {
+    pub fn trigger_encryption(&mut self) -> Result<()> {
+        let test_location = self.test_file.location.clone();
+        self.publ.send(BusEvent::EncryptionRequest(test_location))?;
+        Ok(())
+    }
+
+    pub fn bus(&self) -> EventBus {
+        self.bus.clone()
+    }
+
+    pub fn ignore_event(&self) -> Result<()> {
+        let _event = self.sub.recv()?; // ignore message sent earliner
+        Ok(())
+    }
+
+    pub fn pipeline_finished(&self) -> Result<bool> {
+        let event = self.sub.recv()?;
+        Ok(event == BusEvent::PipelineFinished)
+    }
+
+    pub fn no_events_on_bus(self) -> bool {
+        self.sub.try_recv(Duration::from_secs(2)).is_err()
+    }
+
+    pub fn send_events(&mut self, events: &[BusEvent]) -> Result<()> {
+        for event in events {
+            self.publ.send(event.clone())?;
+        }
+        Ok(())
+    }
+
+    pub fn no_such_event(&self, event: BusEvent, max_events: usize) -> Result<bool> {
+        for i in 0..max_events {
+            if self.sub.recv()? == event {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+}
+
+pub fn mk_file(user_dir_name: String, filename: String) -> Result<TestFile> {
     let tmp_dir = tempdir()?;
     let user_dir = tmp_dir.path().join(user_dir_name);
     create_dir_all(&user_dir)?;
     let path = user_dir.join(filename);
     fs::write(&path, "anything")?;
     let path = SafePathBuf::new(path);
-    Ok(NewFile {
+    Ok(TestFile {
         _temp_dir: tmp_dir,
+        location: Location::FS(vec![path.clone()]),
         path,
     })
 }
 
-pub struct NewFile {
+pub struct TestFile {
     _temp_dir: TempDir,
     pub path: SafePathBuf,
+    pub location: Location,
 }
 
 pub struct Spy {
