@@ -23,8 +23,6 @@ jobs:
     - run: sudo apt install libleptonica-dev libtesseract-dev clang
     - run: sudo apt install tesseract-ocr-pol
     - uses: rui314/setup-mold@v1
-    - run: which mold
-    - run: mold --version
     - name: Checkout Repo
       uses: actions/checkout@v2
 
