@@ -5,6 +5,6 @@ pub mod extractor;
 pub mod persistence;
 pub mod preprocessor;
 pub mod prompt;
+pub mod receiver;
 pub mod repository;
 pub mod server;
-pub mod receiver;

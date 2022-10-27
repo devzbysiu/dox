@@ -1,7 +1,7 @@
 use crate::entities::location::SafePathBuf;
+use crate::entities::user::User;
 use crate::helpers::PathRefExt;
 use crate::result::UserConvErr;
-use crate::entities::user::User;
 
 use async_once_cell::OnceCell;
 use jwks_client::keyset::KeyStore;
