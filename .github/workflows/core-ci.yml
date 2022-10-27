@@ -22,8 +22,7 @@ jobs:
     - run: sudo apt install libpoppler-glib-dev
     - run: sudo apt install libleptonica-dev libtesseract-dev clang
     - run: sudo apt install tesseract-ocr-pol
-    # turn off mold for know as it looks like GH actions are not configured properly
-    # - uses: rui314/setup-mold@v1
+    - uses: rui314/setup-mold@v1
     - name: Checkout Repo
       uses: actions/checkout@v2
 
