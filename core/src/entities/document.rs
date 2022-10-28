@@ -2,12 +2,13 @@
 use crate::entities::user::User;
 use crate::helpers::PathRefExt;
 
+use fake::{Dummy, Fake};
 use std::path::Path;
 
 /// Data of the document.
 ///
 /// The values in this structure are used to do the indexing.
-#[derive(Debug, PartialOrd, Clone, Ord, Eq, PartialEq)]
+#[derive(Debug, PartialOrd, Clone, Ord, Eq, PartialEq, Dummy)]
 pub struct DocDetails {
     pub filename: String,
     pub body: String,

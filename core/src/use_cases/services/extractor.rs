@@ -70,14 +70,12 @@ pub trait ExtractorFactory: Sync + Send {
 mod test {
     use super::*;
 
-    use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
-    use crate::entities::user::{User, FAKE_USER_EMAIL};
     use crate::result::ExtractorErr;
-    use crate::testingtools::{mk_file, Spy, SubscriberExt};
+    use crate::testingtools::{create_test_shim, Spy};
 
     use anyhow::Result;
-    use claim::assert_err;
+    use fake::{Fake, Faker};
     use leptess::tesseract::TessInitError;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::{channel, Sender};
@@ -90,15 +88,12 @@ mod test {
         init_tracing();
         let (spy, extractor) = ExtractorSpy::working();
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let txt_extractor = TxtExtractor::new(bus.clone());
-        txt_extractor.run(factory_stub);
+        let mut shim = create_test_shim()?;
+        TxtExtractor::new(shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-        let mut publ = bus.publisher();
 
         // when
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
+        shim.trigger_new_doc_appearance()?;
 
         // then
         assert!(spy.method_called());
@@ -110,32 +105,19 @@ mod test {
     fn data_extracted_event_appears_on_success() -> Result<()> {
         // given
         init_tracing();
-        let docs_details = vec![DocDetails::new(
-            User::new(FAKE_USER_EMAIL),
-            "path",
-            "body",
-            "thumbnail",
-        )];
+        let docs_details: Vec<DocDetails> = Faker.fake();
         let extractor = Box::new(ExtractorStub::new(docs_details.clone()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let txt_extractor = TxtExtractor::new(bus.clone());
-        txt_extractor.run(factory_stub);
+        let mut shim = create_test_shim()?;
+        TxtExtractor::new(shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
 
         // when
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
+        shim.trigger_new_doc_appearance()?;
+        shim.ignore_event()?; // ignore NewDocs event
 
         // then
-        let _event = sub.recv()?; // ignore NewDocs event
-        if let BusEvent::DataExtracted(details) = sub.recv()? {
-            assert_eq!(details, docs_details);
-        } else {
-            panic!("invalid event appeared");
-        }
+        assert!(shim.event_on_bus(BusEvent::DataExtracted(docs_details))?);
 
         Ok(())
     }
@@ -144,27 +126,20 @@ mod test {
     fn encryption_request_event_appears_on_success() -> Result<()> {
         // given
         init_tracing();
-        let extractor = Box::new(ExtractorStub::new(Vec::new()));
+        let extractor = Box::new(ExtractorStub::new(Faker.fake()));
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![extractor]));
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let txt_extractor = TxtExtractor::new(bus.clone());
-        txt_extractor.run(factory_stub);
+        let mut shim = create_test_shim()?;
+        TxtExtractor::new(shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
 
         // when
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path.clone()])))?;
+        shim.trigger_new_doc_appearance()?;
+
+        shim.ignore_event()?; // ignore NewDocs event
+        shim.ignore_event()?; // ignore TextExtracted event
 
         // then
-        let _event = sub.recv()?; // ignore NewDocs event
-        let _event = sub.recv()?; // ignore TextExtracted event
-        if let BusEvent::EncryptionRequest(location) = sub.recv()? {
-            assert_eq!(location, Location::FS(vec![new_file.path]));
-        } else {
-            panic!("invalid event appeared");
-        }
+        assert!(shim.event_on_bus(BusEvent::EncryptionRequest(shim.test_location()))?);
 
         Ok(())
     }
@@ -175,61 +150,52 @@ mod test {
         init_tracing();
         let (spy, failing_extractor) = ExtractorSpy::failing();
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![failing_extractor]));
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let txt_extractor = TxtExtractor::new(bus.clone());
-        txt_extractor.run(factory_stub);
+        let mut shim = create_test_shim()?;
+        TxtExtractor::new(shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
 
         // when
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
+        shim.trigger_new_doc_appearance()?;
+
+        shim.ignore_event()?; // ignore NewDocs event
 
         // then
-        let _event = sub.recv()?; // ignore NewDocs event
         assert!(spy.method_called());
-        assert_err!(sub.try_recv(Duration::from_secs(2))); // no more events on the bus
+        assert!(shim.no_events_on_bus());
 
         Ok(())
     }
 
     #[test]
-    #[should_panic(expected = "timed out waiting on channel")]
-    fn extractor_ignores_other_bus_events() {
+    fn extractor_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
         let noop_extractor = Box::new(NoOpExtractor);
         let factory_stub = Box::new(ExtractorFactoryStub::new(vec![noop_extractor]));
-        let _new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into()).unwrap();
-        let bus = event_bus().unwrap();
-        let location = Location::FS(Vec::new());
         let ignored_events = [
-            BusEvent::ThumbnailMade(location),
+            BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::Indexed(Vec::new()),
             BusEvent::PipelineFinished,
         ];
-        let extractor = TxtExtractor::new(bus.clone());
-        extractor.run(factory_stub);
-
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
+        let mut shim = create_test_shim()?;
+        TxtExtractor::new(shim.bus()).run(factory_stub);
 
         // when
-        for event in &ignored_events {
-            publ.send(event.clone()).unwrap();
-        }
+        shim.send_events(&ignored_events)?;
 
         // then
-        // all events are still on the bus, no DataExtracted and EncryptionRequest emitted
-        for _ in ignored_events {
-            match sub.recv().unwrap() {
-                BusEvent::DataExtracted(_) => panic!("DataExtracted should not appear"),
-                BusEvent::EncryptionRequest(_) => panic!("EncryptionRequest should not appear"),
-                _ => {} // the rest of the events are fine
-            }
-        }
-        sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
+        assert!(shim.no_such_events(
+            &[
+                // TODO: those events should not have concrete values inside (any DataExtracted or
+                // EncryptionRequest event should cause failure, not only those with concrete values)
+                BusEvent::DataExtracted(Vec::new()),
+                BusEvent::EncryptionRequest(shim.test_location())
+            ],
+            ignored_events.len(),
+        )?);
+        assert!(shim.no_events_on_bus());
+
+        Ok(())
     }
 
     #[test]
@@ -241,17 +207,15 @@ mod test {
             failing_extractor1,
             failing_extractor2,
         ]));
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let txt_extractor = TxtExtractor::new(bus.clone());
-        txt_extractor.run(factory_stub);
+        let mut shim = create_test_shim()?;
+        TxtExtractor::new(shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-        let mut publ = bus.publisher();
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path.clone()])))?;
+                                               // let mut publ = bus.publisher();
+        shim.trigger_new_doc_appearance()?;
         assert!(spy1.method_called());
 
         // when
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
+        shim.trigger_new_doc_appearance()?;
 
         // then
         assert!(spy2.method_called());

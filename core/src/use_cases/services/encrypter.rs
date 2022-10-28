@@ -148,7 +148,7 @@ mod test {
 
         // then
         // all events are still on the bus, no PipelineFinished emitted
-        assert!(shim.no_such_event(BusEvent::PipelineFinished, ignored_events.len())?);
+        assert!(shim.no_such_events(&[BusEvent::PipelineFinished], ignored_events.len())?);
         assert!(shim.no_events_on_bus()); // no more events on the bus
 
         Ok(())

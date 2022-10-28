@@ -263,13 +263,30 @@ impl TestShim {
         Ok(())
     }
 
-    pub fn no_such_event(&self, event: BusEvent, max_events: usize) -> Result<bool> {
+    pub fn no_such_events(&self, ignored: &[BusEvent], max_events: usize) -> Result<bool> {
         for i in 0..max_events {
-            if self.sub.recv()? == event {
-                return Ok(false);
+            let received = self.sub.recv()?;
+            for event in ignored {
+                if *event == received {
+                    return Ok(false);
+                }
             }
         }
         Ok(true)
+    }
+
+    pub fn trigger_new_doc_appearance(&mut self) -> Result<()> {
+        let test_location = self.test_file.location.clone();
+        self.publ.send(BusEvent::NewDocs(test_location))?;
+        Ok(())
+    }
+
+    pub fn event_on_bus(&self, event: BusEvent) -> Result<bool> {
+        Ok(event == self.sub.recv()?)
+    }
+
+    pub fn test_location(&self) -> Location {
+        self.test_file.location.clone()
     }
 }
 
