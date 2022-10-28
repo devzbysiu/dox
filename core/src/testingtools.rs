@@ -281,8 +281,8 @@ impl TestShim {
         Ok(())
     }
 
-    pub fn event_on_bus(&self, event: BusEvent) -> Result<bool> {
-        Ok(event == self.sub.recv()?)
+    pub fn event_on_bus(&self, event: &BusEvent) -> Result<bool> {
+        Ok(*event == self.sub.recv()?)
     }
 
     pub fn test_location(&self) -> Location {

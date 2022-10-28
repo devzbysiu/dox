@@ -117,7 +117,7 @@ mod test {
         shim.ignore_event()?; // ignore NewDocs event
 
         // then
-        assert!(shim.event_on_bus(BusEvent::DataExtracted(docs_details))?);
+        assert!(shim.event_on_bus(&BusEvent::DataExtracted(docs_details))?);
 
         Ok(())
     }
@@ -139,7 +139,7 @@ mod test {
         shim.ignore_event()?; // ignore TextExtracted event
 
         // then
-        assert!(shim.event_on_bus(BusEvent::EncryptionRequest(shim.test_location()))?);
+        assert!(shim.event_on_bus(&BusEvent::EncryptionRequest(shim.test_location()))?);
 
         Ok(())
     }
