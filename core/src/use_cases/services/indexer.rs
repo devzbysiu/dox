@@ -67,10 +67,9 @@ mod test {
         let (spy, working_repo_write) = RepoWriteSpy::working();
         let mut shim = create_test_shim()?;
         Indexer::new(shim.bus()).run(working_repo_write)?;
-        let doc_details: Vec<DocDetails> = Faker.fake();
 
         // when
-        shim.trigger_indexer(doc_details)?;
+        shim.trigger_indexer(Faker.fake())?;
 
         // then
         assert!(spy.method_called());
@@ -125,10 +124,9 @@ mod test {
         let repo_write = Box::new(ErroneousRepoWrite);
         let mut shim = create_test_shim()?;
         Indexer::new(shim.bus()).run(repo_write)?;
-        let docs_details = Faker.fake();
 
         // when
-        shim.trigger_indexer(docs_details)?;
+        shim.trigger_indexer(Faker.fake())?;
 
         shim.ignore_event()?; // ignore DataExtracted event
 
@@ -169,14 +167,13 @@ mod test {
         // given
         init_tracing();
         let (spy, failing_repo_write) = RepoWriteSpy::failing();
-        let docs_details: Vec<DocDetails> = Faker.fake();
         let mut shim = create_test_shim()?;
         Indexer::new(shim.bus()).run(failing_repo_write)?;
-        shim.trigger_indexer(docs_details.clone())?;
+        shim.trigger_indexer(Faker.fake())?;
         assert!(spy.method_called());
 
         // when
-        shim.trigger_indexer(docs_details)?;
+        shim.trigger_indexer(Faker.fake())?;
 
         // then
         assert!(spy.method_called());
