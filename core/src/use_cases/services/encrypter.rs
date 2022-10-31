@@ -82,7 +82,7 @@ mod test {
         Encrypter::new(shim.bus()).run(cipher_writer);
 
         // when
-        shim.trigger_encryption()?;
+        shim.trigger_encrypter()?;
 
         // then
         assert!(cipher_spy.method_called());
@@ -99,7 +99,7 @@ mod test {
         Encrypter::new(shim.bus()).run(noop_cipher);
 
         // when
-        shim.trigger_encryption()?;
+        shim.trigger_encrypter()?;
 
         shim.ignore_event()?; // ignore EncryptionRequest message sent earliner
 
@@ -118,7 +118,7 @@ mod test {
         Encrypter::new(shim.bus()).run(failing_cipher);
 
         // when
-        shim.trigger_encryption()?;
+        shim.trigger_encrypter()?;
 
         shim.ignore_event()?; // ignore NewDocs event
 
@@ -160,11 +160,11 @@ mod test {
         let (spy, failing_repo_write) = CipherSpy::failing();
         let mut shim = create_test_shim()?;
         Encrypter::new(shim.bus()).run(failing_repo_write);
-        shim.trigger_encryption()?;
+        shim.trigger_encrypter()?;
         assert!(spy.method_called());
 
         // when
-        shim.trigger_encryption()?;
+        shim.trigger_encrypter()?;
 
         // then
         assert!(spy.method_called());

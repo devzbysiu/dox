@@ -48,33 +48,29 @@ impl Indexer {
 mod test {
     use super::*;
 
-    use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
     use crate::entities::document::DocDetails;
     use crate::entities::location::Location;
-    use crate::entities::user::{User, FAKE_USER_EMAIL};
     use crate::result::{BusErr, IndexerErr};
-    use crate::testingtools::{Spy, SubscriberExt};
+    use crate::testingtools::{create_test_shim, Spy};
     use crate::use_cases::repository::RepositoryWrite;
 
     use anyhow::{anyhow, Result};
-    use claim::assert_err;
+    use fake::{Fake, Faker};
     use std::sync::mpsc::{channel, Sender};
     use std::sync::Mutex;
-    use std::time::Duration;
 
     #[test]
     fn repo_write_is_used_to_index_data() -> Result<()> {
         // given
         init_tracing();
         let (spy, working_repo_write) = RepoWriteSpy::working();
-        let bus = event_bus()?;
-        let indexer = Indexer::new(bus.clone());
-        indexer.run(working_repo_write)?;
-        let mut publ = bus.publisher();
+        let mut shim = create_test_shim()?;
+        Indexer::new(shim.bus()).run(working_repo_write)?;
+        let doc_details: Vec<DocDetails> = Faker.fake();
 
         // when
-        publ.send(BusEvent::DataExtracted(Vec::new()))?;
+        shim.trigger_indexer(doc_details)?;
 
         // then
         assert!(spy.method_called());
@@ -87,18 +83,18 @@ mod test {
         // given
         init_tracing();
         let noop_repo_write = Box::new(NoOpRepoWrite);
-        let bus = event_bus()?;
-        let indexer = Indexer::new(bus.clone());
-        indexer.run(noop_repo_write)?;
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
+        let mut shim = create_test_shim()?;
+        Indexer::new(shim.bus()).run(noop_repo_write)?;
+        let doc_details: Vec<DocDetails> = Faker.fake();
 
         // when
-        publ.send(BusEvent::DataExtracted(Vec::new()))?;
+        shim.trigger_indexer(doc_details.clone())?;
+
+        // TODO: try to move it to the trigger_* methods
+        shim.ignore_event()?; // ignore DataExtracted event
 
         // then
-        let _event = sub.recv()?; // ignore DataExtracted event
-        assert_eq!(sub.recv()?, BusEvent::Indexed(Vec::new()));
+        assert!(shim.event_on_bus(&BusEvent::Indexed(doc_details))?);
 
         Ok(())
     }
@@ -108,24 +104,16 @@ mod test {
         // given
         init_tracing();
         let repo_write = Box::new(NoOpRepoWrite);
-        let bus = event_bus()?;
-        let docs_details = vec![DocDetails::new(
-            User::new(FAKE_USER_EMAIL),
-            "path",
-            "body",
-            "thumbnail",
-        )];
-        let indexer = Indexer::new(bus.clone());
-        indexer.run(repo_write)?;
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
+        let mut shim = create_test_shim()?;
+        let docs_details: Vec<DocDetails> = Faker.fake();
+        Indexer::new(shim.bus()).run(repo_write)?;
 
         // when
-        publ.send(BusEvent::DataExtracted(docs_details.clone()))?;
+        shim.trigger_indexer(docs_details.clone())?;
+        shim.ignore_event()?; // ignore DataExtracted event
 
         // then
-        let _event = sub.recv()?; // ignore DataExtracted event
-        assert_eq!(sub.recv()?, BusEvent::Indexed(docs_details));
+        assert!(shim.event_on_bus(&BusEvent::Indexed(docs_details))?);
 
         Ok(())
     }
@@ -135,52 +123,45 @@ mod test {
         // given
         init_tracing();
         let repo_write = Box::new(ErroneousRepoWrite);
-        let bus = event_bus()?;
-        let indexer = Indexer::new(bus.clone());
-        indexer.run(repo_write)?;
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
+        let mut shim = create_test_shim()?;
+        Indexer::new(shim.bus()).run(repo_write)?;
+        let docs_details = Faker.fake();
 
         // when
-        publ.send(BusEvent::DataExtracted(Vec::new()))?;
+        shim.trigger_indexer(docs_details)?;
+
+        shim.ignore_event()?; // ignore DataExtracted event
 
         // then
-        let _event = sub.recv()?; // ignore DataExtracted event
-        assert_err!(sub.try_recv(Duration::from_secs(2)));
+        assert!(shim.no_events_on_bus());
 
         Ok(())
     }
 
     #[test]
-    #[should_panic(expected = "timed out waiting on channel")]
-    fn indexer_ignores_other_bus_events() {
+    fn indexer_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
         let noop_repo_write = Box::new(NoOpRepoWrite);
-        let bus = event_bus().unwrap();
-        let location = Location::FS(Vec::new());
+        let mut shim = create_test_shim()?;
+        let location: Location = Faker.fake();
         let ignored_events = [
             BusEvent::NewDocs(location.clone()),
             BusEvent::EncryptionRequest(location.clone()),
             BusEvent::ThumbnailMade(location),
             BusEvent::PipelineFinished,
         ];
-        let indexer = Indexer::new(bus.clone());
-        indexer.run(noop_repo_write).unwrap();
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
+        Indexer::new(shim.bus()).run(noop_repo_write).unwrap();
 
         // when
-        for event in &ignored_events {
-            publ.send(event.clone()).unwrap();
-        }
+        shim.send_events(&ignored_events)?;
 
         // then
         // all events are still on the bus, no Indexed emitted
-        for _ in ignored_events {
-            assert_ne!(sub.recv().unwrap(), BusEvent::Indexed(Vec::new()));
-        }
-        sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
+        assert!(shim.no_such_events(&[BusEvent::Indexed(Vec::new())], ignored_events.len())?);
+        assert!(shim.no_events_on_bus());
+
+        Ok(())
     }
 
     #[test]
@@ -188,15 +169,14 @@ mod test {
         // given
         init_tracing();
         let (spy, failing_repo_write) = RepoWriteSpy::failing();
-        let bus = event_bus()?;
-        let indexer = Indexer::new(bus.clone());
-        indexer.run(failing_repo_write)?;
-        let mut publ = bus.publisher();
-        publ.send(BusEvent::DataExtracted(Vec::new()))?;
+        let docs_details: Vec<DocDetails> = Faker.fake();
+        let mut shim = create_test_shim()?;
+        Indexer::new(shim.bus()).run(failing_repo_write)?;
+        shim.trigger_indexer(docs_details.clone())?;
         assert!(spy.method_called());
 
         // when
-        publ.send(BusEvent::DataExtracted(Vec::new()))?;
+        shim.trigger_indexer(docs_details)?;
 
         // then
         assert!(spy.method_called());

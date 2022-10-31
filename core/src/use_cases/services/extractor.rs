@@ -93,7 +93,7 @@ mod test {
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
-        shim.trigger_new_doc_appearance()?;
+        shim.trigger_extractor()?;
 
         // then
         assert!(spy.method_called());
@@ -113,7 +113,7 @@ mod test {
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
-        shim.trigger_new_doc_appearance()?;
+        shim.trigger_extractor()?;
         shim.ignore_event()?; // ignore NewDocs event
 
         // then
@@ -133,7 +133,7 @@ mod test {
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
-        shim.trigger_new_doc_appearance()?;
+        shim.trigger_extractor()?;
 
         shim.ignore_event()?; // ignore NewDocs event
         shim.ignore_event()?; // ignore TextExtracted event
@@ -155,7 +155,7 @@ mod test {
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
-        shim.trigger_new_doc_appearance()?;
+        shim.trigger_extractor()?;
 
         shim.ignore_event()?; // ignore NewDocs event
 
@@ -211,11 +211,11 @@ mod test {
         TxtExtractor::new(shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
                                                // let mut publ = bus.publisher();
-        shim.trigger_new_doc_appearance()?;
+        shim.trigger_extractor()?;
         assert!(spy1.method_called());
 
         // when
-        shim.trigger_new_doc_appearance()?;
+        shim.trigger_extractor()?;
 
         // then
         assert!(spy2.method_called());

@@ -1,6 +1,7 @@
 #![allow(unused)] // TODO: remove this
 
 use crate::configuration::factories::event_bus;
+use crate::entities::document::DocDetails;
 use crate::entities::location::{Location, SafePathBuf};
 use crate::entities::user::FAKE_USER_EMAIL;
 use crate::startup::rocket;
@@ -232,7 +233,7 @@ pub struct TestShim {
 }
 
 impl TestShim {
-    pub fn trigger_encryption(&mut self) -> Result<()> {
+    pub fn trigger_encrypter(&mut self) -> Result<()> {
         let test_location = self.test_file.location.clone();
         self.publ.send(BusEvent::EncryptionRequest(test_location))?;
         Ok(())
@@ -275,7 +276,7 @@ impl TestShim {
         Ok(true)
     }
 
-    pub fn trigger_new_doc_appearance(&mut self) -> Result<()> {
+    pub fn trigger_extractor(&mut self) -> Result<()> {
         let test_location = self.test_file.location.clone();
         self.publ.send(BusEvent::NewDocs(test_location))?;
         Ok(())
@@ -287,6 +288,14 @@ impl TestShim {
 
     pub fn test_location(&self) -> Location {
         self.test_file.location.clone()
+    }
+
+    // TODO: this should take data the indexer should be triggered with - do that also for other
+    // trigger_* methods
+    pub fn trigger_indexer(&mut self, details: Vec<DocDetails>) -> Result<()> {
+        let test_location = self.test_file.location.clone();
+        self.publ.send(BusEvent::DataExtracted(details))?;
+        Ok(())
     }
 }
 
