@@ -95,14 +95,12 @@ pub trait PreprocessorFactory: Sync + Send {
 mod test {
     use super::*;
 
-    use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
-    use crate::entities::user::FAKE_USER_EMAIL;
     use crate::result::BusErr;
-    use crate::testingtools::{mk_file, Spy, SubscriberExt};
+    use crate::testingtools::{create_test_shim, Spy};
 
     use anyhow::{anyhow, Result};
-    use claim::assert_err;
+    use fake::{Fake, Faker};
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::{channel, Sender};
     use std::sync::Mutex;
@@ -114,16 +112,12 @@ mod test {
         init_tracing();
         let (spy, preprocessor) = PreprocessorSpy::working();
         let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![preprocessor]));
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let cfg = Config::default();
-        let thumbnail_generator = ThumbnailGenerator::new(cfg, bus.clone());
-        thumbnail_generator.run(factory_stub);
+        let mut shim = create_test_shim()?;
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start preprocessor
-        let mut publ = bus.publisher();
 
         // when
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
+        shim.trigger_preprocessor()?;
 
         // then
         assert!(spy.method_called());
@@ -137,25 +131,17 @@ mod test {
         init_tracing();
         let preprocessor = Box::new(NoOpPreprocessor);
         let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![preprocessor]));
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let cfg = Config::default();
-        let thumbnail_generator = ThumbnailGenerator::new(cfg, bus.clone());
-        thumbnail_generator.run(factory_stub);
+        let mut shim = create_test_shim()?;
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
 
         // when
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path.clone()])))?;
+        shim.trigger_preprocessor()?;
+
+        shim.ignore_event()?; // ignore NewDocs event
 
         // then
-        let _event = sub.recv()?; // ignore NewDocs event
-        if let BusEvent::ThumbnailMade(location) = sub.recv()? {
-            assert_eq!(location, Location::FS(vec![new_file.path]));
-        } else {
-            panic!("invalid event appeared");
-        }
+        assert!(shim.event_on_bus(&BusEvent::ThumbnailMade(shim.test_location()))?);
 
         Ok(())
     }
@@ -166,26 +152,18 @@ mod test {
         init_tracing();
         let preprocessor = Box::new(NoOpPreprocessor);
         let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![preprocessor]));
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let cfg = Config::default();
-        let thumbnail_generator = ThumbnailGenerator::new(cfg, bus.clone());
-        thumbnail_generator.run(factory_stub);
+        let mut shim = create_test_shim()?;
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
 
         // when
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path.clone()])))?;
+        shim.trigger_preprocessor()?;
+
+        shim.ignore_event()?; // ignore NewDocs event
+        shim.ignore_event()?; // ignore TextExtracted event
 
         // then
-        let _event = sub.recv()?; // ignore NewDocs event
-        let _event = sub.recv()?; // ignore TextExtracted event
-        if let BusEvent::EncryptionRequest(location) = sub.recv()? {
-            assert_eq!(location, Location::FS(vec![new_file.path]));
-        } else {
-            panic!("invalid event appeared");
-        }
+        assert!(shim.event_on_bus(&BusEvent::EncryptionRequest(shim.test_location()))?);
 
         Ok(())
     }
@@ -196,63 +174,53 @@ mod test {
         init_tracing();
         let (spy, failing_preprocessor) = PreprocessorSpy::failing();
         let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![failing_preprocessor]));
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let cfg = Config::default();
-        let thumbnail_generator = ThumbnailGenerator::new(cfg, bus.clone());
-        thumbnail_generator.run(factory_stub);
+        let mut shim = create_test_shim()?;
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
 
         // when
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
+        shim.trigger_preprocessor()?;
+
+        shim.ignore_event()?; // ignore NewDocs event
 
         // then
-        let _event = sub.recv()?; // ignore NewDocs event
         assert!(spy.method_called());
-        assert_err!(sub.try_recv(Duration::from_secs(2))); // no more events on the bus
+        assert!(shim.no_events_on_bus());
 
         Ok(())
     }
 
     #[test]
-    #[should_panic(expected = "timed out waiting on channel")]
-    fn preprocessor_ignores_other_bus_events() {
+    fn preprocessor_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
         let preprocessor = Box::new(NoOpPreprocessor);
         let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![preprocessor]));
-        let _new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into()).unwrap();
-        let bus = event_bus().unwrap();
-        let cfg = Config::default();
-        let location = Location::FS(Vec::new());
+        let mut shim = create_test_shim()?;
         let ignored_events = [
-            BusEvent::ThumbnailMade(location),
+            BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::Indexed(Vec::new()),
             BusEvent::PipelineFinished,
         ];
-        let preprocessor = ThumbnailGenerator::new(cfg, bus.clone());
-        preprocessor.run(factory_stub);
-
-        let mut publ = bus.publisher();
-        let sub = bus.subscriber();
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
 
         // when
-        for event in &ignored_events {
-            publ.send(event.clone()).unwrap();
-        }
+        shim.send_events(&ignored_events)?;
 
         // then
         // all events are still on the bus, no DataExtracted and EncryptionRequest emitted
-        for _ in ignored_events {
-            match sub.recv().unwrap() {
-                BusEvent::DataExtracted(_) => panic!("DataExtracted should not appear"),
-                BusEvent::EncryptionRequest(_) => panic!("EncryptionRequest should not appear"),
-                _ => {} // the rest of the events are fine
-            }
-        }
-        sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
+        shim.no_such_events(
+            &[
+                // TODO: this shouldn't use specific values - any DataExtracted and EncryptionRequest
+                // event (with any data) should make this test fail
+                BusEvent::DataExtracted(Faker.fake()),
+                BusEvent::EncryptionRequest(Faker.fake()),
+            ],
+            ignored_events.len(),
+        )?;
+        assert!(shim.no_events_on_bus());
+
+        Ok(())
     }
 
     #[test]
@@ -264,18 +232,15 @@ mod test {
             failing_preprocessor1,
             failing_preprocessor2,
         ]));
-        let new_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
-        let bus = event_bus()?;
-        let cfg = Config::default();
-        let thumbnail_preprocessor = ThumbnailGenerator::new(cfg, bus.clone());
-        thumbnail_preprocessor.run(factory_stub);
+        let mut shim = create_test_shim()?;
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-        let mut publ = bus.publisher();
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path.clone()])))?;
+
+        shim.trigger_preprocessor()?;
         assert!(spy1.method_called());
 
         // when
-        publ.send(BusEvent::NewDocs(Location::FS(vec![new_file.path])))?;
+        shim.trigger_preprocessor()?;
 
         // then
         assert!(spy2.method_called());

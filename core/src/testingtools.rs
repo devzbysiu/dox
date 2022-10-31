@@ -297,8 +297,14 @@ impl TestShim {
         self.publ.send(BusEvent::DataExtracted(details))?;
         Ok(())
     }
+
+    pub fn trigger_preprocessor(&mut self) -> Result<()> {
+        self.publ.send(BusEvent::NewDocs(self.test_location()))?;
+        Ok(())
+    }
 }
 
+// TODO: make this private
 pub fn mk_file(user_dir_name: String, filename: String) -> Result<TestFile> {
     let tmp_dir = tempdir()?;
     let user_dir = tmp_dir.path().join(user_dir_name);
