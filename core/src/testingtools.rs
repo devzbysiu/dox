@@ -6,6 +6,7 @@ use crate::entities::location::{Location, SafePathBuf};
 use crate::entities::user::FAKE_USER_EMAIL;
 use crate::startup::rocket;
 use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher, EventSubscriber};
+use crate::use_cases::receiver::DocsEvent;
 
 use anyhow::{anyhow, Result};
 use once_cell::sync::OnceCell;
@@ -22,7 +23,7 @@ use std::fs;
 use std::fs::create_dir_all;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::{channel, Receiver};
+use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
@@ -217,7 +218,11 @@ pub fn create_test_shim() -> Result<TestShim> {
     let bus = event_bus()?;
     let publ = bus.publisher();
     let sub = bus.subscriber();
+    let (tx, rx) = channel();
+    let rx = Some(rx);
     Ok(TestShim {
+        rx,
+        tx,
         test_file,
         bus,
         publ,
@@ -226,6 +231,8 @@ pub fn create_test_shim() -> Result<TestShim> {
 }
 
 pub struct TestShim {
+    rx: Option<Receiver<DocsEvent>>,
+    tx: Sender<DocsEvent>,
     test_file: TestFile,
     bus: EventBus,
     publ: EventPublisher,
@@ -300,6 +307,23 @@ impl TestShim {
 
     pub fn trigger_preprocessor(&mut self) -> Result<()> {
         self.publ.send(BusEvent::NewDocs(self.test_location()))?;
+        Ok(())
+    }
+
+    pub fn rx(&mut self) -> Receiver<DocsEvent> {
+        self.rx.take().unwrap()
+    }
+
+    // TODO: I think it would be better to explicitly pass the event being sent - it's cleaner in
+    // the test. This should be changed for all trigger_* methods
+    pub fn trigger_watcher(&self) -> Result<()> {
+        let file_path = self.test_file.path.clone();
+        self.tx.send(DocsEvent::Created(file_path))?;
+        Ok(())
+    }
+
+    pub fn mk_docs_event(&self, event: DocsEvent) -> Result<()> {
+        self.tx.send(event)?;
         Ok(())
     }
 }

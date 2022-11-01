@@ -45,75 +45,64 @@ impl DocsWatcher {
 mod test {
     use super::*;
 
-    use crate::configuration::factories::event_bus;
     use crate::configuration::telemetry::init_tracing;
     use crate::result::EventReceiverErr;
-    use crate::testingtools::{mk_file, SubscriberExt};
+    use crate::testingtools::create_test_shim;
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::receiver::EventReceiver;
 
     use anyhow::Result;
-    use std::sync::mpsc::{channel, Receiver, RecvError};
-    use std::time::Duration;
+    use std::sync::mpsc::{Receiver, RecvError};
 
     #[test]
     fn created_docs_event_puts_new_docs_event_on_bus() -> Result<()> {
         // given
         init_tracing();
-        let (tx, rx) = channel();
-        let mock_event_receiver = Box::new(MockEventReceiver::new(rx));
-        let bus = event_bus()?;
-        let new_file = mk_file("parent-dir".into(), "some-file.jpg".into())?;
-        let watcher = DocsWatcher::new(bus.clone());
-        watcher.run(mock_event_receiver);
-        let sub = bus.subscriber();
+        let mut shim = create_test_shim()?;
+        let mock_event_receiver = Box::new(MockEventReceiver::new(shim.rx()));
+        DocsWatcher::new(shim.bus()).run(mock_event_receiver);
 
         // when
-        tx.send(DocsEvent::Created(new_file.path.clone()))?;
+        shim.trigger_watcher()?;
 
         // then
-        assert_eq!(
-            sub.recv()?,
-            BusEvent::NewDocs(Location::FS(vec![new_file.path]))
-        );
+        assert!(shim.event_on_bus(&BusEvent::NewDocs(shim.test_location()))?);
 
         Ok(())
     }
 
     #[test]
-    #[should_panic(expected = "timed out waiting on channel")]
-    fn other_docs_event_is_ignored() {
+    fn other_docs_event_is_ignored() -> Result<()> {
         // given
         init_tracing();
-        let (tx, rx) = channel();
-        let mock_event_receiver = Box::new(MockEventReceiver::new(rx));
-        let bus = event_bus().unwrap();
-        let watcher = DocsWatcher::new(bus.clone());
-        watcher.run(mock_event_receiver);
-        let sub = bus.subscriber();
+        let mut shim = create_test_shim()?;
+        let mock_event_receiver = Box::new(MockEventReceiver::new(shim.rx()));
+        DocsWatcher::new(shim.bus()).run(mock_event_receiver);
 
         // when
-        tx.send(DocsEvent::Other).unwrap();
+        shim.mk_docs_event(DocsEvent::Other)?;
 
         // then
-        sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
+        assert!(shim.no_events_on_bus());
+
+        Ok(())
     }
 
     #[test]
-    #[should_panic(expected = "timed out waiting on channel")]
-    fn errors_in_receiver_are_not_propagated_to_event_bus() {
+    fn errors_in_receiver_are_not_propagated_to_event_bus() -> Result<()> {
         // given
         init_tracing();
         let erroneous_event_receiver = Box::new(ErroneousEventReceiver);
-        let bus = event_bus().unwrap();
-        let watcher = DocsWatcher::new(bus.clone());
-        let sub = bus.subscriber();
+        let shim = create_test_shim()?;
+        let watcher = DocsWatcher::new(shim.bus());
 
         // when
         watcher.run(erroneous_event_receiver); // error ignored here
 
         // then
-        sub.try_recv(Duration::from_secs(2)).unwrap(); // should panic
+        assert!(shim.no_events_on_bus());
+
+        Ok(())
     }
 
     struct MockEventReceiver {
