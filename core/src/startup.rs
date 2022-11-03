@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::configuration::factories::{
     cipher, config_loader, config_resolver, event_bus, event_watcher, extractor_factory,
     persistence, preprocessor_factory, repository,
@@ -21,7 +23,7 @@ use tracing::{debug, instrument};
 
 #[must_use]
 #[instrument]
-pub fn rocket(path_override: Option<String>) -> Rocket<Build> {
+pub fn rocket(path_override: Option<PathBuf>) -> Rocket<Build> {
     let resolver = config_resolver(config_loader());
 
     let cfg = resolver

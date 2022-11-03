@@ -7,6 +7,7 @@ use crate::result::SetupErr;
 use crate::startup::rocket;
 
 use std::env;
+use std::path::PathBuf;
 
 mod configuration;
 mod data_providers;
@@ -24,7 +25,8 @@ async fn main() -> Result<(), SetupErr> {
     init_tracing();
     let path_override = env::var("DOX_CONFIG_PATH")
         .ok()
-        .or_else(|| env::args().nth(1));
+        .or_else(|| env::args().nth(1))
+        .map(PathBuf::from);
     let _rocket = rocket(path_override).launch().await?;
 
     Ok(())

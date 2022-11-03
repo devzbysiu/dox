@@ -37,7 +37,7 @@ pub trait ConfigResolver {
     /// This method should read the configuration using the path specified as an argument.
     /// If the path is `None`, then no override takes place and configuration should be loaded from
     /// original path.
-    fn handle_config(&self, path_override: Option<String>) -> Result<Config, ConfigurationErr>;
+    fn handle_config(&self, path_override: Option<PathBuf>) -> Result<Config, ConfigurationErr>;
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]

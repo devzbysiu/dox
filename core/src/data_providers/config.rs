@@ -54,8 +54,8 @@ impl FsConfigResolver {
 impl ConfigResolver for FsConfigResolver {
     // TODO: path_override should be a PathBuf
     #[instrument(skip(self))]
-    fn handle_config(&self, path_override: Option<String>) -> Result<Config, ConfigurationErr> {
-        let config_path = path_override.map_or(config_path(), PathBuf::from);
+    fn handle_config(&self, path_override: Option<PathBuf>) -> Result<Config, ConfigurationErr> {
+        let config_path = path_override.unwrap_or_else(default_config_path);
         let cfg = if config_path.exists() {
             debug!("loading config from '{}'", config_path.str());
             let cfg = self.config_loader.load(&config_path)?;
@@ -72,7 +72,7 @@ impl ConfigResolver for FsConfigResolver {
     }
 }
 
-pub fn config_path() -> PathBuf {
+pub fn default_config_path() -> PathBuf {
     dirs::config_dir()
         .expect("failed to read system config direcory")
         .join("dox/dox.toml")
@@ -148,7 +148,7 @@ mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
-    use crate::data_providers::config::config_path;
+    use crate::data_providers::config::default_config_path;
     use crate::testingtools::Spy;
 
     use anyhow::Result;
@@ -262,7 +262,7 @@ mod test {
         let path = dirs::config_dir().unwrap().join("dox/dox.toml");
 
         // when
-        let cfg_path = config_path();
+        let cfg_path = default_config_path();
 
         // then
         assert_eq!(cfg_path, path);
@@ -322,7 +322,7 @@ index_dir = "/index_dir"
         create_config(&cfg_path, &config_content)?;
         let (spy, loader) = ConfigLoaderSpy::create(config);
         let config_resolver = FsConfigResolver::new(loader);
-        let path_override = Some(cfg_path.string());
+        let path_override = Some(cfg_path);
 
         // when
         let _cfg = config_resolver.handle_config(path_override)?;
@@ -351,7 +351,7 @@ index_dir = "/index_dir"
         create_config(&cfg_path, &config_content)?;
         let (spy, loader) = ConfigLoaderSpy::create(config);
         let config_resolver = FsConfigResolver::new(loader);
-        let path_override = Some(cfg_path.string());
+        let path_override = Some(cfg_path);
         let err_msg = format!("It needs to be a directory: '{}'", watched_dir.string());
 
         // when

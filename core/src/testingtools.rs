@@ -34,19 +34,15 @@ use tracing::debug;
 pub fn create_test_app() -> Result<App> {
     let config = TestConfig::new()?;
     let config_dir = create_cfg_file(&config)?;
-    let client = Client::tracked(rocket(Some(config_dir_string(&config_dir))))?;
+    let client = Client::tracked(rocket(Some(config_dir_path(&config_dir))))?;
     Ok(App {
         client,
         _config_dir: config_dir,
     })
 }
 
-fn config_dir_string(config_dir: &TempDir) -> String {
-    config_dir
-        .path()
-        .join("dox.toml")
-        .to_string_lossy()
-        .to_string()
+fn config_dir_path(config_dir: &TempDir) -> PathBuf {
+    config_dir.path().join("dox.toml")
 }
 
 #[derive(Debug)]
@@ -328,8 +324,7 @@ impl TestShim {
     }
 }
 
-// TODO: make this private
-pub fn mk_file(user_dir_name: String, filename: String) -> Result<TestFile> {
+fn mk_file(user_dir_name: String, filename: String) -> Result<TestFile> {
     let tmp_dir = tempdir()?;
     let user_dir = tmp_dir.path().join(user_dir_name);
     create_dir_all(&user_dir)?;
