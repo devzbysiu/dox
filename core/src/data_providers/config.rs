@@ -52,7 +52,6 @@ impl FsConfigResolver {
 }
 
 impl ConfigResolver for FsConfigResolver {
-    // TODO: path_override should be a PathBuf
     #[instrument(skip(self))]
     fn handle_config(&self, path_override: Option<PathBuf>) -> Result<Config, ConfigurationErr> {
         let config_path = path_override.unwrap_or_else(default_config_path);
