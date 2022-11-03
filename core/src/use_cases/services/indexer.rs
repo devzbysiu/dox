@@ -50,7 +50,6 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::entities::document::DocDetails;
-    use crate::entities::location::Location;
     use crate::result::{BusErr, IndexerErr};
     use crate::testingtools::{create_test_shim, Spy};
     use crate::use_cases::repository::RepositoryWrite;
@@ -81,7 +80,7 @@ mod test {
     fn indexed_event_is_send_on_success() -> Result<()> {
         // given
         init_tracing();
-        let noop_repo_write = Box::new(NoOpRepoWrite);
+        let noop_repo_write = NoOpRepoWrite::new();
         let mut shim = create_test_shim()?;
         Indexer::new(shim.bus()).run(noop_repo_write)?;
         let doc_details: Vec<DocDetails> = Faker.fake();
@@ -89,7 +88,6 @@ mod test {
         // when
         shim.trigger_indexer(doc_details.clone())?;
 
-        // TODO: try to move it to the trigger_* methods
         shim.ignore_event()?; // ignore DataExtracted event
 
         // then
@@ -102,13 +100,14 @@ mod test {
     fn indexed_event_contains_docs_details_received_from_data_extracted_event() -> Result<()> {
         // given
         init_tracing();
-        let repo_write = Box::new(NoOpRepoWrite);
+        let repo_write = NoOpRepoWrite::new();
         let mut shim = create_test_shim()?;
         let docs_details: Vec<DocDetails> = Faker.fake();
         Indexer::new(shim.bus()).run(repo_write)?;
 
         // when
         shim.trigger_indexer(docs_details.clone())?;
+
         shim.ignore_event()?; // ignore DataExtracted event
 
         // then
@@ -121,7 +120,7 @@ mod test {
     fn no_event_is_send_when_indexing_error_occurs() -> Result<()> {
         // given
         init_tracing();
-        let repo_write = Box::new(ErroneousRepoWrite);
+        let repo_write = ErroneousRepoWrite::new();
         let mut shim = create_test_shim()?;
         Indexer::new(shim.bus()).run(repo_write)?;
 
@@ -140,13 +139,12 @@ mod test {
     fn indexer_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
-        let noop_repo_write = Box::new(NoOpRepoWrite);
+        let noop_repo_write = NoOpRepoWrite::new();
         let mut shim = create_test_shim()?;
-        let location: Location = Faker.fake();
         let ignored_events = [
-            BusEvent::NewDocs(location.clone()),
-            BusEvent::EncryptionRequest(location.clone()),
-            BusEvent::ThumbnailMade(location),
+            BusEvent::NewDocs(Faker.fake()),
+            BusEvent::EncryptionRequest(Faker.fake()),
+            BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::PipelineFinished,
         ];
         Indexer::new(shim.bus()).run(noop_repo_write).unwrap();
@@ -239,6 +237,12 @@ mod test {
 
     struct NoOpRepoWrite;
 
+    impl NoOpRepoWrite {
+        fn new() -> Box<Self> {
+            Box::new(Self)
+        }
+    }
+
     impl RepositoryWrite for NoOpRepoWrite {
         fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
             // nothing to do here
@@ -247,6 +251,12 @@ mod test {
     }
 
     struct ErroneousRepoWrite;
+
+    impl ErroneousRepoWrite {
+        fn new() -> Box<Self> {
+            Box::new(Self)
+        }
+    }
 
     impl RepositoryWrite for ErroneousRepoWrite {
         fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {

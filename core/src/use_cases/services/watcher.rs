@@ -59,7 +59,7 @@ mod test {
         // given
         init_tracing();
         let mut shim = create_test_shim()?;
-        let mock_event_receiver = Box::new(MockEventReceiver::new(shim.rx()));
+        let mock_event_receiver = MockEventReceiver::new(shim.rx());
         DocsWatcher::new(shim.bus()).run(mock_event_receiver);
 
         // when
@@ -76,7 +76,7 @@ mod test {
         // given
         init_tracing();
         let mut shim = create_test_shim()?;
-        let mock_event_receiver = Box::new(MockEventReceiver::new(shim.rx()));
+        let mock_event_receiver = MockEventReceiver::new(shim.rx());
         DocsWatcher::new(shim.bus()).run(mock_event_receiver);
 
         // when
@@ -92,7 +92,7 @@ mod test {
     fn errors_in_receiver_are_not_propagated_to_event_bus() -> Result<()> {
         // given
         init_tracing();
-        let erroneous_event_receiver = Box::new(ErroneousEventReceiver);
+        let erroneous_event_receiver = ErroneousEventReceiver::new();
         let shim = create_test_shim()?;
         let watcher = DocsWatcher::new(shim.bus());
 
@@ -110,8 +110,8 @@ mod test {
     }
 
     impl MockEventReceiver {
-        fn new(rx: Receiver<DocsEvent>) -> Self {
-            Self { rx }
+        fn new(rx: Receiver<DocsEvent>) -> Box<Self> {
+            Box::new(Self { rx })
         }
     }
 
@@ -122,6 +122,12 @@ mod test {
     }
 
     struct ErroneousEventReceiver;
+
+    impl ErroneousEventReceiver {
+        fn new() -> Box<Self> {
+            Box::new(Self)
+        }
+    }
 
     impl EventReceiver for ErroneousEventReceiver {
         fn recv(&self) -> std::result::Result<DocsEvent, EventReceiverErr> {

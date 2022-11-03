@@ -94,7 +94,7 @@ mod test {
     fn pipeline_finished_message_appears_after_encryption() -> Result<()> {
         // given
         init_tracing();
-        let noop_cipher = Arc::new(NoOpCipher);
+        let noop_cipher = NoOpCipher::new();
         let mut shim = create_test_shim()?;
         Encrypter::new(shim.bus()).run(noop_cipher);
 
@@ -133,13 +133,13 @@ mod test {
     fn encrypter_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
-        let noop_cipher = Arc::new(NoOpCipher);
+        let noop_cipher = NoOpCipher::new();
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
-            BusEvent::DataExtracted(Vec::new()),
+            BusEvent::DataExtracted(Faker.fake()),
             BusEvent::ThumbnailMade(Faker.fake()),
-            BusEvent::Indexed(Vec::new()),
+            BusEvent::Indexed(Faker.fake()),
         ];
         Encrypter::new(shim.bus()).run(noop_cipher);
 
@@ -229,6 +229,12 @@ mod test {
     }
 
     struct NoOpCipher;
+
+    impl NoOpCipher {
+        fn new() -> Arc<Self> {
+            Arc::new(Self)
+        }
+    }
 
     impl CipherWriteStrategy for NoOpCipher {
         fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {

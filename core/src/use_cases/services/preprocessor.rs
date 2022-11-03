@@ -111,7 +111,7 @@ mod test {
         // given
         init_tracing();
         let (spy, preprocessor) = PreprocessorSpy::working();
-        let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![preprocessor]));
+        let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
         let mut shim = create_test_shim()?;
         ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start preprocessor
@@ -130,7 +130,7 @@ mod test {
         // given
         init_tracing();
         let preprocessor = Box::new(NoOpPreprocessor);
-        let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![preprocessor]));
+        let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
         let mut shim = create_test_shim()?;
         ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
@@ -150,8 +150,8 @@ mod test {
     fn thumbnail_generator_emits_encryption_request_event_success() -> Result<()> {
         // given
         init_tracing();
-        let preprocessor = Box::new(NoOpPreprocessor);
-        let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![preprocessor]));
+        let preprocessor = NoOpPreprocessor::new();
+        let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
         let mut shim = create_test_shim()?;
         ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
@@ -173,7 +173,7 @@ mod test {
         // given
         init_tracing();
         let (spy, failing_preprocessor) = PreprocessorSpy::failing();
-        let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![failing_preprocessor]));
+        let factory_stub = PreprocessorFactoryStub::new(vec![failing_preprocessor]);
         let mut shim = create_test_shim()?;
         ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
@@ -194,12 +194,12 @@ mod test {
     fn preprocessor_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
-        let preprocessor = Box::new(NoOpPreprocessor);
-        let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![preprocessor]));
+        let preprocessor = NoOpPreprocessor::new();
+        let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::ThumbnailMade(Faker.fake()),
-            BusEvent::Indexed(Vec::new()),
+            BusEvent::Indexed(Faker.fake()),
             BusEvent::PipelineFinished,
         ];
         ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
@@ -226,12 +226,9 @@ mod test {
     #[test]
     fn failure_during_preprocessing_do_not_kill_service() -> Result<()> {
         // given
-        let (spy1, failing_preprocessor1) = PreprocessorSpy::failing();
-        let (spy2, failing_preprocessor2) = PreprocessorSpy::failing();
-        let factory_stub = Box::new(PreprocessorFactoryStub::new(vec![
-            failing_preprocessor1,
-            failing_preprocessor2,
-        ]));
+        let (spy1, failing_prepr1) = PreprocessorSpy::failing();
+        let (spy2, failing_prepr2) = PreprocessorSpy::failing();
+        let factory_stub = PreprocessorFactoryStub::new(vec![failing_prepr1, failing_prepr2]);
         let mut shim = create_test_shim()?;
         ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
@@ -259,12 +256,12 @@ mod test {
         // it's not possible to extract it from withing a `Mutex` without using `Option`. It has to
         // be inside `Mutex` because it has to be `Sync`, otherwise it won't compile. And finally,
         // it has to be taken because the trait `ExtractorFactory` is supposed to return owned value.
-        fn new(preprocessor_stubs: Vec<Preprocessor>) -> Self {
+        fn new(preprocessor_stubs: Vec<Preprocessor>) -> Box<Self> {
             let preprocessor_stubs = preprocessor_stubs.into_iter().map(Option::Some).collect();
-            Self {
+            Box::new(Self {
                 preprocessor_stubs: Mutex::new(preprocessor_stubs),
                 current: AtomicUsize::new(0),
-            }
+            })
         }
     }
 
@@ -345,6 +342,12 @@ mod test {
     }
 
     struct NoOpPreprocessor;
+
+    impl NoOpPreprocessor {
+        fn new() -> Box<Self> {
+            Box::new(Self)
+        }
+    }
 
     impl FilePreprocessor for NoOpPreprocessor {
         fn preprocess(
