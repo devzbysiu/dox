@@ -38,7 +38,7 @@ impl ThumbnailGenerator {
                 match sub.recv()? {
                     BusEvent::NewDocs(loc) => {
                         debug!("NewDocs in: '{:?}', starting preprocessing", loc);
-                        let extension = loc.extension();
+                        let extension = loc.extension()?;
                         let preprocessor = preprocessor_factory.make(&extension);
                         let publ = self.bus.publisher();
                         let dir = thumbnails_dir.clone();

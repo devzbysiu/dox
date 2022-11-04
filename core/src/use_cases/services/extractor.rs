@@ -30,7 +30,7 @@ impl TxtExtractor {
                 match sub.recv()? {
                     BusEvent::NewDocs(location) => {
                         debug!("NewDocs in: '{:?}', starting extraction", location);
-                        let extension = location.extension();
+                        let extension = location.extension()?;
                         let extractor = extractor_factory.make(&extension);
                         let publ = self.bus.publisher();
                         tp.spawn(move || {

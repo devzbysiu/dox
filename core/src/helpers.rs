@@ -1,5 +1,7 @@
 use crate::entities::extension::Ext;
+use crate::result::GeneralErr;
 
+use std::convert::TryFrom;
 use std::fs::DirEntry;
 use std::path::Path;
 
@@ -14,7 +16,7 @@ impl DirEntryExt for DirEntry {
 }
 
 pub trait PathRefExt {
-    fn ext(&self) -> Ext;
+    fn ext(&self) -> Result<Ext, GeneralErr>;
     fn str(&self) -> &str;
     fn string(&self) -> String;
     fn filestem(&self) -> String;
@@ -29,8 +31,10 @@ pub trait PathRefExt {
 }
 
 impl<T: AsRef<Path>> PathRefExt for T {
-    fn ext(&self) -> Ext {
-        Ext::from(self.as_ref().extension().unwrap().to_str().unwrap())
+    fn ext(&self) -> Result<Ext, GeneralErr> {
+        Ok(Ext::try_from(
+            self.as_ref().extension().unwrap().to_str().unwrap(),
+        )?)
     }
 
     fn str(&self) -> &str {
@@ -117,7 +121,7 @@ mod test {
     }
 
     #[test]
-    fn test_ext_for_supported_extensions() {
+    fn test_ext_for_supported_extensions() -> Result<()> {
         // given
         let test_cases = vec![
             ("png", Ext::Png),
@@ -133,8 +137,10 @@ mod test {
             let path = Path::new(&path);
 
             // then
-            assert_eq!(path.ext(), test_case.1);
+            assert_eq!(path.ext()?, test_case.1);
         }
+
+        Ok(())
     }
 
     #[test]

@@ -4,6 +4,7 @@
 //! implementation.
 use crate::entities::extension::Ext;
 use crate::helpers::PathRefExt;
+use crate::result::GeneralErr;
 
 use fake::{Dummy, Fake};
 use std::fmt::Display;
@@ -22,7 +23,7 @@ impl Location {
     /// This implementation assumes that all documents appearing in the system via one particular
     /// event, have the same extension. It's achieved by getting first path of the vector of paths
     /// and reading extension of this path.
-    pub fn extension(&self) -> Ext {
+    pub fn extension(&self) -> Result<Ext, GeneralErr> {
         let Location::FS(paths) = self;
         paths
             .get(0)
@@ -42,7 +43,7 @@ impl SafePathBuf {
         Self(path.into())
     }
 
-    pub fn ext(&self) -> Ext {
+    pub fn ext(&self) -> Result<Ext, GeneralErr> {
         self.0.ext()
     }
 

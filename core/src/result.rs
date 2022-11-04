@@ -3,6 +3,21 @@ use std::io::ErrorKind::NotFound;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
+pub enum GeneralErr {
+    #[error("Extension not supported.")]
+    InvalidExtension,
+}
+
+// NOTE: not sure if this is way to go. It's needed because the trait `TryFrom` uses `Infallible`
+// and for some reason it's not possible to convert it to custom error type via thiserror.
+// See https://github.com/dtolnay/thiserror/issues/62
+impl From<std::convert::Infallible> for GeneralErr {
+    fn from(_: std::convert::Infallible) -> Self {
+        unreachable!()
+    }
+}
+
+#[derive(Debug, Error)]
 pub enum ThumbnailReadErr {
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
@@ -96,6 +111,9 @@ pub enum ExtractorErr {
 
     #[error("Failed to create threadpool.")]
     ThreadPoolError(#[from] rayon::ThreadPoolBuildError),
+
+    #[error("Invalid file extension")]
+    InvalidExtension(#[from] GeneralErr),
 }
 
 #[derive(Debug, Error)]
@@ -109,7 +127,7 @@ pub enum PreprocessorErr {
     #[error("Failed to load PDF document.")]
     PopplerError(#[from] cairo::glib::error::Error),
 
-    #[error("Failed to create image from PDF page.")]
+    #[error("Failed to create thumbnail from PDF page.")]
     ThumbnailSurfaceError(#[from] cairo::Error),
 
     #[error("Failed to write PDF thumbnail to image surface.")]
@@ -117,6 +135,9 @@ pub enum PreprocessorErr {
 
     #[error("Failed to create threadpool.")]
     ThreadPoolError(#[from] rayon::ThreadPoolBuildError),
+
+    #[error("Invalid file extension")]
+    InvalidExtension(#[from] GeneralErr),
 }
 
 #[derive(Debug, Error)]
