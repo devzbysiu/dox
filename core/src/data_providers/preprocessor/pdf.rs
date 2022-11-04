@@ -83,7 +83,7 @@ mod test {
     use tempfile::tempdir;
 
     #[test]
-    fn test_pdf_preprocessor_with_correct_files() -> Result<()> {
+    fn pdf_preprocessor_puts_pdf_files_under_user_dir() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
         let preprocessor = Pdf;
@@ -105,7 +105,7 @@ mod test {
 
     #[test]
     #[should_panic(expected = "PDF document is damaged")]
-    fn test_pdf_preprocessor_with_wrong_files() {
+    fn pdf_preprocessor_fails_with_non_pdf_files() {
         // given
         let tmp_dir = tempdir().unwrap();
         let preprocessor = Pdf;
