@@ -101,7 +101,7 @@ mod test {
     }
 
     #[test]
-    fn pdf_preprocessor_fails_with_non_pdf_files() -> Result<()> {
+    fn pdf_preprocessor_fails_with_non_pdf_files() {
         // given
         let tmp_dir = tempdir().unwrap();
         let preprocessor = Pdf;
@@ -112,7 +112,5 @@ mod test {
 
         // then
         assert_err!(res);
-
-        Ok(())
     }
 }

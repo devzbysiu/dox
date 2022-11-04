@@ -68,13 +68,11 @@ mod test {
     }
 
     #[test]
-    fn image_preprocessor_fails_with_non_image_files() -> Result<()> {
+    fn image_preprocessor_fails_with_non_image_files() {
         // given
         let tmp_dir = tempdir().unwrap();
         let preprocessor = Image;
         let paths = vec![SafePathBuf::from("res/doc1.pdf")];
-        let is_empty = tmp_dir.path().read_dir()?.next().is_none();
-        assert!(is_empty);
 
         // TODO: currently, this just copies the file to the thumbnails_dir without
         // checking if this is the correct file type. Potentially this should be checked
@@ -84,7 +82,5 @@ mod test {
 
         // then
         assert_err!(res);
-
-        Ok(())
     }
 }
