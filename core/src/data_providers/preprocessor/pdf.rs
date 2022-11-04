@@ -76,6 +76,7 @@ mod test {
     use crate::helpers::DirEntryExt;
 
     use anyhow::Result;
+    use claim::assert_err;
     use tempfile::tempdir;
 
     #[test]
@@ -100,16 +101,18 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "PDF document is damaged")]
-    fn pdf_preprocessor_fails_with_non_pdf_files() {
+    fn pdf_preprocessor_fails_with_non_pdf_files() -> Result<()> {
         // given
         let tmp_dir = tempdir().unwrap();
         let preprocessor = Pdf;
         let paths = vec![SafePathBuf::from("res/doc8.jpg")];
 
+        // when
+        let res = preprocessor.preprocess(&Location::FS(paths), tmp_dir.path());
+
         // then
-        preprocessor
-            .preprocess(&Location::FS(paths), tmp_dir.path())
-            .unwrap(); // should panic
+        assert_err!(res);
+
+        Ok(())
     }
 }
