@@ -48,6 +48,25 @@ mod test {
     use tempfile::tempdir;
 
     #[test]
+    fn image_preprocessor_returns_generated_thumbnail_location() -> Result<()> {
+        // given
+        let tmp_dir = tempdir()?;
+        let preprocessor = Image;
+        let paths = vec![SafePathBuf::from("res/doc1.png")];
+        let loc = Location::FS(paths.clone());
+        let target_path = tmp_dir.path().join(format!("{}.png", paths[0].rel_stem()));
+
+        // when
+        let res = preprocessor.preprocess(&loc, tmp_dir.path())?;
+        let target_loc = Location::FS(vec![SafePathBuf::from(target_path)]);
+
+        // then
+        assert_eq!(res, target_loc);
+
+        Ok(())
+    }
+
+    #[test]
     fn image_preprocessor_puts_image_files_in_user_dir() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
@@ -74,9 +93,6 @@ mod test {
         let preprocessor = Image;
         let paths = vec![SafePathBuf::from("res/doc1.pdf")];
 
-        // TODO: currently, this just copies the file to the thumbnails_dir without
-        // checking if this is the correct file type. Potentially this should be checked
-        // and error should be thrown (and this should be consistent with Pdf preprocessor)
         // when
         let res = preprocessor.preprocess(&Location::FS(paths), tmp_dir.path());
 
