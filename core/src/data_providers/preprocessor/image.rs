@@ -53,11 +53,10 @@ mod test {
         let tmp_dir = tempdir()?;
         let preprocessor = Image;
         let paths = vec![SafePathBuf::from("res/doc1.png")];
-        let loc = Location::FS(paths.clone());
         let target_path = tmp_dir.path().join(format!("{}.png", paths[0].rel_stem()));
 
         // when
-        let res = preprocessor.preprocess(&loc, tmp_dir.path())?;
+        let res = preprocessor.preprocess(&Location::FS(paths.clone()), tmp_dir.path())?;
         let target_loc = Location::FS(vec![SafePathBuf::from(target_path)]);
 
         // then
