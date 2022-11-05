@@ -80,6 +80,25 @@ mod test {
     use tempfile::tempdir;
 
     #[test]
+    fn pdf_preprocessor_returns_generated_thumbnail_location() -> Result<()> {
+        // given
+        let tmp_dir = tempdir()?;
+        let preprocessor = Pdf;
+        let paths = vec![SafePathBuf::from("res/doc1.pdf")];
+        let loc = Location::FS(paths.clone());
+        let target_path = tmp_dir.path().join(format!("{}.png", paths[0].rel_stem()));
+
+        // when
+        let res = preprocessor.preprocess(&loc, tmp_dir.path())?;
+        let target_loc = Location::FS(vec![SafePathBuf::from(target_path)]);
+
+        // then
+        assert_eq!(res, target_loc);
+
+        Ok(())
+    }
+
+    #[test]
     fn pdf_preprocessor_puts_pdf_files_under_user_dir() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
@@ -89,7 +108,6 @@ mod test {
         assert!(is_empty);
 
         // when
-        // TODO: now, preprocessors return Location, make sure to check it here as well
         preprocessor.preprocess(&Location::FS(paths), tmp_dir.path())?;
         let user_dir = tmp_dir.path().read_dir()?.next().unwrap()?;
 
