@@ -23,7 +23,7 @@ impl Pdf {
     #[instrument(skip(self))]
     fn generate(&self, pdf_path: &SafePathBuf, out_path: &Path) -> Result<(), PreprocessorErr> {
         create_dir_all(out_path.parent_path())?;
-        let page = first_page(&pdf_path)?;
+        let page = first_page(pdf_path)?;
         let surface = paint_background_and_scale(&page)?;
         debug!("writing thumbnail to: '{}'", out_path.display());
         let mut f: File = File::create(out_path)?;

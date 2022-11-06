@@ -190,7 +190,7 @@ mod test {
 
     fn create_config<A: AsRef<Path>, S: Into<String>>(path: A, content: S) -> Result<()> {
         let path = path.as_ref();
-        let mut cfg_file = File::create(&path)?;
+        let mut cfg_file = File::create(path)?;
         cfg_file.write_all(content.into().as_bytes())?;
         Ok(())
     }
