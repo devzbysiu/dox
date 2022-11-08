@@ -285,6 +285,10 @@ impl TestShim {
         Ok(())
     }
 
+    // TODO: this should have timeout, otherwise it will hung the tests.
+    // Currently, timeout is implemented in [`SubscriberExt`] but it spawns separate thread for
+    // waiting for an event. Because of that, it consumes `self` and this cannot be done here
+    // because I'm accepting `&self`.
     pub fn event_on_bus(&self, event: &BusEvent) -> Result<bool> {
         Ok(*event == self.sub.recv()?)
     }

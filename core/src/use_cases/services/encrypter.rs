@@ -37,6 +37,9 @@ impl Encrypter {
                         if all_worked_out {
                             debug!("encryption finished");
                             publ.send(BusEvent::PipelineFinished)?;
+                        } else {
+                            error!("encryption failed");
+                            publ.send(BusEvent::EncryptionFailed)?;
                         }
                     }
                     e => debug!("event not supported in encrypter: '{}'", e),
@@ -110,7 +113,7 @@ mod test {
     }
 
     #[test]
-    fn no_event_appears_when_encrypter_fails() -> Result<()> {
+    fn encryption_failed_event_appears_when_encrypter_fails() -> Result<()> {
         // given
         init_tracing();
         let (spy, failing_cipher) = CipherSpy::failing();
@@ -124,7 +127,7 @@ mod test {
 
         // then
         assert!(spy.method_called());
-        assert!(shim.no_events_on_bus()); // no more events on the bus
+        assert!(shim.event_on_bus(&BusEvent::EncryptionFailed)?);
 
         Ok(())
     }

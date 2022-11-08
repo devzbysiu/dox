@@ -52,6 +52,9 @@ pub enum BusEvent {
 
     /// Published when document processing is finished.
     PipelineFinished,
+
+    /// Published when there is an error during file encryption.
+    EncryptionFailed,
 }
 
 impl Display for BusEvent {
@@ -66,6 +69,7 @@ impl Display for BusEvent {
                 BusEvent::Indexed(_) => "Indexed",
                 BusEvent::EncryptionRequest(_) => "EncryptionRequest",
                 BusEvent::PipelineFinished => "PipelineFinished",
+                BusEvent::EncryptionFailed => "EncryptionFailed",
             }
         )
     }
