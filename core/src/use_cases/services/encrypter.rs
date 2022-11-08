@@ -28,7 +28,7 @@ impl Encrypter {
                 match sub.recv()? {
                     BusEvent::EncryptionRequest(location) => {
                         debug!("encryption request: '{:?}', starting encryption", location);
-                        let Location::FS(paths) = location;
+                        let Location::FS(paths) = &location;
                         let all_worked_out = paths
                             .par_iter()
                             .map(|path| encrypt(&cipher, path))
@@ -39,7 +39,7 @@ impl Encrypter {
                             publ.send(BusEvent::PipelineFinished)?;
                         } else {
                             error!("encryption failed");
-                            publ.send(BusEvent::EncryptionFailed)?;
+                            publ.send(BusEvent::EncryptionFailed(location))?;
                         }
                     }
                     e => debug!("event not supported in encrypter: '{}'", e),
@@ -127,7 +127,7 @@ mod test {
 
         // then
         assert!(spy.method_called());
-        assert!(shim.event_on_bus(&BusEvent::EncryptionFailed)?);
+        assert!(shim.event_on_bus(&BusEvent::EncryptionFailed(shim.test_location()))?);
 
         Ok(())
     }
