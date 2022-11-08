@@ -4,6 +4,7 @@ use crate::entities::location::Location;
 use crate::result::PreprocessorErr;
 use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher};
 use crate::use_cases::config::Config;
+use crate::use_cases::fs::Fs;
 
 use rayon::ThreadPoolBuilder;
 use std::path::Path;
@@ -28,8 +29,8 @@ impl ThumbnailGenerator {
         Self { cfg, bus }
     }
 
-    #[instrument(skip(self, preprocessor_factory))]
-    pub fn run(self, preprocessor_factory: PreprocessorCreator) {
+    #[instrument(skip(self, preprocessor_factory, fs))]
+    pub fn run(self, preprocessor_factory: PreprocessorCreator, fs: Fs) {
         thread::spawn(move || -> Result<(), PreprocessorErr> {
             let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
             let thumbnails_dir = self.cfg.thumbnails_dir.clone();
@@ -44,7 +45,16 @@ impl ThumbnailGenerator {
                         let dir = thumbnails_dir.clone();
                         tp.spawn(move || {
                             if let Err(e) = preprocess(&loc, &preprocessor, &dir, publ) {
-                                error!("extraction failed: '{}'", e);
+                                error!("thumbnail generation failed: '{}'", e);
+                            }
+                        });
+                    }
+                    BusEvent::EncryptionFailed(loc) => {
+                        debug!("pipeline failed, removing thumbnail");
+                        let fs = fs.clone();
+                        tp.spawn(move || {
+                            if let Err(e) = remove_thumbnail(&loc, &fs) {
+                                error!("thumbnail removal failed: '{}'", e);
                             }
                         });
                     }
@@ -67,6 +77,16 @@ fn preprocess<P: AsRef<Path>>(
     publ.send(BusEvent::ThumbnailMade(thumbnail_loc.clone()))?;
     debug!("sending encryption request for: '{:?}'", thumbnail_loc);
     publ.send(BusEvent::EncryptionRequest(thumbnail_loc))?;
+    Ok(())
+}
+
+fn remove_thumbnail(loc: &Location, fs: &Fs) -> Result<(), PreprocessorErr> {
+    let Location::FS(paths) = loc;
+    for path in paths {
+        fs.rm_file(path)?;
+        debug!("removed '{}'", path);
+    }
+    debug!("thumbnail removed");
     Ok(())
 }
 
@@ -96,14 +116,16 @@ mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
-    use crate::result::BusErr;
+    use crate::entities::location::SafePathBuf;
+    use crate::result::{BusErr, FsErr};
     use crate::testingtools::{create_test_shim, Spy};
+    use crate::use_cases::fs::Filesystem;
 
     use anyhow::{anyhow, Result};
     use fake::{Fake, Faker};
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::{channel, Sender};
-    use std::sync::Mutex;
+    use std::sync::{Arc, Mutex};
     use std::time::Duration;
 
     #[test]
@@ -112,8 +134,9 @@ mod test {
         init_tracing();
         let (spy, preprocessor) = PreprocessorSpy::working();
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
+        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, fs_dummy);
         thread::sleep(Duration::from_secs(1)); // allow to start preprocessor
 
         // when
@@ -131,8 +154,9 @@ mod test {
         init_tracing();
         let preprocessor = Box::new(NoOpPreprocessor);
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
+        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, fs_dummy);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -152,8 +176,9 @@ mod test {
         init_tracing();
         let preprocessor = NoOpPreprocessor::new();
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
+        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, fs_dummy);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -174,8 +199,9 @@ mod test {
         init_tracing();
         let (spy, failing_preprocessor) = PreprocessorSpy::failing();
         let factory_stub = PreprocessorFactoryStub::new(vec![failing_preprocessor]);
+        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, fs_dummy);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -196,13 +222,14 @@ mod test {
         init_tracing();
         let preprocessor = NoOpPreprocessor::new();
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
+        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::Indexed(Faker.fake()),
             BusEvent::PipelineFinished,
         ];
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, fs_dummy);
 
         // when
         shim.send_events(&ignored_events)?;
@@ -226,11 +253,13 @@ mod test {
     #[test]
     fn failure_during_preprocessing_do_not_kill_service() -> Result<()> {
         // given
+        init_tracing();
         let (spy1, failing_prepr1) = PreprocessorSpy::failing();
         let (spy2, failing_prepr2) = PreprocessorSpy::failing();
         let factory_stub = PreprocessorFactoryStub::new(vec![failing_prepr1, failing_prepr2]);
+        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub);
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, fs_dummy);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         shim.trigger_preprocessor()?;
@@ -241,6 +270,26 @@ mod test {
 
         // then
         assert!(spy2.method_called());
+
+        Ok(())
+    }
+
+    #[test]
+    fn when_encryption_failed_event_appears_filesystem_is_used_for_cleanup() -> Result<()> {
+        // given
+        init_tracing();
+        let preprocessor = NoOpPreprocessor::new();
+        let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
+        let (spy, working_fs) = FsSpy::working();
+        let mut shim = create_test_shim()?;
+        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, working_fs);
+        thread::sleep(Duration::from_secs(1)); // allow to start extractor
+
+        // when
+        shim.trigger_encryption_failure()?;
+
+        // then
+        assert!(spy.method_called());
 
         Ok(())
     }
@@ -356,6 +405,52 @@ mod test {
             _thumbnails_dir: &Path,
         ) -> Result<Location, PreprocessorErr> {
             Ok(location.clone())
+        }
+    }
+
+    struct NoOpFs;
+
+    impl NoOpFs {
+        fn new() -> Arc<Self> {
+            Arc::new(Self)
+        }
+    }
+
+    impl Filesystem for NoOpFs {
+        fn rm_file(&self, _path: &SafePathBuf) -> Result<(), FsErr> {
+            // nothing to do
+            Ok(())
+        }
+    }
+
+    struct FsSpy;
+
+    impl FsSpy {
+        fn working() -> (Spy, Fs) {
+            let (tx, rx) = channel();
+            (Spy::new(rx), WorkingFs::new(tx))
+        }
+    }
+
+    struct WorkingFs {
+        tx: Mutex<Sender<()>>,
+    }
+
+    impl WorkingFs {
+        fn new(tx: Sender<()>) -> Arc<Self> {
+            Arc::new(Self { tx: Mutex::new(tx) })
+        }
+    }
+
+    impl Filesystem for WorkingFs {
+        fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
+            debug!("pretending to remove '{}'", path);
+            self.tx
+                .lock()
+                .expect("poisoned mutex")
+                .send(())
+                .expect("failed to send message");
+            Ok(())
         }
     }
 }

@@ -138,6 +138,9 @@ pub enum PreprocessorErr {
 
     #[error("Invalid file extension")]
     InvalidExtension(#[from] GeneralErr),
+
+    #[error("Failed to make filesystem operation")]
+    FsError(#[from] FsErr),
 }
 
 #[derive(Debug, Error)]
@@ -280,3 +283,6 @@ pub enum SetupErr {
     #[error("Failed to launch Rocket.")]
     RocketErr(#[from] rocket::Error),
 }
+
+#[derive(Debug, Error)]
+pub enum FsErr {}

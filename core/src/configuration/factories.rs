@@ -2,6 +2,7 @@ use crate::data_providers::bus::LocalBus;
 use crate::data_providers::cipher::Chacha20Poly1305Cipher;
 use crate::data_providers::config::{FsConfigLoader, FsConfigResolver};
 use crate::data_providers::extractor::ExtractorFactoryImpl;
+use crate::data_providers::fs::LocalFs;
 use crate::data_providers::persistence::FsPersistence;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::receiver::FsEventReceiver;
@@ -10,6 +11,7 @@ use crate::result::{BusErr, EventReceiverErr, RepositoryErr};
 use crate::use_cases::bus::EventBus;
 use crate::use_cases::cipher::{CipherRead, CipherWrite};
 use crate::use_cases::config::{CfgLoader, CfgResolver, Config};
+use crate::use_cases::fs::Fs;
 use crate::use_cases::persistence::Persistence;
 use crate::use_cases::receiver::EventRecv;
 use crate::use_cases::repository::{RepoRead, RepoWrite};
@@ -53,4 +55,8 @@ pub fn cipher() -> (CipherRead, CipherWrite) {
 pub fn event_watcher(cfg: &Config) -> Result<EventRecv, EventReceiverErr> {
     let watched_dir = cfg.watched_dir.clone();
     Ok(Box::new(FsEventReceiver::new(watched_dir)?))
+}
+
+pub fn fs() -> Fs {
+    Arc::new(LocalFs)
 }

@@ -326,6 +326,12 @@ impl TestShim {
         self.tx.send(event)?;
         Ok(())
     }
+
+    pub fn trigger_encryption_failure(&mut self) -> Result<()> {
+        let test_location = self.test_location();
+        self.publ.send(BusEvent::EncryptionFailed(test_location))?;
+        Ok(())
+    }
 }
 
 fn mk_file(user_dir_name: String, filename: String) -> Result<TestFile> {

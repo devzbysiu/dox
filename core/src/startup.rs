@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use crate::configuration::factories::{
-    cipher, config_loader, config_resolver, event_bus, event_watcher, extractor_factory,
+    cipher, config_loader, config_resolver, event_bus, event_watcher, extractor_factory, fs,
     persistence, preprocessor_factory, repository,
 };
 use crate::data_providers::server::{
@@ -59,7 +59,7 @@ fn setup_core(cfg: &Config, bus: EventBus) -> Result<(RepoRead, CipherRead), Set
     let encrypter = Encrypter::new(bus);
 
     watcher.run(event_watcher(cfg)?);
-    preprocessor.run(preprocessor_factory());
+    preprocessor.run(preprocessor_factory(), fs());
     extractor.run(extractor_factory());
     let (repo_read, repo_write) = repository(cfg)?;
     indexer.run(repo_write)?;
