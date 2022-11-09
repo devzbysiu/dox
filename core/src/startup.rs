@@ -11,6 +11,7 @@ use crate::result::SetupErr;
 use crate::use_cases::bus::EventBus;
 use crate::use_cases::cipher::CipherRead;
 use crate::use_cases::config::Config;
+use crate::use_cases::fs::Fs;
 use crate::use_cases::repository::RepoRead;
 use crate::use_cases::services::encrypter::Encrypter;
 use crate::use_cases::services::extractor::TxtExtractor;
@@ -31,7 +32,8 @@ pub fn rocket(path_override: Option<PathBuf>) -> Rocket<Build> {
         .expect("failed to get config");
 
     let bus = event_bus().expect("failed to create bus");
-    let (repo_read, cipher_read) = setup_core(&cfg, bus).expect("failed to setup core");
+    let fs = fs();
+    let (repo_read, cipher_read) = setup_core(&cfg, bus, fs.clone()).expect("failed to setup core");
 
     debug!("starting server...");
     rocket::build()
@@ -47,11 +49,11 @@ pub fn rocket(path_override: Option<PathBuf>) -> Rocket<Build> {
         )
         .manage(repo_read)
         .manage(cipher_read)
-        .manage(fs())
+        .manage(fs)
         .manage(cfg)
 }
 
-fn setup_core(cfg: &Config, bus: EventBus) -> Result<(RepoRead, CipherRead), SetupErr> {
+fn setup_core(cfg: &Config, bus: EventBus, fs: Fs) -> Result<(RepoRead, CipherRead), SetupErr> {
     let watcher = DocsWatcher::new(bus.clone());
     let preprocessor = ThumbnailGenerator::new(cfg.clone(), bus.clone());
     let extractor = TxtExtractor::new(bus.clone());
@@ -59,7 +61,7 @@ fn setup_core(cfg: &Config, bus: EventBus) -> Result<(RepoRead, CipherRead), Set
     let encrypter = Encrypter::new(bus);
 
     watcher.run(event_watcher(cfg)?);
-    preprocessor.run(preprocessor_factory(), fs());
+    preprocessor.run(preprocessor_factory(), fs);
     extractor.run(extractor_factory());
     let (repo_read, repo_write) = repository(cfg)?;
     indexer.run(repo_write)?;
