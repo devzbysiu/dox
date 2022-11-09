@@ -15,8 +15,8 @@ impl Indexer {
         Self { bus }
     }
 
-    #[instrument(skip(self, repository))]
-    pub fn run(&self, repository: RepoWrite) -> Result<(), IndexerErr> {
+    #[instrument(skip(self, repo))]
+    pub fn run(&self, repo: RepoWrite) -> Result<(), IndexerErr> {
         // TODO: add threadpool to other services
         // TODO: think about num_threads
         // TODO: should threadpool be shared between services?
@@ -29,7 +29,7 @@ impl Indexer {
                 match sub.recv()? {
                     BusEvent::DataExtracted(doc_details) => {
                         if let Err(e) = tp.install(|| -> Result<(), IndexerErr> {
-                            repository.index(&doc_details)?;
+                            repo.index(&doc_details)?;
                             publ.send(BusEvent::Indexed(doc_details))?;
                             Ok(())
                         }) {
