@@ -23,20 +23,20 @@ pub enum ThumbnailReadErr {
     UnexpectedError(#[from] anyhow::Error),
 
     #[error("Failed to load thumbnail.")]
-    LoadError(#[from] PersistenceErr),
+    LoadError(#[from] FsErr),
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for ThumbnailReadErr {
     fn respond_to(self, _request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
         Err(match self {
-            Self::LoadError(PersistenceErr::IoError(e)) if e.kind() == NotFound => Status::NotFound,
+            Self::LoadError(FsErr::IoError(e)) if e.kind() == NotFound => Status::NotFound,
             Self::UnexpectedError(_) | Self::LoadError(_) => Status::InternalServerError,
         })
     }
 }
 
 #[derive(Debug, Error)]
-pub enum PersistenceErr {
+pub enum FsErr {
     #[error("Failed to make IO operation.")]
     IoError(#[from] std::io::Error),
 }
@@ -283,6 +283,3 @@ pub enum SetupErr {
     #[error("Failed to launch Rocket.")]
     RocketErr(#[from] rocket::Error),
 }
-
-#[derive(Debug, Error)]
-pub enum FsErr {}

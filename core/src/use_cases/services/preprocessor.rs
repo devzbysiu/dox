@@ -123,6 +123,7 @@ mod test {
 
     use anyhow::{anyhow, Result};
     use fake::{Fake, Faker};
+    use std::path::PathBuf;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::{channel, Sender};
     use std::sync::{Arc, Mutex};
@@ -417,6 +418,16 @@ mod test {
     }
 
     impl Filesystem for NoOpFs {
+        fn save(&self, _uri: PathBuf, _buf: &[u8]) -> Result<(), FsErr> {
+            // nothing to do
+            Ok(())
+        }
+
+        fn load(&self, _uri: PathBuf) -> Result<Option<Vec<u8>>, FsErr> {
+            // nothing to do
+            Ok(Some(Vec::new()))
+        }
+
         fn rm_file(&self, _path: &SafePathBuf) -> Result<(), FsErr> {
             // nothing to do
             Ok(())
@@ -443,6 +454,14 @@ mod test {
     }
 
     impl Filesystem for WorkingFs {
+        fn save(&self, _uri: PathBuf, _buf: &[u8]) -> Result<(), FsErr> {
+            unimplemented!()
+        }
+
+        fn load(&self, _uri: PathBuf) -> Result<Option<Vec<u8>>, FsErr> {
+            unimplemented!()
+        }
+
         fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
             debug!("pretending to remove '{}'", path);
             self.tx

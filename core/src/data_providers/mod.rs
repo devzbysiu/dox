@@ -3,7 +3,6 @@ pub mod cipher;
 pub mod config;
 pub mod extractor;
 pub mod fs;
-pub mod persistence;
 pub mod preprocessor;
 pub mod prompt;
 pub mod receiver;

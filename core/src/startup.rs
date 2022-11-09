@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::configuration::factories::{
     cipher, config_loader, config_resolver, event_bus, event_watcher, extractor_factory, fs,
-    persistence, preprocessor_factory, repository,
+    preprocessor_factory, repository,
 };
 use crate::data_providers::server::{
     all_thumbnails, document, receive_document, search, thumbnail,
@@ -47,7 +47,7 @@ pub fn rocket(path_override: Option<PathBuf>) -> Rocket<Build> {
         )
         .manage(repo_read)
         .manage(cipher_read)
-        .manage(persistence())
+        .manage(fs())
         .manage(cfg)
 }
 

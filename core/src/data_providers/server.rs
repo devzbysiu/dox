@@ -2,7 +2,7 @@ use crate::entities::user::User;
 use crate::result::{DocumentReadErr, DocumentSaveErr, SearchErr, ThumbnailReadErr};
 use crate::use_cases::cipher::CipherRead;
 use crate::use_cases::config::Config;
-use crate::use_cases::persistence::Persistence;
+use crate::use_cases::fs::Fs;
 use crate::use_cases::repository::{RepoRead, SearchResult};
 
 use anyhow::Context;
@@ -32,7 +32,7 @@ pub fn thumbnail(
     user: User,
     filename: String,
     cfg: &State<Config>,
-    persistence: &State<Persistence>,
+    persistence: &State<Fs>,
     cipher_read: &State<CipherRead>,
 ) -> Result<Option<Vec<u8>>, ThumbnailReadErr> {
     let thumbnail_path = cfg.thumbnails_dir.join(relative_path(&user, filename));
@@ -66,7 +66,7 @@ pub fn document(
     user: User,
     filename: String,
     cfg: &State<Config>,
-    persistence: &State<Persistence>,
+    persistence: &State<Fs>,
     cipher_read: &State<CipherRead>,
 ) -> Result<Option<Vec<u8>>, DocumentReadErr> {
     let document_path = cfg.watched_dir.join(relative_path(&user, filename));
@@ -94,7 +94,7 @@ pub fn receive_document(
     user: User,
     doc: Json<Document>,
     cfg: &State<Config>,
-    persistence: &State<Persistence>,
+    persistence: &State<Fs>,
 ) -> Result<Status, DocumentSaveErr> {
     let target_path = cfg.watched_dir.join(relative_path(&user, &doc.filename));
     let decoded_body = base64::decode(&doc.body).context("Failed to decode body.")?;
