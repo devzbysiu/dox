@@ -5,48 +5,52 @@ use crate::entities::location::Location;
 use crate::result::ExtractorErr;
 use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher};
 
-use rayon::ThreadPoolBuilder;
+use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::thread;
 use tracing::{debug, error, instrument, warn};
 
 pub type ExtractorCreator = Box<dyn ExtractorFactory>;
 pub type Extractor = Box<dyn DataExtractor>;
+type Result<T> = std::result::Result<T, ExtractorErr>;
 
 pub struct TxtExtractor {
     bus: EventBus,
+    tp: ThreadPool,
 }
 
 impl TxtExtractor {
-    pub fn new(bus: EventBus) -> Self {
-        Self { bus }
+    pub fn new(bus: EventBus) -> Result<Self> {
+        let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
+        Ok(Self { bus, tp })
     }
 
-    #[instrument(skip(self, extractor_factory))]
-    pub fn run(self, extractor_factory: ExtractorCreator) {
-        thread::spawn(move || -> Result<(), ExtractorErr> {
+    #[instrument(skip(self, factory))]
+    pub fn run(self, factory: ExtractorCreator) {
+        thread::spawn(move || -> Result<()> {
             let sub = self.bus.subscriber();
-            let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
             loop {
                 match sub.recv()? {
-                    BusEvent::NewDocs(location) => {
-                        debug!("NewDocs in: '{:?}', starting extraction", location);
-                        let extension = location.extension()?;
-                        let extractor = extractor_factory.make(&extension);
-                        let publ = self.bus.publisher();
-                        tp.spawn(move || {
-                            if let Err(e) = extract(location, &extractor, publ) {
-                                error!("extraction failed: '{}'", e);
-                            }
-                        });
-                    }
+                    BusEvent::NewDocs(loc) => self.extract_data(loc, &factory)?,
                     e => debug!("event not supported in TxtExtractor: '{}'", e),
                 }
             }
         });
     }
+
+    fn extract_data(&self, loc: Location, factory: &ExtractorCreator) -> Result<()> {
+        debug!("NewDocs in: '{:?}', starting extraction", loc);
+        let extractor = factory.make(&loc.extension()?);
+        let publ = self.bus.publisher();
+        self.tp.spawn(move || {
+            if let Err(e) = extract(loc, &extractor, publ) {
+                error!("extraction failed: '{}'", e);
+            }
+        });
+        Ok(())
+    }
 }
 
-fn extract(loc: Location, extr: &Extractor, mut publ: EventPublisher) -> Result<(), ExtractorErr> {
+fn extract(loc: Location, extr: &Extractor, mut publ: EventPublisher) -> Result<()> {
     publ.send(BusEvent::DataExtracted(extr.extract_data(&loc)?))?;
     debug!("extraction finished");
     debug!("sending encryption request for: '{:?}'", loc);
@@ -57,7 +61,7 @@ fn extract(loc: Location, extr: &Extractor, mut publ: EventPublisher) -> Result<
 /// Extracts text.
 pub trait DataExtractor: Send {
     /// Given the [`Location`], extracts text from all documents contained in it.
-    fn extract_data(&self, location: &Location) -> Result<Vec<DocDetails>, ExtractorErr>;
+    fn extract_data(&self, location: &Location) -> Result<Vec<DocDetails>>;
 }
 
 /// Creates extractor.
@@ -89,7 +93,7 @@ mod test {
         let (spy, extractor) = ExtractorSpy::working();
         let factory_stub = ExtractorFactoryStub::new(vec![extractor]);
         let mut shim = create_test_shim()?;
-        TxtExtractor::new(shim.bus()).run(factory_stub);
+        TxtExtractor::new(shim.bus())?.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -109,7 +113,7 @@ mod test {
         let extractor = ExtractorStub::new(docs_details.clone());
         let factory_stub = ExtractorFactoryStub::new(vec![extractor]);
         let mut shim = create_test_shim()?;
-        TxtExtractor::new(shim.bus()).run(factory_stub);
+        TxtExtractor::new(shim.bus())?.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -129,7 +133,7 @@ mod test {
         let extractor = ExtractorStub::new(Faker.fake());
         let factory_stub = ExtractorFactoryStub::new(vec![extractor]);
         let mut shim = create_test_shim()?;
-        TxtExtractor::new(shim.bus()).run(factory_stub);
+        TxtExtractor::new(shim.bus())?.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -151,7 +155,7 @@ mod test {
         let (spy, failing_extractor) = ExtractorSpy::failing();
         let factory_stub = ExtractorFactoryStub::new(vec![failing_extractor]);
         let mut shim = create_test_shim()?;
-        TxtExtractor::new(shim.bus()).run(factory_stub);
+        TxtExtractor::new(shim.bus())?.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -178,7 +182,7 @@ mod test {
             BusEvent::PipelineFinished,
         ];
         let mut shim = create_test_shim()?;
-        TxtExtractor::new(shim.bus()).run(factory_stub);
+        TxtExtractor::new(shim.bus())?.run(factory_stub);
 
         // when
         shim.send_events(&ignored_events)?;
@@ -206,7 +210,7 @@ mod test {
         let (spy2, failing_extractor2) = ExtractorSpy::failing();
         let factory_stub = ExtractorFactoryStub::new(vec![failing_extractor1, failing_extractor2]);
         let mut shim = create_test_shim()?;
-        TxtExtractor::new(shim.bus()).run(factory_stub);
+        TxtExtractor::new(shim.bus())?.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
                                                // let mut publ = bus.publisher();
         shim.trigger_extractor()?;

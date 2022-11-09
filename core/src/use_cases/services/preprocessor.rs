@@ -32,13 +32,13 @@ impl ThumbnailGenerator {
         Ok(Self { cfg, bus, tp })
     }
 
-    #[instrument(skip(self, preprocessor_factory, fs))]
-    pub fn run(self, preprocessor_factory: PreprocessorCreator, fs: Fs) {
+    #[instrument(skip(self, factory, fs))]
+    pub fn run(self, factory: PreprocessorCreator, fs: Fs) {
         thread::spawn(move || -> Result<()> {
             let sub = self.bus.subscriber();
             loop {
                 match sub.recv()? {
-                    BusEvent::NewDocs(loc) => self.do_thumbnail(loc, &preprocessor_factory)?,
+                    BusEvent::NewDocs(loc) => self.do_thumbnail(loc, &factory)?,
                     BusEvent::ThumbnailEncryptionFailed(loc) => self.cleanup(loc, &fs),
                     e => debug!("event not supported in ThumbnailGenerator: '{}'", e),
                 }
