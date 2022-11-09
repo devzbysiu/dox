@@ -50,7 +50,7 @@ fn extract(loc: Location, extr: &Extractor, mut publ: EventPublisher) -> Result<
     publ.send(BusEvent::DataExtracted(extr.extract_data(&loc)?))?;
     debug!("extraction finished");
     debug!("sending encryption request for: '{:?}'", loc);
-    publ.send(BusEvent::EncryptionRequest(loc))?;
+    publ.send(BusEvent::EncryptDocument(loc))?;
     Ok(())
 }
 
@@ -123,7 +123,7 @@ mod test {
     }
 
     #[test]
-    fn encryption_request_event_appears_on_success() -> Result<()> {
+    fn encrypt_document_event_appears_on_success() -> Result<()> {
         // given
         init_tracing();
         let extractor = ExtractorStub::new(Faker.fake());
@@ -139,7 +139,7 @@ mod test {
         shim.ignore_event()?; // ignore TextExtracted event
 
         // then
-        assert!(shim.event_on_bus(&BusEvent::EncryptionRequest(shim.test_location()))?);
+        assert!(shim.event_on_bus(&BusEvent::EncryptDocument(shim.test_location()))?);
 
         Ok(())
     }
@@ -189,7 +189,8 @@ mod test {
                 // TODO: those events should not have concrete values inside (any DataExtracted or
                 // EncryptionRequest event should cause failure, not only those with concrete values)
                 BusEvent::DataExtracted(Vec::new()),
-                BusEvent::EncryptionRequest(shim.test_location())
+                BusEvent::EncryptDocument(shim.test_location()),
+                BusEvent::EncryptThumbnail(shim.test_location())
             ],
             ignored_events.len(),
         )?);

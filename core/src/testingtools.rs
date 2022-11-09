@@ -236,9 +236,15 @@ pub struct TestShim {
 }
 
 impl TestShim {
-    pub fn trigger_encrypter(&mut self) -> Result<()> {
+    pub fn trigger_thumbail_encryption(&mut self) -> Result<()> {
         let test_location = self.test_file.location.clone();
-        self.publ.send(BusEvent::EncryptionRequest(test_location))?;
+        self.publ.send(BusEvent::EncryptThumbnail(test_location))?;
+        Ok(())
+    }
+
+    pub fn trigger_document_encryption(&mut self) -> Result<()> {
+        let test_location = self.test_file.location.clone();
+        self.publ.send(BusEvent::EncryptDocument(test_location))?;
         Ok(())
     }
 
@@ -329,7 +335,8 @@ impl TestShim {
 
     pub fn trigger_encryption_failure(&mut self) -> Result<()> {
         let test_location = self.test_location();
-        self.publ.send(BusEvent::EncryptionFailed(test_location))?;
+        self.publ
+            .send(BusEvent::ThumbnailEncryptionFailed(test_location))?;
         Ok(())
     }
 }

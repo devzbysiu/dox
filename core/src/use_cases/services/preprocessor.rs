@@ -49,7 +49,7 @@ impl ThumbnailGenerator {
                             }
                         });
                     }
-                    BusEvent::EncryptionFailed(loc) => {
+                    BusEvent::ThumbnailEncryptionFailed(loc) => {
                         debug!("pipeline failed, removing thumbnail");
                         let fs = fs.clone();
                         tp.spawn(move || {
@@ -76,7 +76,7 @@ fn preprocess<P: AsRef<Path>>(
     debug!("preprocessing finished");
     publ.send(BusEvent::ThumbnailMade(thumbnail_loc.clone()))?;
     debug!("sending encryption request for: '{:?}'", thumbnail_loc);
-    publ.send(BusEvent::EncryptionRequest(thumbnail_loc))?;
+    publ.send(BusEvent::EncryptThumbnail(thumbnail_loc))?;
     Ok(())
 }
 
@@ -172,7 +172,7 @@ mod test {
     }
 
     #[test]
-    fn thumbnail_generator_emits_encryption_request_event_success() -> Result<()> {
+    fn thumbnail_generator_emits_encrypt_thumbnail_event_on_success() -> Result<()> {
         // given
         init_tracing();
         let preprocessor = NoOpPreprocessor::new();
@@ -189,7 +189,7 @@ mod test {
         shim.ignore_event()?; // ignore TextExtracted event
 
         // then
-        assert!(shim.event_on_bus(&BusEvent::EncryptionRequest(shim.test_location()))?);
+        assert!(shim.event_on_bus(&BusEvent::EncryptThumbnail(shim.test_location()))?);
 
         Ok(())
     }
@@ -242,7 +242,8 @@ mod test {
                 // TODO: this shouldn't use specific values - any DataExtracted and EncryptionRequest
                 // event (with any data) should make this test fail
                 BusEvent::DataExtracted(Faker.fake()),
-                BusEvent::EncryptionRequest(Faker.fake()),
+                BusEvent::EncryptThumbnail(Faker.fake()),
+                BusEvent::EncryptDocument(Faker.fake()),
             ],
             ignored_events.len(),
         )?;

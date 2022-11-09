@@ -25,27 +25,39 @@ impl Encrypter {
         thread::spawn(move || -> Result<(), EncrypterErr> {
             let mut publ = self.bus.publisher();
             loop {
-                match sub.recv()? {
-                    BusEvent::EncryptionRequest(location) => {
-                        debug!("encryption request: '{:?}', starting encryption", location);
-                        let Location::FS(paths) = &location;
-                        let all_worked_out = paths
-                            .par_iter()
-                            .map(|path| encrypt(&cipher, path))
-                            .inspect(report_errors)
-                            .all(|r| r.is_ok());
-                        if all_worked_out {
+                let ev = sub.recv()?;
+                match ev.clone() {
+                    BusEvent::EncryptDocument(location) | BusEvent::EncryptThumbnail(location) => {
+                        if encrypt_all(&location, &cipher).is_ok() {
                             debug!("encryption finished");
                             publ.send(BusEvent::PipelineFinished)?;
-                        } else {
-                            error!("encryption failed");
-                            publ.send(BusEvent::EncryptionFailed(location))?;
+                            continue;
                         }
+                        error!("encryption failed");
+                        publ.send(pick_response(&ev, location))?;
                     }
                     e => debug!("event not supported in encrypter: '{}'", e),
                 }
             }
         });
+    }
+}
+
+fn encrypt_all(location: &Location, cipher: &CipherWrite) -> Result<bool, EncrypterErr> {
+    debug!("encryption request: '{:?}', starting encryption", location);
+    let Location::FS(paths) = location;
+    paths
+        .par_iter()
+        .map(|path| encrypt(cipher, path))
+        .inspect(report_errors)
+        .all(|r| r.is_ok())
+        .then_some(true)
+        .ok_or(EncrypterErr::AllOrNothingErr)
+}
+
+fn report_errors(res: &Result<(), EncrypterErr>) {
+    if let Err(e) = res {
+        error!("failed to encrypt: {:?}", e);
     }
 }
 
@@ -55,9 +67,11 @@ fn encrypt(cipher: &CipherWrite, path: &SafePathBuf) -> Result<(), EncrypterErr>
     Ok(())
 }
 
-fn report_errors(res: &Result<(), EncrypterErr>) {
-    if let Err(e) = res {
-        error!("failed to encrypt: {:?}", e);
+fn pick_response(ev: &BusEvent, location: Location) -> BusEvent {
+    if matches!(ev, BusEvent::EncryptDocument(_)) {
+        BusEvent::DocumentEncryptionFailed(location)
+    } else {
+        BusEvent::ThumbnailEncryptionFailed(location)
     }
 }
 
@@ -77,7 +91,7 @@ mod test {
     use std::sync::{Arc, Mutex};
 
     #[test]
-    fn cipher_is_used_when_encryption_request_appears() -> Result<()> {
+    fn cipher_is_used_when_encrypt_thumbnail_event_appears() -> Result<()> {
         // given
         init_tracing();
         let (cipher_spy, cipher_writer) = CipherSpy::working();
@@ -85,7 +99,7 @@ mod test {
         Encrypter::new(shim.bus()).run(cipher_writer);
 
         // when
-        shim.trigger_encrypter()?;
+        shim.trigger_thumbail_encryption()?;
 
         // then
         assert!(cipher_spy.method_called());
@@ -94,7 +108,24 @@ mod test {
     }
 
     #[test]
-    fn pipeline_finished_message_appears_after_encryption() -> Result<()> {
+    fn cipher_is_used_when_encrypt_document_event_appears() -> Result<()> {
+        // given
+        init_tracing();
+        let (cipher_spy, cipher_writer) = CipherSpy::working();
+        let mut shim = create_test_shim()?;
+        Encrypter::new(shim.bus()).run(cipher_writer);
+
+        // when
+        shim.trigger_document_encryption()?;
+
+        // then
+        assert!(cipher_spy.method_called());
+
+        Ok(())
+    }
+
+    #[test]
+    fn pipeline_finished_message_appears_after_thumbnail_encryption() -> Result<()> {
         // given
         init_tracing();
         let noop_cipher = NoOpCipher::new();
@@ -102,9 +133,9 @@ mod test {
         Encrypter::new(shim.bus()).run(noop_cipher);
 
         // when
-        shim.trigger_encrypter()?;
+        shim.trigger_thumbail_encryption()?;
 
-        shim.ignore_event()?; // ignore EncryptionRequest message sent earliner
+        shim.ignore_event()?; // ignore encryption message sent earliner
 
         // then
         assert!(shim.pipeline_finished()?);
@@ -113,7 +144,26 @@ mod test {
     }
 
     #[test]
-    fn encryption_failed_event_appears_when_encrypter_fails() -> Result<()> {
+    fn pipeline_finished_message_appears_after_document_encryption() -> Result<()> {
+        // given
+        init_tracing();
+        let noop_cipher = NoOpCipher::new();
+        let mut shim = create_test_shim()?;
+        Encrypter::new(shim.bus()).run(noop_cipher);
+
+        // when
+        shim.trigger_document_encryption()?;
+
+        shim.ignore_event()?; // ignore encryption message sent earliner
+
+        // then
+        assert!(shim.pipeline_finished()?);
+
+        Ok(())
+    }
+
+    #[test]
+    fn thumbnail_encryption_failed_event_appears_when_thumbnail_encryption_fails() -> Result<()> {
         // given
         init_tracing();
         let (spy, failing_cipher) = CipherSpy::failing();
@@ -121,13 +171,33 @@ mod test {
         Encrypter::new(shim.bus()).run(failing_cipher);
 
         // when
-        shim.trigger_encrypter()?;
+        shim.trigger_thumbail_encryption()?;
 
         shim.ignore_event()?; // ignore NewDocs event
 
         // then
         assert!(spy.method_called());
-        assert!(shim.event_on_bus(&BusEvent::EncryptionFailed(shim.test_location()))?);
+        assert!(shim.event_on_bus(&BusEvent::ThumbnailEncryptionFailed(shim.test_location()))?);
+
+        Ok(())
+    }
+
+    #[test]
+    fn document_encryption_failed_event_appears_when_document_encryption_fails() -> Result<()> {
+        // given
+        init_tracing();
+        let (spy, failing_cipher) = CipherSpy::failing();
+        let mut shim = create_test_shim()?;
+        Encrypter::new(shim.bus()).run(failing_cipher);
+
+        // when
+        shim.trigger_document_encryption()?;
+
+        shim.ignore_event()?; // ignore NewDocs event
+
+        // then
+        assert!(spy.method_called());
+        assert!(shim.event_on_bus(&BusEvent::DocumentEncryptionFailed(shim.test_location()))?);
 
         Ok(())
     }
@@ -158,16 +228,34 @@ mod test {
     }
 
     #[test]
-    fn failure_during_encryption_do_not_kill_service() -> Result<()> {
+    fn failure_during_thumbnail_encryption_do_not_kill_service() -> Result<()> {
         // given
         let (spy, failing_repo_write) = CipherSpy::failing();
         let mut shim = create_test_shim()?;
         Encrypter::new(shim.bus()).run(failing_repo_write);
-        shim.trigger_encrypter()?;
+        shim.trigger_thumbail_encryption()?;
         assert!(spy.method_called());
 
         // when
-        shim.trigger_encrypter()?;
+        shim.trigger_thumbail_encryption()?;
+
+        // then
+        assert!(spy.method_called());
+
+        Ok(())
+    }
+
+    #[test]
+    fn failure_during_document_encryption_do_not_kill_service() -> Result<()> {
+        // given
+        let (spy, failing_repo_write) = CipherSpy::failing();
+        let mut shim = create_test_shim()?;
+        Encrypter::new(shim.bus()).run(failing_repo_write);
+        shim.trigger_document_encryption()?;
+        assert!(spy.method_called());
+
+        // when
+        shim.trigger_document_encryption()?;
 
         // then
         assert!(spy.method_called());

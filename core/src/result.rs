@@ -189,6 +189,9 @@ pub enum EncrypterErr {
 
     #[error("Failed to create threadpool.")]
     ThreadPoolError(#[from] rayon::ThreadPoolBuildError),
+
+    #[error("Failed to encrypt all files.")]
+    AllOrNothingErr,
 }
 
 #[derive(Debug, Error)]

@@ -47,14 +47,20 @@ pub enum BusEvent {
     /// Represents document finished indexing. Internal event.
     Indexed(Vec<DocDetails>),
 
-    /// Published when there is a time to encrypt the file.
-    EncryptionRequest(Location),
+    /// Published when there is a need to encrypt document file.
+    EncryptDocument(Location),
+
+    /// Published when there is a need to encrypt thumbnail file.
+    EncryptThumbnail(Location),
 
     /// Published when document processing is finished.
     PipelineFinished,
 
-    /// Published when there is an error during file encryption.
-    EncryptionFailed(Location),
+    /// Published when there is an error during document encryption.
+    DocumentEncryptionFailed(Location),
+
+    /// Published when there is an error during thumbnail encryption.
+    ThumbnailEncryptionFailed(Location),
 }
 
 impl Display for BusEvent {
@@ -67,9 +73,11 @@ impl Display for BusEvent {
                 BusEvent::DataExtracted(_) => "DataExtracted",
                 BusEvent::ThumbnailMade(_) => "ThumbnailMade",
                 BusEvent::Indexed(_) => "Indexed",
-                BusEvent::EncryptionRequest(_) => "EncryptionRequest",
+                BusEvent::EncryptDocument(_) => "DocumentEncryptionRequest",
+                BusEvent::EncryptThumbnail(_) => "ThumbnailEncryptionRequest",
                 BusEvent::PipelineFinished => "PipelineFinished",
-                BusEvent::EncryptionFailed(_) => "EncryptionFailed",
+                BusEvent::DocumentEncryptionFailed(_) => "DocumentEncryptionFailed",
+                BusEvent::ThumbnailEncryptionFailed(_) => "ThumbnailEncryptionFailed",
             }
         )
     }
