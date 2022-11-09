@@ -268,6 +268,9 @@ pub enum SetupErr {
     #[error("Failed to run encrypter.")]
     EncrypterError(#[from] EncrypterErr),
 
+    #[error("Failed to run preprocessor.")]
+    PreprocessorError(#[from] PreprocessorErr),
+
     #[error("Failed to run watcher.")]
     WatcherError(#[from] WatcherErr),
 

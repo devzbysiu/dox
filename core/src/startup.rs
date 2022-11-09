@@ -55,7 +55,7 @@ pub fn rocket(path_override: Option<PathBuf>) -> Rocket<Build> {
 
 fn setup_core(cfg: &Config, bus: EventBus, fs: Fs) -> Result<(RepoRead, CipherRead), SetupErr> {
     let watcher = DocsWatcher::new(bus.clone());
-    let preprocessor = ThumbnailGenerator::new(cfg.clone(), bus.clone());
+    let preprocessor = ThumbnailGenerator::new(cfg.clone(), bus.clone())?;
     let extractor = TxtExtractor::new(bus.clone());
     let indexer = Indexer::new(bus.clone());
     let encrypter = Encrypter::new(bus);

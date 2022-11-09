@@ -6,13 +6,14 @@ use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher};
 use crate::use_cases::config::Config;
 use crate::use_cases::fs::Fs;
 
-use rayon::ThreadPoolBuilder;
-use std::path::Path;
+use rayon::{ThreadPool, ThreadPoolBuilder};
+use std::path::{Path, PathBuf};
 use std::thread;
 use tracing::{debug, error, instrument, warn};
 
 pub type PreprocessorCreator = Box<dyn PreprocessorFactory>;
 pub type Preprocessor = Box<dyn FilePreprocessor>;
+type Result<T> = std::result::Result<T, PreprocessorErr>;
 
 /// Generates thumbnail either for PDF file or image file when [`Event::NewDocs`] appears on the
 /// bus.
@@ -22,55 +23,59 @@ pub type Preprocessor = Box<dyn FilePreprocessor>;
 pub struct ThumbnailGenerator {
     cfg: Config,
     bus: EventBus,
+    tp: ThreadPool,
 }
 
 impl ThumbnailGenerator {
-    pub fn new(cfg: Config, bus: EventBus) -> Self {
-        Self { cfg, bus }
+    pub fn new(cfg: Config, bus: EventBus) -> Result<Self> {
+        let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
+        Ok(Self { cfg, bus, tp })
     }
 
     #[instrument(skip(self, preprocessor_factory, fs))]
     pub fn run(self, preprocessor_factory: PreprocessorCreator, fs: Fs) {
-        thread::spawn(move || -> Result<(), PreprocessorErr> {
-            let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
-            let thumbnails_dir = self.cfg.thumbnails_dir.clone();
+        thread::spawn(move || -> Result<()> {
             let sub = self.bus.subscriber();
             loop {
                 match sub.recv()? {
-                    BusEvent::NewDocs(loc) => {
-                        debug!("NewDocs in: '{:?}', starting preprocessing", loc);
-                        let extension = loc.extension()?;
-                        let preprocessor = preprocessor_factory.make(&extension);
-                        let publ = self.bus.publisher();
-                        let dir = thumbnails_dir.clone();
-                        tp.spawn(move || {
-                            if let Err(e) = preprocess(&loc, &preprocessor, &dir, publ) {
-                                error!("thumbnail generation failed: '{}'", e);
-                            }
-                        });
-                    }
-                    BusEvent::ThumbnailEncryptionFailed(loc) => {
-                        debug!("pipeline failed, removing thumbnail");
-                        let fs = fs.clone();
-                        tp.spawn(move || {
-                            if let Err(e) = remove_thumbnail(&loc, &fs) {
-                                error!("thumbnail removal failed: '{}'", e);
-                            }
-                        });
-                    }
+                    BusEvent::NewDocs(loc) => self.do_thumbnail(loc, &preprocessor_factory)?,
+                    BusEvent::ThumbnailEncryptionFailed(loc) => self.cleanup(loc, &fs),
                     e => debug!("event not supported in ThumbnailGenerator: '{}'", e),
                 }
             }
         });
     }
+
+    fn do_thumbnail(&self, loc: Location, factory: &PreprocessorCreator) -> Result<()> {
+        debug!("NewDocs in: '{:?}', starting preprocessing", loc);
+        let preprocessor = factory.make(&loc.extension()?);
+        let publ = self.bus.publisher();
+        let dir = self.cfg.thumbnails_dir.clone();
+        self.tp.spawn(move || {
+            if let Err(e) = preprocess(&loc, &preprocessor, &dir, publ) {
+                error!("thumbnail generation failed: '{}'", e);
+            }
+        });
+        Ok(())
+    }
+
+    fn cleanup(&self, loc: Location, fs: &Fs) {
+        debug!("pipeline failed, removing thumbnail");
+        let fs = fs.clone();
+        self.tp.spawn(move || {
+            if let Err(e) = remove_thumbnail(&loc, &fs) {
+                error!("thumbnail removal failed: '{}'", e);
+            }
+        });
+    }
 }
 
-fn preprocess<P: AsRef<Path>>(
+fn preprocess(
     loc: &Location,
     prepr: &Preprocessor,
-    thumbnails_dir: P,
+    thumbnails_dir: &PathBuf,
     mut publ: EventPublisher,
-) -> Result<(), PreprocessorErr> {
+) -> Result<()> {
     let thumbnails_dir = thumbnails_dir.as_ref();
     let thumbnail_loc = prepr.preprocess(loc, thumbnails_dir)?;
     debug!("preprocessing finished");
@@ -80,7 +85,7 @@ fn preprocess<P: AsRef<Path>>(
     Ok(())
 }
 
-fn remove_thumbnail(loc: &Location, fs: &Fs) -> Result<(), PreprocessorErr> {
+fn remove_thumbnail(loc: &Location, fs: &Fs) -> Result<()> {
     let Location::FS(paths) = loc;
     for path in paths {
         fs.rm_file(path)?;
@@ -97,11 +102,7 @@ fn remove_thumbnail(loc: &Location, fs: &Fs) -> Result<(), PreprocessorErr> {
 pub trait FilePreprocessor: Send {
     /// Take source location as the input and the parent directory for the output.
     /// Returns the final location of the preprocessing.
-    fn preprocess(
-        &self,
-        location: &Location,
-        thumbnails_dir: &Path,
-    ) -> Result<Location, PreprocessorErr>;
+    fn preprocess(&self, location: &Location, thumbnails_dir: &Path) -> Result<Location>;
 }
 
 /// Creates [`Preprocessor`].
@@ -137,7 +138,7 @@ mod test {
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
         let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, fs_dummy);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, fs_dummy);
         thread::sleep(Duration::from_secs(1)); // allow to start preprocessor
 
         // when
@@ -157,7 +158,7 @@ mod test {
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
         let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, fs_dummy);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, fs_dummy);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -179,7 +180,7 @@ mod test {
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
         let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, fs_dummy);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, fs_dummy);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -202,7 +203,7 @@ mod test {
         let factory_stub = PreprocessorFactoryStub::new(vec![failing_preprocessor]);
         let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, fs_dummy);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, fs_dummy);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -230,7 +231,7 @@ mod test {
             BusEvent::Indexed(Faker.fake()),
             BusEvent::PipelineFinished,
         ];
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, fs_dummy);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, fs_dummy);
 
         // when
         shim.send_events(&ignored_events)?;
@@ -261,7 +262,7 @@ mod test {
         let factory_stub = PreprocessorFactoryStub::new(vec![failing_prepr1, failing_prepr2]);
         let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, fs_dummy);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, fs_dummy);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         shim.trigger_preprocessor()?;
@@ -284,7 +285,7 @@ mod test {
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
         let (spy, working_fs) = FsSpy::working();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus()).run(factory_stub, working_fs);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, working_fs);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
