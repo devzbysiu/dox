@@ -31,6 +31,7 @@ impl TxtExtractor {
             loop {
                 match sub.recv()? {
                     BusEvent::NewDocs(loc) => self.extract_data(loc, &factory)?,
+                    BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(&loc),
                     e => debug!("event not supported in TxtExtractor: '{}'", e),
                 }
             }
@@ -47,6 +48,11 @@ impl TxtExtractor {
             }
         });
         Ok(())
+    }
+
+    #[allow(clippy::unused_self)] // TODO: remove this
+    fn cleanup(&self, _loc: &Location) {
+        debug!("document encryption failed, cleaning up");
     }
 }
 
