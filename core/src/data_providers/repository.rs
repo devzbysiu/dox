@@ -42,7 +42,7 @@ impl TantivyRepository {
         let indexes = Arc::new(DashMap::new());
         Ok((
             Box::new(TantivyRead::new(indexes.clone(), schema.clone())),
-            Box::new(TantivyWrite::new(indexes, cfg.index_dir.clone(), schema)),
+            Arc::new(TantivyWrite::new(indexes, cfg.index_dir.clone(), schema)),
         ))
     }
 }

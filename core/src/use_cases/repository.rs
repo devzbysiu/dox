@@ -5,9 +5,10 @@ use crate::result::{IndexerErr, SearchErr};
 
 use serde::Serialize;
 use std::collections::HashSet;
+use std::sync::Arc;
 
 pub type RepoRead = Box<dyn RepositoryRead>;
-pub type RepoWrite = Box<dyn RepositoryWrite>;
+pub type RepoWrite = Arc<dyn RepositoryWrite>;
 
 /// Allows to search and list all indexed documents .
 pub trait RepositoryRead: Sync + Send {

@@ -57,7 +57,7 @@ fn setup_core(cfg: &Config, bus: EventBus, fs: Fs) -> Result<(RepoRead, CipherRe
     let watcher = DocsWatcher::new(bus.clone());
     let preprocessor = ThumbnailGenerator::new(cfg.clone(), bus.clone())?;
     let extractor = TxtExtractor::new(bus.clone())?;
-    let indexer = Indexer::new(bus.clone());
+    let indexer = Indexer::new(bus.clone())?;
     let encrypter = Encrypter::new(bus);
 
     watcher.run(event_watcher(cfg)?);

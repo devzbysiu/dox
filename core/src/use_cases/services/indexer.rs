@@ -1,47 +1,65 @@
+use crate::entities::document::DocDetails;
+use crate::entities::location::Location;
 use crate::result::IndexerErr;
-use crate::use_cases::bus::{BusEvent, EventBus};
+use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher};
 use crate::use_cases::repository::RepoWrite;
 
-use rayon::ThreadPoolBuilder;
+use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::thread;
 use tracing::{debug, error, instrument, warn};
+type Result<T> = std::result::Result<T, IndexerErr>;
 
 pub struct Indexer {
     bus: EventBus,
+    tp: ThreadPool,
 }
 
 impl Indexer {
-    pub fn new(bus: EventBus) -> Self {
-        Self { bus }
+    pub fn new(bus: EventBus) -> Result<Self> {
+        let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
+        Ok(Self { bus, tp })
     }
 
     #[instrument(skip(self, repo))]
-    pub fn run(&self, repo: RepoWrite) -> Result<(), IndexerErr> {
+    pub fn run(self, repo: RepoWrite) -> Result<()> {
         // TODO: add threadpool to other services
         // TODO: think about num_threads
         // TODO: should threadpool be shared between services?
         // TODO: should threadpool have it's own abstraction here?
-        let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
         let sub = self.bus.subscriber();
-        let mut publ = self.bus.publisher();
-        thread::spawn(move || -> Result<(), IndexerErr> {
+        thread::spawn(move || -> Result<()> {
             loop {
                 match sub.recv()? {
-                    BusEvent::DataExtracted(doc_details) => {
-                        if let Err(e) = tp.install(|| -> Result<(), IndexerErr> {
-                            repo.index(&doc_details)?;
-                            publ.send(BusEvent::Indexed(doc_details))?;
-                            Ok(())
-                        }) {
-                            error!("indexing failed: '{}'", e);
-                        }
-                    }
+                    BusEvent::DataExtracted(doc_details) => self.index(doc_details, repo.clone()),
+                    BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(&loc),
                     e => debug!("event not supported in indexer: '{}'", e),
                 }
             }
         });
         Ok(())
     }
+
+    fn index(&self, doc_details: Vec<DocDetails>, repo: RepoWrite) {
+        let publ = self.bus.publisher();
+        self.tp.spawn(move || {
+            if let Err(e) = index(doc_details, &repo, publ) {
+                error!("indexing failed: '{}'", e);
+            }
+        });
+    }
+
+    #[allow(clippy::unused_self)] // TODO: remove this
+    fn cleanup(&self, _loc: &Location) {
+        debug!("document encryption failed, cleaning up");
+    }
+}
+
+fn index(doc_details: Vec<DocDetails>, repo: &RepoWrite, mut publ: EventPublisher) -> Result<()> {
+    debug!("start indexing docs");
+    repo.index(&doc_details)?;
+    debug!("docs indexed");
+    publ.send(BusEvent::Indexed(doc_details.to_vec()))?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -57,7 +75,7 @@ mod test {
     use anyhow::{anyhow, Result};
     use fake::{Fake, Faker};
     use std::sync::mpsc::{channel, Sender};
-    use std::sync::Mutex;
+    use std::sync::{Arc, Mutex};
 
     #[test]
     fn repo_write_is_used_to_index_data() -> Result<()> {
@@ -65,7 +83,7 @@ mod test {
         init_tracing();
         let (spy, working_repo_write) = RepoWriteSpy::working();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus()).run(working_repo_write)?;
+        Indexer::new(shim.bus())?.run(working_repo_write)?;
 
         // when
         shim.trigger_indexer(Faker.fake())?;
@@ -82,7 +100,7 @@ mod test {
         init_tracing();
         let noop_repo_write = NoOpRepoWrite::new();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus()).run(noop_repo_write)?;
+        Indexer::new(shim.bus())?.run(noop_repo_write)?;
         let doc_details: Vec<DocDetails> = Faker.fake();
 
         // when
@@ -103,7 +121,7 @@ mod test {
         let repo_write = NoOpRepoWrite::new();
         let mut shim = create_test_shim()?;
         let docs_details: Vec<DocDetails> = Faker.fake();
-        Indexer::new(shim.bus()).run(repo_write)?;
+        Indexer::new(shim.bus())?.run(repo_write)?;
 
         // when
         shim.trigger_indexer(docs_details.clone())?;
@@ -122,7 +140,7 @@ mod test {
         init_tracing();
         let repo_write = ErroneousRepoWrite::new();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus()).run(repo_write)?;
+        Indexer::new(shim.bus())?.run(repo_write)?;
 
         // when
         shim.trigger_indexer(Faker.fake())?;
@@ -148,7 +166,7 @@ mod test {
             BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::PipelineFinished,
         ];
-        Indexer::new(shim.bus()).run(noop_repo_write).unwrap();
+        Indexer::new(shim.bus())?.run(noop_repo_write).unwrap();
 
         // when
         shim.send_events(&ignored_events)?;
@@ -167,7 +185,7 @@ mod test {
         init_tracing();
         let (spy, failing_repo_write) = RepoWriteSpy::failing();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus()).run(failing_repo_write)?;
+        Indexer::new(shim.bus())?.run(failing_repo_write)?;
         shim.trigger_indexer(Faker.fake())?;
         assert!(spy.method_called());
 
@@ -199,8 +217,8 @@ mod test {
     }
 
     impl WorkingRepoWrite {
-        fn make(tx: Sender<()>) -> Box<Self> {
-            Box::new(Self { tx: Mutex::new(tx) })
+        fn make(tx: Sender<()>) -> Arc<Self> {
+            Arc::new(Self { tx: Mutex::new(tx) })
         }
     }
 
@@ -220,8 +238,8 @@ mod test {
     }
 
     impl FailingRepoWrite {
-        fn make(tx: Sender<()>) -> Box<Self> {
-            Box::new(Self { tx: Mutex::new(tx) })
+        fn make(tx: Sender<()>) -> Arc<Self> {
+            Arc::new(Self { tx: Mutex::new(tx) })
         }
     }
 
@@ -239,8 +257,8 @@ mod test {
     struct NoOpRepoWrite;
 
     impl NoOpRepoWrite {
-        fn new() -> Box<Self> {
-            Box::new(Self)
+        fn new() -> Arc<Self> {
+            Arc::new(Self)
         }
     }
 
@@ -254,8 +272,8 @@ mod test {
     struct ErroneousRepoWrite;
 
     impl ErroneousRepoWrite {
-        fn new() -> Box<Self> {
-            Box::new(Self)
+        fn new() -> Arc<Self> {
+            Arc::new(Self)
         }
     }
 
