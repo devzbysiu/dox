@@ -92,7 +92,7 @@ impl TantivyRead {
             let thumbnails = retrieved_doc.get_all(self.field(&Fields::Thumbnail));
             results.extend(to_search_entries(filenames, thumbnails));
         }
-        Ok(SearchResult::from_vec(results))
+        Ok(results.into())
     }
 
     fn search_for(&self, user: User, query: &impl Query) -> Result<SearchResult, SearchErr> {
@@ -292,13 +292,14 @@ mod test {
         // then
         assert_eq!(
             all_docs,
-            SearchResult::from_vec(vec![
+            vec![
                 SearchEntry::new(("filename1".into(), "thumbnail1".into())),
                 SearchEntry::new(("filename2".into(), "thumbnail2".into())),
                 SearchEntry::new(("filename3".into(), "thumbnail3".into())),
                 SearchEntry::new(("filename4".into(), "thumbnail4".into())),
                 SearchEntry::new(("filename5".into(), "thumbnail5".into())),
-            ])
+            ]
+            .into()
         );
 
         Ok(())
@@ -325,10 +326,7 @@ mod test {
         // then
         assert_eq!(
             results,
-            SearchResult::from_vec(vec![SearchEntry::new((
-                "filename5".into(),
-                "thumbnail5".into()
-            )),])
+            vec![SearchEntry::new(("filename5".into(), "thumbnail5".into())),].into()
         );
 
         Ok(())
@@ -356,12 +354,9 @@ mod test {
         // then
         assert_eq!(
             first_results,
-            SearchResult::from_vec(vec![SearchEntry::new((
-                "filename3".into(),
-                "thumbnail3".into()
-            )),])
+            vec![SearchEntry::new(("filename3".into(), "thumbnail3".into())),].into()
         );
-        assert_eq!(second_results, SearchResult::from_vec(vec![]));
+        assert_eq!(second_results, Vec::new().into());
 
         Ok(())
     }

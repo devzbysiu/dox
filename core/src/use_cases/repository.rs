@@ -30,8 +30,8 @@ pub struct SearchResult {
     entries: HashSet<SearchEntry>,
 }
 
-impl SearchResult {
-    pub fn from_vec(entries: Vec<SearchEntry>) -> Self {
+impl From<Vec<SearchEntry>> for SearchResult {
+    fn from(entries: Vec<SearchEntry>) -> Self {
         Self {
             entries: entries.into_iter().collect(),
         }
