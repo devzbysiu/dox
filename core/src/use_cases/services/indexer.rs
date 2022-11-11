@@ -21,7 +21,7 @@ impl Indexer {
     }
 
     #[instrument(skip(self, repo))]
-    pub fn run(self, repo: RepoWrite) -> Result<()> {
+    pub fn run(self, repo: RepoWrite) {
         // TODO: add threadpool to other services
         // TODO: think about num_threads
         // TODO: should threadpool be shared between services?
@@ -36,13 +36,12 @@ impl Indexer {
                 }
             }
         });
-        Ok(())
     }
 
     fn index(&self, doc_details: Vec<DocDetails>, repo: RepoWrite) {
         let publ = self.bus.publisher();
         self.tp.spawn(move || {
-            if let Err(e) = index(doc_details, &repo, publ) {
+            if let Err(e) = index(&doc_details, &repo, publ) {
                 error!("indexing failed: '{}'", e);
             }
         });
@@ -54,9 +53,9 @@ impl Indexer {
     }
 }
 
-fn index(doc_details: Vec<DocDetails>, repo: &RepoWrite, mut publ: EventPublisher) -> Result<()> {
+fn index(doc_details: &[DocDetails], repo: &RepoWrite, mut publ: EventPublisher) -> Result<()> {
     debug!("start indexing docs");
-    repo.index(&doc_details)?;
+    repo.index(doc_details)?;
     debug!("docs indexed");
     publ.send(BusEvent::Indexed(doc_details.to_vec()))?;
     Ok(())
@@ -83,7 +82,7 @@ mod test {
         init_tracing();
         let (spy, working_repo_write) = RepoWriteSpy::working();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(working_repo_write)?;
+        Indexer::new(shim.bus())?.run(working_repo_write);
 
         // when
         shim.trigger_indexer(Faker.fake())?;
@@ -100,7 +99,7 @@ mod test {
         init_tracing();
         let noop_repo_write = NoOpRepoWrite::new();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(noop_repo_write)?;
+        Indexer::new(shim.bus())?.run(noop_repo_write);
         let doc_details: Vec<DocDetails> = Faker.fake();
 
         // when
@@ -121,7 +120,7 @@ mod test {
         let repo_write = NoOpRepoWrite::new();
         let mut shim = create_test_shim()?;
         let docs_details: Vec<DocDetails> = Faker.fake();
-        Indexer::new(shim.bus())?.run(repo_write)?;
+        Indexer::new(shim.bus())?.run(repo_write);
 
         // when
         shim.trigger_indexer(docs_details.clone())?;
@@ -140,7 +139,7 @@ mod test {
         init_tracing();
         let repo_write = ErroneousRepoWrite::new();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo_write)?;
+        Indexer::new(shim.bus())?.run(repo_write);
 
         // when
         shim.trigger_indexer(Faker.fake())?;
@@ -166,7 +165,7 @@ mod test {
             BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::PipelineFinished,
         ];
-        Indexer::new(shim.bus())?.run(noop_repo_write).unwrap();
+        Indexer::new(shim.bus())?.run(noop_repo_write);
 
         // when
         shim.send_events(&ignored_events)?;
@@ -185,7 +184,7 @@ mod test {
         init_tracing();
         let (spy, failing_repo_write) = RepoWriteSpy::failing();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(failing_repo_write)?;
+        Indexer::new(shim.bus())?.run(failing_repo_write);
         shim.trigger_indexer(Faker.fake())?;
         assert!(spy.method_called());
 
