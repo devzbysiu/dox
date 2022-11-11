@@ -6,6 +6,8 @@ use crate::use_cases::receiver::{DocsEvent, EventRecv};
 use std::thread;
 use tracing::{debug, trace, warn};
 
+type Result<T> = std::result::Result<T, WatcherErr>;
+
 /// Watches for the event comming from [`Watcher`] and publishes appropriate event on the event bus.
 ///
 /// It then spawns new thread in which it receives events from [`Watcher`]. If the event is
@@ -23,7 +25,7 @@ impl DocsWatcher {
 
     pub fn run(self, receiver: EventRecv) {
         debug!("spawning watching thread");
-        thread::spawn(move || -> Result<(), WatcherErr> {
+        thread::spawn(move || -> Result<()> {
             debug!("watching thread spawned");
             let mut publ = self.bus.publisher();
             loop {

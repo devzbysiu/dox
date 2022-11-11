@@ -8,6 +8,8 @@ use std::fs;
 use std::thread;
 use tracing::{debug, error, instrument, warn};
 
+type Result<T> = std::result::Result<T, EncrypterErr>;
+
 pub struct Encrypter {
     bus: EventBus,
 }
@@ -22,7 +24,7 @@ impl Encrypter {
         let sub = self.bus.subscriber();
         // TODO: improve tracing of threads somehow. Currently, it's hard to debug because threads
         // do not appear as separate tracing's scopes
-        thread::spawn(move || -> Result<(), EncrypterErr> {
+        thread::spawn(move || -> Result<()> {
             let mut publ = self.bus.publisher();
             loop {
                 let ev = sub.recv()?;
@@ -43,7 +45,7 @@ impl Encrypter {
     }
 }
 
-fn encrypt_all(location: &Location, cipher: &CipherWrite) -> Result<bool, EncrypterErr> {
+fn encrypt_all(location: &Location, cipher: &CipherWrite) -> Result<bool> {
     debug!("encryption request: '{:?}', starting encryption", location);
     let Location::FS(paths) = location;
     paths
@@ -55,13 +57,13 @@ fn encrypt_all(location: &Location, cipher: &CipherWrite) -> Result<bool, Encryp
         .ok_or(EncrypterErr::AllOrNothingErr)
 }
 
-fn report_errors(res: &Result<(), EncrypterErr>) {
+fn report_errors(res: &Result<()>) {
     if let Err(e) = res {
         error!("failed to encrypt: {:?}", e);
     }
 }
 
-fn encrypt(cipher: &CipherWrite, path: &SafePathBuf) -> Result<(), EncrypterErr> {
+fn encrypt(cipher: &CipherWrite, path: &SafePathBuf) -> Result<()> {
     let encrypted = cipher.encrypt(&fs::read(path)?)?;
     fs::write(path, encrypted)?;
     Ok(())
