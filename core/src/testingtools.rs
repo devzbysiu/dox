@@ -34,7 +34,7 @@ use tracing::debug;
 
 pub fn create_test_app() -> Result<App> {
     let config = TestConfig::new()?;
-    let ctx = Context::full(&config)?;
+    let ctx = Context::new(&config)?;
     let client = Client::tracked(rocket(ctx))?;
     Ok(App {
         client,

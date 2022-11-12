@@ -36,7 +36,7 @@ async fn main() -> Result<(), SetupErr> {
         .handle_config(path_override)
         .expect("failed to get config");
 
-    let ctx = Context::full(cfg)?;
+    let ctx = Context::new(cfg)?;
 
     let _rocket = rocket(ctx).launch().await?;
 

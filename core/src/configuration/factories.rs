@@ -30,7 +30,7 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn full<C: AsRef<Config>>(cfg: C) -> Result<Self, SetupErr> {
+    pub fn new<C: AsRef<Config>>(cfg: C) -> Result<Self, SetupErr> {
         let cfg = cfg.as_ref();
         Ok(Self {
             cfg: cfg.clone(),
