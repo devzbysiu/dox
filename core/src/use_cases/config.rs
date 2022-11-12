@@ -14,7 +14,7 @@ pub type CfgLoader = Box<dyn ConfigLoader>;
 /// Responsible for reading/saving the configuration from/to some medium.
 ///
 /// Used medium is the implementation detail and is not part of this interface.
-pub trait ConfigLoader {
+pub trait ConfigLoader: Send {
     /// Reads the configuration.
     ///
     /// This reads the configuration pointed by `PathBuf`. The `path` argument doesn't need to
@@ -31,7 +31,7 @@ pub trait ConfigLoader {
 /// Handles config override.
 ///
 /// When user specifies configuration path during startup, this interface handles this case.
-pub trait ConfigResolver {
+pub trait ConfigResolver: Send {
     /// Loads the [`Config`] using specified path.
     ///
     /// This method should read the configuration using the path specified as an argument.
@@ -54,6 +54,12 @@ impl Default for Config {
             thumbnails_dir: thumbnails_dir_default(),
             index_dir: index_dir_default(),
         }
+    }
+}
+
+impl AsRef<Config> for Config {
+    fn as_ref(&self) -> &Config {
+        self
     }
 }
 

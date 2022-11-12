@@ -265,6 +265,9 @@ pub enum PromptErr {
 
 #[derive(Debug, Error)]
 pub enum SetupErr {
+    #[error("Failed to create event bus.")]
+    BusError(#[from] BusErr),
+
     #[error("Failed to run encrypter.")]
     EncrypterError(#[from] EncrypterErr),
 

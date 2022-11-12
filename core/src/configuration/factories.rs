@@ -6,7 +6,7 @@ use crate::data_providers::fs::LocalFs;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::receiver::FsEventReceiver;
 use crate::data_providers::repository::TantivyRepository;
-use crate::result::{BusErr, EventReceiverErr, RepositoryErr};
+use crate::result::{BusErr, EventReceiverErr, RepositoryErr, SetupErr};
 use crate::use_cases::bus::EventBus;
 use crate::use_cases::cipher::{CipherRead, CipherWrite};
 use crate::use_cases::config::{CfgLoader, CfgResolver, Config};
@@ -17,6 +17,33 @@ use crate::use_cases::services::extractor::ExtractorCreator;
 use crate::use_cases::services::preprocessor::PreprocessorCreator;
 
 use std::sync::Arc;
+
+pub struct Context {
+    pub cfg: Config,
+    pub bus: EventBus,
+    pub fs: Fs,
+    pub event_watcher: EventRecv,
+    pub preprocessor_factory: PreprocessorCreator,
+    pub extractor_factory: ExtractorCreator,
+    pub repo: (RepoRead, RepoWrite),
+    pub cipher: (CipherRead, CipherWrite),
+}
+
+impl Context {
+    pub fn full<C: AsRef<Config>>(cfg: C) -> Result<Self, SetupErr> {
+        let cfg = cfg.as_ref();
+        Ok(Self {
+            cfg: cfg.clone(),
+            bus: event_bus()?,
+            fs: fs(),
+            event_watcher: event_watcher(cfg)?,
+            preprocessor_factory: preprocessor_factory(),
+            extractor_factory: extractor_factory(),
+            repo: repository(cfg)?,
+            cipher: cipher(),
+        })
+    }
+}
 
 pub fn config_resolver(config_loader: CfgLoader) -> CfgResolver {
     Box::new(FsConfigResolver::new(config_loader))

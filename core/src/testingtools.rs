@@ -1,11 +1,12 @@
 #![allow(unused)] // TODO: remove this
 
-use crate::configuration::factories::event_bus;
+use crate::configuration::factories::{event_bus, Context};
 use crate::entities::document::DocDetails;
 use crate::entities::location::{Location, SafePathBuf};
 use crate::entities::user::FAKE_USER_EMAIL;
 use crate::startup::rocket;
 use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher, EventSubscriber};
+use crate::use_cases::config::Config;
 use crate::use_cases::receiver::DocsEvent;
 
 use anyhow::{anyhow, Result};
@@ -33,11 +34,11 @@ use tracing::debug;
 
 pub fn create_test_app() -> Result<App> {
     let config = TestConfig::new()?;
-    let config_dir = create_cfg_file(&config)?;
-    let client = Client::tracked(rocket(Some(config_dir_path(&config_dir))))?;
+    let ctx = Context::full(&config)?;
+    let client = Client::tracked(rocket(ctx))?;
     Ok(App {
         client,
-        _config_dir: config_dir,
+        _config: config,
     })
 }
 
@@ -47,6 +48,7 @@ fn config_dir_path(config_dir: &TempDir) -> PathBuf {
 
 #[derive(Debug)]
 struct TestConfig {
+    value: Config,
     watched_dir: TempDir,
     thumbnails_dir: TempDir,
     index_dir: TempDir,
@@ -54,11 +56,32 @@ struct TestConfig {
 
 impl TestConfig {
     fn new() -> Result<Self> {
+        let watched_dir = watched_dir_path()?;
+        let thumbnails_dir = thumbnails_dir_path()?;
+        let index_dir = index_dir_path()?;
         Ok(Self {
-            watched_dir: watched_dir_path()?,
-            thumbnails_dir: thumbnails_dir_path()?,
-            index_dir: index_dir_path()?,
+            // NOTE: This weird 'config in config' is here because:
+            // 1. I can't drop `TestConfig` - because it holds TempDir.
+            // 2. TestConfig is useful on it's own (for example keeps in check the fields
+            //    in `Config`).
+            // 3. I need to use `Config` to build `Context`.
+            // 4. I tried to introduce trait for configuration, but it requires implementing
+            //    serde's `Serialize` and `Deserialize` traits which is not worth it.
+            value: Config {
+                watched_dir: watched_dir.path().to_path_buf(),
+                thumbnails_dir: thumbnails_dir.path().to_path_buf(),
+                index_dir: index_dir.path().to_path_buf(),
+            },
+            watched_dir,
+            thumbnails_dir,
+            index_dir,
         })
+    }
+}
+
+impl AsRef<Config> for TestConfig {
+    fn as_ref(&self) -> &Config {
+        &self.value
     }
 }
 
@@ -119,7 +142,7 @@ fn config_path<P: AsRef<Path>>(config_dir: P) -> PathBuf {
 
 pub struct App {
     client: Client,
-    _config_dir: TempDir,
+    _config: TestConfig,
 }
 
 impl App {

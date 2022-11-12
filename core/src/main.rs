@@ -2,6 +2,9 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::enum_variant_names)]
 
+use configuration::factories::{config_loader, config_resolver};
+
+use crate::configuration::factories::Context;
 use crate::configuration::telemetry::init_tracing;
 use crate::result::SetupErr;
 use crate::startup::rocket;
@@ -27,7 +30,15 @@ async fn main() -> Result<(), SetupErr> {
         .ok()
         .or_else(|| env::args().nth(1))
         .map(PathBuf::from);
-    let _rocket = rocket(path_override).launch().await?;
+
+    let resolver = config_resolver(config_loader());
+    let cfg = resolver
+        .handle_config(path_override)
+        .expect("failed to get config");
+
+    let ctx = Context::full(cfg)?;
+
+    let _rocket = rocket(ctx).launch().await?;
 
     Ok(())
 }
