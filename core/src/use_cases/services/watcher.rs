@@ -49,7 +49,7 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::result::EventReceiverErr;
-    use crate::testingtools::create_test_shim;
+    use crate::testingtools::unit::create_test_shim;
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::receiver::EventReceiver;
 

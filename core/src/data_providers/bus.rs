@@ -84,7 +84,7 @@ impl Publisher for LocalPublisher {
 mod test {
     use super::*;
 
-    use crate::testingtools::SubscriberExt;
+    use crate::testingtools::unit::SubscriberExt;
 
     use anyhow::Result;
     use claim::{assert_err, assert_ok, assert_ok_eq};

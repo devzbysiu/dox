@@ -76,7 +76,7 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::result::ExtractorErr;
-    use crate::testingtools::{create_test_shim, Spy};
+    use crate::testingtools::unit::{create_test_shim, Spy};
 
     use anyhow::Result;
     use fake::{Fake, Faker};

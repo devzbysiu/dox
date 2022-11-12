@@ -83,7 +83,7 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::result::CipherErr;
-    use crate::testingtools::{create_test_shim, Spy};
+    use crate::testingtools::unit::{create_test_shim, Spy};
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
 

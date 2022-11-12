@@ -119,7 +119,7 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::entities::location::SafePathBuf;
     use crate::result::{BusErr, FsErr};
-    use crate::testingtools::{create_test_shim, Spy};
+    use crate::testingtools::unit::{create_test_shim, Spy};
     use crate::use_cases::fs::Filesystem;
 
     use anyhow::{anyhow, Result};

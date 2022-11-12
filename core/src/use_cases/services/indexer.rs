@@ -68,7 +68,7 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::entities::document::DocDetails;
     use crate::result::{BusErr, IndexerErr};
-    use crate::testingtools::{create_test_shim, Spy};
+    use crate::testingtools::unit::{create_test_shim, Spy};
     use crate::use_cases::repository::RepositoryWrite;
 
     use anyhow::{anyhow, Result};
