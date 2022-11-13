@@ -170,7 +170,6 @@ mod test {
         // when
         app.upload_doc(doc("doc1.png"))?;
         app.wait_til_indexed();
-        // thread::sleep(Duration::from_secs(5));
 
         // TODO: for some reason, only one word search is working - fix it
         let res = app.search(search_term)?;

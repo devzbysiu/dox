@@ -39,34 +39,18 @@ pub fn start_test_app() -> Result<App> {
     let ctx = Context::new(&config)?;
     let client = Client::tracked(rocket(ctx))?;
     Ok(App {
-        client: Some(client),
-        config: Some(config),
-        ctx: None,
+        client,
+        config,
         tracked_repo_spy: None,
     })
 }
 
-pub fn test_app() -> App {
-    App {
-        client: None,
+pub fn test_app() -> AppBuilder {
+    AppBuilder {
         config: None,
         ctx: None,
         tracked_repo_spy: None,
     }
-}
-
-pub fn test_app_with(ctx: Context, config: TestConfig) -> Result<App> {
-    let client = Client::tracked(rocket(ctx))?;
-    Ok(App {
-        client: Some(client),
-        config: Some(config),
-        ctx: None,
-        tracked_repo_spy: None,
-    })
-}
-
-fn config_dir_path(config_dir: &TempDir) -> PathBuf {
-    config_dir.path().join("dox.toml")
 }
 
 #[derive(Debug)]
@@ -121,68 +105,22 @@ impl Serialize for TestConfig {
     }
 }
 
-fn create_cfg_file(cfg: &TestConfig) -> Result<TempDir> {
-    let mut dirs = tmp_dirs().lock().expect("poisoned mutex");
-    let config_dir = tempfile::tempdir()?;
-    let dir = config_dir.path().to_string_lossy().to_string();
-    if dirs.contains(&dir) {
-        panic!("Can't use the same directory");
-    }
-    dirs.insert(dir);
-    drop(dirs);
-    let config_path = config_path(&config_dir);
-    let config = toml::to_string(&cfg)?;
-    let mut file = fs::File::create(&config_path)?;
-    debug!("writing {} to {}", config, config_path.display());
-    file.write_all(config.as_bytes())?;
-    Ok(config_dir)
-}
-
-fn tmp_dirs() -> &'static Mutex<HashSet<String>> {
-    static INSTANCE: OnceCell<Mutex<HashSet<String>>> = OnceCell::new();
-    INSTANCE.get_or_init(|| Mutex::new(HashSet::new()))
-}
-
-#[inline]
-fn config_path<P: AsRef<Path>>(config_dir: P) -> PathBuf {
-    config_dir.as_ref().join("dox.toml")
-}
-
 pub struct App {
-    client: Option<Client>,
-    config: Option<TestConfig>,
-    ctx: Option<Context>,
+    client: Client,
+    config: TestConfig,
     tracked_repo_spy: Option<Spy>,
 }
 
 impl App {
-    pub fn with_tracked_repo(mut self) -> Result<Self> {
-        let config = TestConfig::new()?;
-        let (spy, tracked_repo) = TrackedRepo::wrap(repository(&config)?);
-        let ctx = Context::new(&config)?.with_repo(tracked_repo);
-        self.config = Some(config);
-        self.ctx = Some(ctx);
-        self.tracked_repo_spy = Some(spy);
-        Ok(self)
-    }
-
-    pub fn start(mut self) -> Result<Self> {
-        let ctx = self
-            .ctx
-            .take()
-            .unwrap_or_else(|| panic!("uninitialized context"));
-        let client = Client::tracked(rocket(ctx))?;
-        self.client = Some(client);
-        Ok(self)
-    }
-
     pub fn wait_til_indexed(&mut self) {
-        let spy = self
-            .tracked_repo_spy
-            .take()
-            .unwrap_or_else(|| panic!("uninitialized tracked repo spy"));
+        let spy = self.tracked_repo_spy();
         spy.method_called();
-        thread::sleep(Duration::from_millis(200));
+    }
+
+    fn tracked_repo_spy(&self) -> &Spy {
+        self.tracked_repo_spy
+            .as_ref()
+            .unwrap_or_else(|| panic!("uninitialized tracked repo spy"))
     }
 
     pub fn search<S: Into<String>>(&self, q: S) -> Result<ApiResponse> {
@@ -190,8 +128,6 @@ impl App {
         let urlencoded = encode(&q);
         let mut resp = self
             .client
-            .as_ref()
-            .unwrap_or_else(|| panic!("client is not initialized"))
             .get(format!("/search?q={}", urlencoded))
             .dispatch();
         let body = resp.read_body()?;
@@ -203,6 +139,7 @@ impl App {
 
     pub fn upload_doc<P: AsRef<Path>>(&self, path: P) -> Result<ApiResponse> {
         let body = base64::encode(fs::read(&path)?);
+        // TODO: cleanup getting the name
         let filename = path
             .as_ref()
             .file_name()
@@ -211,8 +148,6 @@ impl App {
             .to_string();
         let mut resp = self
             .client
-            .as_ref()
-            .unwrap_or_else(|| panic!("client is not initialized"))
             .post("/document/upload")
             .body(
                 json!({
@@ -276,6 +211,51 @@ pub enum HelperErr {
 
     #[error("Invalid utf characters.")]
     Utf8Error(#[from] std::string::FromUtf8Error),
+}
+
+pub struct AppBuilder {
+    config: Option<TestConfig>,
+    ctx: Option<Context>,
+    tracked_repo_spy: Option<Spy>,
+}
+
+impl AppBuilder {
+    pub fn with_tracked_repo(mut self) -> Result<Self> {
+        let config = TestConfig::new()?;
+        let (spy, tracked_repo) = TrackedRepo::wrap(repository(&config)?);
+        let ctx = Context::new(&config)?.with_repo(tracked_repo);
+        self.config = Some(config);
+        self.ctx = Some(ctx);
+        self.tracked_repo_spy = Some(spy);
+        Ok(self)
+    }
+
+    pub fn start(mut self) -> Result<App> {
+        let client = Client::tracked(rocket(self.context()))?;
+        let tracked_repo_spy = self.tracked_repo_spy();
+        let config = self.config();
+        Ok(App {
+            client,
+            config,
+            tracked_repo_spy,
+        })
+    }
+
+    fn context(&mut self) -> Context {
+        self.ctx
+            .take()
+            .unwrap_or_else(|| panic!("uninitialized context"))
+    }
+
+    fn tracked_repo_spy(&mut self) -> Option<Spy> {
+        self.tracked_repo_spy.take()
+    }
+
+    fn config(&mut self) -> TestConfig {
+        self.config
+            .take()
+            .unwrap_or_else(|| panic!("uninitialized config"))
+    }
 }
 
 pub fn doc<S: Into<String>>(name: S) -> PathBuf {
