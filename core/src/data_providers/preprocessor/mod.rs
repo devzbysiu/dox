@@ -1,3 +1,5 @@
+use tracing::instrument;
+
 use crate::data_providers::preprocessor::image::Image;
 use crate::data_providers::preprocessor::pdf::Pdf;
 use crate::entities::extension::Ext;
@@ -18,6 +20,7 @@ pub mod pdf;
 pub struct PreprocessorFactoryImpl;
 
 impl PreprocessorFactory for PreprocessorFactoryImpl {
+    #[instrument(skip(self))]
     fn make(&self, ext: &Ext) -> Preprocessor {
         match ext {
             Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Image),

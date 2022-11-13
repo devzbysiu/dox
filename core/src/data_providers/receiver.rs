@@ -29,7 +29,7 @@ impl FsEventReceiver {
 impl EventReceiver for FsEventReceiver {
     fn recv(&self) -> Result<DocsEvent, EventReceiverErr> {
         match self.watcher_rx.recv() {
-            Ok(DebouncedEvent::Create(path)) if path.is_file() && path.is_in_user_dir() => {
+            Ok(DebouncedEvent::Create(path)) if is_valid(&path) => {
                 debug!("new doc detected: {}", path.display());
                 Ok(DocsEvent::Created(path.into()))
             }
@@ -45,6 +45,11 @@ impl EventReceiver for FsEventReceiver {
     }
 }
 
+fn is_valid<P: AsRef<Path>>(path: P) -> bool {
+    let path = path.as_ref();
+    path.is_file() && path.has_supported_extension() && path.is_in_user_dir()
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -54,7 +59,7 @@ mod test {
     use fake::faker::filesystem::en::FileName;
     use fake::faker::internet::en::SafeEmail;
     use fake::faker::lorem::en::Paragraph;
-    use fake::Fake;
+    use fake::{Fake, Faker};
     use std::fs::{self, create_dir_all};
     use std::path::PathBuf;
     use tempfile::tempdir;
@@ -74,20 +79,44 @@ mod test {
     }
 
     #[test]
-    fn created_event_appears_when_file_is_created_in_user_dir() -> Result<()> {
+    fn created_event_appears_when_supported_file_is_created_in_user_dir() -> Result<()> {
         // given
         let watched_dir = tempdir()?;
         let user_email: String = SafeEmail().fake();
         let user_dir = mk_user_dir(&watched_dir, user_email)?;
         let receiver = FsEventReceiver::new(&watched_dir)?;
-        let created_file: String = FileName().fake();
+        let supported_extensions = vec!["png", "jpg", "jpeg", "webp", "pdf"];
+
+        for extension in supported_extensions {
+            let created_file: String = format!("some-file.{}", extension);
+            let file_path = user_dir.join(created_file);
+
+            // when
+            mk_file(&file_path)?;
+
+            // then
+            assert_ok_eq!(receiver.recv(), DocsEvent::Created(file_path.into()));
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn other_event_appears_when_file_has_unsupported_extension() -> Result<()> {
+        // given
+        let watched_dir = tempdir()?;
+        let user_email: String = SafeEmail().fake();
+        let user_dir = mk_user_dir(&watched_dir, user_email)?;
+        let receiver = FsEventReceiver::new(&watched_dir)?;
+        let extension: String = Faker.fake();
+        let created_file: String = format!("some-file.{}", extension);
         let file_path = user_dir.join(created_file);
 
         // when
         mk_file(&file_path)?;
 
         // then
-        assert_ok_eq!(receiver.recv(), DocsEvent::Created(file_path.into()));
+        assert_ok_eq!(receiver.recv(), DocsEvent::Other);
 
         Ok(())
     }

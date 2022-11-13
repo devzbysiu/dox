@@ -9,6 +9,7 @@ use crate::result::GeneralErr;
 use fake::{Dummy, Fake};
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
+use tracing::instrument;
 
 /// Represents abstraction of the location on some medium.
 #[derive(Debug, Clone, PartialEq, Eq, Dummy)]
@@ -23,6 +24,7 @@ impl Location {
     /// This implementation assumes that all documents appearing in the system via one particular
     /// event, have the same extension. It's achieved by getting first path of the vector of paths
     /// and reading extension of this path.
+    #[instrument(skip(self))]
     pub fn extension(&self) -> Result<Ext, GeneralErr> {
         let Location::FS(paths) = self;
         paths

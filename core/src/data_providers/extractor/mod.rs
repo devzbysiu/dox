@@ -1,3 +1,5 @@
+use tracing::instrument;
+
 use crate::data_providers::extractor::image::FromImage;
 use crate::data_providers::extractor::pdf::FromPdf;
 use crate::entities::extension::Ext;
@@ -18,6 +20,7 @@ pub mod pdf;
 pub struct ExtractorFactoryImpl;
 
 impl ExtractorFactory for ExtractorFactoryImpl {
+    #[instrument(skip(self))]
     fn make(&self, ext: &Ext) -> Extractor {
         match ext {
             Ext::Png | Ext::Jpg | Ext::Webp => Box::new(FromImage),

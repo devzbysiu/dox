@@ -1,3 +1,5 @@
+use tracing::instrument;
+
 use crate::entities::extension::Ext;
 use crate::result::GeneralErr;
 
@@ -28,13 +30,17 @@ pub trait PathRefExt {
     fn rel_path(&self) -> String;
     fn rel_stem(&self) -> String;
     fn is_in_user_dir(&self) -> bool;
+    fn has_supported_extension(&self) -> bool;
 }
 
 impl<T: AsRef<Path>> PathRefExt for T {
+    #[instrument(skip(self))]
     fn ext(&self) -> Result<Ext, GeneralErr> {
-        Ok(Ext::try_from(
-            self.as_ref().extension().unwrap().to_str().unwrap(),
-        )?)
+        let path = self.as_ref();
+        match path.extension() {
+            Some(ext) => Ok(Ext::try_from(ext.to_str().unwrap())?),
+            None => Err(GeneralErr::InvalidExtension),
+        }
     }
 
     fn str(&self) -> &str {
@@ -93,6 +99,17 @@ impl<T: AsRef<Path>> PathRefExt for T {
         let dir_name = self.parent_name();
         base64::decode(dir_name).is_ok()
     }
+
+    fn has_supported_extension(&self) -> bool {
+        let path = self.as_ref();
+        let Some(extension) = path.extension() else {
+            return false;
+        };
+        match extension.to_str() {
+            Some("png" | "jpg" | "jpeg" | "webp" | "pdf") => true,
+            Some(_) | None => false,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -100,6 +117,7 @@ mod test {
     use super::*;
 
     use anyhow::Result;
+    use fake::{Fake, Faker};
     use std::fs::{read_dir, File};
     use std::path::PathBuf;
     use tempfile::tempdir;
@@ -205,5 +223,33 @@ mod test {
             path.file_name().unwrap().to_string_lossy().to_string(),
             filename
         );
+    }
+
+    #[test]
+    fn has_supported_extension_returns_true_for_supported_extensions() {
+        // given
+        let supported_extensions = vec!["png", "jpg", "jpeg", "webp", "pdf"];
+
+        for test_case in supported_extensions {
+            // when
+            let path = format!("/some-path/here.{}", test_case);
+            let path = Path::new(&path);
+
+            // then
+            assert!(path.has_supported_extension());
+        }
+    }
+
+    #[test]
+    fn false_is_returned_by_has_supported_extension_for_unsupported_extensions() {
+        // given
+        let unsupported_extension: String = Faker.fake(); // anything but supported ones
+
+        // when
+        let path = format!("/some-path/here.{}", unsupported_extension);
+        let path = Path::new(&path);
+
+        // then
+        assert!(!path.has_supported_extension());
     }
 }
