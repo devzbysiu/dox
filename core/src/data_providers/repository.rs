@@ -20,7 +20,7 @@ use tantivy::directory::MmapDirectory;
 use tantivy::query::{AllQuery, FuzzyTermQuery, Query};
 use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
 use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy, Term};
-use tracing::{debug, instrument};
+use tracing::{debug, instrument, warn};
 
 #[derive(Debug, Clone)]
 pub struct TantivyRepository;
@@ -58,6 +58,7 @@ impl TantivyRead {
         Self { indexes, schema }
     }
 
+    #[instrument(skip(self))]
     fn create_searcher(&self, user: User) -> Result<Searcher, SearchErr> {
         Ok(self
             .indexes
@@ -80,6 +81,7 @@ impl TantivyRead {
         self.schema.get_field(&field.to_string()).unwrap()
     }
 
+    #[instrument(skip(self, searcher))]
     fn to_search_result(
         &self,
         searcher: &Searcher,
@@ -95,6 +97,7 @@ impl TantivyRead {
         Ok(results.into())
     }
 
+    #[instrument(skip(self))]
     fn search_for(&self, user: User, query: &impl Query) -> Result<SearchResult, SearchErr> {
         let searcher = self.create_searcher(user);
         if let Err(SearchErr::MissingIndex(email)) = searcher {
@@ -110,7 +113,10 @@ impl TantivyRead {
 impl RepositoryRead for TantivyRead {
     #[instrument(skip(self))]
     fn search(&self, user: User, term: String) -> Result<SearchResult, SearchErr> {
-        self.search_for(user, &self.make_query(term))
+        debug!("search of user: '{}', for: '{}'", user.email, term);
+        let res = self.search_for(user, &self.make_query(term))?;
+        debug!("found docs: '{:?}'", res);
+        Ok(res)
     }
 
     #[instrument(skip(self))]

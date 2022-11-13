@@ -6,7 +6,7 @@ use crate::use_cases::repository::RepoWrite;
 
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::thread;
-use tracing::{debug, error, instrument, warn};
+use tracing::{debug, error, instrument, trace, warn};
 type Result<T> = std::result::Result<T, IndexerErr>;
 
 pub struct Indexer {
@@ -32,7 +32,7 @@ impl Indexer {
                 match sub.recv()? {
                     BusEvent::DataExtracted(doc_details) => self.index(doc_details, repo.clone()),
                     BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(&loc),
-                    e => debug!("event not supported in indexer: '{}'", e),
+                    e => trace!("event not supported in indexer: '{}'", e),
                 }
             }
         });

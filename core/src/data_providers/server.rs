@@ -12,18 +12,18 @@ use rocket::serde::Deserialize;
 use rocket::{get, post, State};
 use tracing::instrument;
 
-#[instrument(skip(repo_read))]
+#[instrument(skip(repo))]
 #[get("/search?<q>")]
 pub fn search(
     user: User,
     q: String,
-    repo_read: &State<RepoRead>,
+    repo: &State<RepoRead>,
 ) -> Result<Json<SearchResult>, SearchErr> {
-    Ok(Json(
-        repo_read
-            .search(user, q)
-            .context("Failed to search for query.")?,
-    ))
+    // let all_docs = repo
+    //     .all_documents(user)
+    //     .context("Failed to retrieve all thumbnails.")?;
+    // Ok(Json(all_docs))
+    Ok(Json(repo.search(user, q).context("Searching failed.")?))
 }
 
 #[instrument(skip(fs, cipher_read))]
@@ -95,8 +95,8 @@ pub fn receive_document(
     fs: &State<Fs>,
 ) -> Result<Status, DocumentSaveErr> {
     let target_path = cfg.watched_dir.join(relative_path(&user, &doc.filename));
-    let decoded_body = base64::decode(&doc.body).context("Failed to decode body.")?;
-    fs.save(target_path, &decoded_body)
+    let doc = base64::decode(&doc.body).context("Failed to decode body.")?;
+    fs.save(target_path, &doc)
         .context("Failed to save document")?;
     Ok(Status::Created)
 }
@@ -105,4 +105,57 @@ pub fn receive_document(
 pub struct Document {
     filename: String,
     body: String,
+}
+
+#[cfg(test)]
+mod test {
+    use std::{thread, time::Duration};
+
+    use crate::{
+        configuration::telemetry::init_tracing,
+        testingtools::integration::{doc, test_app},
+    };
+
+    use anyhow::Result;
+    use fake::{Fake, Faker};
+    use rocket::http::Status;
+
+    #[test]
+    fn empty_index_returns_200_and_empty_json_entries() -> Result<()> {
+        // given
+        init_tracing();
+        let app = test_app()?;
+
+        // when
+        let res = app.search(Faker.fake::<String>())?;
+
+        // then
+        assert_eq!(res.status, Status::Ok);
+        assert_eq!(res.body, r#"{"entries":[]}"#);
+
+        Ok(())
+    }
+
+    #[test]
+    fn uploading_pdf_document_triggers_indexing() -> Result<()> {
+        // given
+        init_tracing();
+        let app = test_app()?;
+
+        // when
+        app.upload_doc(doc("doc1.pdf"))?;
+        thread::sleep(Duration::from_secs(5));
+
+        // TODO: for some reason, only one word search is working - fix it
+        let res = app.search("zdjęcie")?;
+
+        // then
+        assert_eq!(res.status, Status::Ok);
+        assert_eq!(
+            res.body,
+            r#"{"entries":[{"filename":"doc1.pdf","thumbnail":"doc1.png"}]}"#
+        );
+
+        Ok(())
+    }
 }

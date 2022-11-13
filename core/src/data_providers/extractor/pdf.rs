@@ -11,7 +11,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::convert::TryFrom;
 use std::fmt::Debug;
 use std::path::Path;
-use tracing::instrument;
+use tracing::{instrument, trace};
 
 /// Extracts text from PDF file.
 ///
@@ -35,12 +35,9 @@ impl DataExtractor for FromPdf {
 #[instrument]
 fn extract(path: &SafePathBuf) -> Result<DocDetails, ExtractorErr> {
     let user = User::try_from(path)?;
-    Ok(DocDetails::new(
-        user,
-        path,
-        extract_text(path)?,
-        thumbnail(path),
-    ))
+    let text = extract_text(path)?;
+    trace!("extracted text: '{}'", text);
+    Ok(DocDetails::new(user, path, text, thumbnail(path)))
 }
 
 fn thumbnail<P: AsRef<Path>>(path: P) -> String {

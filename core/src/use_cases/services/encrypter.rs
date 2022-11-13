@@ -6,7 +6,7 @@ use crate::use_cases::cipher::CipherWrite;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use std::fs;
 use std::thread;
-use tracing::{debug, error, instrument, warn};
+use tracing::{debug, error, instrument, trace, warn};
 
 type Result<T> = std::result::Result<T, EncrypterErr>;
 
@@ -38,7 +38,7 @@ impl Encrypter {
                         error!("encryption failed");
                         publ.send(pick_response(&ev, location))?;
                     }
-                    e => debug!("event not supported in encrypter: '{}'", e),
+                    e => trace!("event not supported in encrypter: '{}'", e),
                 }
             }
         });

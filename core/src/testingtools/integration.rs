@@ -13,6 +13,7 @@ use retry::{retry, OperationResult};
 use rocket::http::Status;
 use rocket::local::blocking::Client;
 use rocket::local::blocking::LocalResponse;
+use rocket::serde::json::json;
 use rocket::serde::Serialize;
 use serde::ser::SerializeStruct;
 use serde::Serializer;
@@ -24,8 +25,9 @@ use std::sync::Mutex;
 use tempfile::TempDir;
 use thiserror::Error;
 use tracing::debug;
+use urlencoding::encode;
 
-pub fn create_test_app() -> Result<App> {
+pub fn test_app() -> Result<App> {
     let config = TestConfig::new()?;
     let ctx = Context::new(&config)?;
     let client = Client::tracked(rocket(ctx))?;
@@ -125,9 +127,37 @@ pub struct App {
 
 impl App {
     pub fn search<S: Into<String>>(&self, q: S) -> Result<ApiResponse> {
+        let q = q.into();
+        let urlencoded = encode(&q);
         let mut resp = self
             .client
-            .get(format!("/search?q={}", q.into()))
+            .get(format!("/search?q={}", urlencoded))
+            .dispatch();
+        let body = resp.read_body()?;
+        Ok(ApiResponse {
+            status: resp.status(),
+            body,
+        })
+    }
+
+    pub fn upload_doc<P: AsRef<Path>>(&self, path: P) -> Result<ApiResponse> {
+        let body = base64::encode(fs::read(&path)?);
+        let filename = path
+            .as_ref()
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+        let mut resp = self
+            .client
+            .post("/document/upload")
+            .body(
+                json!({
+                    "filename": filename,
+                    "body": body
+                })
+                .to_string(),
+            )
             .dispatch();
         let body = resp.read_body()?;
         Ok(ApiResponse {
@@ -183,4 +213,9 @@ pub enum HelperErr {
 
     #[error("Invalid utf characters.")]
     Utf8Error(#[from] std::string::FromUtf8Error),
+}
+
+pub fn doc<S: Into<String>>(name: S) -> PathBuf {
+    let name = name.into();
+    PathBuf::from(format!("res/{}", name))
 }

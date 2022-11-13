@@ -9,7 +9,7 @@ use crate::use_cases::fs::Fs;
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::path::{Path, PathBuf};
 use std::thread;
-use tracing::{debug, error, instrument, warn};
+use tracing::{debug, error, instrument, trace, warn};
 
 pub type PreprocessorCreator = Box<dyn PreprocessorFactory>;
 pub type Preprocessor = Box<dyn FilePreprocessor>;
@@ -40,7 +40,7 @@ impl ThumbnailGenerator {
                 match sub.recv()? {
                     BusEvent::NewDocs(loc) => self.do_thumbnail(loc, &factory)?,
                     BusEvent::ThumbnailEncryptionFailed(loc) => self.cleanup(loc, &fs),
-                    e => debug!("event not supported in ThumbnailGenerator: '{}'", e),
+                    e => trace!("event not supported in ThumbnailGenerator: '{}'", e),
                 }
             }
         });

@@ -6,8 +6,7 @@ use crate::helpers::PathRefExt;
 use crate::result::FsErr;
 use crate::use_cases::fs::Filesystem;
 
-use std::fs::{self, create_dir_all, File};
-use std::io::Write;
+use std::fs::{self, create_dir_all};
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
@@ -26,8 +25,7 @@ impl Filesystem for LocalFs {
             // library
             thread::sleep(Duration::from_secs(1)); // allow to start watching for new directory
         }
-        let mut file = File::create(uri)?;
-        file.write_all(buf)?;
+        fs::write(uri, buf)?;
         Ok(())
     }
 

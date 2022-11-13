@@ -7,7 +7,7 @@ use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use std::path::Path;
 use std::sync::mpsc::{channel, Receiver};
 use std::time::Duration;
-use tracing::{error, warn};
+use tracing::{debug, error, warn};
 
 pub struct FsEventReceiver {
     _watcher: RecommendedWatcher, // just keep watcher alive
@@ -30,10 +30,11 @@ impl EventReceiver for FsEventReceiver {
     fn recv(&self) -> Result<DocsEvent, EventReceiverErr> {
         match self.watcher_rx.recv() {
             Ok(DebouncedEvent::Create(path)) if path.is_file() && path.is_in_user_dir() => {
+                debug!("new doc detected: {}", path.display());
                 Ok(DocsEvent::Created(path.into()))
             }
             Ok(e) => {
-                warn!("this FS event is not supported: {:?}", e);
+                warn!("this FS event is not supported in FsEventReceiver: {:?}", e);
                 Ok(DocsEvent::Other)
             }
             Err(e) => {

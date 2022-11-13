@@ -7,7 +7,7 @@ use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher};
 
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::thread;
-use tracing::{debug, error, instrument, warn};
+use tracing::{debug, error, instrument, trace, warn};
 
 pub type ExtractorCreator = Box<dyn ExtractorFactory>;
 pub type Extractor = Box<dyn DataExtractor>;
@@ -31,7 +31,7 @@ impl TxtExtractor {
             loop {
                 match sub.recv()? {
                     BusEvent::NewDocs(loc) => self.extract_data(loc, &factory)?,
-                    e => debug!("event not supported in TxtExtractor: '{}'", e),
+                    e => trace!("event not supported in TxtExtractor: '{}'", e),
                 }
             }
         });

@@ -4,7 +4,7 @@ use crate::use_cases::bus::{BusEvent, EventBus};
 use crate::use_cases::receiver::{DocsEvent, EventRecv};
 
 use std::thread;
-use tracing::{debug, trace, warn};
+use tracing::{debug, trace};
 
 type Result<T> = std::result::Result<T, WatcherErr>;
 
@@ -35,7 +35,7 @@ impl DocsWatcher {
                         debug!("got create file event on path: '{:?}'", path);
                         publ.send(BusEvent::NewDocs(Location::FS(vec![path])))?;
                     }
-                    Ok(e) => warn!("event not supported in Watcher: '{}'", e),
+                    Ok(e) => trace!("event not supported in Watcher: '{}'", e),
                     Err(e) => trace!("watcher error: {:?}", e),
                 }
             }
