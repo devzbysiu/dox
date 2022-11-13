@@ -204,7 +204,7 @@ mod test {
     }
 
     #[test]
-    fn unsuported_extension_file_uploaded_does_nothing() -> Result<()> {
+    fn unsupported_extension_file_uploaded_does_nothing() -> Result<()> {
         // given
         init_tracing();
         let mut app = test_app().with_tracked_repo()?.start()?;
