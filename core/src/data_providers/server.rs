@@ -183,4 +183,42 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn uploading_document_without_extension_does_nothing() -> Result<()> {
+        // given
+        init_tracing();
+        let mut app = test_app().with_tracked_repo()?.start()?;
+
+        // when
+        app.upload_doc(doc("no-extension-doc"))?;
+        app.wait_til_indexed();
+
+        let res = app.search("zdjęcie")?;
+
+        // then
+        assert_eq!(res.status, Status::Ok);
+        assert_eq!(res.body, r#"{"entries":[]}"#);
+
+        Ok(())
+    }
+
+    #[test]
+    fn unsuported_extension_file_uploaded_does_nothing() -> Result<()> {
+        // given
+        init_tracing();
+        let mut app = test_app().with_tracked_repo()?.start()?;
+
+        // when
+        app.upload_doc(doc("unsupported-extension-doc.abc"))?;
+        app.wait_til_indexed();
+
+        let res = app.search("zdjęcie")?;
+
+        // then
+        assert_eq!(res.status, Status::Ok);
+        assert_eq!(res.body, r#"{"entries":[]}"#);
+
+        Ok(())
+    }
 }
