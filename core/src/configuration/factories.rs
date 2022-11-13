@@ -65,7 +65,8 @@ pub fn extractor_factory() -> ExtractorCreator {
     Box::new(ExtractorFactoryImpl)
 }
 
-pub fn repository(cfg: &Config) -> Result<(RepoRead, RepoWrite), RepositoryErr> {
+pub fn repository<C: AsRef<Config>>(cfg: &C) -> Result<(RepoRead, RepoWrite), RepositoryErr> {
+    let cfg = cfg.as_ref();
     TantivyRepository::create(cfg)
 }
 

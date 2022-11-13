@@ -1,10 +1,14 @@
 #![allow(unused)] // TODO: remove this
 
+use super::unit::Spy;
 use super::{index_dir_path, thumbnails_dir_path, watched_dir_path};
 
 use crate::configuration::factories::Context;
+use crate::entities::document::DocDetails;
+use crate::result::IndexerErr;
 use crate::startup::rocket;
 use crate::use_cases::config::Config;
+use crate::use_cases::repository::{RepoRead, RepoWrite, RepositoryWrite};
 
 use anyhow::Result;
 use once_cell::sync::OnceCell;
@@ -21,7 +25,8 @@ use std::collections::HashSet;
 use std::fs::{self, create_dir_all};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::mpsc::{channel, Sender};
+use std::sync::{Arc, Mutex};
 use tempfile::TempDir;
 use thiserror::Error;
 use tracing::debug;
@@ -37,12 +42,20 @@ pub fn test_app() -> Result<App> {
     })
 }
 
+pub fn test_app_with(ctx: Context, config: TestConfig) -> Result<App> {
+    let client = Client::tracked(rocket(ctx))?;
+    Ok(App {
+        client,
+        _config: config,
+    })
+}
+
 fn config_dir_path(config_dir: &TempDir) -> PathBuf {
     config_dir.path().join("dox.toml")
 }
 
 #[derive(Debug)]
-struct TestConfig {
+pub struct TestConfig {
     value: Config,
     watched_dir: TempDir,
     thumbnails_dir: TempDir,
@@ -50,7 +63,7 @@ struct TestConfig {
 }
 
 impl TestConfig {
-    fn new() -> Result<Self> {
+    pub fn new() -> Result<Self> {
         let watched_dir = watched_dir_path()?;
         let thumbnails_dir = thumbnails_dir_path()?;
         let index_dir = index_dir_path()?;
@@ -218,4 +231,35 @@ pub enum HelperErr {
 pub fn doc<S: Into<String>>(name: S) -> PathBuf {
     let name = name.into();
     PathBuf::from(format!("res/{}", name))
+}
+
+impl Context {
+    pub fn with_repo(mut self, (repo_read, repo_write): (RepoRead, RepoWrite)) -> Self {
+        self.repo = (repo_read, repo_write);
+        self
+    }
+}
+
+pub struct TrackedRepo {
+    repo_write: RepoWrite,
+    tx: Mutex<Sender<()>>,
+}
+
+impl TrackedRepo {
+    pub fn wrap((repo_read, repo_write): (RepoRead, RepoWrite)) -> (Spy, (RepoRead, RepoWrite)) {
+        let (tx, rx) = channel();
+        let tx = Mutex::new(tx);
+        (Spy::new(rx), (repo_read, Arc::new(Self { repo_write, tx })))
+    }
+}
+
+impl RepositoryWrite for TrackedRepo {
+    fn index(&self, docs_details: &[DocDetails]) -> Result<(), IndexerErr> {
+        debug!("before indexing");
+        self.repo_write.index(docs_details)?;
+        let tx = self.tx.lock().expect("poisoned mutex");
+        tx.send(());
+        debug!("after indexing");
+        Ok(())
+    }
 }

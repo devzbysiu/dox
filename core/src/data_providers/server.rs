@@ -19,10 +19,6 @@ pub fn search(
     q: String,
     repo: &State<RepoRead>,
 ) -> Result<Json<SearchResult>, SearchErr> {
-    // let all_docs = repo
-    //     .all_documents(user)
-    //     .context("Failed to retrieve all thumbnails.")?;
-    // Ok(Json(all_docs))
     Ok(Json(repo.search(user, q).context("Searching failed.")?))
 }
 
@@ -111,10 +107,9 @@ pub struct Document {
 mod test {
     use std::{thread, time::Duration};
 
-    use crate::{
-        configuration::telemetry::init_tracing,
-        testingtools::integration::{doc, test_app},
-    };
+    use crate::configuration::factories::{repository, Context};
+    use crate::configuration::telemetry::init_tracing;
+    use crate::testingtools::integration::{doc, test_app, test_app_with, TestConfig, TrackedRepo};
 
     use anyhow::Result;
     use fake::{Fake, Faker};
@@ -140,7 +135,10 @@ mod test {
     fn uploading_pdf_document_triggers_indexing() -> Result<()> {
         // given
         init_tracing();
-        let app = test_app()?;
+        let config = TestConfig::new()?;
+        let (spy, tracked_repo) = TrackedRepo::wrap(repository(&config)?);
+        let ctx = Context::new(&config)?.with_repo(tracked_repo);
+        let app = test_app_with(ctx, config)?;
         let search_term = "zdjęcie";
 
         let res = app.search(search_term)?;
@@ -149,8 +147,7 @@ mod test {
 
         // when
         app.upload_doc(doc("doc1.pdf"))?;
-        // TODO: implement waiting for the end of the pipeline
-        thread::sleep(Duration::from_secs(5));
+        assert!(spy.method_called()); // wait till indexed
 
         // TODO: for some reason, only one word search is working - fix it
         let res = app.search(search_term)?;
