@@ -105,11 +105,8 @@ pub struct Document {
 
 #[cfg(test)]
 mod test {
-    use std::{thread, time::Duration};
-
-    use crate::configuration::factories::{repository, Context};
     use crate::configuration::telemetry::init_tracing;
-    use crate::testingtools::integration::{doc, test_app, test_app_with, TestConfig, TrackedRepo};
+    use crate::testingtools::integration::{doc, start_test_app, test_app};
 
     use anyhow::Result;
     use fake::{Fake, Faker};
@@ -119,7 +116,7 @@ mod test {
     fn empty_index_returns_200_and_empty_json_entries() -> Result<()> {
         // given
         init_tracing();
-        let app = test_app()?;
+        let app = start_test_app()?;
 
         // when
         let res = app.search(Faker.fake::<String>())?;
@@ -135,10 +132,7 @@ mod test {
     fn uploading_pdf_document_triggers_indexing() -> Result<()> {
         // given
         init_tracing();
-        let config = TestConfig::new()?;
-        let (spy, tracked_repo) = TrackedRepo::wrap(repository(&config)?);
-        let ctx = Context::new(&config)?.with_repo(tracked_repo);
-        let app = test_app_with(ctx, config)?;
+        let mut app = test_app().with_tracked_repo()?.start()?;
         let search_term = "zdjęcie";
 
         let res = app.search(search_term)?;
@@ -147,7 +141,7 @@ mod test {
 
         // when
         app.upload_doc(doc("doc1.pdf"))?;
-        assert!(spy.method_called()); // wait till indexed
+        app.wait_til_indexed();
 
         // TODO: for some reason, only one word search is working - fix it
         let res = app.search(search_term)?;
@@ -166,7 +160,7 @@ mod test {
     fn uploading_png_document_triggers_indexing() -> Result<()> {
         // given
         init_tracing();
-        let app = test_app()?;
+        let mut app = test_app().with_tracked_repo()?.start()?;
         let search_term = "Parlamentarny";
 
         let res = app.search(search_term)?;
@@ -175,7 +169,8 @@ mod test {
 
         // when
         app.upload_doc(doc("doc1.png"))?;
-        thread::sleep(Duration::from_secs(5));
+        app.wait_til_indexed();
+        // thread::sleep(Duration::from_secs(5));
 
         // TODO: for some reason, only one word search is working - fix it
         let res = app.search(search_term)?;

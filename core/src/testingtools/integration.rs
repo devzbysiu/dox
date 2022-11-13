@@ -3,7 +3,7 @@
 use super::unit::Spy;
 use super::{index_dir_path, thumbnails_dir_path, watched_dir_path};
 
-use crate::configuration::factories::Context;
+use crate::configuration::factories::{repository, Context};
 use crate::entities::document::DocDetails;
 use crate::result::IndexerErr;
 use crate::startup::rocket;
@@ -27,26 +27,41 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 use tempfile::TempDir;
 use thiserror::Error;
 use tracing::debug;
 use urlencoding::encode;
 
-pub fn test_app() -> Result<App> {
+pub fn start_test_app() -> Result<App> {
     let config = TestConfig::new()?;
     let ctx = Context::new(&config)?;
     let client = Client::tracked(rocket(ctx))?;
     Ok(App {
-        client,
-        _config: config,
+        client: Some(client),
+        config: Some(config),
+        ctx: None,
+        tracked_repo_spy: None,
     })
+}
+
+pub fn test_app() -> App {
+    App {
+        client: None,
+        config: None,
+        ctx: None,
+        tracked_repo_spy: None,
+    }
 }
 
 pub fn test_app_with(ctx: Context, config: TestConfig) -> Result<App> {
     let client = Client::tracked(rocket(ctx))?;
     Ok(App {
-        client,
-        _config: config,
+        client: Some(client),
+        config: Some(config),
+        ctx: None,
+        tracked_repo_spy: None,
     })
 }
 
@@ -134,16 +149,49 @@ fn config_path<P: AsRef<Path>>(config_dir: P) -> PathBuf {
 }
 
 pub struct App {
-    client: Client,
-    _config: TestConfig,
+    client: Option<Client>,
+    config: Option<TestConfig>,
+    ctx: Option<Context>,
+    tracked_repo_spy: Option<Spy>,
 }
 
 impl App {
+    pub fn with_tracked_repo(mut self) -> Result<Self> {
+        let config = TestConfig::new()?;
+        let (spy, tracked_repo) = TrackedRepo::wrap(repository(&config)?);
+        let ctx = Context::new(&config)?.with_repo(tracked_repo);
+        self.config = Some(config);
+        self.ctx = Some(ctx);
+        self.tracked_repo_spy = Some(spy);
+        Ok(self)
+    }
+
+    pub fn start(mut self) -> Result<Self> {
+        let ctx = self
+            .ctx
+            .take()
+            .unwrap_or_else(|| panic!("uninitialized context"));
+        let client = Client::tracked(rocket(ctx))?;
+        self.client = Some(client);
+        Ok(self)
+    }
+
+    pub fn wait_til_indexed(&mut self) {
+        let spy = self
+            .tracked_repo_spy
+            .take()
+            .unwrap_or_else(|| panic!("uninitialized tracked repo spy"));
+        spy.method_called();
+        thread::sleep(Duration::from_millis(200));
+    }
+
     pub fn search<S: Into<String>>(&self, q: S) -> Result<ApiResponse> {
         let q = q.into();
         let urlencoded = encode(&q);
         let mut resp = self
             .client
+            .as_ref()
+            .unwrap_or_else(|| panic!("client is not initialized"))
             .get(format!("/search?q={}", urlencoded))
             .dispatch();
         let body = resp.read_body()?;
@@ -163,6 +211,8 @@ impl App {
             .to_string();
         let mut resp = self
             .client
+            .as_ref()
+            .unwrap_or_else(|| panic!("client is not initialized"))
             .post("/document/upload")
             .body(
                 json!({
