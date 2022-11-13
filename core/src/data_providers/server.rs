@@ -26,17 +26,17 @@ pub fn search(
     ))
 }
 
-#[instrument(skip(persistence, cipher_read))]
+#[instrument(skip(fs, cipher_read))]
 #[get("/thumbnail/<filename>")]
 pub fn thumbnail(
     user: User,
     filename: String,
     cfg: &State<Config>,
-    persistence: &State<Fs>,
+    fs: &State<Fs>,
     cipher_read: &State<CipherRead>,
 ) -> Result<Option<Vec<u8>>, ThumbnailReadErr> {
     let thumbnail_path = cfg.thumbnails_dir.join(relative_path(&user, filename));
-    let buf = persistence.load(thumbnail_path)?;
+    let buf = fs.load(thumbnail_path)?;
     Ok(match buf {
         Some(buf) => Some(
             cipher_read
@@ -59,20 +59,18 @@ pub fn all_thumbnails(
     Ok(Json(all_docs))
 }
 
-#[instrument(skip(persistence, cipher_read))]
+#[instrument(skip(fs, cipher_read))]
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[get("/document/<filename>")]
 pub fn document(
     user: User,
     filename: String,
     cfg: &State<Config>,
-    persistence: &State<Fs>,
+    fs: &State<Fs>,
     cipher_read: &State<CipherRead>,
 ) -> Result<Option<Vec<u8>>, DocumentReadErr> {
     let document_path = cfg.watched_dir.join(relative_path(&user, filename));
-    let buf = persistence
-        .load(document_path)
-        .context("Failed to read document.")?;
+    let buf = fs.load(document_path).context("Failed to read document.")?;
     Ok(match buf {
         Some(buf) => Some(
             cipher_read
@@ -87,19 +85,18 @@ fn relative_path<S: Into<String>>(user: &User, filename: S) -> String {
     format!("{}/{}", base64::encode(&user.email), filename.into())
 }
 
-#[instrument(skip(doc, persistence))]
+#[instrument(skip(doc, fs))]
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[post("/document/upload", data = "<doc>")]
 pub fn receive_document(
     user: User,
     doc: Json<Document>,
     cfg: &State<Config>,
-    persistence: &State<Fs>,
+    fs: &State<Fs>,
 ) -> Result<Status, DocumentSaveErr> {
     let target_path = cfg.watched_dir.join(relative_path(&user, &doc.filename));
     let decoded_body = base64::decode(&doc.body).context("Failed to decode body.")?;
-    persistence
-        .save(target_path, &decoded_body)
+    fs.save(target_path, &decoded_body)
         .context("Failed to save document")?;
     Ok(Status::Created)
 }
