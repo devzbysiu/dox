@@ -141,19 +141,53 @@ mod test {
         // given
         init_tracing();
         let app = test_app()?;
+        let search_term = "zdjęcie";
+
+        let res = app.search(search_term)?;
+        assert_eq!(res.status, Status::Ok);
+        assert_eq!(res.body, r#"{"entries":[]}"#);
 
         // when
         app.upload_doc(doc("doc1.pdf"))?;
+        // TODO: implement waiting for the end of the pipeline
         thread::sleep(Duration::from_secs(5));
 
         // TODO: for some reason, only one word search is working - fix it
-        let res = app.search("zdjęcie")?;
+        let res = app.search(search_term)?;
 
         // then
         assert_eq!(res.status, Status::Ok);
         assert_eq!(
             res.body,
             r#"{"entries":[{"filename":"doc1.pdf","thumbnail":"doc1.png"}]}"#
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn uploading_png_document_triggers_indexing() -> Result<()> {
+        // given
+        init_tracing();
+        let app = test_app()?;
+        let search_term = "Parlamentarny";
+
+        let res = app.search(search_term)?;
+        assert_eq!(res.status, Status::Ok);
+        assert_eq!(res.body, r#"{"entries":[]}"#);
+
+        // when
+        app.upload_doc(doc("doc1.png"))?;
+        thread::sleep(Duration::from_secs(5));
+
+        // TODO: for some reason, only one word search is working - fix it
+        let res = app.search(search_term)?;
+
+        // then
+        assert_eq!(res.status, Status::Ok);
+        assert_eq!(
+            res.body,
+            r#"{"entries":[{"filename":"doc1.png","thumbnail":"doc1.png"}]}"#
         );
 
         Ok(())
