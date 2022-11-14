@@ -15,7 +15,7 @@ pub trait RepositoryRead: Sync + Send {
     /// Returns list of documents mathing passed query.
     fn search(&self, user: User, q: String) -> Result<SearchResult, SearchErr>;
     /// Returns list of all indexed documents.
-    fn all_documents(&self, user: User) -> Result<SearchResult, SearchErr>;
+    fn all_docs(&self, user: User) -> Result<SearchResult, SearchErr>;
 }
 
 /// Allows to index documents.

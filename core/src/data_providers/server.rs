@@ -4,7 +4,7 @@ use crate::helpers::PathRefExt;
 use crate::result::{DocumentReadErr, DocumentSaveErr, SearchErr, ThumbnailReadErr};
 use crate::use_cases::cipher::CipherRead;
 use crate::use_cases::config::Config;
-use crate::use_cases::fs::Fs;
+use crate::use_cases::fs::Fs as Filesystem;
 use crate::use_cases::repository::{RepoRead, SearchResult};
 
 use anyhow::Context;
@@ -15,55 +15,44 @@ use rocket::{get, post, State};
 use std::path::Path;
 use tracing::instrument;
 
+type Cfg = State<Config>;
+type Fs = State<Filesystem>;
+type Cipher = State<CipherRead>;
+type Repo = State<RepoRead>;
+type Doc = Json<Document>;
+
+type SearchRes = Result<Json<SearchResult>, SearchErr>;
+type GetThumbRes = Result<Option<Vec<u8>>, ThumbnailReadErr>;
+type GetAllThumbsRes = Result<Json<SearchResult>, ThumbnailReadErr>;
+type GetDocRes = Result<Option<Vec<u8>>, DocumentReadErr>;
+type PostDocRes = Result<(Status, String), DocumentSaveErr>;
+
 #[instrument(skip(repo))]
 #[get("/search?<q>")]
-pub fn search(
-    user: User,
-    q: String,
-    repo: &State<RepoRead>,
-) -> Result<Json<SearchResult>, SearchErr> {
+pub fn search(user: User, q: String, repo: &Repo) -> SearchRes {
     Ok(Json(repo.search(user, q).context("Searching failed.")?))
 }
 
-#[instrument(skip(fs, cipher_read))]
-#[get("/thumbnail/<filename>")]
-pub fn thumbnail(
-    user: User,
-    filename: String,
-    cfg: &State<Config>,
-    fs: &State<Fs>,
-    cipher_read: &State<CipherRead>,
-) -> Result<Option<Vec<u8>>, ThumbnailReadErr> {
-    let thumbnail_path = cfg.thumbnails_dir.join(relative_path(&user, filename));
+#[instrument(skip(fs, cipher))]
+#[get("/thumbnail/<name>")]
+pub fn thumbnail(user: User, name: String, cfg: &Cfg, fs: &Fs, cipher: &Cipher) -> GetThumbRes {
+    let thumbnail_path = cfg.thumbnails_dir.join(relative_path(&user, name));
     let Some(buf) = fs.load(thumbnail_path)? else {
         return Ok(None);
     };
-    Ok(Some(
-        cipher_read.decrypt(&buf).context("Image decrypt failed.")?,
-    ))
+    Ok(Some(cipher.decrypt(&buf).context("Image decrypt failed.")?))
 }
 
 #[instrument(skip(repo))]
 #[get("/thumbnails/all")]
-pub fn all_thumbnails(
-    user: User,
-    repo: &State<RepoRead>,
-) -> Result<Json<SearchResult>, ThumbnailReadErr> {
-    Ok(Json(
-        repo.all_documents(user).context("Failed to read docs.")?,
-    ))
+pub fn all_thumbnails(user: User, repo: &Repo) -> GetAllThumbsRes {
+    Ok(Json(repo.all_docs(user).context("Failed to read docs.")?))
 }
 
 #[instrument(skip(fs, cipher))]
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[get("/document/<filename>")]
-pub fn document(
-    user: User,
-    filename: String,
-    cfg: &State<Config>,
-    fs: &State<Fs>,
-    cipher: &State<CipherRead>,
-) -> Result<Option<Vec<u8>>, DocumentReadErr> {
+pub fn document(user: User, filename: String, cfg: &Cfg, fs: &Fs, cipher: &Cipher) -> GetDocRes {
     let document_path = cfg.watched_dir.join(relative_path(&user, filename));
     let Some(buf) = fs.load(document_path).context("Failed to read document.")? else {
         return Ok(None);
@@ -78,12 +67,7 @@ fn relative_path<S: Into<String>>(user: &User, filename: S) -> String {
 #[instrument(skip(doc, fs))]
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[post("/document/upload", data = "<doc>")]
-pub fn receive_document(
-    user: User,
-    doc: Json<Document>,
-    cfg: &State<Config>,
-    fs: &State<Fs>,
-) -> Result<(Status, String), DocumentSaveErr> {
+pub fn receive_document(user: User, doc: Doc, cfg: &Cfg, fs: &Fs) -> PostDocRes {
     let filename = Path::new(&doc.filename);
     if !filename.has_supported_extension() {
         return Ok((Status::UnsupportedMediaType, wrong_extension_msg(filename)));

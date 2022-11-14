@@ -120,7 +120,7 @@ impl RepositoryRead for TantivyRead {
     }
 
     #[instrument(skip(self))]
-    fn all_documents(&self, user: User) -> Result<SearchResult, SearchErr> {
+    fn all_docs(&self, user: User) -> Result<SearchResult, SearchErr> {
         self.search_for(user, &AllQuery)
     }
 }
@@ -293,7 +293,7 @@ mod test {
         repo_write.index(&tuples_to_index)?;
         // TODO: this test should check only indexing but it's also
         // searching via all_documents
-        let all_docs = repo_read.all_documents(user)?;
+        let all_docs = repo_read.all_docs(user)?;
 
         // then
         assert_eq!(
