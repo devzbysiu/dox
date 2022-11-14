@@ -95,18 +95,21 @@ pub fn receive_document(
 ) -> Result<(Status, String), DocumentSaveErr> {
     let filename = Path::new(&doc.filename);
     if !filename.has_supported_extension() {
-        let msg = format!(
-            "File '{}' has unsupported extension. Those are supported: {:?}",
-            filename.display(),
-            supported_extensions()
-        );
-        return Ok((Status::UnsupportedMediaType, msg));
+        return Ok((Status::UnsupportedMediaType, wrong_extension_msg(filename)));
     }
-    let target_path = cfg.watched_dir.join(relative_path(&user, &doc.filename));
+    let to = cfg.watched_dir.join(relative_path(&user, &doc.filename));
     let doc = base64::decode(&doc.body).context("Failed to decode body.")?;
-    fs.save(target_path, &doc)
-        .context("Failed to save document")?;
+    fs.save(to, &doc).context("Failed to save document")?;
     Ok((Status::Created, String::new()))
+}
+
+fn wrong_extension_msg<P: AsRef<Path>>(filename: P) -> String {
+    let filename = filename.as_ref();
+    format!(
+        "File '{}' has unsupported extension. Those are supported: {:?}",
+        filename.display(),
+        supported_extensions()
+    )
 }
 
 #[derive(Debug, Deserialize)]
