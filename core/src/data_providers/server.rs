@@ -35,15 +35,12 @@ pub fn thumbnail(
     cipher_read: &State<CipherRead>,
 ) -> Result<Option<Vec<u8>>, ThumbnailReadErr> {
     let thumbnail_path = cfg.thumbnails_dir.join(relative_path(&user, filename));
-    let buf = fs.load(thumbnail_path)?;
-    Ok(match buf {
-        Some(buf) => Some(
-            cipher_read
-                .decrypt(&buf)
-                .context("Failed to decrypt thumbnail.")?,
-        ),
-        None => None,
-    })
+    let Some(buf) = fs.load(thumbnail_path)? else {
+        return Ok(None);
+    };
+    Ok(Some(
+        cipher_read.decrypt(&buf).context("Image decrypt failed.")?,
+    ))
 }
 
 #[instrument(skip(repo))]
@@ -52,13 +49,12 @@ pub fn all_thumbnails(
     user: User,
     repo: &State<RepoRead>,
 ) -> Result<Json<SearchResult>, ThumbnailReadErr> {
-    let all_docs = repo
-        .all_documents(user)
-        .context("Failed to retrieve all thumbnails.")?;
-    Ok(Json(all_docs))
+    Ok(Json(
+        repo.all_documents(user).context("Failed to read docs.")?,
+    ))
 }
 
-#[instrument(skip(fs, cipher_read))]
+#[instrument(skip(fs, cipher))]
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[get("/document/<filename>")]
 pub fn document(
@@ -66,18 +62,13 @@ pub fn document(
     filename: String,
     cfg: &State<Config>,
     fs: &State<Fs>,
-    cipher_read: &State<CipherRead>,
+    cipher: &State<CipherRead>,
 ) -> Result<Option<Vec<u8>>, DocumentReadErr> {
     let document_path = cfg.watched_dir.join(relative_path(&user, filename));
-    let buf = fs.load(document_path).context("Failed to read document.")?;
-    Ok(match buf {
-        Some(buf) => Some(
-            cipher_read
-                .decrypt(&buf)
-                .context("Failed to decrypt document.")?,
-        ),
-        None => None,
-    })
+    let Some(buf) = fs.load(document_path).context("Failed to read document.")? else {
+        return Ok(None);
+    };
+    Ok(Some(cipher.decrypt(&buf).context("Doc decrypt failed.")?))
 }
 
 fn relative_path<S: Into<String>>(user: &User, filename: S) -> String {
@@ -99,14 +90,14 @@ pub fn receive_document(
     }
     let to = cfg.watched_dir.join(relative_path(&user, &doc.filename));
     let doc = base64::decode(&doc.body).context("Failed to decode body.")?;
-    fs.save(to, &doc).context("Failed to save document")?;
+    fs.save(to, &doc).context("Failed to save document.")?;
     Ok((Status::Created, String::new()))
 }
 
 fn wrong_extension_msg<P: AsRef<Path>>(filename: P) -> String {
     let filename = filename.as_ref();
     format!(
-        "File '{}' has unsupported extension. Those are supported: {:?}",
+        "File '{}' has unsupported extension. Those are supported: {:?}.",
         filename.display(),
         supported_extensions()
     )
@@ -212,7 +203,7 @@ mod test {
         assert_eq!(res.status, Status::from_code(415).unwrap());
         assert_eq!(
             res.body,
-            r#"File 'no-extension-doc' has unsupported extension. Those are supported: [Png, Jpg, Webp, Pdf]"#
+            r#"File 'no-extension-doc' has unsupported extension. Those are supported: [Png, Jpg, Webp, Pdf]."#
         );
 
         Ok(())
@@ -231,7 +222,7 @@ mod test {
         assert_eq!(res.status, Status::from_code(415).unwrap());
         assert_eq!(
             res.body,
-            r#"File 'unsupported-extension-doc.abc' has unsupported extension. Those are supported: [Png, Jpg, Webp, Pdf]"#
+            r#"File 'unsupported-extension-doc.abc' has unsupported extension. Those are supported: [Png, Jpg, Webp, Pdf]."#
         );
 
         Ok(())
