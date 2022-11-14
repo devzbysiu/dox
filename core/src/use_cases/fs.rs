@@ -2,7 +2,7 @@
 use crate::entities::location::SafePathBuf;
 use crate::result::FsErr;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub type Fs = Arc<dyn Filesystem>;
@@ -22,5 +22,5 @@ pub trait Filesystem: Sync + Send {
     fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr>;
 
     /// Checks if file exists
-    fn exists(&self, path: &PathBuf) -> bool;
+    fn exists(&self, path: &Path) -> bool;
 }

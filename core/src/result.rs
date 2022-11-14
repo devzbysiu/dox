@@ -39,6 +39,11 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for ThumbnailReadErr {
 pub enum FsErr {
     #[error("Failed to make IO operation.")]
     IoError(#[from] std::io::Error),
+
+    // TODO: Think if there is a better way
+    #[cfg(test)]
+    #[error("Purposefully faling IO operation")]
+    TestError,
 }
 
 #[derive(Debug, Error)]

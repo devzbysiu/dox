@@ -7,7 +7,7 @@ use crate::result::FsErr;
 use crate::use_cases::fs::Filesystem;
 
 use std::fs::{self, create_dir_all};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
 use tracing::{debug, instrument};
@@ -39,7 +39,7 @@ impl Filesystem for LocalFs {
         unimplemented!()
     }
 
-    fn exists(&self, path: &PathBuf) -> bool {
+    fn exists(&self, path: &Path) -> bool {
         path.exists()
     }
 }

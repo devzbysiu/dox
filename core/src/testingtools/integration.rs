@@ -5,9 +5,11 @@ use super::{index_dir_path, thumbnails_dir_path, watched_dir_path};
 
 use crate::configuration::factories::{repository, Context};
 use crate::entities::document::DocDetails;
-use crate::result::IndexerErr;
+use crate::entities::location::SafePathBuf;
+use crate::result::{FsErr, IndexerErr};
 use crate::startup::rocket;
 use crate::use_cases::config::Config;
+use crate::use_cases::fs::{Filesystem, Fs};
 use crate::use_cases::repository::{RepoRead, RepoWrite, RepositoryWrite};
 
 use anyhow::Result;
@@ -241,6 +243,17 @@ impl AppBuilder {
         Ok(self)
     }
 
+    pub fn with_failing_load_fs(mut self) -> Result<Self> {
+        // TODO: Allow combining changes in the context.
+        // TODO: Get rid of this duplication (see `with_tracked_repo`).
+        let config = TestConfig::new()?;
+        let failing_load_fs = FailingLoadFs::new();
+        let ctx = Context::new(&config)?.with_fs(failing_load_fs);
+        self.config = Some(config);
+        self.ctx = Some(ctx);
+        Ok(self)
+    }
+
     pub fn start(mut self) -> Result<App> {
         let client = Client::tracked(rocket(self.context()))?;
         let tracked_repo_spy = self.tracked_repo_spy();
@@ -279,6 +292,11 @@ impl Context {
         self.repo = (repo_read, repo_write);
         self
     }
+
+    pub fn with_fs(mut self, fs: Fs) -> Self {
+        self.fs = fs;
+        self
+    }
 }
 
 pub struct TrackedRepo {
@@ -302,5 +320,31 @@ impl RepositoryWrite for TrackedRepo {
         tx.send(());
         debug!("after indexing");
         Ok(())
+    }
+}
+
+pub struct FailingLoadFs;
+
+impl FailingLoadFs {
+    fn new() -> Arc<Self> {
+        Arc::new(FailingLoadFs)
+    }
+}
+
+impl Filesystem for FailingLoadFs {
+    fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<(), FsErr> {
+        Ok(())
+    }
+
+    fn load(&self, uri: PathBuf) -> Result<Option<Vec<u8>>, FsErr> {
+        Err(FsErr::TestError)
+    }
+
+    fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
+        Ok(())
+    }
+
+    fn exists(&self, _path: &Path) -> bool {
+        true
     }
 }

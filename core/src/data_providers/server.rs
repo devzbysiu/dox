@@ -236,4 +236,19 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn when_fs_fails_to_load_document() -> Result<()> {
+        // given
+        init_tracing();
+        let app = test_app().with_failing_load_fs()?.start()?;
+
+        // when
+        let res = app.get_doc("not-existing-doc")?;
+
+        // then
+        assert_eq!(res.status, Status::InternalServerError);
+
+        Ok(())
+    }
 }

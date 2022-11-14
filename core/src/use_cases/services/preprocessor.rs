@@ -435,7 +435,7 @@ mod test {
             Ok(())
         }
 
-        fn exists(&self, _path: &PathBuf) -> bool {
+        fn exists(&self, _path: &Path) -> bool {
             // nothing to do
             true
         }
@@ -479,7 +479,7 @@ mod test {
             Ok(())
         }
 
-        fn exists(&self, _path: &PathBuf) -> bool {
+        fn exists(&self, _path: &Path) -> bool {
             unimplemented!()
         }
     }
