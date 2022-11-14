@@ -4,14 +4,15 @@
 //! [`ExtractorFactoryImpl`](crate::data_providers::extractor::ExtractorFactoryImpl)
 //! and [`PreprocessorFactoryImpl`](crate::data_providers::preprocessor::PreprocessorFactoryImpl).
 
-use std::convert::TryFrom;
-
 use crate::result::GeneralErr;
+
+use enum_iterator::{all, Sequence};
+use std::convert::TryFrom;
 
 /// File extension.
 ///
 /// Contains all currently supported filetypes.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Sequence)]
 pub enum Ext {
     Png,
     Jpg,
@@ -52,5 +53,26 @@ impl From<&str> for Ext {
             "pdf" => Self::Pdf,
             _ => panic!("failed to create extension from '{}'", ext),
         }
+    }
+}
+
+pub fn supported_extensions() -> Vec<Ext> {
+    all::<Ext>().collect()
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn supported_extensions_returns_all_extensions_from_enum() {
+        // given
+        let all_extensions = vec![Ext::Png, Ext::Jpg, Ext::Webp, Ext::Pdf];
+
+        // when
+        let supported_extensions = supported_extensions();
+
+        // then
+        assert_eq!(all_extensions, supported_extensions);
     }
 }

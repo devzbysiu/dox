@@ -1,4 +1,6 @@
+use crate::entities::extension::supported_extensions;
 use crate::entities::user::User;
+use crate::helpers::PathRefExt;
 use crate::result::{DocumentReadErr, DocumentSaveErr, SearchErr, ThumbnailReadErr};
 use crate::use_cases::cipher::CipherRead;
 use crate::use_cases::config::Config;
@@ -10,6 +12,7 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, post, State};
+use std::path::Path;
 use tracing::instrument;
 
 #[instrument(skip(repo))]
@@ -89,12 +92,21 @@ pub fn receive_document(
     doc: Json<Document>,
     cfg: &State<Config>,
     fs: &State<Fs>,
-) -> Result<Status, DocumentSaveErr> {
+) -> Result<(Status, String), DocumentSaveErr> {
+    let filename = Path::new(&doc.filename);
+    if !filename.has_supported_extension() {
+        let msg = format!(
+            "File '{}' has unsupported extension. Those are supported: {:?}",
+            filename.display(),
+            supported_extensions()
+        );
+        return Ok((Status::UnsupportedMediaType, msg));
+    }
     let target_path = cfg.watched_dir.join(relative_path(&user, &doc.filename));
     let doc = base64::decode(&doc.body).context("Failed to decode body.")?;
     fs.save(target_path, &doc)
         .context("Failed to save document")?;
-    Ok(Status::Created)
+    Ok((Status::Created, String::new()))
 }
 
 #[derive(Debug, Deserialize)]
@@ -185,39 +197,39 @@ mod test {
     }
 
     #[test]
-    fn uploading_document_without_extension_does_nothing() -> Result<()> {
+    fn uploading_document_without_extension_results_in_415_status_code() -> Result<()> {
         // given
         init_tracing();
-        let mut app = test_app().with_tracked_repo()?.start()?;
+        let app = test_app().with_tracked_repo()?.start()?;
 
         // when
-        app.upload_doc(doc("no-extension-doc"))?;
-        app.wait_til_indexed();
-
-        let res = app.search("zdjęcie")?;
+        let res = app.upload_doc(doc("no-extension-doc"))?;
 
         // then
-        assert_eq!(res.status, Status::Ok);
-        assert_eq!(res.body, r#"{"entries":[]}"#);
+        assert_eq!(res.status, Status::from_code(415).unwrap());
+        assert_eq!(
+            res.body,
+            r#"File 'no-extension-doc' has unsupported extension. Those are supported: [Png, Jpg, Webp, Pdf]"#
+        );
 
         Ok(())
     }
 
     #[test]
-    fn unsupported_extension_file_uploaded_does_nothing() -> Result<()> {
+    fn uploading_document_with_unsupported_extension_results_in_415_status_code() -> Result<()> {
         // given
         init_tracing();
-        let mut app = test_app().with_tracked_repo()?.start()?;
+        let app = test_app().with_tracked_repo()?.start()?;
 
         // when
-        app.upload_doc(doc("unsupported-extension-doc.abc"))?;
-        app.wait_til_indexed();
-
-        let res = app.search("zdjęcie")?;
+        let res = app.upload_doc(doc("unsupported-extension-doc.abc"))?;
 
         // then
-        assert_eq!(res.status, Status::Ok);
-        assert_eq!(res.body, r#"{"entries":[]}"#);
+        assert_eq!(res.status, Status::from_code(415).unwrap());
+        assert_eq!(
+            res.body,
+            r#"File 'unsupported-extension-doc.abc' has unsupported extension. Those are supported: [Png, Jpg, Webp, Pdf]"#
+        );
 
         Ok(())
     }
