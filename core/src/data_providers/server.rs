@@ -238,7 +238,7 @@ mod test {
     }
 
     #[test]
-    fn when_fs_fails_to_load_document() -> Result<()> {
+    fn when_fs_fails_to_load_document_internal_server_error_is_returned() -> Result<()> {
         // given
         init_tracing();
         let app = test_app().with_failing_load_fs()?.start()?;
