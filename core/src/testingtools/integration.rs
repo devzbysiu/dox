@@ -22,6 +22,8 @@ use rocket::serde::Serialize;
 use serde::ser::SerializeStruct;
 use serde::Serializer;
 use std::collections::HashSet;
+use std::convert::TryFrom;
+use std::convert::TryInto;
 use std::fs::{self, create_dir_all};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -126,15 +128,10 @@ impl App {
     pub fn search<S: Into<String>>(&self, q: S) -> Result<ApiResponse> {
         let q = q.into();
         let urlencoded = encode(&q);
-        let mut resp = self
-            .client
+        self.client
             .get(format!("/search?q={}", urlencoded))
-            .dispatch();
-        let body = resp.read_body()?;
-        Ok(ApiResponse {
-            status: resp.status(),
-            body,
-        })
+            .dispatch()
+            .try_into()
     }
 
     pub fn upload_doc<P: AsRef<Path>>(&self, path: P) -> Result<ApiResponse> {
@@ -146,8 +143,7 @@ impl App {
             .unwrap()
             .to_string_lossy()
             .to_string();
-        let mut resp = self
-            .client
+        self.client
             .post("/document/upload")
             .body(
                 json!({
@@ -156,18 +152,33 @@ impl App {
                 })
                 .to_string(),
             )
-            .dispatch();
-        let body = resp.read_body()?;
-        Ok(ApiResponse {
-            status: resp.status(),
-            body,
-        })
+            .dispatch()
+            .try_into()
+    }
+
+    pub fn get_doc<S: Into<String>>(&self, name: S) -> Result<ApiResponse> {
+        let filename = name.into();
+        self.client
+            .get(format!("/document/{}", filename))
+            .dispatch()
+            .try_into()
     }
 }
 
 pub struct ApiResponse {
     pub status: Status,
     pub body: String,
+}
+
+impl TryFrom<LocalResponse<'_>> for ApiResponse {
+    type Error = anyhow::Error;
+
+    fn try_from(mut res: LocalResponse<'_>) -> Result<Self, Self::Error> {
+        Ok(ApiResponse {
+            status: res.status(),
+            body: res.read_body()?,
+        })
+    }
 }
 
 trait LocalResponseExt {

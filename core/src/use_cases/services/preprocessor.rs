@@ -434,6 +434,11 @@ mod test {
             // nothing to do
             Ok(())
         }
+
+        fn exists(&self, _path: &PathBuf) -> bool {
+            // nothing to do
+            true
+        }
     }
 
     struct FsSpy;
@@ -472,6 +477,10 @@ mod test {
                 .send(())
                 .expect("failed to send message");
             Ok(())
+        }
+
+        fn exists(&self, _path: &PathBuf) -> bool {
+            unimplemented!()
         }
     }
 }

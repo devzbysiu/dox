@@ -20,4 +20,7 @@ pub trait Filesystem: Sync + Send {
 
     /// Removes file specified by the `path` argument.
     fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr>;
+
+    /// Checks if file exists
+    fn exists(&self, path: &PathBuf) -> bool;
 }

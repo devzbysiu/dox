@@ -38,6 +38,10 @@ impl Filesystem for LocalFs {
     fn rm_file(&self, _path: &SafePathBuf) -> Result<(), FsErr> {
         unimplemented!()
     }
+
+    fn exists(&self, path: &PathBuf) -> bool {
+        path.exists()
+    }
 }
 
 #[cfg(test)]
