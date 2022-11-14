@@ -179,18 +179,24 @@ mod test {
         // given
         init_tracing();
         let app = test_app().with_tracked_repo()?.start()?;
+        let wrong_doc = "no-extension-doc";
 
         // when
-        let res = app.upload_doc(doc("no-extension-doc"))?;
+        let res = app.upload_doc(doc(wrong_doc))?;
 
         // then
         assert_eq!(res.status, Status::from_code(415).unwrap());
-        assert_eq!(
-            res.body,
-            r#"File 'no-extension-doc' has unsupported extension. Those are supported: [Png, Jpg, Webp, Pdf]."#
-        );
+        assert_eq!(res.body, wrong_extension_msg(wrong_doc));
 
         Ok(())
+    }
+
+    fn wrong_extension_msg<S: Into<String>>(filename: S) -> String {
+        let filename = filename.into();
+        format!(
+            "File '{}' has unsupported extension. Those are supported: [Png, Jpg, Webp, Pdf].",
+            filename
+        )
     }
 
     #[test]
@@ -198,16 +204,14 @@ mod test {
         // given
         init_tracing();
         let app = test_app().with_tracked_repo()?.start()?;
+        let wrong_doc = "unsupported-extension-doc.abc";
 
         // when
-        let res = app.upload_doc(doc("unsupported-extension-doc.abc"))?;
+        let res = app.upload_doc(doc(wrong_doc))?;
 
         // then
         assert_eq!(res.status, Status::from_code(415).unwrap());
-        assert_eq!(
-            res.body,
-            r#"File 'unsupported-extension-doc.abc' has unsupported extension. Those are supported: [Png, Jpg, Webp, Pdf]."#
-        );
+        assert_eq!(res.body, wrong_extension_msg(wrong_doc));
 
         Ok(())
     }
