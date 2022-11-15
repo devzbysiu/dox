@@ -36,7 +36,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           ./core/target/            
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-${{ hashFiles('./core/Cargo.lock') }}
         restore-keys: ${{ runner.os }}-cargo-
 
     - name: Run cargo-make
