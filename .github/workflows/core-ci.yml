@@ -30,13 +30,12 @@ jobs:
       uses: actions/cache@v3
       continue-on-error: false
       with:
-        working-directory: ./core
         path: |
           ~/.cargo/bin/
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
-          target/            
+          ./core/target/            
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: ${{ runner.os }}-cargo-
 
