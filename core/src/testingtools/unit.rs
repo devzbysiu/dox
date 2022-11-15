@@ -202,6 +202,6 @@ impl Spy {
     }
 
     pub fn method_called(&self) -> bool {
-        self.rx.recv_timeout(Duration::from_secs(5)).is_ok()
+        self.rx.recv_timeout(Duration::from_secs(30)).is_ok()
     }
 }
