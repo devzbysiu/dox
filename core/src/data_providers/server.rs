@@ -128,7 +128,7 @@ mod test {
     fn uploading_pdf_document_triggers_indexing() -> Result<()> {
         // given
         init_tracing();
-        let mut app = test_app().with_tracked_repo()?.start()?;
+        let mut app = test_app()?.with_tracked_repo()?.start()?;
         let search_term = "zdjęcie";
 
         let res = app.search(search_term)?;
@@ -156,7 +156,7 @@ mod test {
     fn uploading_png_document_triggers_indexing() -> Result<()> {
         // given
         init_tracing();
-        let mut app = test_app().with_tracked_repo()?.start()?;
+        let mut app = test_app()?.with_tracked_repo()?.start()?;
         let search_term = "Parlamentarny";
 
         let res = app.search(search_term)?;
@@ -184,7 +184,7 @@ mod test {
     fn uploading_document_without_extension_results_in_415_status_code() -> Result<()> {
         // given
         init_tracing();
-        let app = test_app().with_tracked_repo()?.start()?;
+        let app = test_app()?.with_tracked_repo()?.start()?;
         let wrong_doc = "no-extension-doc";
 
         // when
@@ -209,7 +209,7 @@ mod test {
     fn uploading_document_with_unsupported_extension_results_in_415_status_code() -> Result<()> {
         // given
         init_tracing();
-        let app = test_app().with_tracked_repo()?.start()?;
+        let app = test_app()?.with_tracked_repo()?.start()?;
         let wrong_doc = "unsupported-extension-doc.abc";
 
         // when
@@ -241,7 +241,7 @@ mod test {
     fn when_fs_fails_to_load_document_internal_server_error_is_returned() -> Result<()> {
         // given
         init_tracing();
-        let app = test_app().with_failing_load_fs()?.start()?;
+        let app = test_app()?.with_failing_load_fs().start()?;
 
         // when
         let res = app.get_doc("not-existing-doc")?;

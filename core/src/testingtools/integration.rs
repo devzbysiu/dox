@@ -49,12 +49,14 @@ pub fn start_test_app() -> Result<App> {
     })
 }
 
-pub fn test_app() -> AppBuilder {
-    AppBuilder {
-        config: None,
-        ctx: None,
+pub fn test_app() -> Result<AppBuilder> {
+    let config = TestConfig::new()?;
+    let ctx = Context::new(&config)?;
+    Ok(AppBuilder {
+        config: Some(config),
+        ctx: Some(ctx),
         tracked_repo_spy: None,
-    }
+    })
 }
 
 #[derive(Debug)]
@@ -234,24 +236,19 @@ pub struct AppBuilder {
 
 impl AppBuilder {
     pub fn with_tracked_repo(mut self) -> Result<Self> {
-        let config = TestConfig::new()?;
-        let (spy, tracked_repo) = TrackedRepo::wrap(repository(&config)?);
-        let ctx = Context::new(&config)?.with_repo(tracked_repo);
-        self.config = Some(config);
-        self.ctx = Some(ctx);
+        let cfg = self.config.as_ref().unwrap();
+        let (spy, tracked_repo) = TrackedRepo::wrap(repository(cfg)?);
+        let mut cfg = self.ctx.as_mut().unwrap();
+        cfg.with_repo(tracked_repo);
         self.tracked_repo_spy = Some(spy);
         Ok(self)
     }
 
-    pub fn with_failing_load_fs(mut self) -> Result<Self> {
-        // TODO: Allow combining changes in the context.
-        // TODO: Get rid of this duplication (see `with_tracked_repo`).
-        let config = TestConfig::new()?;
-        let failing_load_fs = FailingLoadFs::new();
-        let ctx = Context::new(&config)?.with_fs(failing_load_fs);
-        self.config = Some(config);
-        self.ctx = Some(ctx);
-        Ok(self)
+    pub fn with_failing_load_fs(mut self) -> Self {
+        let cfg = self.config.as_ref().unwrap();
+        let mut cfg = self.ctx.as_mut().unwrap();
+        cfg.with_fs(FailingLoadFs::new());
+        self
     }
 
     pub fn start(mut self) -> Result<App> {
@@ -288,12 +285,12 @@ pub fn doc<S: Into<String>>(name: S) -> PathBuf {
 }
 
 impl Context {
-    pub fn with_repo(mut self, (repo_read, repo_write): (RepoRead, RepoWrite)) -> Self {
+    pub fn with_repo(&mut self, (repo_read, repo_write): (RepoRead, RepoWrite)) -> &Self {
         self.repo = (repo_read, repo_write);
         self
     }
 
-    pub fn with_fs(mut self, fs: Fs) -> Self {
+    pub fn with_fs(&mut self, fs: Fs) -> &Self {
         self.fs = fs;
         self
     }
