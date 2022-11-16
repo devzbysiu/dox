@@ -34,6 +34,9 @@ impl Location {
     }
 }
 
+/// Represents a path of resource which is always present.
+///
+/// It is not possible to create `SafePathBuf` poiting to not existing resource.
 #[derive(Debug, Clone, PartialEq, Eq, Dummy)]
 pub struct SafePathBuf(PathBuf);
 

@@ -5,7 +5,9 @@ use std::fmt::Display;
 
 pub type EventRecv = Box<dyn EventReceiver>;
 
+/// Allows to receive events of new documents appearing in the system.
 pub trait EventReceiver: Send {
+    /// Receives the event.
     fn recv(&self) -> Result<DocsEvent, EventReceiverErr>;
 }
 
