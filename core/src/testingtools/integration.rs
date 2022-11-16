@@ -131,11 +131,11 @@ impl App {
 
     pub fn search<S: Into<String>>(&self, q: S) -> Result<ApiResponse> {
         let q = q.into();
-        let urlencoded = encode(&q);
-        self.client
-            .get(format!("/search?q={}", urlencoded))
-            .dispatch()
-            .try_into()
+        self.get(format!("/search?q={}", encode(&q)))
+    }
+
+    fn get<S: Into<String>>(&self, url: S) -> Result<ApiResponse> {
+        self.client.get(url.into()).dispatch().try_into()
     }
 
     pub fn upload_doc<P: AsRef<Path>>(&self, path: P) -> Result<ApiResponse> {
@@ -161,19 +161,11 @@ impl App {
     }
 
     pub fn get_doc<S: Into<String>>(&self, name: S) -> Result<ApiResponse> {
-        let filename = name.into();
-        self.client
-            .get(format!("/document/{}", filename))
-            .dispatch()
-            .try_into()
+        self.get(format!("/document/{}", name.into()))
     }
 
     pub fn get_thumbnail<S: Into<String>>(&self, name: S) -> Result<ApiResponse> {
-        let filename = name.into();
-        self.client
-            .get(format!("/thumbnail/{}", filename))
-            .dispatch()
-            .try_into()
+        self.get(format!("/thumbnail/{}", name.into()))
     }
 }
 
