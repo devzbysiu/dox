@@ -238,6 +238,21 @@ mod test {
     }
 
     #[test]
+    fn fetching_not_existing_thumbnail_returns_404() -> Result<()> {
+        // given
+        init_tracing();
+        let app = start_test_app()?;
+
+        // when
+        let res = app.get_thumbnail("not-existing-thumbnail")?;
+
+        // then
+        assert_eq!(res.status, Status::NotFound);
+
+        Ok(())
+    }
+
+    #[test]
     fn when_fs_fails_to_load_document_internal_server_error_is_returned() -> Result<()> {
         // given
         init_tracing();

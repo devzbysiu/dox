@@ -167,6 +167,14 @@ impl App {
             .dispatch()
             .try_into()
     }
+
+    pub fn get_thumbnail<S: Into<String>>(&self, name: S) -> Result<ApiResponse> {
+        let filename = name.into();
+        self.client
+            .get(format!("/thumbnail/{}", filename))
+            .dispatch()
+            .try_into()
+    }
 }
 
 pub struct ApiResponse {
