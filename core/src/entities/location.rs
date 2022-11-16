@@ -34,6 +34,8 @@ impl Location {
     }
 }
 
+// TODO: Is this always true? Think about the case when `SafePathBuf` us used in
+// [`std::fs::remove_file`] and similar.
 /// Represents a path of resource which is always present.
 ///
 /// It is not possible to create `SafePathBuf` poiting to not existing resource.
