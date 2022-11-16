@@ -69,10 +69,9 @@ pub fn receive_document(user: User, doc: Doc, cfg: &Cfg, fs: &Fs) -> PostDocRes 
 }
 
 fn wrong_extension_msg<P: AsRef<Path>>(filename: P) -> String {
-    let filename = filename.as_ref();
     format!(
         "File '{}' has unsupported extension. Those are supported: {:?}.",
-        filename.display(),
+        filename.as_ref().display(),
         supported_extensions()
     )
 }
@@ -182,10 +181,9 @@ mod test {
     }
 
     fn wrong_extension_msg<S: Into<String>>(filename: S) -> String {
-        let filename = filename.into();
         format!(
             "File '{}' has unsupported extension. Those are supported: [Png, Jpg, Webp, Pdf].",
-            filename
+            filename.into()
         )
     }
 
