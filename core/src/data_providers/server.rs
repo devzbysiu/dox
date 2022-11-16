@@ -36,8 +36,7 @@ pub fn search(user: User, q: String, repo: &Repo) -> SearchRes {
 #[instrument(skip(fs, cipher))]
 #[get("/thumbnail/<name>")]
 pub fn thumbnail(user: User, name: String, cfg: &Cfg, fs: &Fs, cipher: &Cipher) -> GetThumbRes {
-    let thumbnail_path = cfg.thumbnails_dir.join(relative_path(&user, name));
-    let buf = fs.load(thumbnail_path)?;
+    let buf = fs.load(cfg.thumbnail_path(&user, name))?;
     Ok(Some(cipher.decrypt(&buf).context("Image decrypt failed.")?))
 }
 
@@ -49,15 +48,10 @@ pub fn all_thumbnails(user: User, repo: &Repo) -> GetAllThumbsRes {
 
 #[instrument(skip(fs, cipher))]
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
-#[get("/document/<filename>")]
-pub fn document(user: User, filename: String, cfg: &Cfg, fs: &Fs, cipher: &Cipher) -> GetDocRes {
-    let document_path = cfg.watched_dir.join(relative_path(&user, filename));
-    let buf = fs.load(document_path)?;
+#[get("/document/<name>")]
+pub fn document(user: User, name: String, cfg: &Cfg, fs: &Fs, cipher: &Cipher) -> GetDocRes {
+    let buf = fs.load(cfg.document_path(&user, name))?;
     Ok(Some(cipher.decrypt(&buf).context("Doc decrypt failed.")?))
-}
-
-fn relative_path<S: Into<String>>(user: &User, filename: S) -> String {
-    format!("{}/{}", base64::encode(&user.email), filename.into())
 }
 
 #[instrument(skip(doc, fs))]
@@ -68,7 +62,7 @@ pub fn receive_document(user: User, doc: Doc, cfg: &Cfg, fs: &Fs) -> PostDocRes 
     if !filename.has_supported_extension() {
         return Ok((Status::UnsupportedMediaType, wrong_extension_msg(filename)));
     }
-    let to = cfg.watched_dir.join(relative_path(&user, &doc.filename));
+    let to = cfg.dst_path(&user, &doc.filename);
     let doc = base64::decode(&doc.body).context("Failed to decode body.")?;
     fs.save(to, &doc).context("Failed to save document.")?;
     Ok((Status::Created, String::new()))

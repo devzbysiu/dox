@@ -2,7 +2,7 @@
 //!
 //! The actual place where the config will be saved to or read from is not tight to this interface
 //! and it's considered to be implementation detail.
-use crate::result::ConfigurationErr;
+use crate::{entities::user::User, result::ConfigurationErr};
 
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -45,6 +45,27 @@ pub struct Config {
     pub watched_dir: PathBuf,
     pub thumbnails_dir: PathBuf,
     pub index_dir: PathBuf,
+}
+
+impl Config {
+    // TODO: Cover this with tests
+    pub fn thumbnail_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
+        self.thumbnails_dir.join(relative_path(user, name))
+    }
+
+    // TODO: Cover this with tests
+    pub fn document_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
+        self.watched_dir.join(relative_path(user, name))
+    }
+
+    // TODO: Cover this with tests
+    pub fn dst_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
+        self.watched_dir.join(relative_path(user, name))
+    }
+}
+
+fn relative_path<S: Into<String>>(user: &User, filename: S) -> String {
+    format!("{}/{}", base64::encode(&user.email), filename.into())
 }
 
 impl Default for Config {
