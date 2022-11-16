@@ -425,19 +425,14 @@ mod test {
             Ok(())
         }
 
-        fn load(&self, _uri: PathBuf) -> Result<Option<Vec<u8>>, FsErr> {
+        fn load(&self, _uri: PathBuf) -> Result<Vec<u8>, FsErr> {
             // nothing to do
-            Ok(Some(Vec::new()))
+            Ok(Vec::new())
         }
 
         fn rm_file(&self, _path: &SafePathBuf) -> Result<(), FsErr> {
             // nothing to do
             Ok(())
-        }
-
-        fn exists(&self, _path: &Path) -> bool {
-            // nothing to do
-            true
         }
     }
 
@@ -465,7 +460,7 @@ mod test {
             unimplemented!()
         }
 
-        fn load(&self, _uri: PathBuf) -> Result<Option<Vec<u8>>, FsErr> {
+        fn load(&self, _uri: PathBuf) -> Result<Vec<u8>, FsErr> {
             unimplemented!()
         }
 
@@ -477,10 +472,6 @@ mod test {
                 .send(())
                 .expect("failed to send message");
             Ok(())
-        }
-
-        fn exists(&self, _path: &Path) -> bool {
-            unimplemented!()
         }
     }
 }

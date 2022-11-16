@@ -7,7 +7,7 @@ use crate::result::FsErr;
 use crate::use_cases::fs::Filesystem;
 
 use std::fs::{self, create_dir_all};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 use tracing::{debug, instrument};
@@ -30,17 +30,13 @@ impl Filesystem for LocalFs {
     }
 
     #[instrument(skip(self))]
-    fn load(&self, uri: PathBuf) -> Result<Option<Vec<u8>>, FsErr> {
+    fn load(&self, uri: PathBuf) -> Result<Vec<u8>, FsErr> {
         debug!("returning file under '{}'", uri.display());
-        Ok(Some(fs::read(uri)?))
+        Ok(fs::read(uri)?)
     }
 
     fn rm_file(&self, _path: &SafePathBuf) -> Result<(), FsErr> {
         unimplemented!()
-    }
-
-    fn exists(&self, path: &Path) -> bool {
-        path.exists()
     }
 }
 
@@ -154,7 +150,7 @@ mod test {
         let res = fs.load(file_path);
 
         // then
-        assert_ok_eq!(res, Some(data.as_bytes().to_vec()));
+        assert_ok_eq!(res, data.as_bytes().to_vec());
 
         Ok(())
     }

@@ -333,15 +333,11 @@ impl Filesystem for FailingLoadFs {
         Ok(())
     }
 
-    fn load(&self, uri: PathBuf) -> Result<Option<Vec<u8>>, FsErr> {
+    fn load(&self, uri: PathBuf) -> Result<Vec<u8>, FsErr> {
         Err(FsErr::TestError)
     }
 
     fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
         Ok(())
-    }
-
-    fn exists(&self, _path: &Path) -> bool {
-        true
     }
 }

@@ -24,7 +24,7 @@ type Doc = Json<Document>;
 type SearchRes = Result<Json<SearchResult>, SearchErr>;
 type GetThumbRes = Result<Option<Vec<u8>>, ThumbnailReadErr>;
 type GetAllThumbsRes = Result<Json<SearchResult>, ThumbnailReadErr>;
-type GetDocRes = Result<(Status, Option<Vec<u8>>), DocumentReadErr>;
+type GetDocRes = Result<Option<Vec<u8>>, DocumentReadErr>;
 type PostDocRes = Result<(Status, String), DocumentSaveErr>;
 
 #[instrument(skip(repo))]
@@ -37,9 +37,7 @@ pub fn search(user: User, q: String, repo: &Repo) -> SearchRes {
 #[get("/thumbnail/<name>")]
 pub fn thumbnail(user: User, name: String, cfg: &Cfg, fs: &Fs, cipher: &Cipher) -> GetThumbRes {
     let thumbnail_path = cfg.thumbnails_dir.join(relative_path(&user, name));
-    let Some(buf) = fs.load(thumbnail_path)? else {
-        return Ok(None);
-    };
+    let buf = fs.load(thumbnail_path)?;
     Ok(Some(cipher.decrypt(&buf).context("Image decrypt failed.")?))
 }
 
@@ -54,16 +52,8 @@ pub fn all_thumbnails(user: User, repo: &Repo) -> GetAllThumbsRes {
 #[get("/document/<filename>")]
 pub fn document(user: User, filename: String, cfg: &Cfg, fs: &Fs, cipher: &Cipher) -> GetDocRes {
     let document_path = cfg.watched_dir.join(relative_path(&user, filename));
-    if !fs.exists(&document_path) {
-        return Ok((Status::NotFound, None));
-    }
-    let Some(buf) = fs.load(document_path).context("Failed to read document.")? else {
-        return Ok((Status::InternalServerError, None));
-    };
-    Ok((
-        Status::Ok,
-        Some(cipher.decrypt(&buf).context("Doc decrypt failed.")?),
-    ))
+    let buf = fs.load(document_path)?;
+    Ok(Some(cipher.decrypt(&buf).context("Doc decrypt failed.")?))
 }
 
 fn relative_path<S: Into<String>>(user: &User, filename: S) -> String {
@@ -238,21 +228,6 @@ mod test {
     }
 
     #[test]
-    fn fetching_not_existing_thumbnail_returns_404() -> Result<()> {
-        // given
-        init_tracing();
-        let app = start_test_app()?;
-
-        // when
-        let res = app.get_thumbnail("not-existing-thumbnail")?;
-
-        // then
-        assert_eq!(res.status, Status::NotFound);
-
-        Ok(())
-    }
-
-    #[test]
     fn when_fs_fails_to_load_document_internal_server_error_is_returned() -> Result<()> {
         // given
         init_tracing();
@@ -263,6 +238,21 @@ mod test {
 
         // then
         assert_eq!(res.status, Status::InternalServerError);
+
+        Ok(())
+    }
+
+    #[test]
+    fn fetching_not_existing_thumbnail_returns_404() -> Result<()> {
+        // given
+        init_tracing();
+        let app = start_test_app()?;
+
+        // when
+        let res = app.get_thumbnail("not-existing-thumbnail")?;
+
+        // then
+        assert_eq!(res.status, Status::NotFound);
 
         Ok(())
     }

@@ -50,11 +50,17 @@ pub enum FsErr {
 pub enum DocumentReadErr {
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
+
+    #[error("Failed to load document.")]
+    LoadError(#[from] FsErr),
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for DocumentReadErr {
     fn respond_to(self, _request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
-        Err(Status::new(500))
+        Err(match self {
+            Self::LoadError(FsErr::IoError(e)) if e.kind() == NotFound => Status::NotFound,
+            Self::UnexpectedError(_) | Self::LoadError(_) => Status::InternalServerError,
+        })
     }
 }
 
