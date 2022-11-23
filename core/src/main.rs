@@ -2,9 +2,7 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::enum_variant_names)]
 
-use configuration::factories::{config_loader, config_resolver};
-
-use crate::configuration::factories::Context;
+use crate::configuration::factories::{config_loader, config_resolver, Context};
 use crate::configuration::telemetry::init_tracing;
 use crate::result::SetupErr;
 use crate::startup::rocket;
