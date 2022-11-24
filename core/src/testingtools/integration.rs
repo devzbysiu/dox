@@ -1,16 +1,18 @@
 #![allow(unused)] // TODO: remove this
 
-use super::unit::Spy;
-use super::{index_dir_path, thumbnails_dir_path, watched_dir_path};
-
 use crate::configuration::factories::{repository, Context};
 use crate::entities::document::DocDetails;
 use crate::entities::location::SafePathBuf;
-use crate::result::{FsErr, IndexerErr};
+use crate::entities::user::User;
+use crate::result::{FsErr, IndexerErr, SearchErr};
 use crate::startup::rocket;
+use crate::testingtools::unit::Spy;
+use crate::testingtools::{index_dir_path, thumbnails_dir_path, watched_dir_path};
 use crate::use_cases::config::Config;
 use crate::use_cases::fs::{Filesystem, Fs};
-use crate::use_cases::repository::{RepoRead, RepoWrite, RepositoryWrite};
+use crate::use_cases::repository::{
+    Repo, RepoRead, RepoWrite, Repository, RepositoryRead, RepositoryWrite, SearchResult,
+};
 
 use anyhow::Result;
 use once_cell::sync::OnceCell;
@@ -45,7 +47,7 @@ pub fn start_test_app() -> Result<App> {
     Ok(App {
         client,
         config,
-        tracked_repo_spy: None,
+        repo_spies: None,
     })
 }
 
@@ -55,7 +57,7 @@ pub fn test_app() -> Result<AppBuilder> {
     Ok(AppBuilder {
         config: Some(config),
         ctx: Some(ctx),
-        tracked_repo_spy: None,
+        repo_spies: None,
     })
 }
 
@@ -114,17 +116,16 @@ impl Serialize for TestConfig {
 pub struct App {
     client: Client,
     config: TestConfig,
-    tracked_repo_spy: Option<Spy>,
+    repo_spies: Option<RepoSpies>,
 }
 
 impl App {
     pub fn wait_til_indexed(&mut self) {
-        let spy = self.tracked_repo_spy();
-        spy.method_called();
+        self.repo_spies().write.method_called();
     }
 
-    fn tracked_repo_spy(&self) -> &Spy {
-        self.tracked_repo_spy
+    fn repo_spies(&self) -> &RepoSpies {
+        self.repo_spies
             .as_ref()
             .unwrap_or_else(|| panic!("uninitialized tracked repo spy"))
     }
@@ -231,16 +232,16 @@ pub enum HelperErr {
 pub struct AppBuilder {
     config: Option<TestConfig>,
     ctx: Option<Context>,
-    tracked_repo_spy: Option<Spy>,
+    repo_spies: Option<RepoSpies>,
 }
 
 impl AppBuilder {
     pub fn with_tracked_repo(mut self) -> Result<Self> {
         let cfg = self.config.as_ref().unwrap();
-        let (spy, tracked_repo) = TrackedRepo::wrap(repository(cfg)?);
+        let (repo_spies, tracked_repo) = TrackedRepo::wrap(&repository(cfg)?);
         let mut cfg = self.ctx.as_mut().unwrap();
         cfg.with_repo(tracked_repo);
-        self.tracked_repo_spy = Some(spy);
+        self.repo_spies = Some(repo_spies);
         Ok(self)
     }
 
@@ -253,12 +254,12 @@ impl AppBuilder {
 
     pub fn start(mut self) -> Result<App> {
         let client = Client::tracked(rocket(self.context()))?;
-        let tracked_repo_spy = self.tracked_repo_spy();
+        let repo_spies = self.repo_spies();
         let config = self.config();
         Ok(App {
             client,
             config,
-            tracked_repo_spy,
+            repo_spies,
         })
     }
 
@@ -268,8 +269,8 @@ impl AppBuilder {
             .unwrap_or_else(|| panic!("uninitialized context"))
     }
 
-    fn tracked_repo_spy(&mut self) -> Option<Spy> {
-        self.tracked_repo_spy.take()
+    fn repo_spies(&mut self) -> Option<RepoSpies> {
+        self.repo_spies.take()
     }
 
     fn config(&mut self) -> TestConfig {
@@ -285,8 +286,8 @@ pub fn doc<S: Into<String>>(name: S) -> PathBuf {
 }
 
 impl Context {
-    pub fn with_repo(&mut self, (repo_read, repo_write): (RepoRead, RepoWrite)) -> &Self {
-        self.repo = (repo_read, repo_write);
+    pub fn with_repo(&mut self, repo: Repo) -> &Self {
+        self.repo = repo;
         self
     }
 
@@ -297,27 +298,84 @@ impl Context {
 }
 
 pub struct TrackedRepo {
-    repo_write: RepoWrite,
-    tx: Mutex<Sender<()>>,
+    read: RepoRead,
+    write: RepoWrite,
 }
 
 impl TrackedRepo {
-    pub fn wrap((repo_read, repo_write): (RepoRead, RepoWrite)) -> (Spy, (RepoRead, RepoWrite)) {
-        let (tx, rx) = channel();
-        let tx = Mutex::new(tx);
-        (Spy::new(rx), (repo_read, Arc::new(Self { repo_write, tx })))
+    pub fn wrap(repo: &Repo) -> (RepoSpies, Repo) {
+        let (read_tx, read_rx) = channel();
+        let (write_tx, write_rx) = channel();
+        let read_tx = Mutex::new(read_tx);
+        let write_tx = Mutex::new(write_tx);
+        let read = Spy::new(read_rx);
+        let write = Spy::new(write_rx);
+        (
+            RepoSpies { read, write },
+            Box::new(Self {
+                write: TrackedWrite::create(repo.write(), write_tx),
+                read: TrackedRead::create(repo.read(), read_tx),
+            }),
+        )
     }
 }
 
-impl RepositoryWrite for TrackedRepo {
+impl Repository for TrackedRepo {
+    fn read(&self) -> RepoRead {
+        self.read.clone()
+    }
+
+    fn write(&self) -> RepoWrite {
+        self.write.clone()
+    }
+}
+
+pub struct TrackedRead {
+    read: RepoRead,
+    tx: Mutex<Sender<()>>,
+}
+
+impl TrackedRead {
+    fn create(read: RepoRead, tx: Mutex<Sender<()>>) -> RepoRead {
+        Arc::new(Self { read, tx })
+    }
+}
+
+impl RepositoryRead for TrackedRead {
+    fn search(&self, user: User, q: String) -> Result<SearchResult, SearchErr> {
+        self.read.search(user, q)
+    }
+
+    fn all_docs(&self, user: User) -> Result<SearchResult, SearchErr> {
+        self.read.all_docs(user)
+    }
+}
+
+pub struct TrackedWrite {
+    write: RepoWrite,
+    tx: Mutex<Sender<()>>,
+}
+
+impl TrackedWrite {
+    fn create(write: RepoWrite, tx: Mutex<Sender<()>>) -> RepoWrite {
+        Arc::new(Self { write, tx })
+    }
+}
+
+impl RepositoryWrite for TrackedWrite {
     fn index(&self, docs_details: &[DocDetails]) -> Result<(), IndexerErr> {
         debug!("before indexing");
-        self.repo_write.index(docs_details)?;
+        self.write.index(docs_details)?;
         let tx = self.tx.lock().expect("poisoned mutex");
         tx.send(());
         debug!("after indexing");
         Ok(())
     }
+}
+
+pub struct RepoSpies {
+    read: Spy,
+    write: Spy,
 }
 
 pub struct FailingLoadFs;

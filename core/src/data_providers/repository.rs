@@ -6,7 +6,8 @@ use crate::entities::user::User;
 use crate::result::{IndexerErr, RepositoryErr, SearchErr};
 use crate::use_cases::config::Config;
 use crate::use_cases::repository::{
-    RepoRead, RepoWrite, RepositoryRead, RepositoryWrite, SearchEntry, SearchResult,
+    Repo, RepoRead, RepoWrite, Repository, RepositoryRead, RepositoryWrite, SearchEntry,
+    SearchResult,
 };
 
 use core::fmt;
@@ -22,11 +23,13 @@ use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
 use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy, Term};
 use tracing::{debug, instrument, warn};
 
-#[derive(Debug, Clone)]
-pub struct TantivyRepository;
+pub struct TantivyRepository {
+    read: RepoRead,
+    write: RepoWrite,
+}
 
 impl TantivyRepository {
-    pub fn create(cfg: &Config) -> Result<(RepoRead, RepoWrite), RepositoryErr> {
+    pub fn create(cfg: &Config) -> Result<Repo, RepositoryErr> {
         if cfg.index_dir.exists() && cfg.index_dir.is_file() {
             return Err(RepositoryErr::InvalidIndexPath(format!(
                 "It needs to be a directory: '{}'",
@@ -40,10 +43,20 @@ impl TantivyRepository {
         schema_builder.add_text_field(&Fields::Thumbnail.to_string(), TEXT | STORED);
         let schema = schema_builder.build();
         let indexes = Arc::new(DashMap::new());
-        Ok((
-            Box::new(TantivyRead::new(indexes.clone(), schema.clone())),
-            Arc::new(TantivyWrite::new(indexes, cfg.index_dir.clone(), schema)),
-        ))
+        Ok(Box::new(Self {
+            read: Arc::new(TantivyRead::new(indexes.clone(), schema.clone())),
+            write: Arc::new(TantivyWrite::new(indexes, cfg.index_dir.clone(), schema)),
+        }))
+    }
+}
+
+impl Repository for TantivyRepository {
+    fn read(&self) -> RepoRead {
+        self.read.clone()
+    }
+
+    fn write(&self) -> RepoWrite {
+        self.write.clone()
     }
 }
 
@@ -278,7 +291,7 @@ mod test {
     fn test_index_docs() -> Result<()> {
         // given
         let config = create_config()?;
-        let (repo_read, repo_write) = TantivyRepository::create(&config)?;
+        let repo = TantivyRepository::create(&config)?;
         let user_email = FAKE_USER_EMAIL;
         let user = User::new(user_email);
         let tuples_to_index = vec![
@@ -290,10 +303,10 @@ mod test {
         ];
 
         // when
-        repo_write.index(&tuples_to_index)?;
+        repo.write().index(&tuples_to_index)?;
         // TODO: this test should check only indexing but it's also
         // searching via all_documents
-        let all_docs = repo_read.all_docs(user)?;
+        let all_docs = repo.read().all_docs(user)?;
 
         // then
         assert_eq!(
@@ -315,7 +328,7 @@ mod test {
     fn test_search() -> Result<()> {
         // given
         let config = create_config()?;
-        let (repo_read, repo_write) = TantivyRepository::create(&config)?;
+        let repo = TantivyRepository::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
             DocDetails::new(user.clone(), "filename1", "body", "thumbnail1"),
@@ -326,8 +339,8 @@ mod test {
         ];
 
         // when
-        repo_write.index(&tuples_to_index)?;
-        let results = repo_read.search(user, "line".into())?;
+        repo.write().index(&tuples_to_index)?;
+        let results = repo.read().search(user, "line".into())?;
 
         // then
         assert_eq!(
@@ -342,7 +355,7 @@ mod test {
     fn test_search_with_fuzziness() -> Result<()> {
         // given
         let config = create_config()?;
-        let (repo_read, repo_write) = TantivyRepository::create(&config)?;
+        let repo = TantivyRepository::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
             DocDetails::new(user.clone(), "filename1", "some body", "thumbnail1"),
@@ -351,11 +364,11 @@ mod test {
         ];
 
         // when
-        repo_write.index(&tuples_to_index)?;
+        repo.write().index(&tuples_to_index)?;
         // NOTE: it's not the same word as above, two letters of fuzziness is fine
-        let first_results = repo_read.search(user.clone(), "9fAB".into())?;
+        let first_results = repo.read().search(user.clone(), "9fAB".into())?;
         // NOTE: three letters is too much
-        let second_results = repo_read.search(user, "9ABC".into())?;
+        let second_results = repo.read().search(user, "9ABC".into())?;
 
         // then
         assert_eq!(

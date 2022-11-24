@@ -60,8 +60,8 @@ fn setup_core(ctx: Context) -> Result<(RepoRead, CipherRead), SetupErr> {
     watcher.run(event_watcher);
     preprocessor.run(preprocessor_factory, fs);
     extractor.run(extractor_factory);
-    indexer.run(repo.1); // TODO: get rid of those '.1' and '.0'
-    encrypter.run(cipher.1);
+    indexer.run(repo.write());
+    encrypter.run(cipher.1); // TODO: get rid of those '.1' and '.0'
 
-    Ok((repo.0, cipher.0))
+    Ok((repo.read(), cipher.0))
 }

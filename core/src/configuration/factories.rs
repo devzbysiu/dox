@@ -12,7 +12,7 @@ use crate::use_cases::cipher::{CipherRead, CipherWrite};
 use crate::use_cases::config::{CfgLoader, CfgResolver, Config};
 use crate::use_cases::fs::Fs;
 use crate::use_cases::receiver::EventRecv;
-use crate::use_cases::repository::{RepoRead, RepoWrite};
+use crate::use_cases::repository::Repo;
 use crate::use_cases::services::extractor::ExtractorCreator;
 use crate::use_cases::services::preprocessor::PreprocessorCreator;
 
@@ -25,7 +25,7 @@ pub struct Context {
     pub event_watcher: EventRecv,
     pub preprocessor_factory: PreprocessorCreator,
     pub extractor_factory: ExtractorCreator,
-    pub repo: (RepoRead, RepoWrite),
+    pub repo: Repo,
     pub cipher: (CipherRead, CipherWrite),
 }
 
@@ -65,7 +65,7 @@ pub fn extractor_factory() -> ExtractorCreator {
     Box::new(ExtractorFactoryImpl)
 }
 
-pub fn repository<C: AsRef<Config>>(cfg: &C) -> Result<(RepoRead, RepoWrite), RepositoryErr> {
+pub fn repository<C: AsRef<Config>>(cfg: &C) -> Result<Repo, RepositoryErr> {
     let cfg = cfg.as_ref();
     TantivyRepository::create(cfg)
 }

@@ -7,8 +7,14 @@ use serde::Serialize;
 use std::collections::HashSet;
 use std::sync::Arc;
 
-pub type RepoRead = Box<dyn RepositoryRead>;
+pub type Repo = Box<dyn Repository>;
+pub type RepoRead = Arc<dyn RepositoryRead>;
 pub type RepoWrite = Arc<dyn RepositoryWrite>;
+
+pub trait Repository: Send {
+    fn read(&self) -> RepoRead;
+    fn write(&self) -> RepoWrite;
+}
 
 /// Allows to search and list all indexed documents .
 pub trait RepositoryRead: Sync + Send {
