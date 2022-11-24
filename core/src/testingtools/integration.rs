@@ -4,6 +4,7 @@ use crate::configuration::factories::{repository, Context};
 use crate::entities::document::DocDetails;
 use crate::entities::location::SafePathBuf;
 use crate::entities::user::User;
+use crate::helpers::PathRefExt;
 use crate::result::{FsErr, IndexerErr, SearchErr};
 use crate::startup::rocket;
 use crate::testingtools::unit::Spy;
@@ -141,13 +142,7 @@ impl App {
 
     pub fn upload_doc<P: AsRef<Path>>(&self, path: P) -> Result<ApiResponse> {
         let body = base64::encode(fs::read(&path)?);
-        // TODO: cleanup getting the name
-        let filename = path
-            .as_ref()
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
+        let filename = path.filename();
         self.client
             .post("/document/upload")
             .body(
