@@ -3,7 +3,7 @@ use crate::helpers::PathRefExt;
 use crate::startup::rocket;
 use crate::testingtools::integration::api::ApiResponse;
 use crate::testingtools::integration::config::TestConfig;
-use crate::testingtools::integration::{FailingLoadFs, RepoSpies, TrackedRepo};
+use crate::testingtools::integration::services::{FailingLoadFs, RepoSpies, TrackedRepo};
 use crate::use_cases::fs::Fs;
 use crate::use_cases::repository::Repo;
 
@@ -45,7 +45,7 @@ pub struct App {
 
 impl App {
     pub fn wait_til_indexed(&mut self) {
-        self.repo_spies().write.method_called();
+        self.repo_spies().write().method_called();
     }
 
     fn repo_spies(&self) -> &RepoSpies {
