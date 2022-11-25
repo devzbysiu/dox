@@ -1,6 +1,4 @@
-#![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
 #![allow(clippy::module_name_repetitions)]
-#![allow(clippy::enum_variant_names)]
 
 use crate::configuration::factories::{config_loader, config_resolver, Context};
 use crate::configuration::telemetry::init_tracing;
@@ -24,19 +22,15 @@ mod testingtools;
 #[rocket::main]
 async fn main() -> Result<(), SetupErr> {
     init_tracing();
-    let path_override = env::var("DOX_CONFIG_PATH")
-        .ok()
-        .or_else(|| env::args().nth(1))
-        .map(PathBuf::from);
-
-    let resolver = config_resolver(config_loader());
-    let cfg = resolver
-        .handle_config(path_override)
-        .expect("failed to get config");
-
-    let ctx = Context::new(cfg)?;
-
-    let _rocket = rocket(ctx).launch().await?;
+    let cfg = config_resolver(config_loader()).handle_config(path_override())?;
+    let _rocket = rocket(Context::new(cfg)?).launch().await?;
 
     Ok(())
+}
+
+fn path_override() -> Option<PathBuf> {
+    env::var("DOX_CONFIG_PATH")
+        .ok()
+        .or_else(|| env::args().nth(1))
+        .map(PathBuf::from)
 }

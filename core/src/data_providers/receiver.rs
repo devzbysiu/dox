@@ -39,7 +39,7 @@ impl EventReceiver for FsEventReceiver {
             }
             Err(e) => {
                 error!("watch error: {:?}", e);
-                Err(EventReceiverErr::ReceiveError(e))
+                Err(EventReceiverErr::Receive(e))
             }
         }
     }

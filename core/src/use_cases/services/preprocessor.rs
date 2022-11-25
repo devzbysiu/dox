@@ -387,9 +387,7 @@ mod test {
                 .expect("poisoned mutex")
                 .send(())
                 .expect("failed to send message");
-            Err(PreprocessorErr::BusError(BusErr::GenericError(anyhow!(
-                "error"
-            ))))
+            Err(PreprocessorErr::Bus(BusErr::Generic(anyhow!("error"))))
         }
     }
 

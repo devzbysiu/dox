@@ -122,7 +122,7 @@ impl Filesystem for FailingLoadFs {
     }
 
     fn load(&self, _uri: PathBuf) -> Result<Vec<u8>, FsErr> {
-        Err(FsErr::TestError)
+        Err(FsErr::Test)
     }
 
     fn rm_file(&self, _path: &SafePathBuf) -> Result<(), FsErr> {

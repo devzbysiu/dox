@@ -1,3 +1,5 @@
+#![allow(clippy::no_effect_underscore_binding)] // needed because of how rocket macros work
+
 use crate::configuration::factories::Context;
 use crate::data_providers::server::{
     all_thumbnails, document, receive_document, search, thumbnail,

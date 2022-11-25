@@ -165,6 +165,6 @@ mod test {
         let res = fs.load(file_path);
 
         // then
-        assert_matches!(res, Err(FsErr::IoError(e)) if e.kind() == ErrorKind::NotFound);
+        assert_matches!(res, Err(FsErr::Io(e)) if e.kind() == ErrorKind::NotFound);
     }
 }

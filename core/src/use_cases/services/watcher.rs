@@ -133,7 +133,7 @@ mod test {
 
     impl EventReceiver for ErroneousEventReceiver {
         fn recv(&self) -> std::result::Result<DocsEvent, EventReceiverErr> {
-            Err(EventReceiverErr::ReceiveError(RecvError))
+            Err(EventReceiverErr::Receive(RecvError))
         }
     }
 }

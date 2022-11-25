@@ -54,7 +54,7 @@ fn encrypt_all(location: &Location, cipher: &CipherWrite) -> Result<bool> {
         .inspect(report_errors)
         .all(|r| r.is_ok())
         .then_some(true)
-        .ok_or(EncrypterErr::AllOrNothingErr)
+        .ok_or(EncrypterErr::AllOrNothing)
 }
 
 fn report_errors(res: &Result<()>) {
@@ -317,7 +317,7 @@ mod test {
                 .expect("poisoned mutex")
                 .send(())
                 .expect("failed to send message");
-            Err(CipherErr::ChachaError(chacha20poly1305::Error))
+            Err(CipherErr::Chacha(chacha20poly1305::Error))
         }
     }
 

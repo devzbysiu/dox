@@ -20,17 +20,17 @@ impl From<std::convert::Infallible> for GeneralErr {
 #[derive(Debug, Error)]
 pub enum ThumbnailReadErr {
     #[error(transparent)]
-    UnexpectedError(#[from] anyhow::Error),
+    Unexpected(#[from] anyhow::Error),
 
     #[error("Failed to load thumbnail.")]
-    LoadError(#[from] FsErr),
+    Load(#[from] FsErr),
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for ThumbnailReadErr {
     fn respond_to(self, _request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
         Err(match self {
-            Self::LoadError(FsErr::IoError(e)) if e.kind() == NotFound => Status::NotFound,
-            Self::UnexpectedError(_) | Self::LoadError(_) => Status::InternalServerError,
+            Self::Load(FsErr::Io(e)) if e.kind() == NotFound => Status::NotFound,
+            Self::Unexpected(_) | Self::Load(_) => Status::InternalServerError,
         })
     }
 }
@@ -38,28 +38,28 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for ThumbnailReadErr {
 #[derive(Debug, Error)]
 pub enum FsErr {
     #[error("Failed to make IO operation.")]
-    IoError(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
 
     // TODO: Think if there is a better way
     #[cfg(test)]
     #[error("Purposefully faling IO operation")]
-    TestError,
+    Test,
 }
 
 #[derive(Debug, Error)]
 pub enum DocumentReadErr {
     #[error(transparent)]
-    UnexpectedError(#[from] anyhow::Error),
+    Unexpected(#[from] anyhow::Error),
 
     #[error("Failed to load document.")]
-    LoadError(#[from] FsErr),
+    Load(#[from] FsErr),
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for DocumentReadErr {
     fn respond_to(self, _request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
         Err(match self {
-            Self::LoadError(FsErr::IoError(e)) if e.kind() == NotFound => Status::NotFound,
-            Self::UnexpectedError(_) | Self::LoadError(_) => Status::InternalServerError,
+            Self::Load(FsErr::Io(e)) if e.kind() == NotFound => Status::NotFound,
+            Self::Unexpected(_) | Self::Load(_) => Status::InternalServerError,
         })
     }
 }
@@ -67,13 +67,13 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for DocumentReadErr {
 #[derive(Debug, Error)]
 pub enum CipherErr {
     #[error("Failed to decrypt")]
-    ChachaError(#[from] chacha20poly1305::Error),
+    Chacha(#[from] chacha20poly1305::Error),
 }
 
 #[derive(Debug, Error)]
 pub enum DocumentSaveErr {
     #[error(transparent)]
-    UnexpectedError(#[from] anyhow::Error),
+    Unexpected(#[from] anyhow::Error),
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for DocumentSaveErr {
@@ -85,13 +85,13 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for DocumentSaveErr {
 #[derive(Debug, Error)]
 pub enum SearchErr {
     #[error("Failed while searching for document.")]
-    DocumentFetchError(#[from] tantivy::TantivyError),
+    DocumentFetch(#[from] tantivy::TantivyError),
 
     #[error("No index for user '{0}' found")]
     MissingIndex(String),
 
     #[error(transparent)]
-    UnexpectedError(#[from] anyhow::Error),
+    Unexpected(#[from] anyhow::Error),
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for SearchErr {
@@ -103,25 +103,25 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for SearchErr {
 #[derive(Debug, Error)]
 pub enum ExtractorErr {
     #[error("Error when converting to utf8.")]
-    PdfExtractionError(#[from] pdf_extract::OutputError),
+    PdfExtraction(#[from] pdf_extract::OutputError),
 
     #[error("Error when converting to utf8.")]
-    UserConversionError(#[from] UserConvErr),
+    UserConversion(#[from] UserConvErr),
 
     #[error("Error when publishing bus event.")]
-    PublisherError(#[from] BusErr),
+    Publisher(#[from] BusErr),
 
     #[error("Error when initializing LepTess.")]
-    OcrExtractError(#[from] leptess::tesseract::TessInitError),
+    OcrExtract(#[from] leptess::tesseract::TessInitError),
 
     #[error("Error when setting the image.")]
-    SettingImageError(#[from] leptess::leptonica::PixError),
+    SettingImage(#[from] leptess::leptonica::PixError),
 
     #[error("Error when converting to utf8.")]
-    Utf8Error(#[from] std::str::Utf8Error),
+    Utf8(#[from] std::str::Utf8Error),
 
     #[error("Failed to create threadpool.")]
-    ThreadPoolError(#[from] rayon::ThreadPoolBuildError),
+    ThreadPool(#[from] rayon::ThreadPoolBuildError),
 
     #[error("Invalid file extension")]
     InvalidExtension(#[from] GeneralErr),
@@ -130,28 +130,28 @@ pub enum ExtractorErr {
 #[derive(Debug, Error)]
 pub enum PreprocessorErr {
     #[error("Error when using bus.")]
-    BusError(#[from] BusErr),
+    Bus(#[from] BusErr),
 
     #[error("Failed to make IO operation.")]
-    IoError(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
 
     #[error("Failed to load PDF document.")]
-    PopplerError(#[from] cairo::glib::error::Error),
+    Poppler(#[from] cairo::glib::error::Error),
 
     #[error("Failed to create thumbnail from PDF page.")]
-    ThumbnailSurfaceError(#[from] cairo::Error),
+    ThumbnailSurface(#[from] cairo::Error),
 
     #[error("Failed to write PDF thumbnail to image surface.")]
-    CarioIoError(#[from] cairo::IoError),
+    CarioIo(#[from] cairo::IoError),
 
     #[error("Failed to create threadpool.")]
-    ThreadPoolError(#[from] rayon::ThreadPoolBuildError),
+    ThreadPool(#[from] rayon::ThreadPoolBuildError),
 
     #[error("Invalid file extension")]
     InvalidExtension(#[from] GeneralErr),
 
     #[error("Failed to make filesystem operation")]
-    FsError(#[from] FsErr),
+    Fs(#[from] FsErr),
 }
 
 #[derive(Debug, Error)]
@@ -160,7 +160,7 @@ pub enum UserConvErr {
     Decode(#[from] base64::DecodeError),
 
     #[error("Invalid utf characters.")]
-    Utf8Error(#[from] std::string::FromUtf8Error),
+    Utf8(#[from] std::string::FromUtf8Error),
 
     #[cfg(not(test))]
     #[error("No authorization header found.")]
@@ -178,70 +178,70 @@ pub enum UserConvErr {
 #[derive(Debug, Error)]
 pub enum BusErr {
     #[error("Failed to create Eventador instance")]
-    GenericError(#[from] anyhow::Error),
+    Generic(#[from] anyhow::Error),
 }
 
 #[derive(Debug, Error)]
 pub enum WatcherErr {
     #[error("Error when publishing bus event.")]
-    PublisherError(#[from] BusErr),
+    Publisher(#[from] BusErr),
 }
 
 #[derive(Debug, Error)]
 pub enum EncrypterErr {
     #[error("Error when using bus.")]
-    BusError(#[from] BusErr),
+    Bus(#[from] BusErr),
 
     #[error("Failed to make IO operation.")]
-    IoError(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
 
     #[error("Failed to encrypt data.")]
-    CipherError(#[from] CipherErr),
+    Cipher(#[from] CipherErr),
 
     #[error("Failed to create threadpool.")]
-    ThreadPoolError(#[from] rayon::ThreadPoolBuildError),
+    ThreadPool(#[from] rayon::ThreadPoolBuildError),
 
     #[error("Failed to encrypt all files.")]
-    AllOrNothingErr,
+    AllOrNothing,
 }
 
 #[derive(Debug, Error)]
 pub enum EventReceiverErr {
     #[error("Failed to create watcher.")]
-    CreationError(#[from] notify::Error),
+    Creation(#[from] notify::Error),
 
     #[error("Failed to receive event from watcher.")]
-    ReceiveError(#[from] std::sync::mpsc::RecvError),
+    Receive(#[from] std::sync::mpsc::RecvError),
 }
 
 #[derive(Debug, Error)]
 pub enum RepositoryErr {
     #[error("Failed to create repository.")]
-    CreationError(#[from] notify::Error),
+    Creation(#[from] notify::Error),
 
     #[error("Invalid index path: '{0}'")]
     InvalidIndexPath(String),
 
     #[error("Failed to make IO operation.")]
-    IoError(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
 }
 
 #[derive(Debug, Error)]
 pub enum IndexerErr {
     #[error("Failed to create threadpool.")]
-    ThreadPoolError(#[from] rayon::ThreadPoolBuildError),
+    ThreadPool(#[from] rayon::ThreadPoolBuildError),
 
     #[error("Error when using bus.")]
-    BusError(#[from] BusErr),
+    Bus(#[from] BusErr),
 
     #[error("Failed to make IO operation.")]
-    IoError(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
 
     #[error("Failed to read index directory.")]
-    OpenIndexDirectoryError(#[from] tantivy::directory::error::OpenDirectoryError),
+    OpenIndexDirectory(#[from] tantivy::directory::error::OpenDirectoryError),
 
     #[error("Failed to access index directory.")]
-    IndexDirectoryError(#[from] tantivy::TantivyError),
+    IndexDirectory(#[from] tantivy::TantivyError),
 }
 
 #[derive(Debug, Error)]
@@ -253,16 +253,16 @@ pub enum ConfigurationErr {
     InvalidThumbnailPath(String),
 
     #[error("Failed to make IO operation.")]
-    IoError(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
 
     #[error("Invalid watched directory: '{0}'")]
     InvalidWatchedDirPath(String),
 
     #[error("Failed to deserialize configuration.")]
-    DeserializationError(#[from] toml::de::Error),
+    Deserialization(#[from] toml::de::Error),
 
     #[error("Failed to serialize configuration.")]
-    SerializationError(#[from] toml::ser::Error),
+    Serialization(#[from] toml::ser::Error),
 
     #[error("Invalid config path: '{0}'")]
     InvalidConfigPath(String),
@@ -277,32 +277,32 @@ pub enum PromptErr {
 #[derive(Debug, Error)]
 pub enum SetupErr {
     #[error("Failed to create event bus.")]
-    BusError(#[from] BusErr),
+    Bus(#[from] BusErr),
 
     #[error("Failed to run encrypter.")]
-    EncrypterError(#[from] EncrypterErr),
+    Encrypter(#[from] EncrypterErr),
 
     #[error("Failed to run preprocessor.")]
-    PreprocessorError(#[from] PreprocessorErr),
+    Preprocessor(#[from] PreprocessorErr),
 
     #[error("Failed to run extractor.")]
-    ExtractorError(#[from] ExtractorErr),
+    Extractor(#[from] ExtractorErr),
 
     #[error("Failed to run watcher.")]
-    WatcherError(#[from] WatcherErr),
+    Watcher(#[from] WatcherErr),
 
     #[error("Failed to create receiver.")]
-    EventReceiverError(#[from] EventReceiverErr),
+    EventReceiver(#[from] EventReceiverErr),
 
     #[error("Failed to create repository.")]
-    RepositoryError(#[from] RepositoryErr),
+    Repository(#[from] RepositoryErr),
 
     #[error("Failed to run indexer.")]
-    IndexerError(#[from] IndexerErr),
+    Indexer(#[from] IndexerErr),
 
     #[error("Failed to get configuration.")]
-    ConfigurationError(#[from] ConfigurationErr),
+    Configuration(#[from] ConfigurationErr),
 
     #[error("Failed to launch Rocket.")]
-    RocketErr(#[from] rocket::Error),
+    Rocket(#[from] rocket::Error),
 }

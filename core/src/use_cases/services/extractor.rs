@@ -313,7 +313,7 @@ mod test {
                 .expect("poisoned mutex")
                 .send(())
                 .expect("failed to send message");
-            Err(ExtractorErr::OcrExtractError(TessInitError { code: 0 }))
+            Err(ExtractorErr::OcrExtract(TessInitError { code: 0 }))
         }
     }
 

@@ -249,7 +249,7 @@ mod test {
                 .expect("poisoned mutex")
                 .send(())
                 .expect("failed to send message");
-            Err(IndexerErr::BusError(BusErr::GenericError(anyhow!("error"))))
+            Err(IndexerErr::Bus(BusErr::Generic(anyhow!("error"))))
         }
     }
 
@@ -278,7 +278,7 @@ mod test {
 
     impl RepositoryWrite for ErroneousRepoWrite {
         fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
-            Err(IndexerErr::BusError(BusErr::GenericError(anyhow!("error"))))
+            Err(IndexerErr::Bus(BusErr::Generic(anyhow!("error"))))
         }
     }
 }
