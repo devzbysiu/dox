@@ -23,6 +23,7 @@ pub fn doc<S: Into<String>>(name: S) -> PathBuf {
     PathBuf::from(format!("res/{}", name))
 }
 
+// TODO: Move those impls to some mod
 pub struct TrackedRepo {
     read: RepoRead,
     write: RepoWrite,
