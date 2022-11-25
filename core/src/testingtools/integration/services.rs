@@ -14,7 +14,6 @@ use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
 use tracing::debug;
 
-// TODO: Move those impls to some mod
 pub struct TrackedRepo {
     read: RepoRead,
     write: RepoWrite,
@@ -31,8 +30,8 @@ impl TrackedRepo {
         (
             RepoSpies { read, write },
             Box::new(Self {
-                write: TrackedWrite::create(repo.write(), write_tx),
                 read: TrackedRead::create(repo.read(), read_tx),
+                write: TrackedWrite::create(repo.write(), write_tx),
             }),
         )
     }
@@ -50,7 +49,7 @@ impl Repository for TrackedRepo {
 
 pub struct TrackedRead {
     read: RepoRead,
-    #[allow(dead_code)]
+    #[allow(unused)]
     tx: Mutex<Sender<()>>,
 }
 
@@ -93,13 +92,13 @@ impl RepositoryWrite for TrackedWrite {
 }
 
 pub struct RepoSpies {
-    #[allow(dead_code)]
+    #[allow(unused)]
     read: Spy,
     write: Spy,
 }
 
 impl RepoSpies {
-    #[allow(dead_code)]
+    #[allow(unused)]
     pub fn read(&self) -> &Spy {
         &self.read
     }

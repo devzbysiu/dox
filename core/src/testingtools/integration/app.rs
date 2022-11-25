@@ -17,8 +17,7 @@ use urlencoding::encode;
 
 pub fn start_test_app() -> Result<App> {
     let config = TestConfig::new()?;
-    let ctx = Context::new(&config)?;
-    let client = Client::tracked(rocket(ctx))?;
+    let client = Client::tracked(rocket(Context::new(&config)?))?;
     Ok(App {
         client,
         config,
@@ -28,17 +27,16 @@ pub fn start_test_app() -> Result<App> {
 
 pub fn test_app() -> Result<AppBuilder> {
     let config = TestConfig::new()?;
-    let ctx = Context::new(&config)?;
     Ok(AppBuilder {
+        ctx: Some(Context::new(&config)?),
         config: Some(config),
-        ctx: Some(ctx),
         repo_spies: None,
     })
 }
 
 pub struct App {
     client: Client,
-    #[allow(dead_code)]
+    #[allow(unused)]
     config: TestConfig,
     repo_spies: Option<RepoSpies>,
 }
