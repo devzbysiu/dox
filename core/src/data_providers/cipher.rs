@@ -1,20 +1,35 @@
 use std::sync::Arc;
 
 use crate::result::CipherErr;
-use crate::use_cases::cipher::{CipherRead, CipherReadStrategy, CipherWrite, CipherWriteStrategy};
+use crate::use_cases::cipher::{
+    Cipher, CipherRead, CipherReadStrategy, CipherStrategy, CipherWrite, CipherWriteStrategy,
+};
 
 use chacha20poly1305::aead::{Aead, OsRng};
 use chacha20poly1305::{AeadCore, Key, KeyInit, XChaCha20Poly1305, XNonce};
 use once_cell::sync::OnceCell;
 
-pub struct Chacha20Poly1305Cipher;
+pub struct Chacha20Poly1305Cipher {
+    read: CipherRead,
+    write: CipherWrite,
+}
 
 impl Chacha20Poly1305Cipher {
-    pub fn create() -> (CipherRead, CipherWrite) {
-        (
-            Arc::new(Chacha20Poly1305Read),
-            Arc::new(Chacha20Poly1305Write),
-        )
+    pub fn create() -> Cipher {
+        Box::new(Self {
+            read: Arc::new(Chacha20Poly1305Read),
+            write: Arc::new(Chacha20Poly1305Write),
+        })
+    }
+}
+
+impl CipherStrategy for Chacha20Poly1305Cipher {
+    fn read(&self) -> CipherRead {
+        self.read.clone()
+    }
+
+    fn write(&self) -> CipherWrite {
+        self.write.clone()
     }
 }
 
@@ -68,11 +83,11 @@ mod test {
     #[test]
     fn encryption_return_success() {
         // given
-        let (_, cipher_write) = Chacha20Poly1305Cipher::create();
+        let cipher = Chacha20Poly1305Cipher::create();
         let buf: String = Paragraph(1..2).fake();
 
         // when
-        let res = cipher_write.encrypt(buf.as_bytes());
+        let res = cipher.write().encrypt(buf.as_bytes());
 
         // then
         assert_ok!(res);
@@ -81,13 +96,13 @@ mod test {
     #[test]
     fn cipher_write_uses_chacha20poly1305_encryption() -> Result<()> {
         // given
-        let (_, cipher_write) = Chacha20Poly1305Cipher::create();
+        let cipher = Chacha20Poly1305Cipher::create();
         let buf: String = Paragraph(1..2).fake();
-        let cipher = XChaCha20Poly1305::new(key());
-        let expected = cipher.encrypt(nonce(), buf.as_bytes())?;
+        let chacha = XChaCha20Poly1305::new(key());
+        let expected = chacha.encrypt(nonce(), buf.as_bytes())?;
 
         // when
-        let encrypted = cipher_write.encrypt(buf.as_bytes())?;
+        let encrypted = cipher.write().encrypt(buf.as_bytes())?;
 
         // then
         assert_eq!(encrypted, expected);
@@ -98,13 +113,13 @@ mod test {
     #[test]
     fn cipher_read_uses_chacha20poly1305_encryption() -> Result<()> {
         // given
-        let (cipher_read, _) = Chacha20Poly1305Cipher::create();
+        let cipher = Chacha20Poly1305Cipher::create();
         let buf: String = Paragraph(1..2).fake();
-        let cipher = XChaCha20Poly1305::new(key());
-        let encrypted = cipher.encrypt(nonce(), buf.as_bytes())?;
+        let chacha = XChaCha20Poly1305::new(key());
+        let encrypted = chacha.encrypt(nonce(), buf.as_bytes())?;
 
         // when
-        let decrypted = cipher_read.decrypt(&encrypted)?;
+        let decrypted = cipher.read().decrypt(&encrypted)?;
 
         // then
         assert_eq!(decrypted, buf.as_bytes());
@@ -115,12 +130,12 @@ mod test {
     #[test]
     fn cipher_read_can_read_output_of_cipher_write() -> Result<()> {
         // given
-        let (cipher_read, cipher_write) = Chacha20Poly1305Cipher::create();
+        let cipher = Chacha20Poly1305Cipher::create();
         let buf: String = Paragraph(1..2).fake();
-        let encrypted = cipher_write.encrypt(buf.as_bytes())?;
+        let encrypted = cipher.write().encrypt(buf.as_bytes())?;
 
         // when
-        let decrypted = cipher_read.decrypt(&encrypted)?;
+        let decrypted = cipher.read().decrypt(&encrypted)?;
 
         // then
         assert_eq!(decrypted, buf.as_bytes());

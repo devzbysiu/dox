@@ -1,3 +1,6 @@
+use std::path::PathBuf;
+
+use crate::entities::user::{User, FAKE_USER_EMAIL};
 use crate::testingtools::{index_dir_path, thumbnails_dir_path, watched_dir_path};
 use crate::use_cases::config::Config;
 
@@ -37,6 +40,10 @@ impl TestConfig {
             thumbnails_dir,
             index_dir,
         })
+    }
+
+    pub fn thumbnail_path<S: Into<String>>(&self, name: S) -> PathBuf {
+        self.value.thumbnail_path(&User::new(FAKE_USER_EMAIL), name)
     }
 }
 

@@ -8,7 +8,7 @@ use crate::data_providers::receiver::FsEventReceiver;
 use crate::data_providers::repository::TantivyRepository;
 use crate::result::{BusErr, EventReceiverErr, RepositoryErr, SetupErr};
 use crate::use_cases::bus::EventBus;
-use crate::use_cases::cipher::{CipherRead, CipherWrite};
+use crate::use_cases::cipher::Cipher;
 use crate::use_cases::config::{CfgLoader, CfgResolver, Config};
 use crate::use_cases::fs::Fs;
 use crate::use_cases::receiver::EventRecv;
@@ -26,7 +26,7 @@ pub struct Context {
     pub preprocessor_factory: PreprocessorCreator,
     pub extractor_factory: ExtractorCreator,
     pub repo: Repo,
-    pub cipher: (CipherRead, CipherWrite),
+    pub cipher: Cipher,
 }
 
 impl Context {
@@ -74,7 +74,7 @@ pub fn fs() -> Fs {
     Arc::new(LocalFs)
 }
 
-pub fn cipher() -> (CipherRead, CipherWrite) {
+pub fn cipher() -> Cipher {
     Chacha20Poly1305Cipher::create()
 }
 

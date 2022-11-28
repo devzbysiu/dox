@@ -63,7 +63,7 @@ fn setup_core(ctx: Context) -> Result<(RepoRead, CipherRead), SetupErr> {
     preprocessor.run(preprocessor_factory, fs);
     extractor.run(extractor_factory);
     indexer.run(repo.write());
-    encrypter.run(cipher.1); // TODO: get rid of those '.1' and '.0'
+    encrypter.run(cipher.write());
 
-    Ok((repo.read(), cipher.0))
+    Ok((repo.read(), cipher.read()))
 }

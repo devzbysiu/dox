@@ -1,8 +1,12 @@
 use crate::entities::document::DocDetails;
 use crate::entities::location::SafePathBuf;
 use crate::entities::user::User;
+use crate::result::CipherErr;
 use crate::result::{FsErr, IndexerErr, SearchErr};
 use crate::testingtools::unit::Spy;
+use crate::use_cases::cipher::{
+    Cipher, CipherRead, CipherReadStrategy, CipherStrategy, CipherWrite, CipherWriteStrategy,
+};
 use crate::use_cases::fs::Filesystem;
 use crate::use_cases::repository::{
     Repo, RepoRead, RepoWrite, Repository, RepositoryRead, RepositoryWrite, SearchResult,
@@ -30,8 +34,8 @@ impl TrackedRepo {
         (
             RepoSpies { read, write },
             Box::new(Self {
-                read: TrackedRead::create(repo.read(), read_tx),
-                write: TrackedWrite::create(repo.write(), write_tx),
+                read: TrackedRepoRead::create(repo.read(), read_tx),
+                write: TrackedRepoWrite::create(repo.write(), write_tx),
             }),
         )
     }
@@ -47,19 +51,19 @@ impl Repository for TrackedRepo {
     }
 }
 
-pub struct TrackedRead {
+pub struct TrackedRepoRead {
     read: RepoRead,
     #[allow(unused)]
     tx: Mutex<Sender<()>>,
 }
 
-impl TrackedRead {
+impl TrackedRepoRead {
     fn create(read: RepoRead, tx: Mutex<Sender<()>>) -> RepoRead {
         Arc::new(Self { read, tx })
     }
 }
 
-impl RepositoryRead for TrackedRead {
+impl RepositoryRead for TrackedRepoRead {
     fn search(&self, user: User, q: String) -> Result<SearchResult, SearchErr> {
         self.read.search(user, q)
     }
@@ -69,18 +73,21 @@ impl RepositoryRead for TrackedRead {
     }
 }
 
-pub struct TrackedWrite {
+// TODO: Think about using decorator design pattern to limit number of implementations (like TrackedWrite is
+// emulating a successfull repo, for failing repo you would have to implement TrackedFailingWrite instead of
+// having just TrackedRepo and separately FailingWrite and SuccessfullWrite).
+pub struct TrackedRepoWrite {
     write: RepoWrite,
     tx: Mutex<Sender<()>>,
 }
 
-impl TrackedWrite {
+impl TrackedRepoWrite {
     fn create(write: RepoWrite, tx: Mutex<Sender<()>>) -> RepoWrite {
         Arc::new(Self { write, tx })
     }
 }
 
-impl RepositoryWrite for TrackedWrite {
+impl RepositoryWrite for TrackedRepoWrite {
     fn index(&self, docs_details: &[DocDetails]) -> Result<(), IndexerErr> {
         debug!("before indexing");
         self.write.index(docs_details)?;
@@ -108,11 +115,28 @@ impl RepoSpies {
     }
 }
 
+pub struct CipherSpies {
+    #[allow(unused)]
+    read: Spy,
+    write: Spy,
+}
+
+impl CipherSpies {
+    #[allow(unused)]
+    pub fn read(&self) -> &Spy {
+        &self.read
+    }
+
+    pub fn write(&self) -> &Spy {
+        &self.write
+    }
+}
+
 pub struct FailingLoadFs;
 
 impl FailingLoadFs {
     pub fn new() -> Arc<Self> {
-        Arc::new(FailingLoadFs)
+        Arc::new(Self)
     }
 }
 
@@ -127,5 +151,129 @@ impl Filesystem for FailingLoadFs {
 
     fn rm_file(&self, _path: &SafePathBuf) -> Result<(), FsErr> {
         Ok(())
+    }
+}
+
+pub struct TrackedCipher {
+    read: CipherRead,
+    write: CipherWrite,
+}
+
+impl TrackedCipher {
+    pub fn wrap(cipher: &Cipher) -> (CipherSpies, Cipher) {
+        let (read_tx, read_rx) = channel();
+        let (write_tx, write_rx) = channel();
+        let read_tx = Mutex::new(read_tx);
+        let write_tx = Mutex::new(write_tx);
+        let read = Spy::new(read_rx);
+        let write = Spy::new(write_rx);
+        (
+            CipherSpies { read, write },
+            Box::new(Self {
+                read: TrackedCipherRead::create(cipher.read(), read_tx),
+                write: TrackedCipherWrite::create(cipher.write(), write_tx),
+            }),
+        )
+    }
+}
+
+impl CipherStrategy for TrackedCipher {
+    fn read(&self) -> CipherRead {
+        self.read.clone()
+    }
+
+    fn write(&self) -> CipherWrite {
+        self.write.clone()
+    }
+}
+
+pub struct TrackedCipherRead {
+    read: CipherRead,
+    #[allow(unused)]
+    tx: Mutex<Sender<()>>,
+}
+
+impl TrackedCipherRead {
+    fn create(read: CipherRead, tx: Mutex<Sender<()>>) -> CipherRead {
+        Arc::new(Self { read, tx })
+    }
+}
+
+impl CipherReadStrategy for TrackedCipherRead {
+    fn decrypt(&self, src_buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
+        self.read.decrypt(src_buf)
+    }
+}
+
+pub struct TrackedCipherWrite {
+    write: CipherWrite,
+    tx: Mutex<Sender<()>>,
+}
+
+impl TrackedCipherWrite {
+    fn create(write: CipherWrite, tx: Mutex<Sender<()>>) -> CipherWrite {
+        Arc::new(Self { write, tx })
+    }
+}
+
+impl CipherWriteStrategy for TrackedCipherWrite {
+    fn encrypt(&self, src_buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
+        debug!("before encrypting");
+        let tx = self.tx.lock().expect("poisoned mutex");
+        tx.send(()).expect("failed to send");
+        let res = self.write.encrypt(src_buf)?;
+        debug!("after encryption");
+        Ok(res)
+    }
+}
+pub struct FailingCipher {
+    read: CipherRead,
+    write: CipherWrite,
+}
+
+impl FailingCipher {
+    pub fn create() -> Cipher {
+        Box::new(Self {
+            read: FailingCipherRead::new(),
+            write: FailingCipherWrite::new(),
+        })
+    }
+}
+
+impl CipherStrategy for FailingCipher {
+    fn read(&self) -> CipherRead {
+        self.read.clone()
+    }
+
+    fn write(&self) -> CipherWrite {
+        self.write.clone()
+    }
+}
+
+pub struct FailingCipherRead;
+
+impl FailingCipherRead {
+    pub fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl CipherReadStrategy for FailingCipherRead {
+    fn decrypt(&self, _src_buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
+        Err(CipherErr::Chacha(chacha20poly1305::Error))
+    }
+}
+
+pub struct FailingCipherWrite;
+
+impl FailingCipherWrite {
+    pub fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl CipherWriteStrategy for FailingCipherWrite {
+    fn encrypt(&self, _src_buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
+        Err(CipherErr::Chacha(chacha20poly1305::Error))
     }
 }

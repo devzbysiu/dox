@@ -35,8 +35,11 @@ impl Filesystem for LocalFs {
         Ok(fs::read(uri)?)
     }
 
-    fn rm_file(&self, _path: &SafePathBuf) -> Result<(), FsErr> {
-        unimplemented!()
+    fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
+        debug!("removing file");
+        fs::remove_file(path)?;
+        debug!("file removed");
+        Ok(())
     }
 }
 
