@@ -107,6 +107,12 @@ impl App {
         debug!("checking if thumbnail '{}' exists", name);
         self.config.thumbnail_path(name).exists()
     }
+
+    pub fn document_exists<S: Into<String>>(&self, name: S) -> bool {
+        let name = name.into();
+        debug!("checking if document '{}' exists", name);
+        self.config.doc_path(name).exists()
+    }
 }
 
 pub struct AppBuilder {
@@ -132,7 +138,7 @@ impl AppBuilder {
         self
     }
 
-    pub fn with_failing_cipher_write(mut self) -> Self {
+    pub fn with_tracked_failing_cipher(mut self) -> Self {
         let (cipher_spies, tracked_cipher) = TrackedCipher::wrap(&FailingCipher::create());
         let ctx = self.ctx.as_mut().unwrap();
         ctx.with_cipher(tracked_cipher);

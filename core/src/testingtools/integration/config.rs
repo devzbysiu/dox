@@ -45,6 +45,10 @@ impl TestConfig {
     pub fn thumbnail_path<S: Into<String>>(&self, name: S) -> PathBuf {
         self.value.thumbnail_path(&User::new(FAKE_USER_EMAIL), name)
     }
+
+    pub fn doc_path<S: Into<String>>(&self, name: S) -> PathBuf {
+        self.value.document_path(&User::new(FAKE_USER_EMAIL), name)
+    }
 }
 
 impl AsRef<Config> for TestConfig {
