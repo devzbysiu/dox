@@ -9,11 +9,14 @@ use rocket::serde::Serialize;
 use serde::ser::SerializeStruct;
 use serde::Serializer;
 use tempfile::TempDir;
+use tracing::debug;
 
 #[derive(Debug)]
 pub struct TestConfig {
     value: Config,
     watched_dir: TempDir,
+    #[allow(unused)]
+    docs_dir: TempDir,
     thumbnails_dir: TempDir,
     index_dir: TempDir,
 }
@@ -22,6 +25,7 @@ impl TestConfig {
     pub fn new() -> Result<Self> {
         let watched_dir = watched_dir_path()?;
         let docs_dir = docs_dir_path()?;
+        debug!("docs dir exists?: {:?}", docs_dir.path().exists());
         let thumbnails_dir = thumbnails_dir_path()?;
         let index_dir = index_dir_path()?;
         Ok(Self {
@@ -39,6 +43,7 @@ impl TestConfig {
                 index_dir: index_dir.path().to_path_buf(),
             },
             watched_dir,
+            docs_dir,
             thumbnails_dir,
             index_dir,
         })

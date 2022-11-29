@@ -7,7 +7,7 @@ use crate::result::FsErr;
 use crate::use_cases::fs::Filesystem;
 
 use std::fs::{self, create_dir_all};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
 use tracing::{debug, instrument};
@@ -35,10 +35,15 @@ impl Filesystem for LocalFs {
         Ok(fs::read(uri)?)
     }
 
+    #[instrument(skip(self))]
     fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
-        debug!("removing file");
         fs::remove_file(path)?;
-        debug!("file removed");
+        Ok(())
+    }
+
+    #[instrument(skip(self))]
+    fn mv_file(&self, from: &SafePathBuf, to: &Path) -> Result<(), FsErr> {
+        fs::rename(from, to)?;
         Ok(())
     }
 }

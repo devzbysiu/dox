@@ -37,7 +37,8 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for ThumbnailReadErr {
 
 #[derive(Debug, Error)]
 pub enum FsErr {
-    #[error("Failed to make IO operation.")]
+    // TODO: Should I add '{0}' everywhere?
+    #[error("Failed to make IO operation: '{0}'.")]
     Io(#[from] std::io::Error),
 
     // TODO: Think if there is a better way
@@ -151,6 +152,33 @@ pub enum PreprocessorErr {
     InvalidExtension(#[from] GeneralErr),
 
     #[error("Failed to make filesystem operation")]
+    Fs(#[from] FsErr),
+}
+
+#[derive(Debug, Error)]
+pub enum MoverErr {
+    #[error("Error when using bus.")]
+    Bus(#[from] BusErr),
+
+    #[error("Failed to make IO operation.")]
+    Io(#[from] std::io::Error),
+
+    #[error("Failed to load PDF document.")]
+    Poppler(#[from] cairo::glib::error::Error),
+
+    #[error("Failed to create thumbnail from PDF page.")]
+    ThumbnailSurface(#[from] cairo::Error),
+
+    #[error("Failed to write PDF thumbnail to image surface.")]
+    CarioIo(#[from] cairo::IoError),
+
+    #[error("Failed to create threadpool.")]
+    ThreadPool(#[from] rayon::ThreadPoolBuildError),
+
+    #[error("Invalid file extension.")]
+    InvalidExtension(#[from] GeneralErr),
+
+    #[error("Failed to make filesystem operation: '{0}'.")]
     Fs(#[from] FsErr),
 }
 
@@ -299,6 +327,9 @@ pub enum SetupErr {
 
     #[error("Failed to create repository.")]
     Repository(#[from] RepositoryErr),
+
+    #[error("Failed to run document mover.")]
+    Mover(#[from] MoverErr),
 
     #[error("Failed to run indexer.")]
     Indexer(#[from] IndexerErr),

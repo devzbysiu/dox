@@ -2,7 +2,7 @@
 use crate::entities::location::SafePathBuf;
 use crate::result::FsErr;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub type Fs = Arc<dyn Filesystem>;
@@ -21,4 +21,7 @@ pub trait Filesystem: Sync + Send {
 
     /// Removes file specified by the `path` argument.
     fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr>;
+
+    /// Moves file from `from` path to `to` path.
+    fn mv_file(&self, from: &SafePathBuf, to: &Path) -> Result<(), FsErr>;
 }

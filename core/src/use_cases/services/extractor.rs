@@ -30,7 +30,7 @@ impl TxtExtractor {
             let sub = self.bus.subscriber();
             loop {
                 match sub.recv()? {
-                    BusEvent::NewDocs(loc) => self.extract_data(loc, &factory)?,
+                    BusEvent::DocMoved(loc) => self.extract_data(loc, &factory)?,
                     e => trace!("event not supported in TxtExtractor: '{}'", e),
                 }
             }
@@ -178,6 +178,7 @@ mod test {
         let noop_extractor = NoOpExtractor::new();
         let factory_stub = ExtractorFactoryStub::new(vec![noop_extractor]);
         let ignored_events = [
+            BusEvent::NewDocs(Faker.fake()),
             BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::Indexed(Faker.fake()),
             BusEvent::PipelineFinished,

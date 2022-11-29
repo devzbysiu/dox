@@ -2,7 +2,6 @@ use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
 use crate::result::IndexerErr;
 use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher};
-use crate::use_cases::fs::Fs;
 use crate::use_cases::repository::RepoWrite;
 
 use rayon::{ThreadPool, ThreadPoolBuilder};
@@ -21,8 +20,8 @@ impl Indexer {
         Ok(Self { bus, tp })
     }
 
-    #[instrument(skip(self, repo, fs))]
-    pub fn run(self, repo: RepoWrite, fs: Fs) {
+    #[instrument(skip(self, repo))]
+    pub fn run(self, repo: RepoWrite) {
         // TODO: add threadpool to other services
         // TODO: think about num_threads
         // TODO: should threadpool be shared between services?
@@ -32,7 +31,7 @@ impl Indexer {
             loop {
                 match sub.recv()? {
                     BusEvent::DataExtracted(doc_details) => self.index(doc_details, repo.clone()),
-                    BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(loc, &fs),
+                    BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(loc),
                     e => trace!("event not supported in indexer: '{}'", e),
                 }
             }
@@ -49,16 +48,9 @@ impl Indexer {
         });
     }
 
-    // TODO: This cleanup shouldn't be here. It should remove data from index, not the document itself.
-    #[instrument(skip(self, fs))]
-    fn cleanup(&self, loc: Location, fs: &Fs) {
-        debug!("pipeline failed, removing document");
-        let fs = fs.clone();
-        self.tp.spawn(move || {
-            if let Err(e) = remove_document(&loc, &fs) {
-                error!("document removal failed: '{}'", e);
-            }
-        });
+    #[instrument(skip(self))]
+    fn cleanup(&self, loc: Location) {
+        debug!("pipeline failed, removing index data");
     }
 }
 
@@ -71,17 +63,6 @@ fn index(doc_details: &[DocDetails], repo: &RepoWrite, mut publ: EventPublisher)
     Ok(())
 }
 
-#[instrument(skip(fs))]
-fn remove_document(loc: &Location, fs: &Fs) -> Result<()> {
-    let Location::FS(paths) = loc;
-    for path in paths {
-        fs.rm_file(path)?;
-        debug!("removed '{}'", path);
-    }
-    debug!("document removed");
-    Ok(())
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -90,23 +71,21 @@ mod test {
     use crate::entities::document::DocDetails;
     use crate::result::{BusErr, IndexerErr};
     use crate::testingtools::unit::create_test_shim;
-    use crate::testingtools::{FsSpy, NoOpFs, Spy};
+    use crate::testingtools::Spy;
     use crate::use_cases::repository::RepositoryWrite;
 
     use anyhow::{anyhow, Result};
     use fake::{Fake, Faker};
     use std::sync::mpsc::{channel, Sender};
     use std::sync::{Arc, Mutex};
-    use std::time::Duration;
 
     #[test]
     fn repo_write_is_used_to_index_data() -> Result<()> {
         // given
         init_tracing();
         let (spy, working_repo_write) = RepoWriteSpy::working();
-        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(working_repo_write, fs_dummy);
+        Indexer::new(shim.bus())?.run(working_repo_write);
 
         // when
         shim.trigger_indexer(Faker.fake())?;
@@ -122,9 +101,8 @@ mod test {
         // given
         init_tracing();
         let noop_repo_write = NoOpRepoWrite::new();
-        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(noop_repo_write, fs_dummy);
+        Indexer::new(shim.bus())?.run(noop_repo_write);
         let doc_details: Vec<DocDetails> = Faker.fake();
 
         // when
@@ -143,10 +121,9 @@ mod test {
         // given
         init_tracing();
         let repo_write = NoOpRepoWrite::new();
-        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
         let docs_details: Vec<DocDetails> = Faker.fake();
-        Indexer::new(shim.bus())?.run(repo_write, fs_dummy);
+        Indexer::new(shim.bus())?.run(repo_write);
 
         // when
         shim.trigger_indexer(docs_details.clone())?;
@@ -164,9 +141,8 @@ mod test {
         // given
         init_tracing();
         let repo_write = ErroneousRepoWrite::new();
-        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo_write, fs_dummy);
+        Indexer::new(shim.bus())?.run(repo_write);
 
         // when
         shim.trigger_indexer(Faker.fake())?;
@@ -184,16 +160,16 @@ mod test {
         // given
         init_tracing();
         let noop_repo_write = NoOpRepoWrite::new();
-        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
+            BusEvent::DocMoved(Faker.fake()),
             BusEvent::EncryptDocument(Faker.fake()),
             BusEvent::EncryptThumbnail(Faker.fake()),
             BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::PipelineFinished,
         ];
-        Indexer::new(shim.bus())?.run(noop_repo_write, fs_dummy);
+        Indexer::new(shim.bus())?.run(noop_repo_write);
 
         // when
         shim.send_events(&ignored_events)?;
@@ -211,9 +187,8 @@ mod test {
         // given
         init_tracing();
         let (spy, failing_repo_write) = RepoWriteSpy::failing();
-        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(failing_repo_write, fs_dummy);
+        Indexer::new(shim.bus())?.run(failing_repo_write);
         shim.trigger_indexer(Faker.fake())?;
         assert!(spy.method_called());
 
@@ -226,24 +201,24 @@ mod test {
         Ok(())
     }
 
-    #[test]
-    fn when_doc_encryption_failed_event_appears_filesystem_removes_document() -> Result<()> {
-        // given
-        init_tracing();
-        let repo = NoOpRepoWrite::new();
-        let (spy, working_fs) = FsSpy::working();
-        let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo, working_fs);
-        thread::sleep(Duration::from_secs(1)); // allow to start indexer
+    // #[test]
+    // fn when_doc_encryption_failed_event_appears_filesystem_removes_document() -> Result<()> {
+    //     // given
+    //     init_tracing();
+    //     let repo = NoOpRepoWrite::new();
+    //     let (spy, working_fs) = FsSpy::working();
+    //     let mut shim = create_test_shim()?;
+    //     Indexer::new(shim.bus())?.run(repo, working_fs);
+    //     thread::sleep(Duration::from_secs(1)); // allow to start indexer
 
-        // when
-        shim.trigger_document_encryption_failure()?;
+    //     // when
+    //     shim.trigger_document_encryption_failure()?;
 
-        // then
-        assert!(spy.method_called());
+    //     // then
+    //     assert!(spy.method_called());
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     struct RepoWriteSpy;
 

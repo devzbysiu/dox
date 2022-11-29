@@ -1,4 +1,4 @@
-//! Abstraction for preprocessing received document.
+//! Abstraction for generating thumbnail of received document.
 use crate::entities::extension::Ext;
 use crate::entities::location::Location;
 use crate::result::PreprocessorErr;
@@ -38,7 +38,7 @@ impl ThumbnailGenerator {
             let sub = self.bus.subscriber();
             loop {
                 match sub.recv()? {
-                    BusEvent::NewDocs(loc) => self.do_thumbnail(loc, &factory)?,
+                    BusEvent::DocMoved(loc) => self.do_thumbnail(loc, &factory)?,
                     BusEvent::ThumbnailEncryptionFailed(loc) => self.cleanup(loc, &fs),
                     e => trace!("event not supported in ThumbnailGenerator: '{}'", e),
                 }
@@ -229,6 +229,7 @@ mod test {
         let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
         let ignored_events = [
+            BusEvent::NewDocs(Faker.fake()),
             BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::Indexed(Faker.fake()),
             BusEvent::PipelineFinished,

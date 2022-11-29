@@ -13,7 +13,7 @@ use crate::use_cases::repository::{
 };
 
 use anyhow::Result;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
 use tracing::debug;
@@ -150,6 +150,10 @@ impl Filesystem for FailingLoadFs {
     }
 
     fn rm_file(&self, _path: &SafePathBuf) -> Result<(), FsErr> {
+        Ok(())
+    }
+
+    fn mv_file(&self, _from: &SafePathBuf, _to: &Path) -> Result<(), FsErr> {
         Ok(())
     }
 }
@@ -305,5 +309,9 @@ impl Filesystem for TrackedFs {
         self.fs.rm_file(path)?;
         tx.send(()).expect("failed to send");
         Ok(())
+    }
+
+    fn mv_file(&self, from: &SafePathBuf, to: &Path) -> Result<(), FsErr> {
+        self.fs.mv_file(from, to)
     }
 }

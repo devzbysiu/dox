@@ -3,7 +3,7 @@ use crate::result::FsErr;
 use crate::use_cases::fs::{Filesystem, Fs};
 
 use anyhow::Result;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -70,6 +70,11 @@ impl Filesystem for NoOpFs {
         // nothing to do
         Ok(())
     }
+
+    fn mv_file(&self, _from: &SafePathBuf, _to: &Path) -> Result<(), FsErr> {
+        // nothing to do
+        Ok(())
+    }
 }
 
 pub struct FsSpy;
@@ -108,5 +113,9 @@ impl Filesystem for WorkingFs {
             .send(())
             .expect("failed to send message");
         Ok(())
+    }
+
+    fn mv_file(&self, _from: &SafePathBuf, _to: &Path) -> Result<(), FsErr> {
+        unimplemented!()
     }
 }

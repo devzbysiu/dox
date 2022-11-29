@@ -14,11 +14,11 @@ type Result<T> = std::result::Result<T, WatcherErr>;
 /// [`WatcherEvent::Created`], then [`Event::NewDocs`] is created out of it and published on the
 /// bus.
 #[derive(Debug)]
-pub struct DocsWatcher {
+pub struct FileWatcher {
     bus: EventBus,
 }
 
-impl DocsWatcher {
+impl FileWatcher {
     pub fn new(bus: EventBus) -> Self {
         Self { bus }
     }
@@ -62,7 +62,7 @@ mod test {
         init_tracing();
         let mut shim = create_test_shim()?;
         let mock_event_receiver = MockEventReceiver::new(shim.rx());
-        DocsWatcher::new(shim.bus()).run(mock_event_receiver);
+        FileWatcher::new(shim.bus()).run(mock_event_receiver);
 
         // when
         shim.trigger_watcher()?;
@@ -79,7 +79,7 @@ mod test {
         init_tracing();
         let mut shim = create_test_shim()?;
         let mock_event_receiver = MockEventReceiver::new(shim.rx());
-        DocsWatcher::new(shim.bus()).run(mock_event_receiver);
+        FileWatcher::new(shim.bus()).run(mock_event_receiver);
 
         // when
         shim.mk_docs_event(DocsEvent::Other)?;
@@ -96,7 +96,7 @@ mod test {
         init_tracing();
         let erroneous_event_receiver = ErroneousEventReceiver::new();
         let shim = create_test_shim()?;
-        let watcher = DocsWatcher::new(shim.bus());
+        let watcher = FileWatcher::new(shim.bus());
 
         // when
         watcher.run(erroneous_event_receiver); // error ignored here

@@ -10,8 +10,9 @@ use crate::use_cases::repository::RepoRead;
 use crate::use_cases::services::encrypter::Encrypter;
 use crate::use_cases::services::extractor::TxtExtractor;
 use crate::use_cases::services::indexer::Indexer;
+use crate::use_cases::services::mover::DocumentMover;
 use crate::use_cases::services::preprocessor::ThumbnailGenerator;
-use crate::use_cases::services::watcher::DocsWatcher;
+use crate::use_cases::services::watcher::FileWatcher;
 
 use rocket::{routes, Build, Rocket};
 use tracing::{debug, instrument};
@@ -53,16 +54,18 @@ fn setup_core(ctx: Context) -> Result<(RepoRead, CipherRead), SetupErr> {
         cipher,
     } = ctx;
 
-    let watcher = DocsWatcher::new(bus.clone());
-    let preprocessor = ThumbnailGenerator::new(cfg, bus.clone())?;
+    let watcher = FileWatcher::new(bus.clone());
+    let document_mover = DocumentMover::new(cfg.clone(), bus.clone())?;
+    let thumbnail_generator = ThumbnailGenerator::new(cfg, bus.clone())?;
     let extractor = TxtExtractor::new(bus.clone())?;
     let indexer = Indexer::new(bus.clone())?;
     let encrypter = Encrypter::new(bus);
 
     watcher.run(event_watcher);
-    preprocessor.run(preprocessor_factory, fs.clone());
+    document_mover.run(fs.clone());
+    thumbnail_generator.run(preprocessor_factory, fs);
     extractor.run(extractor_factory);
-    indexer.run(repo.write(), fs);
+    indexer.run(repo.write());
     encrypter.run(cipher.write());
 
     Ok((repo.read(), cipher.read()))
