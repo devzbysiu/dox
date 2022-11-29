@@ -43,6 +43,7 @@ pub trait ConfigResolver: Send {
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, Clone)]
 pub struct Config {
     pub watched_dir: PathBuf,
+    pub docs_dir: PathBuf,
     pub thumbnails_dir: PathBuf,
     pub index_dir: PathBuf,
 }
@@ -55,11 +56,11 @@ impl Config {
 
     // TODO: Cover this with tests
     pub fn document_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
-        self.watched_dir.join(relative_path(user, name))
+        self.docs_dir.join(relative_path(user, name))
     }
 
     // TODO: Cover this with tests
-    pub fn dst_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
+    pub fn watched_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
         self.watched_dir.join(relative_path(user, name))
     }
 }
@@ -72,6 +73,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             watched_dir: PathBuf::from(""),
+            docs_dir: docs_dir_default(),
             thumbnails_dir: thumbnails_dir_default(),
             index_dir: index_dir_default(),
         }
@@ -90,6 +92,12 @@ fn index_dir_default() -> PathBuf {
         .join("dox/index")
 }
 
+fn docs_dir_default() -> PathBuf {
+    dirs::data_dir()
+        .expect("failed to read system data path")
+        .join("dox/docs")
+}
+
 fn thumbnails_dir_default() -> PathBuf {
     dirs::data_dir()
         .expect("failed to read system data path")
@@ -105,6 +113,7 @@ mod test {
         // given
         let cfg = Config {
             watched_dir: PathBuf::from(""),
+            docs_dir: dirs::data_dir().unwrap().join("dox/docs"),
             thumbnails_dir: dirs::data_dir().unwrap().join("dox/thumbnails"),
             index_dir: dirs::data_dir().unwrap().join("dox/index"),
         };

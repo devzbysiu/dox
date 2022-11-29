@@ -23,6 +23,11 @@ pub fn watched_dir_path() -> Result<TempDir> {
     Ok(tempfile::tempdir()?)
 }
 
+pub fn docs_dir_path() -> Result<TempDir> {
+    debug!("creating docs directory");
+    Ok(tempfile::tempdir()?)
+}
+
 pub fn thumbnails_dir_path() -> Result<TempDir> {
     debug!("creating thumbnails directory");
     Ok(tempfile::tempdir()?)

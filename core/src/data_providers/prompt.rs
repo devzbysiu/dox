@@ -16,6 +16,7 @@ pub fn show() -> Result<Config, PromptErr> {
     let config = Config::default();
     Ok(Config {
         watched_dir: watched_dir_prompt()?,
+        docs_dir: docs_dir_prompt(&config)?,
         thumbnails_dir: thumbnails_dir_prompt(&config)?,
         index_dir: index_dir_prompt(&config)?,
     })
@@ -47,6 +48,15 @@ fn path_autocomplete(input: &str) -> std::result::Result<Vec<String>, CustomUser
         .map(|path| path.string())
         .filter(|path| path.contains(input))
         .collect())
+}
+
+fn docs_dir_prompt(config: &Config) -> Result<PathBuf, PromptErr> {
+    Ok(PathBuf::from(
+        Text::new("Path to a directory for storing documents:")
+            .with_autocomplete(&path_autocomplete)
+            .with_default(config.thumbnails_dir.str())
+            .prompt()?,
+    ))
 }
 
 fn thumbnails_dir_prompt(config: &Config) -> Result<PathBuf, PromptErr> {

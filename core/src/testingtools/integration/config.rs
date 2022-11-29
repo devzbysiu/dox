@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use crate::entities::user::{User, FAKE_USER_EMAIL};
-use crate::testingtools::{index_dir_path, thumbnails_dir_path, watched_dir_path};
+use crate::testingtools::{docs_dir_path, index_dir_path, thumbnails_dir_path, watched_dir_path};
 use crate::use_cases::config::Config;
 
 use anyhow::Result;
@@ -21,6 +21,7 @@ pub struct TestConfig {
 impl TestConfig {
     pub fn new() -> Result<Self> {
         let watched_dir = watched_dir_path()?;
+        let docs_dir = docs_dir_path()?;
         let thumbnails_dir = thumbnails_dir_path()?;
         let index_dir = index_dir_path()?;
         Ok(Self {
@@ -33,6 +34,7 @@ impl TestConfig {
             //    serde's `Serialize` and `Deserialize` traits which is not worth it.
             value: Config {
                 watched_dir: watched_dir.path().to_path_buf(),
+                docs_dir: docs_dir.path().to_path_buf(),
                 thumbnails_dir: thumbnails_dir.path().to_path_buf(),
                 index_dir: index_dir.path().to_path_buf(),
             },

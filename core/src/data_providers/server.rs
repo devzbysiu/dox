@@ -62,7 +62,7 @@ pub fn receive_document(user: User, doc: Doc, cfg: &Cfg, fs: &Fs) -> PostDocRes 
     if !filename.has_supported_extension() {
         return Ok((Status::UnsupportedMediaType, wrong_extension_msg(filename)));
     }
-    let to = cfg.dst_path(&user, &doc.filename);
+    let to = cfg.watched_path(&user, &doc.filename);
     let doc = base64::decode(&doc.body).context("Failed to decode body.")?;
     fs.save(to, &doc).context("Failed to save document.")?;
     Ok((Status::Created, String::new()))

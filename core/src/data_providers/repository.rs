@@ -249,7 +249,9 @@ mod test {
     use super::*;
 
     use crate::entities::user::FAKE_USER_EMAIL;
-    use crate::testingtools::{index_dir_path, thumbnails_dir_path, watched_dir_path};
+    use crate::testingtools::{
+        docs_dir_path, index_dir_path, thumbnails_dir_path, watched_dir_path,
+    };
 
     use anyhow::Result;
     use std::fs::File;
@@ -278,10 +280,12 @@ mod test {
         // NOTE: TempDir is removed on the end of this fn call,
         // but paths are randomized so it's still useful
         let index_dir = index_dir_path()?;
+        let docs_dir = docs_dir_path()?;
         let watched_dir = watched_dir_path()?;
         let thumbnails_dir = thumbnails_dir_path()?;
         Ok(Config {
             watched_dir: watched_dir.path().to_path_buf(),
+            docs_dir: docs_dir.path().to_path_buf(),
             thumbnails_dir: thumbnails_dir.path().to_path_buf(),
             index_dir: index_dir.path().to_path_buf(),
         })

@@ -168,12 +168,14 @@ mod test {
             &cfg_path,
             r#"
             watched_dir = "/home/zbyniu/Tests/notify"
+            docs_dir = "/home/zbyniu/.local/share/dox/docs"
             thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
             index_dir = "/home/zbyniu/.local/share/dox/index"
             "#,
         )?;
         let expected = Config {
             watched_dir: PathBuf::from("/home/zbyniu/Tests/notify"),
+            docs_dir: PathBuf::from("/home/zbyniu/.local/share/dox/docs"),
             thumbnails_dir: PathBuf::from("/home/zbyniu/.local/share/dox/thumbnails"),
             index_dir: PathBuf::from("/home/zbyniu/.local/share/dox/index"),
         };
@@ -204,6 +206,28 @@ mod test {
         create_config(
             &cfg_path,
             r#"
+                docs_dir = "/home/zbyniu/.local/share/dox/docs"
+                thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
+                index_dir = "/home/zbyniu/.local/share/dox/index"
+                "#,
+        )
+        .unwrap();
+        let loader = FsConfigLoader;
+
+        // then
+        loader.load(&cfg_path).unwrap(); // should panic
+    }
+
+    #[test]
+    #[should_panic(expected = "missing field `docs_dir`")]
+    fn missing_docs_dir_in_config_causes_panic_in_config_loader() {
+        // given
+        let tmp_cfg = tempdir().unwrap();
+        let cfg_path = tmp_cfg.path().join("dox.toml");
+        create_config(
+            &cfg_path,
+            r#"
+                watched_dir = "/home/zbyniu/Tests/notify"
                 thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
                 index_dir = "/home/zbyniu/.local/share/dox/index"
                 "#,
@@ -224,6 +248,7 @@ mod test {
         create_config(
             &cfg_path,
             r#"
+                docs_dir = "/home/zbyniu/.local/share/dox/docs"
                 watched_dir = "/home/zbyniu/Tests/notify"
                 index_dir = "/home/zbyniu/.local/share/dox/index"
                 "#,
@@ -244,6 +269,7 @@ mod test {
         create_config(
             &cfg_path,
             r#"
+                docs_dir = "/home/zbyniu/.local/share/dox/docs"
                 watched_dir = "/home/zbyniu/Tests/notify"
                 thumbnails_dir = "/home/zbyniu/.local/share/dox/thumbnails"
                 "#,
@@ -274,6 +300,7 @@ mod test {
         let cfg_path = tmp_cfg.path().join("dox.toml");
         let cfg = Config {
             watched_dir: PathBuf::from("/watched_dir"),
+            docs_dir: PathBuf::from("/docs_dir"),
             thumbnails_dir: PathBuf::from("/thumbnails_dir"),
             index_dir: PathBuf::from("/index_dir"),
         };
@@ -286,6 +313,7 @@ mod test {
         assert_eq!(
             read_to_string(&cfg_path)?,
             r#"watched_dir = "/watched_dir"
+docs_dir = "/docs_dir"
 thumbnails_dir = "/thumbnails_dir"
 index_dir = "/index_dir"
 "#
@@ -314,6 +342,7 @@ index_dir = "/index_dir"
         let cfg_path = tmp_cfg.path().join("dox.toml");
         let config = Config {
             watched_dir: tmp_cfg.path().join("watched_dir"),
+            docs_dir: tmp_cfg.path().join("docs_dir"),
             thumbnails_dir: tmp_cfg.path().join("thumbnails_dir"),
             index_dir: tmp_cfg.path().join("index_dir"),
         };
@@ -343,8 +372,9 @@ index_dir = "/index_dir"
         fs::write(&watched_dir, &dummy_file_content)?; // create file instead of directory
         let config = Config {
             watched_dir: watched_dir.clone(),
-            thumbnails_dir: tmp_cfg.path().join("thumbnails_dir"),
-            index_dir: tmp_cfg.path().join("index_dir"),
+            ..Config::default() // thumbnails_dir: tmp_cfg.path().join("thumbnails_dir"),
+                                // thumbnails_dir: tmp_cfg.path().join("thumbnails_dir"),
+                                // index_dir: tmp_cfg.path().join("index_dir"),
         };
         let config_content = toml::to_string(&config)?;
         create_config(&cfg_path, &config_content)?;
