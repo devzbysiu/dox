@@ -49,13 +49,14 @@ impl Indexer {
         });
     }
 
+    // TODO: This cleanup shouldn't be here. It should remove data from index, not the document itself.
     #[instrument(skip(self, fs))]
     fn cleanup(&self, loc: Location, fs: &Fs) {
         debug!("pipeline failed, removing document");
         let fs = fs.clone();
         self.tp.spawn(move || {
             if let Err(e) = remove_document(&loc, &fs) {
-                error!("thumbnail removal failed: '{}'", e);
+                error!("document removal failed: '{}'", e);
             }
         });
     }
