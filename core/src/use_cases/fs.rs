@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 pub type Fs = Arc<dyn Filesystem>;
 
+// TODO: Update docs
 /// Abstracts the process of saving document.
 ///
 /// The actual implementation can be as simple as saving file on disk, saving file in

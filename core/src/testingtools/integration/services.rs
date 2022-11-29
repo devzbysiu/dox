@@ -3,11 +3,11 @@ use crate::entities::location::SafePathBuf;
 use crate::entities::user::User;
 use crate::result::CipherErr;
 use crate::result::{FsErr, IndexerErr, SearchErr};
-use crate::testingtools::unit::Spy;
+use crate::testingtools::Spy;
 use crate::use_cases::cipher::{
     Cipher, CipherRead, CipherReadStrategy, CipherStrategy, CipherWrite, CipherWriteStrategy,
 };
-use crate::use_cases::fs::Filesystem;
+use crate::use_cases::fs::{Filesystem, Fs};
 use crate::use_cases::repository::{
     Repo, RepoRead, RepoWrite, Repository, RepositoryRead, RepositoryWrite, SearchResult,
 };
@@ -275,5 +275,35 @@ impl FailingCipherWrite {
 impl CipherWriteStrategy for FailingCipherWrite {
     fn encrypt(&self, _src_buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
         Err(CipherErr::Chacha(chacha20poly1305::Error))
+    }
+}
+
+pub struct TrackedFs {
+    fs: Fs,
+    tx: Mutex<Sender<()>>,
+}
+
+impl TrackedFs {
+    pub fn wrap(fs: Fs) -> (Spy, Fs) {
+        let (tx, rx) = channel();
+        let tx = Mutex::new(tx);
+        (Spy::new(rx), Arc::new(Self { fs, tx }))
+    }
+}
+
+impl Filesystem for TrackedFs {
+    fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<(), FsErr> {
+        self.fs.save(uri, buf)
+    }
+
+    fn load(&self, uri: PathBuf) -> Result<Vec<u8>, FsErr> {
+        self.fs.load(uri)
+    }
+
+    fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
+        let tx = self.tx.lock().expect("poisoned mutex");
+        self.fs.rm_file(path)?;
+        tx.send(()).expect("failed to send");
+        Ok(())
     }
 }

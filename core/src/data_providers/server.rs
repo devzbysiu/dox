@@ -269,17 +269,19 @@ mod test {
     fn when_encryption_fails_document_is_removed() -> Result<()> {
         // given
         init_tracing();
-        let mut app = test_app()?.with_tracked_failing_cipher().start()?;
+        let mut app = test_app()?
+            .with_tracked_failing_cipher()
+            .with_tracked_fs()
+            .start()?;
         let res = app.upload_doc(doc("doc1.pdf"))?;
         assert_eq!(res.status, Status::Created);
 
         // when
-        app.wait_til_encrypted();
-        // TODO: It should wait till rm_file method is called
-        std::thread::sleep(std::time::Duration::from_secs(2));
+        app.wait_til_file_removed(); // removal of thumbnail or document
+        app.wait_til_file_removed(); // removal of document or thumbnail
 
         // then
-        assert!(!app.document_exists("doc1.png"));
+        assert!(!app.document_exists("doc1.pdf"));
 
         Ok(())
     }
@@ -288,14 +290,16 @@ mod test {
     fn when_encryption_fails_thumbnail_is_removed() -> Result<()> {
         // given
         init_tracing();
-        let mut app = test_app()?.with_tracked_failing_cipher().start()?;
+        let mut app = test_app()?
+            .with_tracked_failing_cipher()
+            .with_tracked_fs()
+            .start()?;
         let res = app.upload_doc(doc("doc1.pdf"))?;
         assert_eq!(res.status, Status::Created);
 
         // when
-        app.wait_til_encrypted();
-        // TODO: It should wait till rm_file method is called
-        std::thread::sleep(std::time::Duration::from_secs(2));
+        app.wait_til_file_removed(); // removal of thumbnail or document
+        app.wait_til_file_removed(); // removal of document or thumbnail
 
         // then
         assert!(!app.thumbnail_exists("doc1.png"));

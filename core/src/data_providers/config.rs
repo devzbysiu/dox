@@ -148,7 +148,7 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::data_providers::config::default_config_path;
-    use crate::testingtools::unit::Spy;
+    use crate::testingtools::Spy;
 
     use anyhow::Result;
     use claim::assert_matches;

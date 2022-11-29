@@ -164,10 +164,15 @@ impl TestShim {
         Ok(())
     }
 
-    pub fn trigger_encryption_failure(&mut self) -> Result<()> {
-        let test_location = self.test_location();
-        self.publ
-            .send(BusEvent::ThumbnailEncryptionFailed(test_location))?;
+    pub fn trigger_thumbnail_encryption_failure(&mut self) -> Result<()> {
+        let loc = self.test_location();
+        self.publ.send(BusEvent::ThumbnailEncryptionFailed(loc))?;
+        Ok(())
+    }
+
+    pub fn trigger_document_encryption_failure(&mut self) -> Result<()> {
+        let loc = self.test_location();
+        self.publ.send(BusEvent::DocumentEncryptionFailed(loc))?;
         Ok(())
     }
 }
@@ -190,18 +195,4 @@ pub struct TestFile {
     _temp_dir: TempDir,
     pub path: SafePathBuf,
     pub location: Location,
-}
-
-pub struct Spy {
-    rx: Receiver<()>,
-}
-
-impl Spy {
-    pub fn new(rx: Receiver<()>) -> Self {
-        Self { rx }
-    }
-
-    pub fn method_called(&self) -> bool {
-        self.rx.recv_timeout(Duration::from_secs(30)).is_ok()
-    }
 }

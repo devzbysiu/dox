@@ -242,6 +242,9 @@ pub enum IndexerErr {
 
     #[error("Failed to access index directory.")]
     IndexDirectory(#[from] tantivy::TantivyError),
+
+    #[error("Failed to make filesystem operation")]
+    Fs(#[from] FsErr),
 }
 
 #[derive(Debug, Error)]

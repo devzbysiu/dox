@@ -60,9 +60,9 @@ fn setup_core(ctx: Context) -> Result<(RepoRead, CipherRead), SetupErr> {
     let encrypter = Encrypter::new(bus);
 
     watcher.run(event_watcher);
-    preprocessor.run(preprocessor_factory, fs);
+    preprocessor.run(preprocessor_factory, fs.clone());
     extractor.run(extractor_factory);
-    indexer.run(repo.write());
+    indexer.run(repo.write(), fs);
     encrypter.run(cipher.write());
 
     Ok((repo.read(), cipher.read()))

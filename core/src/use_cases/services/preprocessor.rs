@@ -46,6 +46,7 @@ impl ThumbnailGenerator {
         });
     }
 
+    #[instrument(skip(self, factory))]
     fn do_thumbnail(&self, loc: Location, factory: &PreprocessorCreator) -> Result<()> {
         debug!("NewDocs in: '{:?}', starting preprocessing", loc);
         let preprocessor = factory.make(&loc.extension()?);
@@ -59,6 +60,7 @@ impl ThumbnailGenerator {
         Ok(())
     }
 
+    #[instrument(skip(self, fs))]
     fn cleanup(&self, loc: Location, fs: &Fs) {
         debug!("pipeline failed, removing thumbnail");
         let fs = fs.clone();
@@ -70,6 +72,7 @@ impl ThumbnailGenerator {
     }
 }
 
+#[instrument(skip(prepr, publ))]
 fn preprocess(
     loc: &Location,
     prepr: &Preprocessor,
@@ -85,6 +88,7 @@ fn preprocess(
     Ok(())
 }
 
+#[instrument(skip(fs))]
 fn remove_thumbnail(loc: &Location, fs: &Fs) -> Result<()> {
     let Location::FS(paths) = loc;
     for path in paths {
@@ -117,17 +121,15 @@ mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
-    use crate::entities::location::SafePathBuf;
-    use crate::result::{BusErr, FsErr};
-    use crate::testingtools::unit::{create_test_shim, Spy};
-    use crate::use_cases::fs::Filesystem;
+    use crate::result::BusErr;
+    use crate::testingtools::unit::create_test_shim;
+    use crate::testingtools::{FsSpy, NoOpFs, Spy};
 
     use anyhow::{anyhow, Result};
     use fake::{Fake, Faker};
-    use std::path::PathBuf;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::{channel, Sender};
-    use std::sync::{Arc, Mutex};
+    use std::sync::Mutex;
     use std::time::Duration;
 
     #[test]
@@ -278,7 +280,7 @@ mod test {
     }
 
     #[test]
-    fn when_encryption_failed_event_appears_filesystem_is_used_for_cleanup() -> Result<()> {
+    fn when_thumbnail_encryption_failed_event_appears_filesystem_removes_thumbnail() -> Result<()> {
         // given
         init_tracing();
         let preprocessor = NoOpPreprocessor::new();
@@ -289,7 +291,7 @@ mod test {
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
-        shim.trigger_encryption_failure()?;
+        shim.trigger_thumbnail_encryption_failure()?;
 
         // then
         assert!(spy.method_called());
@@ -406,70 +408,6 @@ mod test {
             _thumbnails_dir: &Path,
         ) -> Result<Location, PreprocessorErr> {
             Ok(location.clone())
-        }
-    }
-
-    struct NoOpFs;
-
-    impl NoOpFs {
-        fn new() -> Arc<Self> {
-            Arc::new(Self)
-        }
-    }
-
-    impl Filesystem for NoOpFs {
-        fn save(&self, _uri: PathBuf, _buf: &[u8]) -> Result<(), FsErr> {
-            // nothing to do
-            Ok(())
-        }
-
-        fn load(&self, _uri: PathBuf) -> Result<Vec<u8>, FsErr> {
-            // nothing to do
-            Ok(Vec::new())
-        }
-
-        fn rm_file(&self, _path: &SafePathBuf) -> Result<(), FsErr> {
-            // nothing to do
-            Ok(())
-        }
-    }
-
-    struct FsSpy;
-
-    impl FsSpy {
-        fn working() -> (Spy, Fs) {
-            let (tx, rx) = channel();
-            (Spy::new(rx), WorkingFs::new(tx))
-        }
-    }
-
-    struct WorkingFs {
-        tx: Mutex<Sender<()>>,
-    }
-
-    impl WorkingFs {
-        fn new(tx: Sender<()>) -> Arc<Self> {
-            Arc::new(Self { tx: Mutex::new(tx) })
-        }
-    }
-
-    impl Filesystem for WorkingFs {
-        fn save(&self, _uri: PathBuf, _buf: &[u8]) -> Result<(), FsErr> {
-            unimplemented!()
-        }
-
-        fn load(&self, _uri: PathBuf) -> Result<Vec<u8>, FsErr> {
-            unimplemented!()
-        }
-
-        fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
-            debug!("pretending to remove '{}'", path);
-            self.tx
-                .lock()
-                .expect("poisoned mutex")
-                .send(())
-                .expect("failed to send message");
-            Ok(())
         }
     }
 }
