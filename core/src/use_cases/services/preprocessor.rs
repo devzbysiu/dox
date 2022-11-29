@@ -38,7 +38,7 @@ impl ThumbnailGenerator {
             let sub = self.bus.subscriber();
             loop {
                 match sub.recv()? {
-                    BusEvent::DocMoved(loc) => self.do_thumbnail(loc, &factory)?,
+                    BusEvent::DocsMoved(loc) => self.do_thumbnail(loc, &factory)?,
                     BusEvent::ThumbnailEncryptionFailed(loc) => self.cleanup(loc, &fs),
                     e => trace!("event not supported in ThumbnailGenerator: '{}'", e),
                 }

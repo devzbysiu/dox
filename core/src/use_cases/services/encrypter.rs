@@ -213,7 +213,7 @@ mod test {
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
-            BusEvent::DocMoved(Faker.fake()),
+            BusEvent::DocsMoved(Faker.fake()),
             BusEvent::DataExtracted(Faker.fake()),
             BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::Indexed(Faker.fake()),

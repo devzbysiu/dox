@@ -118,7 +118,7 @@ impl TestShim {
 
     pub fn trigger_extractor(&mut self) -> Result<()> {
         let test_location = self.test_file.location.clone();
-        self.publ.send(BusEvent::DocMoved(test_location))?;
+        self.publ.send(BusEvent::DocsMoved(test_location))?;
         Ok(())
     }
 
@@ -143,7 +143,7 @@ impl TestShim {
     }
 
     pub fn trigger_preprocessor(&mut self) -> Result<()> {
-        self.publ.send(BusEvent::DocMoved(self.test_location()))?;
+        self.publ.send(BusEvent::DocsMoved(self.test_location()))?;
         Ok(())
     }
 

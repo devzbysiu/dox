@@ -42,7 +42,7 @@ pub enum BusEvent {
     DataExtracted(Vec<DocDetails>),
 
     /// Published when document was moved to correct location.
-    DocMoved(Location),
+    DocsMoved(Location),
 
     /// Published when thumbnail generation is finished.
     ThumbnailMade(Location),
@@ -74,7 +74,7 @@ impl Display for BusEvent {
             match self {
                 BusEvent::NewDocs(_) => "NewDocs",
                 BusEvent::DataExtracted(_) => "DataExtracted",
-                BusEvent::DocMoved(_) => "DocumentMmoved",
+                BusEvent::DocsMoved(_) => "DocumentMmoved",
                 BusEvent::ThumbnailMade(_) => "ThumbnailMade",
                 BusEvent::Indexed(_) => "Indexed",
                 BusEvent::EncryptDocument(_) => "DocumentEncryptionRequest",

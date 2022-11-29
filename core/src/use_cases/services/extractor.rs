@@ -30,7 +30,7 @@ impl TxtExtractor {
             let sub = self.bus.subscriber();
             loop {
                 match sub.recv()? {
-                    BusEvent::DocMoved(loc) => self.extract_data(loc, &factory)?,
+                    BusEvent::DocsMoved(loc) => self.extract_data(loc, &factory)?,
                     e => trace!("event not supported in TxtExtractor: '{}'", e),
                 }
             }
