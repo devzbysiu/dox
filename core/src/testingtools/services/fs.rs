@@ -8,10 +8,14 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tracing::instrument;
 
+pub fn failing_load_fs() -> Fs {
+    FailingLoadFs::make()
+}
+
 pub struct FailingLoadFs;
 
 impl FailingLoadFs {
-    pub fn new() -> Arc<Self> {
+    fn make() -> Fs {
         Arc::new(Self)
     }
 }

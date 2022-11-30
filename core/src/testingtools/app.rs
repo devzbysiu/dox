@@ -2,9 +2,9 @@ use crate::configuration::factories::{fs, repository, Context};
 use crate::helpers::PathRefExt;
 use crate::startup::rocket;
 use crate::testingtools::api::ApiResponse;
-use crate::testingtools::services::encrypter::{CipherSpies, FailingCipher, TrackedCipher};
-use crate::testingtools::services::fs::{FailingLoadFs, FsSpies};
-use crate::testingtools::services::indexer::{RepoSpies, TrackedRepo};
+use crate::testingtools::services::encrypter::{failing_cipher, tracked_cipher, CipherSpies};
+use crate::testingtools::services::fs::{failing_load_fs, tracked_fs, FsSpies};
+use crate::testingtools::services::indexer::{tracked_repo, RepoSpies};
 use crate::testingtools::TestConfig;
 use crate::use_cases::cipher::Cipher;
 use crate::use_cases::fs::Fs;
@@ -18,8 +18,6 @@ use std::fs;
 use std::path::Path;
 use tracing::debug;
 use urlencoding::encode;
-
-use super::services::fs::tracked_fs;
 
 pub fn start_test_app() -> Result<App> {
     let config = TestConfig::new()?;
@@ -143,7 +141,7 @@ pub struct AppBuilder {
 impl AppBuilder {
     pub fn with_tracked_repo(mut self) -> Result<Self> {
         let cfg = self.config.as_ref().unwrap();
-        let (repo_spies, tracked_repo) = TrackedRepo::wrap(&repository(cfg)?);
+        let (repo_spies, tracked_repo) = tracked_repo(&repository(cfg)?);
         let ctx = self.ctx.as_mut().unwrap();
         ctx.with_repo(tracked_repo);
         self.repo_spies = Some(repo_spies);
@@ -152,12 +150,12 @@ impl AppBuilder {
 
     pub fn with_failing_load_fs(mut self) -> Self {
         let ctx = self.ctx.as_mut().unwrap();
-        ctx.with_fs(FailingLoadFs::new());
+        ctx.with_fs(failing_load_fs());
         self
     }
 
     pub fn with_tracked_failing_cipher(mut self) -> Self {
-        let (cipher_spies, tracked_cipher) = TrackedCipher::wrap(&FailingCipher::create());
+        let (cipher_spies, tracked_cipher) = tracked_cipher(&failing_cipher());
         let ctx = self.ctx.as_mut().unwrap();
         ctx.with_cipher(tracked_cipher);
         self.cipher_spies = Some(cipher_spies);

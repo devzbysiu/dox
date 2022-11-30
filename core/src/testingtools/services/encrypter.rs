@@ -8,13 +8,17 @@ use anyhow::Result;
 use std::sync::Arc;
 use tracing::debug;
 
+pub fn tracked_cipher(cipher: &Cipher) -> (CipherSpies, Cipher) {
+    TrackedCipher::wrap(cipher)
+}
+
 pub struct TrackedCipher {
     read: CipherRead,
     write: CipherWrite,
 }
 
 impl TrackedCipher {
-    pub fn wrap(cipher: &Cipher) -> (CipherSpies, Cipher) {
+    fn wrap(cipher: &Cipher) -> (CipherSpies, Cipher) {
         let (read_tx, read_spy) = pipe();
         let (write_tx, write_spy) = pipe();
 
@@ -76,13 +80,18 @@ impl CipherWriteStrategy for TrackedCipherWrite {
         Ok(res)
     }
 }
+
+pub fn failing_cipher() -> Cipher {
+    FailingCipher::make()
+}
+
 pub struct FailingCipher {
     read: CipherRead,
     write: CipherWrite,
 }
 
 impl FailingCipher {
-    pub fn create() -> Cipher {
+    fn make() -> Cipher {
         Box::new(Self {
             read: FailingCipherRead::new(),
             write: FailingCipherWrite::new(),

@@ -10,13 +10,17 @@ use anyhow::Result;
 use std::sync::Arc;
 use tracing::debug;
 
+pub fn tracked_repo(repo: &Repo) -> (RepoSpies, Repo) {
+    TrackedRepo::wrap(repo)
+}
+
 pub struct TrackedRepo {
     read: RepoRead,
     write: RepoWrite,
 }
 
 impl TrackedRepo {
-    pub fn wrap(repo: &Repo) -> (RepoSpies, Repo) {
+    fn wrap(repo: &Repo) -> (RepoSpies, Repo) {
         let (read_tx, read_spy) = pipe();
         let (write_tx, write_spy) = pipe();
 
