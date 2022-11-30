@@ -201,25 +201,6 @@ mod test {
         Ok(())
     }
 
-    // #[test]
-    // fn when_doc_encryption_failed_event_appears_filesystem_removes_document() -> Result<()> {
-    //     // given
-    //     init_tracing();
-    //     let repo = NoOpRepoWrite::new();
-    //     let (spy, working_fs) = FsSpy::working();
-    //     let mut shim = create_test_shim()?;
-    //     Indexer::new(shim.bus())?.run(repo, working_fs);
-    //     thread::sleep(Duration::from_secs(1)); // allow to start indexer
-
-    //     // when
-    //     shim.trigger_document_encryption_failure()?;
-
-    //     // then
-    //     assert!(spy.method_called());
-
-    //     Ok(())
-    // }
-
     struct RepoWriteSpy;
 
     impl RepoWriteSpy {

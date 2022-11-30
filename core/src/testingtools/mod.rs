@@ -2,21 +2,23 @@ use crate::entities::location::SafePathBuf;
 use crate::entities::user::{User, FAKE_USER_EMAIL};
 use crate::result::FsErr;
 use crate::use_cases::config::Config;
-use crate::use_cases::fs::{Filesystem, Fs};
+use crate::use_cases::fs::Filesystem;
 
 use anyhow::Result;
 use rocket::serde::Serialize;
 use serde::ser::SerializeStruct;
 use serde::Serializer;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Receiver;
+use std::sync::Arc;
 use std::time::Duration;
 use tempfile::TempDir;
 use tracing::{debug, instrument};
 
 pub mod integration;
 pub mod unit;
+
+pub type WorkingFs = NoOpFs;
 
 pub fn index_dir_path() -> Result<TempDir> {
     debug!("creating index directory");
@@ -83,49 +85,6 @@ impl Filesystem for NoOpFs {
     fn mv_file(&self, from: &SafePathBuf, to: &Path) -> Result<(), FsErr> {
         // nothing to do
         Ok(())
-    }
-}
-
-pub struct FsSpy;
-
-impl FsSpy {
-    pub fn working() -> (Spy, Fs) {
-        let (tx, rx) = channel();
-        (Spy::new(rx), WorkingFs::new(tx))
-    }
-}
-
-struct WorkingFs {
-    tx: Mutex<Sender<()>>,
-}
-
-impl WorkingFs {
-    fn new(tx: Sender<()>) -> Arc<Self> {
-        Arc::new(Self { tx: Mutex::new(tx) })
-    }
-}
-
-impl Filesystem for WorkingFs {
-    fn save(&self, _uri: PathBuf, _buf: &[u8]) -> Result<(), FsErr> {
-        unimplemented!()
-    }
-
-    fn load(&self, _uri: PathBuf) -> Result<Vec<u8>, FsErr> {
-        unimplemented!()
-    }
-
-    fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
-        debug!("pretending to remove '{}'", path);
-        self.tx
-            .lock()
-            .expect("poisoned mutex")
-            .send(())
-            .expect("failed to send message");
-        Ok(())
-    }
-
-    fn mv_file(&self, _from: &SafePathBuf, _to: &Path) -> Result<(), FsErr> {
-        unimplemented!()
     }
 }
 

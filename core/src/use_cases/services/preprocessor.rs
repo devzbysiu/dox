@@ -122,8 +122,9 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::result::BusErr;
+    use crate::testingtools::integration::services::TrackedFs;
     use crate::testingtools::unit::create_test_shim;
-    use crate::testingtools::{FsSpy, NoOpFs, Spy};
+    use crate::testingtools::{NoOpFs, Spy, WorkingFs};
 
     use anyhow::{anyhow, Result};
     use fake::{Fake, Faker};
@@ -286,7 +287,7 @@ mod test {
         init_tracing();
         let preprocessor = NoOpPreprocessor::new();
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
-        let (spy, working_fs) = FsSpy::working();
+        let (fs_spies, working_fs) = TrackedFs::wrap(WorkingFs::new());
         let mut shim = create_test_shim()?;
         ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, working_fs);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
@@ -295,7 +296,7 @@ mod test {
         shim.trigger_thumbnail_encryption_failure()?;
 
         // then
-        assert!(spy.method_called());
+        assert!(fs_spies.rm_file_called());
 
         Ok(())
     }
