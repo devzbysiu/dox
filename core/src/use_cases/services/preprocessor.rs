@@ -123,7 +123,7 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::result::BusErr;
-    use crate::testingtools::services::{NoOpFs, TrackedFs, WorkingFs};
+    use crate::testingtools::services::fs::{NoOpFs, TrackedFs, WorkingFs};
     use crate::testingtools::unit::create_test_shim;
     use crate::testingtools::{pipe, MutexExt, Spy, Tx};
 

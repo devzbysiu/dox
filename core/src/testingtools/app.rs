@@ -2,9 +2,9 @@ use crate::configuration::factories::{fs, repository, Context};
 use crate::helpers::PathRefExt;
 use crate::startup::rocket;
 use crate::testingtools::api::ApiResponse;
-use crate::testingtools::services::{
-    CipherSpies, FailingCipher, FailingLoadFs, RepoSpies, TrackedCipher, TrackedFs, TrackedRepo,
-};
+use crate::testingtools::services::encrypter::{CipherSpies, FailingCipher, TrackedCipher};
+use crate::testingtools::services::fs::{FailingLoadFs, FsSpies, TrackedFs};
+use crate::testingtools::services::indexer::{RepoSpies, TrackedRepo};
 use crate::testingtools::TestConfig;
 use crate::use_cases::cipher::Cipher;
 use crate::use_cases::fs::Fs;
@@ -18,8 +18,6 @@ use std::fs;
 use std::path::Path;
 use tracing::debug;
 use urlencoding::encode;
-
-use super::services::FsSpies;
 
 pub fn start_test_app() -> Result<App> {
     let config = TestConfig::new()?;
