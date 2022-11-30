@@ -6,7 +6,8 @@ use rocket::serde::Serialize;
 use serde::ser::SerializeStruct;
 use serde::Serializer;
 use std::path::PathBuf;
-use std::sync::mpsc::Receiver;
+use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::Mutex;
 use std::time::Duration;
 use tempfile::TempDir;
 use tracing::debug;
@@ -118,5 +119,23 @@ impl Serialize for TestConfig {
 impl From<TestConfig> for Config {
     fn from(cfg: TestConfig) -> Self {
         cfg.value
+    }
+}
+
+pub type Tx = Mutex<Sender<()>>;
+
+pub fn pipe() -> (Tx, Spy) {
+    let (tx, rx) = channel();
+    (Mutex::new(tx), Spy::new(rx))
+}
+
+pub trait MutexExt {
+    fn signal(&self);
+}
+
+impl MutexExt for Tx {
+    fn signal(&self) {
+        let tx = self.lock().expect("poisoned mutex");
+        tx.send(()).expect("failed to send");
     }
 }

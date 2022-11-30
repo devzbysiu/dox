@@ -125,12 +125,11 @@ mod test {
     use crate::result::BusErr;
     use crate::testingtools::services::{NoOpFs, TrackedFs, WorkingFs};
     use crate::testingtools::unit::create_test_shim;
-    use crate::testingtools::Spy;
+    use crate::testingtools::{pipe, MutexExt, Spy, Tx};
 
     use anyhow::{anyhow, Result};
     use fake::{Fake, Faker};
     use std::sync::atomic::{AtomicUsize, Ordering};
-    use std::sync::mpsc::{channel, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
 
@@ -336,23 +335,23 @@ mod test {
 
     impl PreprocessorSpy {
         fn working() -> (Spy, Preprocessor) {
-            let (tx, rx) = channel();
-            (Spy::new(rx), WorkingPreprocessor::new(tx))
+            let (tx, spy) = pipe();
+            (spy, WorkingPreprocessor::new(tx))
         }
 
         fn failing() -> (Spy, Preprocessor) {
-            let (tx, rx) = channel();
-            (Spy::new(rx), FailingPreprocessor::new(tx))
+            let (tx, spy) = pipe();
+            (spy, FailingPreprocessor::new(tx))
         }
     }
 
     struct WorkingPreprocessor {
-        tx: Mutex<Sender<()>>,
+        tx: Tx,
     }
 
     impl WorkingPreprocessor {
-        fn new(tx: Sender<()>) -> Box<Self> {
-            Box::new(Self { tx: Mutex::new(tx) })
+        fn new(tx: Tx) -> Box<Self> {
+            Box::new(Self { tx })
         }
     }
 
@@ -372,26 +371,22 @@ mod test {
     }
 
     struct FailingPreprocessor {
-        tx: Mutex<Sender<()>>,
+        tx: Tx,
     }
 
     impl FailingPreprocessor {
-        fn new(tx: Sender<()>) -> Box<Self> {
-            Box::new(Self { tx: Mutex::new(tx) })
+        fn new(tx: Tx) -> Box<Self> {
+            Box::new(Self { tx })
         }
     }
 
     impl FilePreprocessor for FailingPreprocessor {
         fn preprocess(
             &self,
-            _location: &Location,
-            _thumbnails_dir: &Path,
+            _loc: &Location,
+            _dir: &Path,
         ) -> std::result::Result<Location, PreprocessorErr> {
-            self.tx
-                .lock()
-                .expect("poisoned mutex")
-                .send(())
-                .expect("failed to send message");
+            self.tx.signal();
             Err(PreprocessorErr::Bus(BusErr::Generic(anyhow!("error"))))
         }
     }

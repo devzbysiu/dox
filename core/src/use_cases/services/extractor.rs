@@ -77,13 +77,12 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::result::ExtractorErr;
     use crate::testingtools::unit::create_test_shim;
-    use crate::testingtools::Spy;
+    use crate::testingtools::{pipe, MutexExt, Spy, Tx};
 
     use anyhow::Result;
     use fake::{Fake, Faker};
     use leptess::tesseract::TessInitError;
     use std::sync::atomic::{AtomicUsize, Ordering};
-    use std::sync::mpsc::{channel, Sender};
     use std::sync::Mutex;
     use std::time::Duration;
 
@@ -261,23 +260,23 @@ mod test {
 
     impl ExtractorSpy {
         fn working() -> (Spy, Extractor) {
-            let (tx, rx) = channel();
-            (Spy::new(rx), WorkingExtractor::new(tx))
+            let (tx, spy) = pipe();
+            (spy, WorkingExtractor::new(tx))
         }
 
         fn failing() -> (Spy, Extractor) {
-            let (tx, rx) = channel();
-            (Spy::new(rx), FailingExtractor::new(tx))
+            let (tx, spy) = pipe();
+            (spy, FailingExtractor::new(tx))
         }
     }
 
     struct WorkingExtractor {
-        tx: Mutex<Sender<()>>,
+        tx: Tx,
     }
 
     impl WorkingExtractor {
-        fn new(tx: Sender<()>) -> Box<Self> {
-            Box::new(Self { tx: Mutex::new(tx) })
+        fn new(tx: Tx) -> Box<Self> {
+            Box::new(Self { tx })
         }
     }
 
@@ -286,22 +285,18 @@ mod test {
             &self,
             _location: &Location,
         ) -> std::result::Result<Vec<DocDetails>, ExtractorErr> {
-            self.tx
-                .lock()
-                .expect("poisoned mutex")
-                .send(())
-                .expect("failed to send message");
+            self.tx.signal();
             Ok(Vec::new())
         }
     }
 
     struct FailingExtractor {
-        tx: Mutex<Sender<()>>,
+        tx: Tx,
     }
 
     impl FailingExtractor {
-        fn new(tx: Sender<()>) -> Box<Self> {
-            Box::new(Self { tx: Mutex::new(tx) })
+        fn new(tx: Tx) -> Box<Self> {
+            Box::new(Self { tx })
         }
     }
 
@@ -310,11 +305,7 @@ mod test {
             &self,
             _location: &Location,
         ) -> std::result::Result<Vec<DocDetails>, ExtractorErr> {
-            self.tx
-                .lock()
-                .expect("poisoned mutex")
-                .send(())
-                .expect("failed to send message");
+            self.tx.signal();
             Err(ExtractorErr::OcrExtract(TessInitError { code: 0 }))
         }
     }

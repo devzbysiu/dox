@@ -71,13 +71,12 @@ mod test {
     use crate::entities::document::DocDetails;
     use crate::result::{BusErr, IndexerErr};
     use crate::testingtools::unit::create_test_shim;
-    use crate::testingtools::Spy;
+    use crate::testingtools::{pipe, MutexExt, Spy, Tx};
     use crate::use_cases::repository::RepositoryWrite;
 
     use anyhow::{anyhow, Result};
     use fake::{Fake, Faker};
-    use std::sync::mpsc::{channel, Sender};
-    use std::sync::{Arc, Mutex};
+    use std::sync::Arc;
 
     #[test]
     fn repo_write_is_used_to_index_data() -> Result<()> {
@@ -205,54 +204,46 @@ mod test {
 
     impl RepoWriteSpy {
         fn working() -> (Spy, RepoWrite) {
-            let (tx, rx) = channel();
-            (Spy::new(rx), WorkingRepoWrite::make(tx))
+            let (tx, spy) = pipe();
+            (spy, WorkingRepoWrite::make(tx))
         }
 
         fn failing() -> (Spy, RepoWrite) {
-            let (tx, rx) = channel();
-            (Spy::new(rx), FailingRepoWrite::make(tx))
+            let (tx, spy) = pipe();
+            (spy, FailingRepoWrite::make(tx))
         }
     }
 
     struct WorkingRepoWrite {
-        tx: Mutex<Sender<()>>,
+        tx: Tx,
     }
 
     impl WorkingRepoWrite {
-        fn make(tx: Sender<()>) -> Arc<Self> {
-            Arc::new(Self { tx: Mutex::new(tx) })
+        fn make(tx: Tx) -> Arc<Self> {
+            Arc::new(Self { tx })
         }
     }
 
     impl RepositoryWrite for WorkingRepoWrite {
         fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
-            self.tx
-                .lock()
-                .expect("poisoned mutex")
-                .send(())
-                .expect("failed to send message");
+            self.tx.signal();
             Ok(())
         }
     }
 
     struct FailingRepoWrite {
-        tx: Mutex<Sender<()>>,
+        tx: Tx,
     }
 
     impl FailingRepoWrite {
-        fn make(tx: Sender<()>) -> Arc<Self> {
-            Arc::new(Self { tx: Mutex::new(tx) })
+        fn make(tx: Tx) -> Arc<Self> {
+            Arc::new(Self { tx })
         }
     }
 
     impl RepositoryWrite for FailingRepoWrite {
         fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
-            self.tx
-                .lock()
-                .expect("poisoned mutex")
-                .send(())
-                .expect("failed to send message");
+            self.tx.signal();
             Err(IndexerErr::Bus(BusErr::Generic(anyhow!("error"))))
         }
     }

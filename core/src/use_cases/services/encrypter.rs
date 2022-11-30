@@ -84,14 +84,13 @@ mod test {
     use crate::configuration::telemetry::init_tracing;
     use crate::result::CipherErr;
     use crate::testingtools::unit::create_test_shim;
-    use crate::testingtools::Spy;
+    use crate::testingtools::{pipe, MutexExt, Spy, Tx};
     use crate::use_cases::bus::BusEvent;
     use crate::use_cases::cipher::CipherWriteStrategy;
 
     use anyhow::Result;
     use fake::{Fake, Faker};
-    use std::sync::mpsc::{channel, Sender};
-    use std::sync::{Arc, Mutex};
+    use std::sync::Arc;
 
     #[test]
     fn cipher_is_used_when_encrypt_thumbnail_event_appears() -> Result<()> {
@@ -271,54 +270,46 @@ mod test {
 
     impl CipherSpy {
         fn working() -> (Spy, CipherWrite) {
-            let (tx, rx) = channel();
-            (Spy::new(rx), WorkingCipher::new(tx))
+            let (tx, spy) = pipe();
+            (spy, WorkingCipher::new(tx))
         }
 
         fn failing() -> (Spy, CipherWrite) {
-            let (tx, rx) = channel();
-            (Spy::new(rx), FailingCipher::new(tx))
+            let (tx, spy) = pipe();
+            (spy, FailingCipher::new(tx))
         }
     }
 
     struct WorkingCipher {
-        tx: Mutex<Sender<()>>,
+        tx: Tx,
     }
 
     impl WorkingCipher {
-        fn new(tx: Sender<()>) -> Arc<Self> {
-            Arc::new(Self { tx: Mutex::new(tx) })
+        fn new(tx: Tx) -> Arc<Self> {
+            Arc::new(Self { tx })
         }
     }
 
     impl CipherWriteStrategy for WorkingCipher {
         fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
-            self.tx
-                .lock()
-                .expect("poisoned mutex")
-                .send(())
-                .expect("failed to send message");
+            self.tx.signal();
             Ok(Vec::new())
         }
     }
 
     struct FailingCipher {
-        tx: Mutex<Sender<()>>,
+        tx: Tx,
     }
 
     impl FailingCipher {
-        fn new(tx: Sender<()>) -> Arc<Self> {
-            Arc::new(Self { tx: Mutex::new(tx) })
+        fn new(tx: Tx) -> Arc<Self> {
+            Arc::new(Self { tx })
         }
     }
 
     impl CipherWriteStrategy for FailingCipher {
         fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
-            self.tx
-                .lock()
-                .expect("poisoned mutex")
-                .send(())
-                .expect("failed to send message");
+            self.tx.signal();
             Err(CipherErr::Chacha(chacha20poly1305::Error))
         }
     }
