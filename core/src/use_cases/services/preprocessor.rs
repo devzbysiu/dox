@@ -123,7 +123,7 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::result::BusErr;
-    use crate::testingtools::services::fs::{NoOpFs, TrackedFs, WorkingFs};
+    use crate::testingtools::services::fs::{noop_fs, tracked_fs, working_fs};
     use crate::testingtools::unit::create_test_shim;
     use crate::testingtools::{pipe, MutexExt, Spy, Tx};
 
@@ -139,9 +139,8 @@ mod test {
         init_tracing();
         let (spy, preprocessor) = PreprocessorSpy::working();
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
-        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, fs_dummy);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
         thread::sleep(Duration::from_secs(1)); // allow to start preprocessor
 
         // when
@@ -159,9 +158,8 @@ mod test {
         init_tracing();
         let preprocessor = Box::new(NoOpPreprocessor);
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
-        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, fs_dummy);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -181,9 +179,8 @@ mod test {
         init_tracing();
         let preprocessor = NoOpPreprocessor::new();
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
-        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, fs_dummy);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -204,9 +201,8 @@ mod test {
         init_tracing();
         let (spy, failing_preprocessor) = PreprocessorSpy::failing();
         let factory_stub = PreprocessorFactoryStub::new(vec![failing_preprocessor]);
-        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, fs_dummy);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -227,7 +223,6 @@ mod test {
         init_tracing();
         let preprocessor = NoOpPreprocessor::new();
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
-        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
@@ -235,7 +230,7 @@ mod test {
             BusEvent::Indexed(Faker.fake()),
             BusEvent::PipelineFinished,
         ];
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, fs_dummy);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
 
         // when
         shim.send_events(&ignored_events)?;
@@ -264,9 +259,8 @@ mod test {
         let (spy1, failing_prepr1) = PreprocessorSpy::failing();
         let (spy2, failing_prepr2) = PreprocessorSpy::failing();
         let factory_stub = PreprocessorFactoryStub::new(vec![failing_prepr1, failing_prepr2]);
-        let fs_dummy = NoOpFs::new();
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, fs_dummy);
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         shim.trigger_preprocessor()?;
@@ -287,7 +281,7 @@ mod test {
         init_tracing();
         let preprocessor = NoOpPreprocessor::new();
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
-        let (fs_spies, working_fs) = TrackedFs::wrap(WorkingFs::new());
+        let (fs_spies, working_fs) = tracked_fs(working_fs());
         let mut shim = create_test_shim()?;
         ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, working_fs);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor

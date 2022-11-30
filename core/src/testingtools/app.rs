@@ -3,7 +3,7 @@ use crate::helpers::PathRefExt;
 use crate::startup::rocket;
 use crate::testingtools::api::ApiResponse;
 use crate::testingtools::services::encrypter::{CipherSpies, FailingCipher, TrackedCipher};
-use crate::testingtools::services::fs::{FailingLoadFs, FsSpies, TrackedFs};
+use crate::testingtools::services::fs::{FailingLoadFs, FsSpies};
 use crate::testingtools::services::indexer::{RepoSpies, TrackedRepo};
 use crate::testingtools::TestConfig;
 use crate::use_cases::cipher::Cipher;
@@ -18,6 +18,8 @@ use std::fs;
 use std::path::Path;
 use tracing::debug;
 use urlencoding::encode;
+
+use super::services::fs::tracked_fs;
 
 pub fn start_test_app() -> Result<App> {
     let config = TestConfig::new()?;
@@ -163,7 +165,7 @@ impl AppBuilder {
     }
 
     pub fn with_tracked_fs(mut self) -> Self {
-        let (fs_spies, tracked_fs) = TrackedFs::wrap(fs());
+        let (fs_spies, tracked_fs) = tracked_fs(fs());
         let ctx = self.ctx.as_mut().unwrap();
         ctx.with_fs(tracked_fs);
         self.fs_spies = Some(fs_spies);

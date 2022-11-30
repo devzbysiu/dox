@@ -93,7 +93,7 @@ mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
-    use crate::testingtools::services::fs::{NoOpFs, TrackedFs};
+    use crate::testingtools::services::fs::{noop_fs, tracked_fs};
     use crate::testingtools::unit::create_test_shim;
     use crate::testingtools::TestConfig;
 
@@ -105,7 +105,7 @@ mod test {
         // given
         init_tracing();
         // TODO: Think about methods like `tracked_fs(no_op_fs())` or `tracked_fs(real_fs())`
-        let (fs_spies, fs) = TrackedFs::wrap(NoOpFs::new());
+        let (fs_spies, fs) = tracked_fs(noop_fs());
         let mut shim = create_test_shim()?;
         DocumentMover::new(TestConfig::new()?, shim.bus())?.run(fs);
         thread::sleep(Duration::from_secs(1)); // allow DocumentMover to start

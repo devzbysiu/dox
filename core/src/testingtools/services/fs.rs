@@ -8,8 +8,6 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tracing::instrument;
 
-pub type WorkingFs = NoOpFs;
-
 pub struct FailingLoadFs;
 
 impl FailingLoadFs {
@@ -36,6 +34,10 @@ impl Filesystem for FailingLoadFs {
     }
 }
 
+pub fn tracked_fs(fs: Fs) -> (FsSpies, Fs) {
+    TrackedFs::wrap(fs)
+}
+
 // TODO: Implement tracking for the rest of methods in other services
 pub struct TrackedFs {
     fs: Fs,
@@ -46,7 +48,7 @@ pub struct TrackedFs {
 }
 
 impl TrackedFs {
-    pub fn wrap(fs: Fs) -> (FsSpies, Fs) {
+    fn wrap(fs: Fs) -> (FsSpies, Fs) {
         let (load_tx, load_spy) = pipe();
         let (save_tx, save_spy) = pipe();
         let (rm_file_tx, rm_file_spy) = pipe();
@@ -131,10 +133,18 @@ impl FsSpies {
     }
 }
 
+pub fn working_fs() -> Fs {
+    NoOpFs::new()
+}
+
+pub fn noop_fs() -> Fs {
+    NoOpFs::new()
+}
+
 pub struct NoOpFs;
 
 impl NoOpFs {
-    pub fn new() -> Arc<Self> {
+    fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
