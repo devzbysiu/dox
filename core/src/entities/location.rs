@@ -45,7 +45,13 @@ pub struct SafePathBuf(PathBuf);
 impl SafePathBuf {
     pub fn new<P: AsRef<Path>>(path: P) -> Self {
         let path = path.as_ref();
-        assert!(path.exists(), "Can't create not existing path '{:?}'", path);
+        {
+            // NOTE: Tests are using mocked FS which does not manipulate files,
+            // so for example moving a file won't actually move it thus we can't
+            // check this during tests
+            #[cfg(not(test))]
+            assert!(path.exists(), "Can't create not existing path '{:?}'", path);
+        }
         assert!(path.parent().is_some(), "Can't use '{:?}' as path", path);
         Self(path.into())
     }

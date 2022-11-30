@@ -16,7 +16,7 @@ use anyhow::Result;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
-use tracing::debug;
+use tracing::{debug, instrument};
 
 pub struct TrackedRepo {
     read: RepoRead,
@@ -282,36 +282,116 @@ impl CipherWriteStrategy for FailingCipherWrite {
     }
 }
 
+// TODO: Move this somewhere else. Would be better to get rid of `integration` and `unit`
+// modules and structure everything properly inside `testingtools` mod
+// TODO: Think about some abstraction for this `Mutex<Sender<()>>`
+// TODO: Implement tracking for the rest of methods in other services
 pub struct TrackedFs {
     fs: Fs,
-    tx: Mutex<Sender<()>>,
+    load_tx: Mutex<Sender<()>>,
+    save_tx: Mutex<Sender<()>>,
+    rm_file_tx: Mutex<Sender<()>>,
+    mv_file_tx: Mutex<Sender<()>>,
 }
 
 impl TrackedFs {
-    pub fn wrap(fs: Fs) -> (Spy, Fs) {
-        let (tx, rx) = channel();
-        let tx = Mutex::new(tx);
-        (Spy::new(rx), Arc::new(Self { fs, tx }))
+    pub fn wrap(fs: Fs) -> (FsSpies, Fs) {
+        let (load_tx, load_rx) = channel();
+        let (save_tx, save_rx) = channel();
+        let (rm_file_tx, rm_file_rx) = channel();
+        let (mv_file_tx, mv_file_rx) = channel();
+
+        let load_spy = Spy::new(load_rx);
+        let save_spy = Spy::new(save_rx);
+        let rm_file_spy = Spy::new(rm_file_rx);
+        let mv_file_spy = Spy::new(mv_file_rx);
+
+        let load_tx = Mutex::new(load_tx);
+        let save_tx = Mutex::new(save_tx);
+        let rm_file_tx = Mutex::new(rm_file_tx);
+        let mv_file_tx = Mutex::new(mv_file_tx);
+
+        (
+            FsSpies::new(load_spy, save_spy, rm_file_spy, mv_file_spy),
+            Arc::new(Self {
+                fs,
+                load_tx,
+                save_tx,
+                rm_file_tx,
+                mv_file_tx,
+            }),
+        )
     }
 }
 
+fn signal(tx: &Mutex<Sender<()>>) {
+    let tx = tx.lock().expect("poisoned mutex");
+    tx.send(()).expect("failed to send");
+}
+
 impl Filesystem for TrackedFs {
+    #[instrument(skip(self, buf))]
     fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<(), FsErr> {
-        self.fs.save(uri, buf)
-    }
-
-    fn load(&self, uri: PathBuf) -> Result<Vec<u8>, FsErr> {
-        self.fs.load(uri)
-    }
-
-    fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
-        let tx = self.tx.lock().expect("poisoned mutex");
-        self.fs.rm_file(path)?;
-        tx.send(()).expect("failed to send");
+        self.fs.save(uri, buf)?;
+        signal(&self.save_tx);
         Ok(())
     }
 
+    #[instrument(skip(self))]
+    fn load(&self, uri: PathBuf) -> Result<Vec<u8>, FsErr> {
+        let res = self.fs.load(uri)?;
+        signal(&self.load_tx);
+        Ok(res)
+    }
+
+    #[instrument(skip(self))]
+    fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
+        self.fs.rm_file(path)?;
+        signal(&self.rm_file_tx);
+        Ok(())
+    }
+
+    #[instrument(skip(self))]
     fn mv_file(&self, from: &SafePathBuf, to: &Path) -> Result<(), FsErr> {
-        self.fs.mv_file(from, to)
+        self.fs.mv_file(from, to)?;
+        signal(&self.mv_file_tx);
+        Ok(())
+    }
+}
+
+pub struct FsSpies {
+    load_spy: Spy,
+    save_spy: Spy,
+    rm_file_spy: Spy,
+    mv_file_spy: Spy,
+}
+
+impl FsSpies {
+    // TODO: Think about those Mutex<Receiver<()>>
+    fn new(load_spy: Spy, save_spy: Spy, rm_file_spy: Spy, mv_file_spy: Spy) -> Self {
+        Self {
+            load_spy,
+            save_spy,
+            rm_file_spy,
+            mv_file_spy,
+        }
+    }
+
+    #[allow(unused)]
+    pub fn load_called(&self) -> bool {
+        self.load_spy.method_called()
+    }
+
+    #[allow(unused)]
+    pub fn save_called(&self) -> bool {
+        self.save_spy.method_called()
+    }
+
+    pub fn rm_file_called(&self) -> bool {
+        self.rm_file_spy.method_called()
+    }
+
+    pub fn mv_file_called(&self) -> bool {
+        self.mv_file_spy.method_called()
     }
 }

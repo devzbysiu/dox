@@ -122,6 +122,12 @@ impl TestShim {
         Ok(())
     }
 
+    pub fn trigger_mover(&mut self) -> Result<()> {
+        let test_location = self.test_file.location.clone();
+        self.publ.send(BusEvent::NewDocs(test_location))?;
+        Ok(())
+    }
+
     // TODO: this should have timeout, otherwise it will hung the tests.
     // Currently, timeout is implemented in [`SubscriberExt`] but it spawns separate thread for
     // waiting for an event. Because of that, it consumes `self` and this cannot be done here

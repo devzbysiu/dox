@@ -2,11 +2,10 @@ use crate::configuration::factories::{fs, repository, Context};
 use crate::helpers::PathRefExt;
 use crate::startup::rocket;
 use crate::testingtools::integration::api::ApiResponse;
-use crate::testingtools::integration::config::TestConfig;
 use crate::testingtools::integration::services::{
-    CipherSpies, FailingCipher, FailingLoadFs, RepoSpies, TrackedCipher, TrackedRepo,
+    CipherSpies, FailingCipher, FailingLoadFs, RepoSpies, TrackedCipher, TrackedFs, TrackedRepo,
 };
-use crate::testingtools::Spy;
+use crate::testingtools::TestConfig;
 use crate::use_cases::cipher::Cipher;
 use crate::use_cases::fs::Fs;
 use crate::use_cases::repository::Repo;
@@ -20,7 +19,7 @@ use std::path::Path;
 use tracing::debug;
 use urlencoding::encode;
 
-use super::services::TrackedFs;
+use super::services::FsSpies;
 
 pub fn start_test_app() -> Result<App> {
     let config = TestConfig::new()?;
@@ -30,7 +29,7 @@ pub fn start_test_app() -> Result<App> {
         config,
         repo_spies: None,
         cipher_spies: None,
-        fs_spy: None,
+        fs_spies: None,
     })
 }
 
@@ -41,7 +40,7 @@ pub fn test_app() -> Result<AppBuilder> {
         config: Some(config),
         repo_spies: None,
         cipher_spies: None,
-        fs_spy: None,
+        fs_spies: None,
     })
 }
 
@@ -52,7 +51,7 @@ pub struct App {
     repo_spies: Option<RepoSpies>,
     #[allow(unused)]
     cipher_spies: Option<CipherSpies>,
-    fs_spy: Option<Spy>,
+    fs_spies: Option<FsSpies>,
 }
 
 impl App {
@@ -66,7 +65,7 @@ impl App {
     }
 
     pub fn wait_til_file_removed(&mut self) {
-        self.fs_spy().method_called();
+        self.fs_spies().rm_file_called();
     }
 
     fn repo_spies(&self) -> &RepoSpies {
@@ -81,8 +80,8 @@ impl App {
             .unwrap_or_else(|| panic!("uninitialized cipher spies"))
     }
 
-    fn fs_spy(&self) -> &Spy {
-        self.fs_spy
+    fn fs_spies(&self) -> &FsSpies {
+        self.fs_spies
             .as_ref()
             .unwrap_or_else(|| panic!("uninitialized fs spy"))
     }
@@ -138,7 +137,7 @@ pub struct AppBuilder {
     ctx: Option<Context>,
     repo_spies: Option<RepoSpies>,
     cipher_spies: Option<CipherSpies>,
-    fs_spy: Option<Spy>,
+    fs_spies: Option<FsSpies>,
 }
 
 impl AppBuilder {
@@ -166,10 +165,10 @@ impl AppBuilder {
     }
 
     pub fn with_tracked_fs(mut self) -> Self {
-        let (fs_spy, tracked_fs) = TrackedFs::wrap(fs());
+        let (fs_spies, tracked_fs) = TrackedFs::wrap(fs());
         let ctx = self.ctx.as_mut().unwrap();
         ctx.with_fs(tracked_fs);
-        self.fs_spy = Some(fs_spy);
+        self.fs_spies = Some(fs_spies);
         self
     }
 
@@ -178,13 +177,13 @@ impl AppBuilder {
         let repo_spies = self.repo_spies();
         let config = self.config();
         let cipher_spies = self.cipher_spies();
-        let fs_spy = self.fs_spy();
+        let fs_spies = self.fs_spies();
         Ok(App {
             client,
             config,
             repo_spies,
             cipher_spies,
-            fs_spy,
+            fs_spies,
         })
     }
 
@@ -202,8 +201,8 @@ impl AppBuilder {
         self.cipher_spies.take()
     }
 
-    fn fs_spy(&mut self) -> Option<Spy> {
-        self.fs_spy.take()
+    fn fs_spies(&mut self) -> Option<FsSpies> {
+        self.fs_spies.take()
     }
 
     fn config(&mut self) -> TestConfig {
