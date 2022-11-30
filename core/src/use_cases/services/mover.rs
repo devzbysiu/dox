@@ -100,7 +100,6 @@ mod test {
     use anyhow::Result;
     use std::time::Duration;
 
-    // TODO: Allow to use `TestConfig` in all services which need `Config`
     #[test]
     fn fs_is_used_to_move_document() -> Result<()> {
         // given

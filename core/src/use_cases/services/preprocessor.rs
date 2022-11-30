@@ -27,7 +27,8 @@ pub struct ThumbnailGenerator {
 }
 
 impl ThumbnailGenerator {
-    pub fn new(cfg: Config, bus: EventBus) -> Result<Self> {
+    pub fn new<C: Into<Config>>(cfg: C, bus: EventBus) -> Result<Self> {
+        let cfg = cfg.into();
         let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
         Ok(Self { cfg, bus, tp })
     }
