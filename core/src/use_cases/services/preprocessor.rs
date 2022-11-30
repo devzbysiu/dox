@@ -123,9 +123,9 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::result::BusErr;
-    use crate::testingtools::integration::services::TrackedFs;
+    use crate::testingtools::services::{NoOpFs, TrackedFs, WorkingFs};
     use crate::testingtools::unit::create_test_shim;
-    use crate::testingtools::{NoOpFs, Spy, WorkingFs};
+    use crate::testingtools::Spy;
 
     use anyhow::{anyhow, Result};
     use fake::{Fake, Faker};

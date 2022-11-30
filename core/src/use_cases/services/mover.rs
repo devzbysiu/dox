@@ -93,9 +93,9 @@ mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
-    use crate::testingtools::integration::services::TrackedFs;
+    use crate::testingtools::services::{NoOpFs, TrackedFs};
     use crate::testingtools::unit::create_test_shim;
-    use crate::testingtools::{NoOpFs, TestConfig};
+    use crate::testingtools::TestConfig;
 
     use anyhow::Result;
     use std::time::Duration;

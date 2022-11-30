@@ -85,8 +85,8 @@ pub struct Document {
 #[cfg(test)]
 mod test {
     use crate::configuration::telemetry::init_tracing;
-    use crate::testingtools::integration::api::doc;
-    use crate::testingtools::integration::app::{start_test_app, test_app};
+    use crate::testingtools::api::doc;
+    use crate::testingtools::app::{start_test_app, test_app};
 
     use anyhow::Result;
     use fake::{Fake, Faker};

@@ -1,8 +1,8 @@
 use crate::configuration::factories::{fs, repository, Context};
 use crate::helpers::PathRefExt;
 use crate::startup::rocket;
-use crate::testingtools::integration::api::ApiResponse;
-use crate::testingtools::integration::services::{
+use crate::testingtools::api::ApiResponse;
+use crate::testingtools::services::{
     CipherSpies, FailingCipher, FailingLoadFs, RepoSpies, TrackedCipher, TrackedFs, TrackedRepo,
 };
 use crate::testingtools::TestConfig;

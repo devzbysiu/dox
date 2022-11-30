@@ -1,24 +1,20 @@
-use crate::entities::location::SafePathBuf;
 use crate::entities::user::{User, FAKE_USER_EMAIL};
-use crate::result::FsErr;
 use crate::use_cases::config::Config;
-use crate::use_cases::fs::Filesystem;
 
 use anyhow::Result;
 use rocket::serde::Serialize;
 use serde::ser::SerializeStruct;
 use serde::Serializer;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::mpsc::Receiver;
-use std::sync::Arc;
 use std::time::Duration;
 use tempfile::TempDir;
-use tracing::{debug, instrument};
+use tracing::debug;
 
-pub mod integration;
+pub mod api;
+pub mod app;
+pub mod services;
 pub mod unit;
-
-pub type WorkingFs = NoOpFs;
 
 pub fn index_dir_path() -> Result<TempDir> {
     debug!("creating index directory");
@@ -51,40 +47,6 @@ impl Spy {
 
     pub fn method_called(&self) -> bool {
         self.rx.recv_timeout(Duration::from_secs(30)).is_ok()
-    }
-}
-
-pub struct NoOpFs;
-
-impl NoOpFs {
-    pub fn new() -> Arc<Self> {
-        Arc::new(Self)
-    }
-}
-
-impl Filesystem for NoOpFs {
-    #[instrument(skip(self))]
-    fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<(), FsErr> {
-        // nothing to do
-        Ok(())
-    }
-
-    #[instrument(skip(self))]
-    fn load(&self, uri: PathBuf) -> Result<Vec<u8>, FsErr> {
-        // nothing to do
-        Ok(Vec::new())
-    }
-
-    #[instrument(skip(self))]
-    fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
-        // nothing to do
-        Ok(())
-    }
-
-    #[instrument(skip(self))]
-    fn mv_file(&self, from: &SafePathBuf, to: &Path) -> Result<(), FsErr> {
-        // nothing to do
-        Ok(())
     }
 }
 

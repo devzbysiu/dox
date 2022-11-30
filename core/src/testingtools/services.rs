@@ -18,6 +18,8 @@ use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
 use tracing::{debug, instrument};
 
+pub type WorkingFs = NoOpFs;
+
 pub struct TrackedRepo {
     read: RepoRead,
     write: RepoWrite,
@@ -282,8 +284,6 @@ impl CipherWriteStrategy for FailingCipherWrite {
     }
 }
 
-// TODO: Move this somewhere else. Would be better to get rid of `integration` and `unit`
-// modules and structure everything properly inside `testingtools` mod
 // TODO: Think about some abstraction for this `Mutex<Sender<()>>`
 // TODO: Implement tracking for the rest of methods in other services
 pub struct TrackedFs {
@@ -393,5 +393,39 @@ impl FsSpies {
 
     pub fn mv_file_called(&self) -> bool {
         self.mv_file_spy.method_called()
+    }
+}
+
+pub struct NoOpFs;
+
+impl NoOpFs {
+    pub fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl Filesystem for NoOpFs {
+    #[instrument(skip(self))]
+    fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<(), FsErr> {
+        // nothing to do
+        Ok(())
+    }
+
+    #[instrument(skip(self))]
+    fn load(&self, uri: PathBuf) -> Result<Vec<u8>, FsErr> {
+        // nothing to do
+        Ok(Vec::new())
+    }
+
+    #[instrument(skip(self))]
+    fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
+        // nothing to do
+        Ok(())
+    }
+
+    #[instrument(skip(self))]
+    fn mv_file(&self, from: &SafePathBuf, to: &Path) -> Result<(), FsErr> {
+        // nothing to do
+        Ok(())
     }
 }
