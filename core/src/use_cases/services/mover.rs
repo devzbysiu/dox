@@ -195,4 +195,25 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn failure_during_moving_do_not_kill_service() -> Result<()> {
+        // given
+        init_tracing();
+        let (fs_spies, fs) = tracked_fs(failing_fs());
+        let mut shim = create_test_shim()?;
+        DocumentMover::new(Config::default(), shim.bus())?.run(fs);
+        thread::sleep(Duration::from_secs(1)); // allow to start extractor
+
+        shim.trigger_mover()?;
+        assert!(fs_spies.mv_file_called());
+
+        // when
+        shim.trigger_mover()?;
+
+        // then
+        assert!(fs_spies.mv_file_called());
+
+        Ok(())
+    }
 }
