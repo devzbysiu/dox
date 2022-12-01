@@ -56,14 +56,14 @@ pub enum BusEvent {
     /// Published when there is a need to encrypt thumbnail file.
     EncryptThumbnail(Location),
 
-    /// Published when document processing is finished.
-    PipelineFinished,
-
     /// Published when there is an error during document encryption.
     DocumentEncryptionFailed(Location),
 
     /// Published when there is an error during thumbnail encryption.
     ThumbnailEncryptionFailed(Location),
+
+    /// Published when document processing is finished.
+    PipelineFinished,
 }
 
 /// Represents abstraction for sending events.

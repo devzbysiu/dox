@@ -98,6 +98,7 @@ mod test {
     use crate::testingtools::TestConfig;
 
     use anyhow::Result;
+    use fake::{Fake, Faker};
     use std::time::Duration;
 
     #[test]
@@ -153,6 +154,43 @@ mod test {
 
         // then
         assert!(fs_spies.mv_file_called());
+        assert!(shim.no_events_on_bus());
+
+        Ok(())
+    }
+
+    #[test]
+    fn mover_ignores_other_bus_events() -> Result<()> {
+        // given
+        init_tracing();
+        let mut shim = create_test_shim()?;
+        // TODO: Update ignored events in the rest of the services
+        let ignored_events = [
+            BusEvent::DataExtracted(Faker.fake()),
+            BusEvent::DocsMoved(Faker.fake()),
+            BusEvent::ThumbnailMade(Faker.fake()),
+            BusEvent::Indexed(Faker.fake()),
+            BusEvent::EncryptDocument(Faker.fake()),
+            BusEvent::EncryptThumbnail(Faker.fake()),
+            BusEvent::DocumentEncryptionFailed(Faker.fake()),
+            BusEvent::ThumbnailEncryptionFailed(Faker.fake()),
+            BusEvent::PipelineFinished,
+        ];
+        DocumentMover::new(Config::default(), shim.bus())?.run(noop_fs());
+
+        // when
+        shim.send_events(&ignored_events)?;
+
+        // then
+        // all events are still on the bus, no DocsMoved emitted
+        shim.no_such_events(
+            &[
+                // TODO: this shouldn't use specific values - any DataExtracted and EncryptionRequest
+                // event (with any data) should make this test fail
+                BusEvent::DocsMoved(Faker.fake()),
+            ],
+            ignored_events.len(),
+        )?;
         assert!(shim.no_events_on_bus());
 
         Ok(())
