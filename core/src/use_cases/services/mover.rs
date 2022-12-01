@@ -216,4 +216,22 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn when_document_encryption_failed_event_appears_filesystem_removes_document() -> Result<()> {
+        // given
+        init_tracing();
+        let (fs_spies, fs) = tracked_fs(noop_fs());
+        let mut shim = create_test_shim()?;
+        DocumentMover::new(Config::default(), shim.bus())?.run(fs);
+        thread::sleep(Duration::from_secs(1)); // allow to start extractor
+
+        // when
+        shim.trigger_document_encryption_failure()?;
+
+        // then
+        assert!(fs_spies.rm_file_called());
+
+        Ok(())
+    }
 }
