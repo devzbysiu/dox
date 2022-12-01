@@ -3,7 +3,7 @@ use crate::helpers::PathRefExt;
 use crate::startup::rocket;
 use crate::testingtools::api::ApiResponse;
 use crate::testingtools::services::encrypter::{failing_cipher, tracked_cipher, CipherSpies};
-use crate::testingtools::services::fs::{failing_load_fs, tracked_fs, FsSpies};
+use crate::testingtools::services::fs::{failing_fs, tracked_fs, FsSpies};
 use crate::testingtools::services::indexer::{tracked_repo, RepoSpies};
 use crate::testingtools::TestConfig;
 use crate::use_cases::cipher::Cipher;
@@ -150,7 +150,7 @@ impl AppBuilder {
 
     pub fn with_failing_load_fs(mut self) -> Self {
         let ctx = self.ctx.as_mut().unwrap();
-        ctx.with_fs(failing_load_fs());
+        ctx.with_fs(failing_fs());
         self
     }
 

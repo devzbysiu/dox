@@ -8,21 +8,21 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tracing::instrument;
 
-pub fn failing_load_fs() -> Fs {
-    FailingLoadFs::make()
+pub fn failing_fs() -> Fs {
+    FailingFs::make()
 }
 
-pub struct FailingLoadFs;
+pub struct FailingFs;
 
-impl FailingLoadFs {
+impl FailingFs {
     fn make() -> Fs {
         Arc::new(Self)
     }
 }
 
-impl Filesystem for FailingLoadFs {
+impl Filesystem for FailingFs {
     fn save(&self, _uri: PathBuf, _buf: &[u8]) -> Result<(), FsErr> {
-        Ok(())
+        Err(FsErr::Test)
     }
 
     fn load(&self, _uri: PathBuf) -> Result<Vec<u8>, FsErr> {
@@ -30,11 +30,11 @@ impl Filesystem for FailingLoadFs {
     }
 
     fn rm_file(&self, _path: &SafePathBuf) -> Result<(), FsErr> {
-        Ok(())
+        Err(FsErr::Test)
     }
 
     fn mv_file(&self, _from: &SafePathBuf, _to: &Path) -> Result<(), FsErr> {
-        Ok(())
+        Err(FsErr::Test)
     }
 }
 
@@ -74,30 +74,30 @@ impl TrackedFs {
 impl Filesystem for TrackedFs {
     #[instrument(skip(self, buf))]
     fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<(), FsErr> {
-        self.fs.save(uri, buf)?;
+        let res = self.fs.save(uri, buf);
         self.save_tx.signal();
-        Ok(())
+        res
     }
 
     #[instrument(skip(self))]
     fn load(&self, uri: PathBuf) -> Result<Vec<u8>, FsErr> {
-        let res = self.fs.load(uri)?;
+        let res = self.fs.load(uri);
         self.load_tx.signal();
-        Ok(res)
+        res
     }
 
     #[instrument(skip(self))]
     fn rm_file(&self, path: &SafePathBuf) -> Result<(), FsErr> {
-        self.fs.rm_file(path)?;
+        let res = self.fs.rm_file(path);
         self.rm_file_tx.signal();
-        Ok(())
+        res
     }
 
     #[instrument(skip(self))]
     fn mv_file(&self, from: &SafePathBuf, to: &Path) -> Result<(), FsErr> {
-        self.fs.mv_file(from, to)?;
+        let res = self.fs.mv_file(from, to);
         self.mv_file_tx.signal();
-        Ok(())
+        res
     }
 }
 

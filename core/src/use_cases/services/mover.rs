@@ -93,7 +93,7 @@ mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
-    use crate::testingtools::services::fs::{noop_fs, tracked_fs};
+    use crate::testingtools::services::fs::{failing_fs, noop_fs, tracked_fs};
     use crate::testingtools::unit::create_test_shim;
     use crate::testingtools::TestConfig;
 
@@ -133,6 +133,27 @@ mod test {
 
         // then
         assert!(shim.event_on_bus(&BusEvent::DocsMoved(shim.dst_doc_location()))?);
+
+        Ok(())
+    }
+
+    #[test]
+    fn no_event_appears_when_mover_fails() -> Result<()> {
+        // given
+        init_tracing();
+        let (fs_spies, fs) = tracked_fs(failing_fs());
+        let mut shim = create_test_shim()?;
+        DocumentMover::new(Config::default(), shim.bus())?.run(fs);
+        thread::sleep(Duration::from_secs(1)); // allow to start extractor
+
+        // when
+        shim.trigger_mover()?;
+
+        shim.ignore_event()?; // ignore NewDocs event
+
+        // then
+        assert!(fs_spies.mv_file_called());
+        assert!(shim.no_events_on_bus());
 
         Ok(())
     }
