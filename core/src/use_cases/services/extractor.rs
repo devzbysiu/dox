@@ -31,7 +31,7 @@ impl TxtExtractor {
             loop {
                 match sub.recv()? {
                     BusEvent::DocsMoved(loc) => self.extract_data(loc, &factory)?,
-                    e => trace!("event not supported in TxtExtractor: '{}'", e),
+                    e => trace!("event not supported in TxtExtractor: '{:?}'", e),
                 }
             }
         });

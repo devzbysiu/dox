@@ -38,7 +38,7 @@ impl Encrypter {
                         error!("encryption failed");
                         publ.send(pick_response(&ev, location))?;
                     }
-                    e => trace!("event not supported in encrypter: '{}'", e),
+                    e => trace!("event not supported in encrypter: '{:?}'", e),
                 }
             }
         });

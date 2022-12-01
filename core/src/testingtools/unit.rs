@@ -4,6 +4,8 @@ use crate::configuration::factories::event_bus;
 use crate::entities::document::DocDetails;
 use crate::entities::location::{Location, SafePathBuf};
 use crate::entities::user::FAKE_USER_EMAIL;
+use crate::helpers::PathRefExt;
+use crate::testingtools::TestConfig;
 use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher, EventSubscriber};
 use crate::use_cases::receiver::DocsEvent;
 
@@ -14,6 +16,7 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
 use std::time::Duration;
 use tempfile::{tempdir, TempDir};
+use tracing::debug;
 
 pub trait SubscriberExt {
     fn try_recv(self, timeout: Duration) -> Result<BusEvent>;
@@ -41,12 +44,13 @@ impl SubscriberExt for EventSubscriber {
 }
 
 pub fn create_test_shim() -> Result<TestShim> {
+    let (tx, rx) = channel();
+    let rx = Some(rx);
     let test_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
     let bus = event_bus()?;
     let publ = bus.publisher();
     let sub = bus.subscriber();
-    let (tx, rx) = channel();
-    let rx = Some(rx);
+    let config = TestConfig::new()?;
     Ok(TestShim {
         rx,
         tx,
@@ -54,6 +58,7 @@ pub fn create_test_shim() -> Result<TestShim> {
         bus,
         publ,
         sub,
+        config,
     })
 }
 
@@ -64,6 +69,7 @@ pub struct TestShim {
     bus: EventBus,
     publ: EventPublisher,
     sub: EventSubscriber,
+    config: TestConfig,
 }
 
 impl TestShim {
@@ -77,6 +83,10 @@ impl TestShim {
         let test_location = self.test_file.location.clone();
         self.publ.send(BusEvent::EncryptDocument(test_location))?;
         Ok(())
+    }
+
+    pub fn config(&self) -> &TestConfig {
+        &self.config
     }
 
     pub fn bus(&self) -> EventBus {
@@ -133,11 +143,20 @@ impl TestShim {
     // waiting for an event. Because of that, it consumes `self` and this cannot be done here
     // because I'm accepting `&self`.
     pub fn event_on_bus(&self, event: &BusEvent) -> Result<bool> {
-        Ok(*event == self.sub.recv()?)
+        let received = self.sub.recv()?;
+        debug!("received event: {:?}", received);
+        Ok(*event == received)
     }
 
     pub fn test_location(&self) -> Location {
         self.test_file.location.clone()
+    }
+
+    pub fn dst_doc_location(&self) -> Location {
+        let docs_dir = self.config.docs_dir.path();
+        let src_path = &self.test_file.path;
+        let filename = src_path.filename();
+        Location::FS(vec![docs_dir.join(filename).into()])
     }
 
     // TODO: this should take data the indexer should be triggered with - do that also for other

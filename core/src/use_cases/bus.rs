@@ -6,7 +6,7 @@ use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
 use crate::result::BusErr;
 
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 use std::sync::Arc;
 
 pub type EventBus = Arc<dyn Bus>;
@@ -64,27 +64,6 @@ pub enum BusEvent {
 
     /// Published when there is an error during thumbnail encryption.
     ThumbnailEncryptionFailed(Location),
-}
-
-impl Display for BusEvent {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                BusEvent::NewDocs(_) => "NewDocs",
-                BusEvent::DataExtracted(_) => "DataExtracted",
-                BusEvent::DocsMoved(_) => "DocumentMmoved",
-                BusEvent::ThumbnailMade(_) => "ThumbnailMade",
-                BusEvent::Indexed(_) => "Indexed",
-                BusEvent::EncryptDocument(_) => "DocumentEncryptionRequest",
-                BusEvent::EncryptThumbnail(_) => "ThumbnailEncryptionRequest",
-                BusEvent::PipelineFinished => "PipelineFinished",
-                BusEvent::DocumentEncryptionFailed(_) => "DocumentEncryptionFailed",
-                BusEvent::ThumbnailEncryptionFailed(_) => "ThumbnailEncryptionFailed",
-            }
-        )
-    }
 }
 
 /// Represents abstraction for sending events.

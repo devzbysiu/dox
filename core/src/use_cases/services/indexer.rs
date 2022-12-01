@@ -32,7 +32,7 @@ impl Indexer {
                 match sub.recv()? {
                     BusEvent::DataExtracted(doc_details) => self.index(doc_details, repo.clone()),
                     BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(loc),
-                    e => trace!("event not supported in indexer: '{}'", e),
+                    e => trace!("event not supported in indexer: '{:?}'", e),
                 }
             }
         });

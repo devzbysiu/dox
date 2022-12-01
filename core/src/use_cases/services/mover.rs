@@ -34,7 +34,7 @@ impl DocumentMover {
                 match sub.recv()? {
                     BusEvent::NewDocs(loc) => self.move_doc(loc, &fs),
                     BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(loc, &fs),
-                    e => trace!("event not supported in DocumentMover: '{}'", e),
+                    e => trace!("event not supported in DocumentMover: '{:?}'", e),
                 }
             }
         });
@@ -114,6 +114,25 @@ mod test {
 
         // then
         assert!(fs_spies.mv_file_called());
+
+        Ok(())
+    }
+
+    #[test]
+    fn docs_moved_event_appears_on_success() -> Result<()> {
+        // given
+        init_tracing();
+        let mut shim = create_test_shim()?;
+        DocumentMover::new(shim.config(), shim.bus())?.run(noop_fs());
+        thread::sleep(Duration::from_secs(1)); // allow DocumentMover to start
+
+        // when
+        shim.trigger_mover()?;
+
+        shim.ignore_event()?; // ignore NewDocs event
+
+        // then
+        assert!(shim.event_on_bus(&BusEvent::DocsMoved(shim.dst_doc_location()))?);
 
         Ok(())
     }

@@ -55,7 +55,6 @@ impl Spy {
 pub struct TestConfig {
     value: Config,
     watched_dir: TempDir,
-    #[allow(unused)]
     docs_dir: TempDir,
     thumbnails_dir: TempDir,
     index_dir: TempDir,
@@ -119,6 +118,12 @@ impl Serialize for TestConfig {
 impl From<TestConfig> for Config {
     fn from(cfg: TestConfig) -> Self {
         cfg.value
+    }
+}
+
+impl From<&TestConfig> for Config {
+    fn from(cfg: &TestConfig) -> Self {
+        cfg.value.clone()
     }
 }
 
