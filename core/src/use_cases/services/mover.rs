@@ -108,7 +108,7 @@ mod test {
         let (fs_spies, fs) = tracked_fs(noop_fs());
         let mut shim = create_test_shim()?;
         DocumentMover::new(TestConfig::new()?, shim.bus())?.run(fs);
-        thread::sleep(Duration::from_secs(1)); // allow DocumentMover to start
+        thread::sleep(Duration::from_secs(1)); // allow to start DocumentMover
 
         // when
         shim.trigger_mover()?;
@@ -125,7 +125,7 @@ mod test {
         init_tracing();
         let mut shim = create_test_shim()?;
         DocumentMover::new(shim.config(), shim.bus())?.run(noop_fs());
-        thread::sleep(Duration::from_secs(1)); // allow DocumentMover to start
+        thread::sleep(Duration::from_secs(1)); // allow to start DocumentMover
 
         // when
         shim.trigger_mover()?;
@@ -145,7 +145,7 @@ mod test {
         let (fs_spies, fs) = tracked_fs(failing_fs());
         let mut shim = create_test_shim()?;
         DocumentMover::new(Config::default(), shim.bus())?.run(fs);
-        thread::sleep(Duration::from_secs(1)); // allow to start extractor
+        thread::sleep(Duration::from_secs(1)); // allow to start DocumentMover
 
         // when
         shim.trigger_mover()?;
@@ -203,7 +203,7 @@ mod test {
         let (fs_spies, fs) = tracked_fs(failing_fs());
         let mut shim = create_test_shim()?;
         DocumentMover::new(Config::default(), shim.bus())?.run(fs);
-        thread::sleep(Duration::from_secs(1)); // allow to start extractor
+        thread::sleep(Duration::from_secs(1)); // allow to start DocumentMover
 
         shim.trigger_mover()?;
         assert!(fs_spies.mv_file_called());
@@ -224,7 +224,7 @@ mod test {
         let (fs_spies, fs) = tracked_fs(noop_fs());
         let mut shim = create_test_shim()?;
         DocumentMover::new(Config::default(), shim.bus())?.run(fs);
-        thread::sleep(Duration::from_secs(1)); // allow to start extractor
+        thread::sleep(Duration::from_secs(1)); // allow to start DocumentMover
 
         // when
         shim.trigger_document_encryption_failure()?;
