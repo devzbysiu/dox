@@ -1,0 +1,5 @@
+[hooks]
+pre-commit = "cd ./core && cargo make clip && cargo make test"
+
+[logging]
+verbose = true

@@ -11,7 +11,7 @@ args = ["fmt"]
 command = "cargo"
 args = ["check"]
 
-[tasks.clippy]
+[tasks.clip]
 install_crate = "clippy"
 command = "cargo"
 args = ["clippy", "--all-targets", "--all-features", "--", "-W", "clippy::pedantic", "-D", "warnings"]
