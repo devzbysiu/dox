@@ -24,7 +24,7 @@ use tantivy::directory::MmapDirectory;
 use tantivy::query::{AllQuery, FuzzyTermQuery, Query};
 use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
 use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy, Term};
-use tracing::{debug, instrument, warn};
+use tracing::{debug, error, instrument, warn};
 
 pub struct TantivyRepository {
     read: RepoRead,
@@ -213,6 +213,7 @@ impl RepositoryWrite for TantivyWrite {
         for path in paths {
             let user: User = path.try_into()?;
             let Some(index) = self.indexes.get(&user) else {
+                error!("No index for user: '{}'", user);
                 return Err(IndexerErr::NoIndex(user));
             };
             let mut writer = index.writer(50_000_000)?;
@@ -295,6 +296,7 @@ mod test {
     };
 
     use anyhow::Result;
+    use fake::{Fake, Faker};
     use std::fs::File;
 
     #[test]
@@ -501,6 +503,26 @@ mod test {
 
         // then
         assert_eq!(res, Vec::new().into());
+
+        Ok(())
+    }
+
+    #[test]
+    fn using_delete_with_not_existing_user_returns_no_index_error() -> Result<()> {
+        // given
+        init_tracing();
+        let config = create_config()?;
+        let repo = TantivyRepository::create(&config)?;
+        // NOTE: Index data under fake user (inside `tuples_to_index`), then `delete` with test
+        // `User` implementation which is different user
+        repo.write().index(&[Faker.fake()])?;
+        let loc = Location::FS(vec![Faker.fake()]);
+
+        // when
+        let res = repo.write().delete(&loc);
+
+        // then
+        assert!(matches!(res, Err(IndexerErr::NoIndex(_))));
 
         Ok(())
     }
