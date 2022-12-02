@@ -23,6 +23,11 @@ pub trait Bus: Send + Sync + Debug {
     fn publisher(&self) -> EventPublisher;
 }
 
+/// Represents abstraction for sending events.
+pub trait Publisher: Send {
+    fn send(&mut self, event: BusEvent) -> Result<(), BusErr>;
+}
+
 /// Represents abstraction for receiving events.
 pub trait Subscriber: Send {
     fn recv(&self) -> Result<BusEvent, BusErr>;
@@ -70,9 +75,4 @@ pub enum BusEvent {
 
     /// Published when document processing is finished.
     PipelineFinished,
-}
-
-/// Represents abstraction for sending events.
-pub trait Publisher: Send {
-    fn send(&mut self, event: BusEvent) -> Result<(), BusErr>;
 }
