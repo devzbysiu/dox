@@ -2,7 +2,9 @@
 //!
 //! It uses [`tantivy`] as full text search library.
 use crate::entities::document::DocDetails;
+use crate::entities::location::Location;
 use crate::entities::user::User;
+use crate::helpers::PathRefExt;
 use crate::result::{IndexerErr, RepositoryErr, SearchErr};
 use crate::use_cases::config::Config;
 use crate::use_cases::repository::{
@@ -12,6 +14,7 @@ use crate::use_cases::repository::{
 
 use core::fmt;
 use dashmap::DashMap;
+use std::convert::TryInto;
 use std::fmt::Debug;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
@@ -170,6 +173,12 @@ impl TantivyWrite {
         }
         Ok(())
     }
+
+    fn field(&self, field: &Fields) -> Field {
+        // can unwrap because this field comes from an
+        // enum and I'm using this enum to get the field
+        self.schema.get_field(&field.to_string()).unwrap()
+    }
 }
 
 impl RepositoryWrite for TantivyWrite {
@@ -192,10 +201,41 @@ impl RepositoryWrite for TantivyWrite {
                     body => doc_detail.body.clone(),
                     thumbnail => doc_detail.thumbnail.clone(),
             ))?;
+            debug!("commiting new doc");
             index_writer.commit()?;
         }
         Ok(())
     }
+
+    #[instrument(skip(self))]
+    fn delete(&self, loc: &Location) -> Result<(), IndexerErr> {
+        let Location::FS(paths) = loc;
+        for path in paths {
+            let user: User = path.try_into()?;
+            let Some(index) = self.indexes.get(&user) else {
+                return Err(IndexerErr::NoIndex(user));
+            };
+            let mut writer = index.writer(50_000_000)?;
+            let filename = path.filename();
+
+            // NOTE: At this point, we don't know if the `Location` points to thumbnail or
+            // document, but it doesn't matter, because we need to delete Tantivy document
+            // containing both thumbnail and document name anyway.
+            let doc_term = term(self.field(&Fields::Filename), &filename);
+            let thumbnail_term = term(self.field(&Fields::Thumbnail), &filename);
+            debug!("deleting '{}' as a doc name", filename);
+            writer.delete_term(doc_term);
+            debug!("deleting '{}' as a doc thumbnail", filename);
+            writer.delete_term(thumbnail_term);
+            debug!("commiting deletion");
+            writer.commit()?;
+        }
+        Ok(())
+    }
+}
+
+fn term<S: Into<String>>(field: Field, filename: S) -> Term {
+    Term::from_field_text(field, &filename.into())
 }
 
 type Searcher = LeasedItem<tantivy::Searcher>;
@@ -248,6 +288,7 @@ impl ValueExt for Value {
 mod test {
     use super::*;
 
+    use crate::configuration::telemetry::init_tracing;
     use crate::entities::user::FAKE_USER_EMAIL;
     use crate::testingtools::{
         docs_dir_path, index_dir_path, thumbnails_dir_path, watched_dir_path,
@@ -259,6 +300,7 @@ mod test {
     #[test]
     fn test_mk_index_and_schema_when_index_dir_is_taken_by_file() -> Result<()> {
         // given
+        init_tracing();
         let config = create_config()?;
         File::create(&config.index_dir)?;
 
@@ -294,6 +336,7 @@ mod test {
     #[test]
     fn test_index_docs() -> Result<()> {
         // given
+        init_tracing();
         let config = create_config()?;
         let repo = TantivyRepository::create(&config)?;
         let user_email = FAKE_USER_EMAIL;
@@ -331,6 +374,7 @@ mod test {
     #[test]
     fn test_search() -> Result<()> {
         // given
+        init_tracing();
         let config = create_config()?;
         let repo = TantivyRepository::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
@@ -358,6 +402,7 @@ mod test {
     #[test]
     fn test_search_with_fuzziness() -> Result<()> {
         // given
+        init_tracing();
         let config = create_config()?;
         let repo = TantivyRepository::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
@@ -380,6 +425,82 @@ mod test {
             vec![SearchEntry::new(("filename3".into(), "thumbnail3".into())),].into()
         );
         assert_eq!(second_results, Vec::new().into());
+
+        Ok(())
+    }
+
+    #[test]
+    fn delete_using_doc_path_allows_to_remove_data_of_document() -> Result<()> {
+        // given
+        init_tracing();
+        let config = create_config()?;
+        let repo = TantivyRepository::create(&config)?;
+        let user = User::new(FAKE_USER_EMAIL);
+        let tuples_to_index = vec![
+            DocDetails::new(user.clone(), "filename1", "some body", "thumbnail1"),
+            DocDetails::new(user.clone(), "filename2", "another text here", "thumbnail2"),
+            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
+            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
+            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
+        ];
+        repo.write().index(&tuples_to_index)?;
+        let res = repo.read().search(user.clone(), "9fZX".into())?;
+        assert_eq!(
+            res,
+            vec![
+                SearchEntry::new(("filename3".into(), "thumbnail3".into())),
+                SearchEntry::new(("filename3".into(), "thumbnail3".into())),
+                SearchEntry::new(("filename3".into(), "thumbnail3".into()))
+            ]
+            .into()
+        );
+        // NOTE: Only name of the file matters
+        let loc = Location::FS(vec!["/any/path/filename3".into()]);
+
+        // when
+        repo.write().delete(&loc)?;
+        let res = repo.read().search(user, "9fZX".into())?;
+
+        // then
+        assert_eq!(res, Vec::new().into());
+
+        Ok(())
+    }
+
+    #[test]
+    fn delete_using_thumbnail_path_allows_to_remove_data_of_document() -> Result<()> {
+        // given
+        init_tracing();
+        let config = create_config()?;
+        let repo = TantivyRepository::create(&config)?;
+        let user = User::new(FAKE_USER_EMAIL);
+        let tuples_to_index = vec![
+            DocDetails::new(user.clone(), "filename1", "some body", "thumbnail1"),
+            DocDetails::new(user.clone(), "filename2", "another text here", "thumbnail2"),
+            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
+            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
+            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
+        ];
+        repo.write().index(&tuples_to_index)?;
+        let res = repo.read().search(user.clone(), "9fZX".into())?;
+        assert_eq!(
+            res,
+            vec![
+                SearchEntry::new(("filename3".into(), "thumbnail3".into())),
+                SearchEntry::new(("filename3".into(), "thumbnail3".into())),
+                SearchEntry::new(("filename3".into(), "thumbnail3".into()))
+            ]
+            .into()
+        );
+        // NOTE: Only name of the file matters
+        let loc = Location::FS(vec!["/any/path/thumbnail3".into()]);
+
+        // when
+        repo.write().delete(&loc)?;
+        let res = repo.read().search(user, "9fZX".into())?;
+
+        // then
+        assert_eq!(res, Vec::new().into());
 
         Ok(())
     }

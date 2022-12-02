@@ -1,5 +1,6 @@
 //! Abstraction for indexing and searching documents.
 use crate::entities::document::DocDetails;
+use crate::entities::location::Location;
 use crate::entities::user::User;
 use crate::result::{IndexerErr, SearchErr};
 
@@ -28,6 +29,8 @@ pub trait RepositoryRead: Sync + Send {
 pub trait RepositoryWrite: Sync + Send {
     /// Indexes documents.
     fn index(&self, docs_details: &[DocDetails]) -> Result<(), IndexerErr>;
+
+    fn delete(&self, loc: &Location) -> Result<(), IndexerErr>;
 }
 
 /// Holds list of basic document details.

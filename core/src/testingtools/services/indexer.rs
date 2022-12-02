@@ -1,4 +1,5 @@
 use crate::entities::document::DocDetails;
+use crate::entities::location::Location;
 use crate::entities::user::User;
 use crate::result::{IndexerErr, SearchErr};
 use crate::testingtools::{pipe, MutexExt, Spy, Tx};
@@ -84,6 +85,10 @@ impl RepositoryWrite for TrackedRepoWrite {
         self.tx.signal();
         debug!("after indexing");
         Ok(())
+    }
+
+    fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
+        unimplemented!()
     }
 }
 

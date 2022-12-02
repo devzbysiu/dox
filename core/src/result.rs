@@ -1,3 +1,5 @@
+use crate::entities::user::User;
+
 use rocket::{http::Status, response::Responder};
 use std::io::ErrorKind::NotFound;
 use thiserror::Error;
@@ -106,7 +108,7 @@ pub enum ExtractorErr {
     #[error("Error when converting to utf8.")]
     PdfExtraction(#[from] pdf_extract::OutputError),
 
-    #[error("Error when converting to utf8.")]
+    #[error("Error when converting to User.")]
     UserConversion(#[from] UserConvErr),
 
     #[error("Error when publishing bus event.")]
@@ -273,6 +275,12 @@ pub enum IndexerErr {
 
     #[error("Failed to make filesystem operation")]
     Fs(#[from] FsErr),
+
+    #[error("Error when converting to user.")]
+    UserConversion(#[from] UserConvErr),
+
+    #[error("No index for user '{0}'.")]
+    NoIndex(User),
 }
 
 #[derive(Debug, Error)]

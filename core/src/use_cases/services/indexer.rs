@@ -229,6 +229,10 @@ mod test {
             self.tx.signal();
             Ok(())
         }
+
+        fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
+            unimplemented!();
+        }
     }
 
     struct FailingRepoWrite {
@@ -246,6 +250,10 @@ mod test {
             self.tx.signal();
             Err(IndexerErr::Bus(BusErr::Generic(anyhow!("error"))))
         }
+
+        fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
+            unimplemented!()
+        }
     }
 
     struct NoOpRepoWrite;
@@ -261,6 +269,10 @@ mod test {
             // nothing to do here
             Ok(())
         }
+
+        fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
+            unimplemented!()
+        }
     }
 
     struct ErroneousRepoWrite;
@@ -274,6 +286,10 @@ mod test {
     impl RepositoryWrite for ErroneousRepoWrite {
         fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
             Err(IndexerErr::Bus(BusErr::Generic(anyhow!("error"))))
+        }
+
+        fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
+            unimplemented!()
         }
     }
 }

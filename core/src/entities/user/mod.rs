@@ -3,6 +3,8 @@ mod real;
 #[cfg(test)]
 mod test;
 
+use std::fmt::Display;
+
 use fake::{Dummy, Fake};
 
 #[cfg(test)]
@@ -18,5 +20,11 @@ impl User {
         Self {
             email: email.into(),
         }
+    }
+}
+
+impl Display for User {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.email)
     }
 }
