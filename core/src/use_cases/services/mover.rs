@@ -164,10 +164,10 @@ mod test {
         // given
         init_tracing();
         let mut shim = create_test_shim()?;
-        // TODO: Update ignored events in the rest of the services
+        // TODO: Think about better way of defining ignored events (so there will be no need to go)
+        // check agains `BusEvent` and comparing with events used in the service)
         let ignored_events = [
             BusEvent::DataExtracted(Faker.fake()),
-            BusEvent::DocsMoved(Faker.fake()),
             BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::Indexed(Faker.fake()),
             BusEvent::EncryptDocument(Faker.fake()),
@@ -183,14 +183,9 @@ mod test {
 
         // then
         // all events are still on the bus, no DocsMoved emitted
-        shim.no_such_events(
-            &[
-                // TODO: this shouldn't use specific values - any DataExtracted and EncryptionRequest
-                // event (with any data) should make this test fail
-                BusEvent::DocsMoved(Faker.fake()),
-            ],
-            ignored_events.len(),
-        )?;
+        for _ in 0..ignored_events.len() {
+            assert!(!matches!(shim.recv_event()?, BusEvent::DocsMoved(_)));
+        }
         assert!(shim.no_events_on_bus());
 
         Ok(())

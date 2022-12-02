@@ -212,10 +212,12 @@ mod test {
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
-            BusEvent::DocsMoved(Faker.fake()),
             BusEvent::DataExtracted(Faker.fake()),
+            BusEvent::DocsMoved(Faker.fake()),
             BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::Indexed(Faker.fake()),
+            BusEvent::ThumbnailRemoved,
+            BusEvent::DataRemoved,
         ];
         Encrypter::new(shim.bus()).run(noop_cipher);
 
@@ -223,8 +225,14 @@ mod test {
         shim.send_events(&ignored_events)?;
 
         // then
-        // all events are still on the bus, no PipelineFinished emitted
-        assert!(shim.no_such_events(&[BusEvent::PipelineFinished], ignored_events.len())?);
+        // all events are still on the bus, no PipelineFinished, ThumbnailEncryptionFailed emited
+        // and DocumentEncryptionFailed
+        for _ in 0..ignored_events.len() {
+            let received = shim.recv_event()?;
+            assert!(!matches!(received, BusEvent::PipelineFinished));
+            assert!(!matches!(received, BusEvent::ThumbnailEncryptionFailed(_)));
+            assert!(!matches!(received, BusEvent::DocumentEncryptionFailed(_)));
+        }
         assert!(shim.no_events_on_bus()); // no more events on the bus
 
         Ok(())

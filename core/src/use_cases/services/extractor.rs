@@ -178,8 +178,12 @@ mod test {
         let factory_stub = ExtractorFactoryStub::new(vec![noop_extractor]);
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
-            BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::Indexed(Faker.fake()),
+            BusEvent::EncryptThumbnail(Faker.fake()),
+            BusEvent::DocumentEncryptionFailed(Faker.fake()),
+            BusEvent::ThumbnailEncryptionFailed(Faker.fake()),
+            BusEvent::ThumbnailMade(Faker.fake()),
+            BusEvent::ThumbnailRemoved,
             BusEvent::PipelineFinished,
         ];
         let mut shim = create_test_shim()?;
@@ -189,16 +193,12 @@ mod test {
         shim.send_events(&ignored_events)?;
 
         // then
-        assert!(shim.no_such_events(
-            &[
-                // TODO: those events should not have concrete values inside (any DataExtracted or
-                // EncryptionRequest event should cause failure, not only those with concrete values)
-                BusEvent::DataExtracted(Vec::new()),
-                BusEvent::EncryptDocument(shim.test_location()),
-                BusEvent::EncryptThumbnail(shim.test_location())
-            ],
-            ignored_events.len(),
-        )?);
+        // no DataExtracted and EncryptDocument on the bus
+        for _ in 0..ignored_events.len() {
+            let received_event = shim.recv_event()?;
+            assert!(!matches!(received_event, BusEvent::DataExtracted(_)));
+            assert!(!matches!(received_event, BusEvent::EncryptDocument(_)));
+        }
         assert!(shim.no_events_on_bus());
 
         Ok(())

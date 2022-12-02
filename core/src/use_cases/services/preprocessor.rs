@@ -65,8 +65,9 @@ impl ThumbnailGenerator {
     fn cleanup(&self, loc: Location, fs: &Fs) {
         debug!("pipeline failed, removing thumbnail");
         let fs = fs.clone();
+        let publ = self.bus.publisher();
         self.tp.spawn(move || {
-            if let Err(e) = remove_thumbnail(&loc, &fs) {
+            if let Err(e) = remove_thumbnail(&loc, &fs, publ) {
                 error!("thumbnail removal failed: '{}'", e);
             }
         });
@@ -77,10 +78,10 @@ impl ThumbnailGenerator {
 fn preprocess(
     loc: &Location,
     prepr: &Preprocessor,
-    thumbnails_dir: &PathBuf,
+    dir: &PathBuf,
     mut publ: EventPublisher,
 ) -> Result<()> {
-    let thumbnails_dir = thumbnails_dir.as_ref();
+    let thumbnails_dir = dir.as_ref();
     let thumbnail_loc = prepr.preprocess(loc, thumbnails_dir)?;
     debug!("preprocessing finished");
     publ.send(BusEvent::ThumbnailMade(thumbnail_loc.clone()))?;
@@ -89,13 +90,14 @@ fn preprocess(
     Ok(())
 }
 
-#[instrument(skip(fs))]
-fn remove_thumbnail(loc: &Location, fs: &Fs) -> Result<()> {
+#[instrument(skip(fs, publ))]
+fn remove_thumbnail(loc: &Location, fs: &Fs, mut publ: EventPublisher) -> Result<()> {
     let Location::FS(paths) = loc;
     for path in paths {
         fs.rm_file(path)?;
         debug!("removed '{}'", path);
     }
+    publ.send(BusEvent::ThumbnailRemoved)?;
     debug!("thumbnail removed");
     Ok(())
 }
@@ -226,8 +228,10 @@ mod test {
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
-            BusEvent::ThumbnailMade(Faker.fake()),
+            BusEvent::DataExtracted(Faker.fake()),
             BusEvent::Indexed(Faker.fake()),
+            BusEvent::EncryptDocument(Faker.fake()),
+            BusEvent::DocumentEncryptionFailed(Faker.fake()),
             BusEvent::PipelineFinished,
         ];
         ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
@@ -236,17 +240,13 @@ mod test {
         shim.send_events(&ignored_events)?;
 
         // then
-        // all events are still on the bus, no DataExtracted and EncryptionRequest emitted
-        shim.no_such_events(
-            &[
-                // TODO: this shouldn't use specific values - any DataExtracted and EncryptionRequest
-                // event (with any data) should make this test fail
-                BusEvent::DataExtracted(Faker.fake()),
-                BusEvent::EncryptThumbnail(Faker.fake()),
-                BusEvent::EncryptDocument(Faker.fake()),
-            ],
-            ignored_events.len(),
-        )?;
+        // no ThumbnailMade, ThumbnailRemoved and EncryptThumbnail on the bus
+        for _ in 0..ignored_events.len() {
+            let received_event = shim.recv_event()?;
+            assert!(!matches!(received_event, BusEvent::ThumbnailMade(_)));
+            assert!(!matches!(received_event, BusEvent::EncryptThumbnail(_)));
+            assert!(!matches!(received_event, BusEvent::ThumbnailRemoved));
+        }
         assert!(shim.no_events_on_bus());
 
         Ok(())

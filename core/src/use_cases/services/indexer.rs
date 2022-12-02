@@ -31,7 +31,7 @@ impl Indexer {
             loop {
                 match sub.recv()? {
                     BusEvent::DataExtracted(doc_details) => self.index(doc_details, repo.clone()),
-                    BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(loc),
+                    BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(loc)?,
                     e => trace!("event not supported in indexer: '{:?}'", e),
                 }
             }
@@ -49,8 +49,11 @@ impl Indexer {
     }
 
     #[instrument(skip(self))]
-    fn cleanup(&self, loc: Location) {
+    fn cleanup(&self, loc: Location) -> Result<()> {
         debug!("pipeline failed, removing index data");
+        let mut publ = self.bus.publisher();
+        publ.send(BusEvent::DataRemoved)?;
+        Ok(())
     }
 }
 
@@ -163,9 +166,11 @@ mod test {
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
             BusEvent::DocsMoved(Faker.fake()),
+            BusEvent::ThumbnailMade(Faker.fake()),
             BusEvent::EncryptDocument(Faker.fake()),
             BusEvent::EncryptThumbnail(Faker.fake()),
-            BusEvent::ThumbnailMade(Faker.fake()),
+            BusEvent::ThumbnailEncryptionFailed(Faker.fake()),
+            BusEvent::ThumbnailRemoved,
             BusEvent::PipelineFinished,
         ];
         Indexer::new(shim.bus())?.run(noop_repo_write);
@@ -174,8 +179,12 @@ mod test {
         shim.send_events(&ignored_events)?;
 
         // then
-        // all events are still on the bus, no Indexed emitted
-        assert!(shim.no_such_events(&[BusEvent::Indexed(Vec::new())], ignored_events.len())?);
+        // no Indexed and DataRemoved emitted
+        for _ in 0..ignored_events.len() {
+            let received = shim.recv_event()?;
+            assert!(!matches!(received, BusEvent::Indexed(_)));
+            assert!(!matches!(received, BusEvent::DataRemoved));
+        }
         assert!(shim.no_events_on_bus());
 
         Ok(())

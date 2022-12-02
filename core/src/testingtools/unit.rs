@@ -114,16 +114,8 @@ impl TestShim {
         Ok(())
     }
 
-    pub fn no_such_events(&self, ignored: &[BusEvent], max_events: usize) -> Result<bool> {
-        for i in 0..max_events {
-            let received = self.sub.recv()?;
-            for event in ignored {
-                if *event == received {
-                    return Ok(false);
-                }
-            }
-        }
-        Ok(true)
+    pub fn recv_event(&self) -> Result<BusEvent> {
+        Ok(self.sub.recv()?)
     }
 
     pub fn trigger_extractor(&mut self) -> Result<()> {

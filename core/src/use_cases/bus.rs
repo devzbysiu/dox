@@ -62,6 +62,12 @@ pub enum BusEvent {
     /// Published when there is an error during thumbnail encryption.
     ThumbnailEncryptionFailed(Location),
 
+    /// Published when thumbnail has been removed.
+    ThumbnailRemoved,
+
+    /// Published when data has been removed from index.
+    DataRemoved,
+
     /// Published when document processing is finished.
     PipelineFinished,
 }
