@@ -18,9 +18,9 @@ pub type EventPublisher = Box<dyn Publisher>;
 /// It allows to publish and subscribe to particular events in the system. Publishing can be done
 /// either via [`Publisher`] or via [`Bus::send`] method.
 pub trait Bus: Send + Sync + Debug {
-    fn subscriber(&self) -> EventSubscriber;
-
     fn publisher(&self) -> EventPublisher;
+
+    fn subscriber(&self) -> EventSubscriber;
 }
 
 /// Represents abstraction for sending events.
