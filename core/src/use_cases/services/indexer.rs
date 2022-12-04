@@ -22,7 +22,6 @@ impl Indexer {
 
     #[instrument(skip(self, repo))]
     pub fn run(self, repo: RepoWrite) {
-        // TODO: add threadpool to other services
         // TODO: think about num_threads
         // TODO: should threadpool be shared between services?
         // TODO: should threadpool have it's own abstraction here?
