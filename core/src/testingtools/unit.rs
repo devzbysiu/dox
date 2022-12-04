@@ -148,8 +148,6 @@ impl TestShim {
         Location::FS(vec![docs_dir.join(filename).into()])
     }
 
-    // TODO: this should take data the indexer should be triggered with - do that also for other
-    // trigger_* methods
     pub fn trigger_indexer(&mut self, details: Vec<DocDetails>) -> Result<()> {
         self.publ.send(BusEvent::DataExtracted(details))?;
         Ok(())
@@ -160,20 +158,9 @@ impl TestShim {
         Ok(())
     }
 
-    pub fn rx(&mut self) -> Receiver<DocsEvent> {
-        self.rx.take().unwrap()
-    }
-
-    // TODO: I think it would be better to explicitly pass the event being sent - it's cleaner in
-    // the test. This should be changed for all trigger_* methods
     pub fn trigger_watcher(&self) -> Result<()> {
         let file_path = self.test_file.path.clone();
         self.tx.send(DocsEvent::Created(file_path))?;
-        Ok(())
-    }
-
-    pub fn mk_docs_event(&self, event: DocsEvent) -> Result<()> {
-        self.tx.send(event)?;
         Ok(())
     }
 
@@ -186,6 +173,15 @@ impl TestShim {
     pub fn trigger_document_encryption_failure(&mut self) -> Result<()> {
         let loc = self.test_location();
         self.publ.send(BusEvent::DocumentEncryptionFailed(loc))?;
+        Ok(())
+    }
+
+    pub fn rx(&mut self) -> Receiver<DocsEvent> {
+        self.rx.take().unwrap()
+    }
+
+    pub fn mk_docs_event(&self, event: DocsEvent) -> Result<()> {
+        self.tx.send(event)?;
         Ok(())
     }
 }
