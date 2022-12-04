@@ -9,7 +9,7 @@ use crate::use_cases::repository::{
 
 use anyhow::Result;
 use std::sync::Arc;
-use tracing::debug;
+use tracing::instrument;
 
 pub fn tracked_repo(repo: &Repo) -> (RepoSpies, Repo) {
     TrackedRepo::wrap(repo)
@@ -22,14 +22,17 @@ pub struct TrackedRepo {
 
 impl TrackedRepo {
     fn wrap(repo: &Repo) -> (RepoSpies, Repo) {
-        let (read_tx, read_spy) = pipe();
-        let (write_tx, write_spy) = pipe();
+        let (search_tx, search_spy) = pipe();
+        let (all_docs_tx, all_docs_spy) = pipe();
+
+        let (index_tx, index_spy) = pipe();
+        let (delete_tx, delete_spy) = pipe();
 
         (
-            RepoSpies::new(read_spy, write_spy),
+            RepoSpies::new(search_spy, all_docs_spy, index_spy, delete_spy),
             Box::new(Self {
-                read: TrackedRepoRead::create(repo.read(), read_tx),
-                write: TrackedRepoWrite::create(repo.write(), write_tx),
+                read: TrackedRepoRead::create(repo.read(), search_tx, all_docs_tx),
+                write: TrackedRepoWrite::create(repo.write(), index_tx, delete_tx),
             }),
         )
     }
@@ -48,12 +51,18 @@ impl Repository for TrackedRepo {
 pub struct TrackedRepoRead {
     read: RepoRead,
     #[allow(unused)]
-    tx: Tx,
+    search_tx: Tx,
+    #[allow(unused)]
+    all_docs_tx: Tx,
 }
 
 impl TrackedRepoRead {
-    fn create(read: RepoRead, tx: Tx) -> RepoRead {
-        Arc::new(Self { read, tx })
+    fn create(read: RepoRead, search_tx: Tx, all_docs_tx: Tx) -> RepoRead {
+        Arc::new(Self {
+            read,
+            search_tx,
+            all_docs_tx,
+        })
     }
 }
 
@@ -69,49 +78,70 @@ impl RepositoryRead for TrackedRepoRead {
 
 pub struct TrackedRepoWrite {
     write: RepoWrite,
-    tx: Tx,
+    index_tx: Tx,
+    delete_tx: Tx,
 }
 
 impl TrackedRepoWrite {
-    fn create(write: RepoWrite, tx: Tx) -> RepoWrite {
-        Arc::new(Self { write, tx })
+    fn create(write: RepoWrite, index_tx: Tx, delete_tx: Tx) -> RepoWrite {
+        Arc::new(Self {
+            write,
+            index_tx,
+            delete_tx,
+        })
     }
 }
 
 impl RepositoryWrite for TrackedRepoWrite {
+    #[instrument(skip(self))]
     fn index(&self, docs_details: &[DocDetails]) -> Result<(), IndexerErr> {
-        debug!("before indexing");
-        self.write.index(docs_details)?;
-        self.tx.signal();
-        debug!("after indexing");
-        Ok(())
+        let res = self.write.index(docs_details);
+        self.index_tx.signal();
+        res
     }
 
-    fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
-        unimplemented!()
+    #[instrument(skip(self))]
+    fn delete(&self, loc: &Location) -> Result<(), IndexerErr> {
+        let res = self.write.delete(loc);
+        self.delete_tx.signal();
+        res
     }
 }
 
 pub struct RepoSpies {
     #[allow(unused)]
-    read_spy: Spy,
-    write_spy: Spy,
+    search_spy: Spy,
+    #[allow(unused)]
+    all_docs_spy: Spy,
+    index_spy: Spy,
+    delete_spy: Spy,
 }
 
 impl RepoSpies {
-    fn new(read_spy: Spy, write_spy: Spy) -> Self {
+    fn new(search_spy: Spy, all_docs_spy: Spy, index_spy: Spy, delete_spy: Spy) -> Self {
         Self {
-            read_spy,
-            write_spy,
+            search_spy,
+            all_docs_spy,
+            index_spy,
+            delete_spy,
         }
     }
 
     #[allow(unused)]
-    pub fn read(&self) -> &Spy {
-        &self.read_spy
+    pub fn search_called(&self) -> bool {
+        self.search_spy.method_called()
     }
 
-    pub fn write(&self) -> &Spy {
-        &self.write_spy
+    #[allow(unused)]
+    pub fn all_docs_called(&self) -> bool {
+        self.all_docs_spy.method_called()
+    }
+
+    pub fn index_called(&self) -> bool {
+        self.index_spy.method_called()
+    }
+
+    pub fn delete_called(&self) -> bool {
+        self.delete_spy.method_called()
     }
 }

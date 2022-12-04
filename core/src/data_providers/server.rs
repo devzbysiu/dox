@@ -122,6 +122,9 @@ mod test {
         // when
         app.upload_doc(doc("doc1.pdf"))?;
         app.wait_til_indexed();
+        // TODO: I don't know why this test and the one below is failing without this sleep. This
+        // should be removed
+        std::thread::sleep(std::time::Duration::from_secs(5));
 
         // TODO: for some reason, only one word search is working - fix it
         let res = app.search(search_term)?;
@@ -150,6 +153,9 @@ mod test {
         // when
         app.upload_doc(doc("doc1.png"))?;
         app.wait_til_indexed();
+        // TODO: I don't know why this test and the one above is failing without this sleep. This
+        // should be removed
+        std::thread::sleep(std::time::Duration::from_secs(5));
 
         // TODO: for some reason, only one word search is working - fix it
         let res = app.search(search_term)?;

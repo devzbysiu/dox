@@ -30,7 +30,7 @@ impl Indexer {
             loop {
                 match sub.recv()? {
                     BusEvent::DataExtracted(doc_details) => self.index(doc_details, repo.clone()),
-                    BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(loc)?,
+                    BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(loc, repo.clone()),
                     e => trace!("event not supported in indexer: '{:?}'", e),
                 }
             }
@@ -47,12 +47,15 @@ impl Indexer {
         });
     }
 
-    #[instrument(skip(self))]
-    fn cleanup(&self, loc: Location) -> Result<()> {
+    #[instrument(skip(self, repo))]
+    fn cleanup(&self, loc: Location, repo: RepoWrite) {
         debug!("pipeline failed, removing index data");
-        let mut publ = self.bus.publisher();
-        publ.send(BusEvent::DataRemoved)?;
-        Ok(())
+        let publ = self.bus.publisher();
+        self.tp.spawn(move || {
+            if let Err(e) = cleanup(&loc, &repo, publ) {
+                error!("indexing failed: '{}'", e);
+            }
+        });
     }
 }
 
@@ -65,16 +68,27 @@ fn index(doc_details: &[DocDetails], repo: &RepoWrite, mut publ: EventPublisher)
     Ok(())
 }
 
+#[instrument(skip(repo, publ))]
+fn cleanup(loc: &Location, repo: &RepoWrite, mut publ: EventPublisher) -> Result<()> {
+    repo.delete(loc)?;
+    publ.send(BusEvent::DataRemoved)?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
     use crate::entities::document::DocDetails;
-    use crate::result::{BusErr, IndexerErr};
+    use crate::entities::user::User;
+    use crate::result::{BusErr, IndexerErr, SearchErr};
+    use crate::testingtools::services::indexer::tracked_repo;
     use crate::testingtools::unit::create_test_shim;
     use crate::testingtools::{pipe, MutexExt, Spy, Tx};
-    use crate::use_cases::repository::RepositoryWrite;
+    use crate::use_cases::repository::{
+        Repo, RepoRead, Repository, RepositoryRead, RepositoryWrite, SearchResult,
+    };
 
     use anyhow::{anyhow, Result};
     use fake::{Fake, Faker};
@@ -208,6 +222,23 @@ mod test {
         Ok(())
     }
 
+    #[test]
+    fn repo_removes_data_when_document_encryption_failed_event_appears() -> Result<()> {
+        // given
+        init_tracing();
+        let (repo_spies, repo) = tracked_repo(&noop_repo());
+        let mut shim = create_test_shim()?;
+        Indexer::new(shim.bus())?.run(repo.write());
+
+        // when
+        shim.trigger_document_encryption_failure()?;
+
+        // then
+        assert!(repo_spies.delete_called());
+
+        Ok(())
+    }
+
     struct RepoWriteSpy;
 
     impl RepoWriteSpy {
@@ -264,6 +295,34 @@ mod test {
         }
     }
 
+    fn noop_repo() -> Repo {
+        NoOpRepo::make()
+    }
+
+    struct NoOpRepo {
+        read: RepoRead,
+        write: RepoWrite,
+    }
+
+    impl NoOpRepo {
+        fn make() -> Repo {
+            Box::new(Self {
+                read: NoOpRepoRead::new(),
+                write: NoOpRepoWrite::new(),
+            })
+        }
+    }
+
+    impl Repository for NoOpRepo {
+        fn read(&self) -> RepoRead {
+            self.read.clone()
+        }
+
+        fn write(&self) -> RepoWrite {
+            self.write.clone()
+        }
+    }
+
     struct NoOpRepoWrite;
 
     impl NoOpRepoWrite {
@@ -279,7 +338,28 @@ mod test {
         }
 
         fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
-            unimplemented!()
+            // nothing to do here
+            Ok(())
+        }
+    }
+
+    struct NoOpRepoRead;
+
+    impl NoOpRepoRead {
+        fn new() -> Arc<Self> {
+            Arc::new(Self)
+        }
+    }
+
+    impl RepositoryRead for NoOpRepoRead {
+        fn search(&self, _user: User, _q: String) -> Result<SearchResult, SearchErr> {
+            // nothing to do
+            Ok(Vec::new().into())
+        }
+
+        fn all_docs(&self, _user: User) -> Result<SearchResult, SearchErr> {
+            // nothing to do
+            Ok(Vec::new().into())
         }
     }
 

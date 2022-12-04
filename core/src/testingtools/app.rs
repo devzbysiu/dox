@@ -54,7 +54,7 @@ pub struct App {
 
 impl App {
     pub fn wait_til_indexed(&mut self) {
-        self.repo_spies().write().method_called();
+        self.repo_spies().index_called();
     }
 
     #[allow(unused)]
@@ -69,7 +69,7 @@ impl App {
     fn repo_spies(&self) -> &RepoSpies {
         self.repo_spies
             .as_ref()
-            .unwrap_or_else(|| panic!("uninitialized tracked repo spy"))
+            .unwrap_or_else(|| panic!("uninitialized tracked repo spies"))
     }
 
     fn cipher_spies(&self) -> &CipherSpies {
