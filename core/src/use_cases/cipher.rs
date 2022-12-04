@@ -1,22 +1,30 @@
+//! Abstraction used to encrypt end decrypt data.
 use crate::result::CipherErr;
 
 use std::sync::Arc;
-
-// TODO: Document this
 
 pub type Cipher = Box<dyn CipherStrategy>;
 pub type CipherRead = Arc<dyn CipherReadStrategy>;
 pub type CipherWrite = Arc<dyn CipherWriteStrategy>;
 
+/// Exposes tools for decrypting (`read`) and encrypting (`write`) data.
 pub trait CipherStrategy: Send {
     fn read(&self) -> CipherRead;
     fn write(&self) -> CipherWrite;
 }
 
+/// Abstracts decrypting data.
 pub trait CipherReadStrategy: Sync + Send {
-    fn decrypt(&self, src_buf: &[u8]) -> Result<Vec<u8>, CipherErr>;
+    /// Decrypts data passed in `buf` buffer.
+    ///
+    /// Returns `Vec` containing decrypted data.
+    fn decrypt(&self, buf: &[u8]) -> Result<Vec<u8>, CipherErr>;
 }
 
+/// Abstracts encrypting data.
 pub trait CipherWriteStrategy: Sync + Send {
-    fn encrypt(&self, src_buf: &[u8]) -> Result<Vec<u8>, CipherErr>;
+    /// Encrypts data passed in `buf` buffer.
+    ///
+    /// Returns `Vec` containing encrypted data.
+    fn encrypt(&self, buf: &[u8]) -> Result<Vec<u8>, CipherErr>;
 }

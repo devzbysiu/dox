@@ -69,7 +69,7 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for DocumentReadErr {
 
 #[derive(Debug, Error)]
 pub enum CipherErr {
-    #[error("Failed to decrypt")]
+    #[error("Failed to decrypt.")]
     Chacha(#[from] chacha20poly1305::Error),
 }
 
