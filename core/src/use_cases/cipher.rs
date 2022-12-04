@@ -1,4 +1,4 @@
-//! Abstraction used to encrypt end decrypt data.
+//! Abstraction used to encrypt and decrypt data.
 use crate::result::CipherErr;
 
 use std::sync::Arc;
