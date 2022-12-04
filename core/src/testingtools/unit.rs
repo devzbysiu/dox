@@ -1,5 +1,3 @@
-#![allow(unused)] // TODO: remove this
-
 use crate::configuration::factories::event_bus;
 use crate::entities::document::DocDetails;
 use crate::entities::location::{Location, SafePathBuf};
@@ -10,7 +8,6 @@ use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher, EventSubscriber}
 use crate::use_cases::receiver::DocsEvent;
 
 use anyhow::{anyhow, Result};
-use retry::{retry, OperationResult};
 use std::fs::{self, create_dir_all};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
@@ -154,7 +151,6 @@ impl TestShim {
     // TODO: this should take data the indexer should be triggered with - do that also for other
     // trigger_* methods
     pub fn trigger_indexer(&mut self, details: Vec<DocDetails>) -> Result<()> {
-        let test_location = self.test_file.location.clone();
         self.publ.send(BusEvent::DataExtracted(details))?;
         Ok(())
     }
