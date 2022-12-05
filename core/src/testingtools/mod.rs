@@ -10,7 +10,7 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Mutex;
 use std::time::Duration;
 use tempfile::TempDir;
-use tracing::debug;
+use tracing::{debug, error};
 
 pub mod api;
 pub mod app;
@@ -141,6 +141,15 @@ pub trait MutexExt {
 impl MutexExt for Tx {
     fn signal(&self) {
         let tx = self.lock().expect("poisoned mutex");
-        tx.send(()).expect("failed to send");
+        // NOTE: We can't `unwrap` or `expect` (etc.) here because during testing, the other end of
+        // the channel gets dropped while this end is still used in thread. The result is that
+        // `send` returns error and `unwrap` or `expect` panics which triigers abort and stop the
+        // test binary.
+        // This `signal` fn is used only for testing and it's acceptable to ignore this error.
+        // Ultimately, if the other end is dropped it means that the test finished and all its
+        // requirements are fullfilled.
+        if let Err(e) = tx.send(()) {
+            error!("failed to send signal: {:?}", e);
+        }
     }
 }

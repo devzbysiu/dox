@@ -53,7 +53,7 @@ impl Indexer {
         let publ = self.bus.publisher();
         self.tp.spawn(move || {
             if let Err(e) = cleanup(&loc, &repo, publ) {
-                error!("indexing failed: '{}'", e);
+                error!("cleanup failed: '{}'", e);
             }
         });
     }
@@ -270,7 +270,7 @@ mod test {
         }
 
         fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
-            unimplemented!();
+            unimplemented!()
         }
     }
 

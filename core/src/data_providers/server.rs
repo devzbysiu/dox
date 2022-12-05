@@ -122,9 +122,6 @@ mod test {
         // when
         app.upload_doc(doc("doc1.pdf"))?;
         app.wait_til_indexed();
-        // TODO: I don't know why this test and the one below is failing without this sleep. This
-        // should be removed
-        std::thread::sleep(std::time::Duration::from_secs(5));
 
         // TODO: for some reason, only one word search is working - fix it
         let res = app.search(search_term)?;
@@ -153,9 +150,6 @@ mod test {
         // when
         app.upload_doc(doc("doc1.png"))?;
         app.wait_til_indexed();
-        // TODO: I don't know why this test and the one above is failing without this sleep. This
-        // should be removed
-        std::thread::sleep(std::time::Duration::from_secs(5));
 
         // TODO: for some reason, only one word search is working - fix it
         let res = app.search(search_term)?;
@@ -171,10 +165,10 @@ mod test {
     }
 
     #[test]
-    fn uploading_document_without_extension_results_in_415_status_code() -> Result<()> {
+    fn uploading_no_extension_document_results_in_415_status_code() -> Result<()> {
         // given
         init_tracing();
-        let app = test_app()?.with_tracked_repo()?.start()?;
+        let app = start_test_app()?;
         let wrong_doc = "no-extension-doc";
 
         // when
@@ -198,7 +192,7 @@ mod test {
     fn uploading_document_with_unsupported_extension_results_in_415_status_code() -> Result<()> {
         // given
         init_tracing();
-        let app = test_app()?.with_tracked_repo()?.start()?;
+        let app = start_test_app()?;
         let wrong_doc = "unsupported-extension-doc.abc";
 
         // when

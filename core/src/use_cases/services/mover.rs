@@ -59,7 +59,7 @@ impl DocumentMover {
         let fs = fs.clone();
         self.tp.spawn(move || {
             if let Err(e) = remove_document(&loc, &fs) {
-                error!("document removal failed: '{}'", e);
+                error!("failed to remove document '{:?}': '{}'", loc, e);
             }
         });
     }
