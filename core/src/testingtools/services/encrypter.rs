@@ -137,6 +137,120 @@ impl CipherWriteStrategy for FailingCipherWrite {
     }
 }
 
+pub fn working_cipher() -> Cipher {
+    WorkingCipher::make()
+}
+
+struct WorkingCipher {
+    read: CipherRead,
+    write: CipherWrite,
+}
+
+impl WorkingCipher {
+    fn make() -> Cipher {
+        Box::new(Self {
+            read: WorkingCipherRead::new(),
+            write: WorkingCipherWrite::new(),
+        })
+    }
+}
+
+impl CipherStrategy for WorkingCipher {
+    fn read(&self) -> CipherRead {
+        self.read.clone()
+    }
+
+    fn write(&self) -> CipherWrite {
+        self.write.clone()
+    }
+}
+
+struct WorkingCipherRead;
+
+impl WorkingCipherRead {
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl CipherReadStrategy for WorkingCipherRead {
+    fn decrypt(&self, _buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
+        Ok(Vec::new())
+    }
+}
+
+struct WorkingCipherWrite;
+
+impl WorkingCipherWrite {
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl CipherWriteStrategy for WorkingCipherWrite {
+    fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
+        Ok(Vec::new())
+    }
+}
+
+pub fn noop_cipher() -> Cipher {
+    NoOpCipher::make()
+}
+
+struct NoOpCipher {
+    read: CipherRead,
+    write: CipherWrite,
+}
+
+impl NoOpCipher {
+    fn make() -> Cipher {
+        Box::new(Self {
+            read: NoOpCipherRead::new(),
+            write: NoOpCipherWrite::new(),
+        })
+    }
+}
+
+impl CipherStrategy for NoOpCipher {
+    fn read(&self) -> CipherRead {
+        self.read.clone()
+    }
+
+    fn write(&self) -> CipherWrite {
+        self.write.clone()
+    }
+}
+
+struct NoOpCipherRead;
+
+impl NoOpCipherRead {
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl CipherReadStrategy for NoOpCipherRead {
+    fn decrypt(&self, _buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
+        // nothing to do
+        Ok(Vec::new())
+    }
+}
+
+struct NoOpCipherWrite;
+
+impl NoOpCipherWrite {
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl CipherWriteStrategy for NoOpCipherWrite {
+    fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
+        // nothing to do
+        Ok(Vec::new())
+    }
+}
+
 pub struct CipherSpies {
     #[allow(unused)]
     read_spy: Spy,
@@ -152,11 +266,11 @@ impl CipherSpies {
     }
 
     #[allow(unused)]
-    pub fn read(&self) -> &Spy {
-        &self.read_spy
+    pub fn decrypt_called(&self) -> bool {
+        self.read_spy.method_called()
     }
 
-    pub fn write(&self) -> &Spy {
-        &self.write_spy
+    pub fn encrypt_called(&self) -> bool {
+        self.write_spy.method_called()
     }
 }

@@ -59,7 +59,7 @@ impl App {
 
     #[allow(unused)]
     pub fn wait_til_encrypted(&mut self) {
-        self.cipher_spies().write().method_called();
+        self.cipher_spies().encrypt_called();
     }
 
     pub fn wait_til_file_removed(&mut self) {

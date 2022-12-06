@@ -82,29 +82,28 @@ mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
-    use crate::result::CipherErr;
+    use crate::testingtools::services::encrypter::{
+        failing_cipher, noop_cipher, tracked_cipher, working_cipher,
+    };
     use crate::testingtools::unit::create_test_shim;
-    use crate::testingtools::{pipe, MutexExt, Spy, Tx};
     use crate::use_cases::bus::BusEvent;
-    use crate::use_cases::cipher::CipherWriteStrategy;
 
     use anyhow::Result;
     use fake::{Fake, Faker};
-    use std::sync::Arc;
 
     #[test]
     fn cipher_is_used_when_encrypt_thumbnail_event_appears() -> Result<()> {
         // given
         init_tracing();
-        let (cipher_spy, cipher_writer) = CipherSpy::working();
+        let (cipher_spies, cipher) = tracked_cipher(&working_cipher());
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(cipher_writer);
+        Encrypter::new(shim.bus()).run(cipher.write());
 
         // when
         shim.trigger_thumbail_encryption()?;
 
         // then
-        assert!(cipher_spy.method_called());
+        assert!(cipher_spies.encrypt_called());
 
         Ok(())
     }
@@ -113,15 +112,15 @@ mod test {
     fn cipher_is_used_when_encrypt_document_event_appears() -> Result<()> {
         // given
         init_tracing();
-        let (cipher_spy, cipher_writer) = CipherSpy::working();
+        let (cipher_spies, cipher) = tracked_cipher(&working_cipher());
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(cipher_writer);
+        Encrypter::new(shim.bus()).run(cipher.write());
 
         // when
         shim.trigger_document_encryption()?;
 
         // then
-        assert!(cipher_spy.method_called());
+        assert!(cipher_spies.encrypt_called());
 
         Ok(())
     }
@@ -130,9 +129,9 @@ mod test {
     fn pipeline_finished_message_appears_after_thumbnail_encryption() -> Result<()> {
         // given
         init_tracing();
-        let noop_cipher = NoOpCipher::new();
+        let cipher = noop_cipher();
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(noop_cipher);
+        Encrypter::new(shim.bus()).run(cipher.write());
 
         // when
         shim.trigger_thumbail_encryption()?;
@@ -149,9 +148,9 @@ mod test {
     fn pipeline_finished_message_appears_after_document_encryption() -> Result<()> {
         // given
         init_tracing();
-        let noop_cipher = NoOpCipher::new();
+        let cipher = noop_cipher();
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(noop_cipher);
+        Encrypter::new(shim.bus()).run(cipher.write());
 
         // when
         shim.trigger_document_encryption()?;
@@ -168,9 +167,9 @@ mod test {
     fn thumbnail_encryption_failed_event_appears_when_thumbnail_encryption_fails() -> Result<()> {
         // given
         init_tracing();
-        let (spy, failing_cipher) = CipherSpy::failing();
+        let (cipher_spies, cipher) = tracked_cipher(&failing_cipher());
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(failing_cipher);
+        Encrypter::new(shim.bus()).run(cipher.write());
 
         // when
         shim.trigger_thumbail_encryption()?;
@@ -178,7 +177,7 @@ mod test {
         shim.ignore_event()?; // ignore NewDocs event
 
         // then
-        assert!(spy.method_called());
+        assert!(cipher_spies.encrypt_called());
         assert!(shim.event_on_bus(&BusEvent::ThumbnailEncryptionFailed(shim.test_location()))?);
 
         Ok(())
@@ -188,9 +187,9 @@ mod test {
     fn document_encryption_failed_event_appears_when_document_encryption_fails() -> Result<()> {
         // given
         init_tracing();
-        let (spy, failing_cipher) = CipherSpy::failing();
+        let (cipher_spies, cipher) = tracked_cipher(&failing_cipher());
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(failing_cipher);
+        Encrypter::new(shim.bus()).run(cipher.write());
 
         // when
         shim.trigger_document_encryption()?;
@@ -198,7 +197,7 @@ mod test {
         shim.ignore_event()?; // ignore NewDocs event
 
         // then
-        assert!(spy.method_called());
+        assert!(cipher_spies.encrypt_called());
         assert!(shim.event_on_bus(&BusEvent::DocumentEncryptionFailed(shim.test_location()))?);
 
         Ok(())
@@ -208,7 +207,7 @@ mod test {
     fn encrypter_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
-        let noop_cipher = NoOpCipher::new();
+        let cipher = noop_cipher();
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
@@ -219,7 +218,7 @@ mod test {
             BusEvent::ThumbnailRemoved,
             BusEvent::DataRemoved,
         ];
-        Encrypter::new(shim.bus()).run(noop_cipher);
+        Encrypter::new(shim.bus()).run(cipher.write());
 
         // when
         shim.send_events(&ignored_events)?;
@@ -241,17 +240,17 @@ mod test {
     #[test]
     fn failure_during_thumbnail_encryption_do_not_kill_service() -> Result<()> {
         // given
-        let (spy, failing_repo_write) = CipherSpy::failing();
+        let (cipher_spies, cipher) = tracked_cipher(&failing_cipher());
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(failing_repo_write);
+        Encrypter::new(shim.bus()).run(cipher.write());
         shim.trigger_thumbail_encryption()?;
-        assert!(spy.method_called());
+        assert!(cipher_spies.encrypt_called());
 
         // when
         shim.trigger_thumbail_encryption()?;
 
         // then
-        assert!(spy.method_called());
+        assert!(cipher_spies.encrypt_called());
 
         Ok(())
     }
@@ -259,81 +258,18 @@ mod test {
     #[test]
     fn failure_during_document_encryption_do_not_kill_service() -> Result<()> {
         // given
-        let (spy, failing_repo_write) = CipherSpy::failing();
+        let (cipher_spies, cipher) = tracked_cipher(&failing_cipher());
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(failing_repo_write);
+        Encrypter::new(shim.bus()).run(cipher.write());
         shim.trigger_document_encryption()?;
-        assert!(spy.method_called());
+        assert!(cipher_spies.encrypt_called());
 
         // when
         shim.trigger_document_encryption()?;
 
         // then
-        assert!(spy.method_called());
+        assert!(cipher_spies.encrypt_called());
 
         Ok(())
-    }
-
-    struct CipherSpy;
-
-    impl CipherSpy {
-        fn working() -> (Spy, CipherWrite) {
-            let (tx, spy) = pipe();
-            (spy, WorkingCipher::new(tx))
-        }
-
-        fn failing() -> (Spy, CipherWrite) {
-            let (tx, spy) = pipe();
-            (spy, FailingCipher::new(tx))
-        }
-    }
-
-    struct WorkingCipher {
-        tx: Tx,
-    }
-
-    impl WorkingCipher {
-        fn new(tx: Tx) -> Arc<Self> {
-            Arc::new(Self { tx })
-        }
-    }
-
-    impl CipherWriteStrategy for WorkingCipher {
-        fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
-            self.tx.signal();
-            Ok(Vec::new())
-        }
-    }
-
-    struct FailingCipher {
-        tx: Tx,
-    }
-
-    impl FailingCipher {
-        fn new(tx: Tx) -> Arc<Self> {
-            Arc::new(Self { tx })
-        }
-    }
-
-    impl CipherWriteStrategy for FailingCipher {
-        fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
-            self.tx.signal();
-            Err(CipherErr::Chacha(chacha20poly1305::Error))
-        }
-    }
-
-    struct NoOpCipher;
-
-    impl NoOpCipher {
-        fn new() -> Arc<Self> {
-            Arc::new(Self)
-        }
-    }
-
-    impl CipherWriteStrategy for NoOpCipher {
-        fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
-            // nothing to do
-            Ok(Vec::new())
-        }
     }
 }
