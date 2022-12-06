@@ -93,7 +93,7 @@ mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
-    use crate::testingtools::services::fs::{failing_fs, noop_fs, tracked_fs};
+    use crate::testingtools::services::fs::{failing, noop, tracked};
     use crate::testingtools::unit::create_test_shim;
     use crate::testingtools::TestConfig;
 
@@ -105,7 +105,7 @@ mod test {
     fn fs_is_used_to_move_document() -> Result<()> {
         // given
         init_tracing();
-        let (fs_spies, fs) = tracked_fs(noop_fs());
+        let (fs_spies, fs) = tracked(noop());
         let mut shim = create_test_shim()?;
         DocumentMover::new(TestConfig::new()?, shim.bus())?.run(fs);
         thread::sleep(Duration::from_secs(1)); // allow to start DocumentMover
@@ -124,7 +124,7 @@ mod test {
         // given
         init_tracing();
         let mut shim = create_test_shim()?;
-        DocumentMover::new(shim.config(), shim.bus())?.run(noop_fs());
+        DocumentMover::new(shim.config(), shim.bus())?.run(noop());
         thread::sleep(Duration::from_secs(1)); // allow to start DocumentMover
 
         // when
@@ -142,7 +142,7 @@ mod test {
     fn no_event_appears_when_mover_fails() -> Result<()> {
         // given
         init_tracing();
-        let (fs_spies, fs) = tracked_fs(failing_fs());
+        let (fs_spies, fs) = tracked(failing());
         let mut shim = create_test_shim()?;
         DocumentMover::new(Config::default(), shim.bus())?.run(fs);
         thread::sleep(Duration::from_secs(1)); // allow to start DocumentMover
@@ -176,7 +176,7 @@ mod test {
             BusEvent::ThumbnailEncryptionFailed(Faker.fake()),
             BusEvent::PipelineFinished,
         ];
-        DocumentMover::new(Config::default(), shim.bus())?.run(noop_fs());
+        DocumentMover::new(Config::default(), shim.bus())?.run(noop());
 
         // when
         shim.send_events(&ignored_events)?;
@@ -195,7 +195,7 @@ mod test {
     fn failure_during_moving_do_not_kill_service() -> Result<()> {
         // given
         init_tracing();
-        let (fs_spies, fs) = tracked_fs(failing_fs());
+        let (fs_spies, fs) = tracked(failing());
         let mut shim = create_test_shim()?;
         DocumentMover::new(Config::default(), shim.bus())?.run(fs);
         thread::sleep(Duration::from_secs(1)); // allow to start DocumentMover
@@ -216,7 +216,7 @@ mod test {
     fn when_document_encryption_failed_event_appears_filesystem_removes_document() -> Result<()> {
         // given
         init_tracing();
-        let (fs_spies, fs) = tracked_fs(noop_fs());
+        let (fs_spies, fs) = tracked(noop());
         let mut shim = create_test_shim()?;
         DocumentMover::new(Config::default(), shim.bus())?.run(fs);
         thread::sleep(Duration::from_secs(1)); // allow to start DocumentMover

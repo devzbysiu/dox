@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tracing::instrument;
 
-pub fn failing_fs() -> Fs {
+pub fn failing() -> Fs {
     FailingFs::make()
 }
 
@@ -38,7 +38,7 @@ impl Filesystem for FailingFs {
     }
 }
 
-pub fn tracked_fs(fs: Fs) -> (FsSpies, Fs) {
+pub fn tracked(fs: Fs) -> (FsSpies, Fs) {
     TrackedFs::wrap(fs)
 }
 
@@ -141,7 +141,7 @@ pub fn working_fs() -> Fs {
     NoOpFs::new()
 }
 
-pub fn noop_fs() -> Fs {
+pub fn noop() -> Fs {
     NoOpFs::new()
 }
 

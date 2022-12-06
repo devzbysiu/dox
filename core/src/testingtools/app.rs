@@ -5,7 +5,7 @@ use crate::testingtools::api::ApiResponse;
 use crate::testingtools::services::encrypter::{
     failing as failing_cipher, tracked as tracked_cipher, CipherSpies,
 };
-use crate::testingtools::services::fs::{failing_fs, tracked_fs, FsSpies};
+use crate::testingtools::services::fs::{failing as failing_fs, tracked as tracked_fs, FsSpies};
 use crate::testingtools::services::repo::{tracked, RepoSpies};
 use crate::testingtools::TestConfig;
 use crate::use_cases::cipher::Cipher;

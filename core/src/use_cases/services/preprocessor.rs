@@ -125,7 +125,7 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::result::BusErr;
-    use crate::testingtools::services::fs::{noop_fs, tracked_fs, working_fs};
+    use crate::testingtools::services::fs::{noop, tracked, working_fs};
     use crate::testingtools::unit::create_test_shim;
     use crate::testingtools::{pipe, MutexExt, Spy, Tx};
 
@@ -142,7 +142,7 @@ mod test {
         let (spy, preprocessor) = PreprocessorSpy::working();
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop());
         thread::sleep(Duration::from_secs(1)); // allow to start preprocessor
 
         // when
@@ -161,7 +161,7 @@ mod test {
         let preprocessor = Box::new(NoOpPreprocessor);
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop());
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -182,7 +182,7 @@ mod test {
         let preprocessor = NoOpPreprocessor::new();
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop());
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -204,7 +204,7 @@ mod test {
         let (spy, failing_preprocessor) = PreprocessorSpy::failing();
         let factory_stub = PreprocessorFactoryStub::new(vec![failing_preprocessor]);
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop());
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -234,7 +234,7 @@ mod test {
             BusEvent::DocumentEncryptionFailed(Faker.fake()),
             BusEvent::PipelineFinished,
         ];
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop());
 
         // when
         shim.send_events(&ignored_events)?;
@@ -260,7 +260,7 @@ mod test {
         let (spy2, failing_prepr2) = PreprocessorSpy::failing();
         let factory_stub = PreprocessorFactoryStub::new(vec![failing_prepr1, failing_prepr2]);
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop());
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         shim.trigger_preprocessor()?;
@@ -281,7 +281,7 @@ mod test {
         init_tracing();
         let preprocessor = NoOpPreprocessor::new();
         let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
-        let (fs_spies, working_fs) = tracked_fs(working_fs());
+        let (fs_spies, working_fs) = tracked(working_fs());
         let mut shim = create_test_shim()?;
         ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, working_fs);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
