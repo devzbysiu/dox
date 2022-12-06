@@ -11,7 +11,7 @@ use anyhow::{anyhow, Result};
 use std::sync::Arc;
 use tracing::instrument;
 
-pub fn tracked_repo(repo: &Repo) -> (RepoSpies, Repo) {
+pub fn tracked(repo: &Repo) -> (RepoSpies, Repo) {
     TrackedRepo::wrap(repo)
 }
 
@@ -146,7 +146,7 @@ impl RepoSpies {
     }
 }
 
-pub fn working_repo() -> Repo {
+pub fn working() -> Repo {
     WorkingRepo::make()
 }
 
@@ -210,7 +210,7 @@ impl RepositoryWrite for WorkingRepoWrite {
     }
 }
 
-pub fn failing_repo() -> Repo {
+pub fn failing() -> Repo {
     FailingRepo::make()
 }
 
@@ -274,7 +274,7 @@ impl RepositoryWrite for FailingRepoWrite {
     }
 }
 
-pub fn noop_repo() -> Repo {
+pub fn noop() -> Repo {
     NoOpRepo::make()
 }
 

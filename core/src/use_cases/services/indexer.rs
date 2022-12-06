@@ -81,9 +81,7 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::entities::document::DocDetails;
-    use crate::testingtools::services::indexer::{
-        failing_repo, noop_repo, tracked_repo, working_repo,
-    };
+    use crate::testingtools::services::repo::{failing, noop, tracked, working};
     use crate::testingtools::unit::create_test_shim;
 
     use anyhow::Result;
@@ -93,7 +91,7 @@ mod test {
     fn repo_write_is_used_to_index_data() -> Result<()> {
         // given
         init_tracing();
-        let (repo_spies, repo) = tracked_repo(&working_repo());
+        let (repo_spies, repo) = tracked(&working());
         let mut shim = create_test_shim()?;
         Indexer::new(shim.bus())?.run(repo.write());
 
@@ -110,7 +108,7 @@ mod test {
     fn indexed_event_is_send_on_success() -> Result<()> {
         // given
         init_tracing();
-        let repo = noop_repo();
+        let repo = noop();
         let mut shim = create_test_shim()?;
         Indexer::new(shim.bus())?.run(repo.write());
         let doc_details: Vec<DocDetails> = Faker.fake();
@@ -130,7 +128,7 @@ mod test {
     fn indexed_event_contains_docs_details_received_from_data_extracted_event() -> Result<()> {
         // given
         init_tracing();
-        let repo = noop_repo();
+        let repo = noop();
         let mut shim = create_test_shim()?;
         let docs_details: Vec<DocDetails> = Faker.fake();
         Indexer::new(shim.bus())?.run(repo.write());
@@ -150,7 +148,7 @@ mod test {
     fn no_event_is_send_when_indexing_error_occurs() -> Result<()> {
         // given
         init_tracing();
-        let repo = failing_repo();
+        let repo = failing();
         let mut shim = create_test_shim()?;
         Indexer::new(shim.bus())?.run(repo.write());
 
@@ -169,7 +167,7 @@ mod test {
     fn indexer_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
-        let repo = noop_repo();
+        let repo = noop();
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
@@ -202,7 +200,7 @@ mod test {
     fn failure_during_indexing_do_not_kill_service() -> Result<()> {
         // given
         init_tracing();
-        let (repo_spies, repo) = tracked_repo(&failing_repo());
+        let (repo_spies, repo) = tracked(&failing());
         let mut shim = create_test_shim()?;
         Indexer::new(shim.bus())?.run(repo.write());
         shim.trigger_indexer(Faker.fake())?;
@@ -221,7 +219,7 @@ mod test {
     fn repo_removes_data_when_document_encryption_failed_event_appears() -> Result<()> {
         // given
         init_tracing();
-        let (repo_spies, repo) = tracked_repo(&noop_repo());
+        let (repo_spies, repo) = tracked(&noop());
         let mut shim = create_test_shim()?;
         Indexer::new(shim.bus())?.run(repo.write());
 

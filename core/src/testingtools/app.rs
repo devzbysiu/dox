@@ -4,7 +4,7 @@ use crate::startup::rocket;
 use crate::testingtools::api::ApiResponse;
 use crate::testingtools::services::encrypter::{failing_cipher, tracked_cipher, CipherSpies};
 use crate::testingtools::services::fs::{failing_fs, tracked_fs, FsSpies};
-use crate::testingtools::services::indexer::{tracked_repo, RepoSpies};
+use crate::testingtools::services::repo::{tracked, RepoSpies};
 use crate::testingtools::TestConfig;
 use crate::use_cases::cipher::Cipher;
 use crate::use_cases::fs::Fs;
@@ -141,7 +141,7 @@ pub struct AppBuilder {
 impl AppBuilder {
     pub fn with_tracked_repo(mut self) -> Result<Self> {
         let cfg = self.config.as_ref().unwrap();
-        let (repo_spies, tracked_repo) = tracked_repo(&repository(cfg)?);
+        let (repo_spies, tracked_repo) = tracked(&repository(cfg)?);
         let ctx = self.ctx.as_mut().unwrap();
         ctx.with_repo(tracked_repo);
         self.repo_spies = Some(repo_spies);
