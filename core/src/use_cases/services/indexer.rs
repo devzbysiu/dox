@@ -81,32 +81,27 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::entities::document::DocDetails;
-    use crate::entities::user::User;
-    use crate::result::{BusErr, IndexerErr, SearchErr};
-    use crate::testingtools::services::indexer::tracked_repo;
-    use crate::testingtools::unit::create_test_shim;
-    use crate::testingtools::{pipe, MutexExt, Spy, Tx};
-    use crate::use_cases::repository::{
-        Repo, RepoRead, Repository, RepositoryRead, RepositoryWrite, SearchResult,
+    use crate::testingtools::services::indexer::{
+        failing_repo, noop_repo, tracked_repo, working_repo,
     };
+    use crate::testingtools::unit::create_test_shim;
 
-    use anyhow::{anyhow, Result};
+    use anyhow::Result;
     use fake::{Fake, Faker};
-    use std::sync::Arc;
 
     #[test]
     fn repo_write_is_used_to_index_data() -> Result<()> {
         // given
         init_tracing();
-        let (spy, working_repo_write) = RepoWriteSpy::working();
+        let (repo_spies, repo) = tracked_repo(&working_repo());
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(working_repo_write);
+        Indexer::new(shim.bus())?.run(repo.write());
 
         // when
         shim.trigger_indexer(Faker.fake())?;
 
         // then
-        assert!(spy.method_called());
+        assert!(repo_spies.index_called());
 
         Ok(())
     }
@@ -115,9 +110,9 @@ mod test {
     fn indexed_event_is_send_on_success() -> Result<()> {
         // given
         init_tracing();
-        let noop_repo_write = NoOpRepoWrite::new();
+        let repo = noop_repo();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(noop_repo_write);
+        Indexer::new(shim.bus())?.run(repo.write());
         let doc_details: Vec<DocDetails> = Faker.fake();
 
         // when
@@ -135,10 +130,10 @@ mod test {
     fn indexed_event_contains_docs_details_received_from_data_extracted_event() -> Result<()> {
         // given
         init_tracing();
-        let repo_write = NoOpRepoWrite::new();
+        let repo = noop_repo();
         let mut shim = create_test_shim()?;
         let docs_details: Vec<DocDetails> = Faker.fake();
-        Indexer::new(shim.bus())?.run(repo_write);
+        Indexer::new(shim.bus())?.run(repo.write());
 
         // when
         shim.trigger_indexer(docs_details.clone())?;
@@ -155,9 +150,9 @@ mod test {
     fn no_event_is_send_when_indexing_error_occurs() -> Result<()> {
         // given
         init_tracing();
-        let repo_write = ErroneousRepoWrite::new();
+        let repo = failing_repo();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo_write);
+        Indexer::new(shim.bus())?.run(repo.write());
 
         // when
         shim.trigger_indexer(Faker.fake())?;
@@ -174,7 +169,7 @@ mod test {
     fn indexer_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
-        let noop_repo_write = NoOpRepoWrite::new();
+        let repo = noop_repo();
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
@@ -186,7 +181,7 @@ mod test {
             BusEvent::ThumbnailRemoved,
             BusEvent::PipelineFinished,
         ];
-        Indexer::new(shim.bus())?.run(noop_repo_write);
+        Indexer::new(shim.bus())?.run(repo.write());
 
         // when
         shim.send_events(&ignored_events)?;
@@ -207,17 +202,17 @@ mod test {
     fn failure_during_indexing_do_not_kill_service() -> Result<()> {
         // given
         init_tracing();
-        let (spy, failing_repo_write) = RepoWriteSpy::failing();
+        let (repo_spies, repo) = tracked_repo(&failing_repo());
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(failing_repo_write);
+        Indexer::new(shim.bus())?.run(repo.write());
         shim.trigger_indexer(Faker.fake())?;
-        assert!(spy.method_called());
+        assert!(repo_spies.index_called());
 
         // when
         shim.trigger_indexer(Faker.fake())?;
 
         // then
-        assert!(spy.method_called());
+        assert!(repo_spies.index_called());
 
         Ok(())
     }
@@ -237,147 +232,5 @@ mod test {
         assert!(repo_spies.delete_called());
 
         Ok(())
-    }
-
-    struct RepoWriteSpy;
-
-    impl RepoWriteSpy {
-        fn working() -> (Spy, RepoWrite) {
-            let (tx, spy) = pipe();
-            (spy, WorkingRepoWrite::make(tx))
-        }
-
-        fn failing() -> (Spy, RepoWrite) {
-            let (tx, spy) = pipe();
-            (spy, FailingRepoWrite::make(tx))
-        }
-    }
-
-    struct WorkingRepoWrite {
-        tx: Tx,
-    }
-
-    impl WorkingRepoWrite {
-        fn make(tx: Tx) -> Arc<Self> {
-            Arc::new(Self { tx })
-        }
-    }
-
-    impl RepositoryWrite for WorkingRepoWrite {
-        fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
-            self.tx.signal();
-            Ok(())
-        }
-
-        fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
-            unimplemented!()
-        }
-    }
-
-    struct FailingRepoWrite {
-        tx: Tx,
-    }
-
-    impl FailingRepoWrite {
-        fn make(tx: Tx) -> Arc<Self> {
-            Arc::new(Self { tx })
-        }
-    }
-
-    impl RepositoryWrite for FailingRepoWrite {
-        fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
-            self.tx.signal();
-            Err(IndexerErr::Bus(BusErr::Generic(anyhow!("error"))))
-        }
-
-        fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
-            unimplemented!()
-        }
-    }
-
-    fn noop_repo() -> Repo {
-        NoOpRepo::make()
-    }
-
-    struct NoOpRepo {
-        read: RepoRead,
-        write: RepoWrite,
-    }
-
-    impl NoOpRepo {
-        fn make() -> Repo {
-            Box::new(Self {
-                read: NoOpRepoRead::new(),
-                write: NoOpRepoWrite::new(),
-            })
-        }
-    }
-
-    impl Repository for NoOpRepo {
-        fn read(&self) -> RepoRead {
-            self.read.clone()
-        }
-
-        fn write(&self) -> RepoWrite {
-            self.write.clone()
-        }
-    }
-
-    struct NoOpRepoWrite;
-
-    impl NoOpRepoWrite {
-        fn new() -> Arc<Self> {
-            Arc::new(Self)
-        }
-    }
-
-    impl RepositoryWrite for NoOpRepoWrite {
-        fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
-            // nothing to do here
-            Ok(())
-        }
-
-        fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
-            // nothing to do here
-            Ok(())
-        }
-    }
-
-    struct NoOpRepoRead;
-
-    impl NoOpRepoRead {
-        fn new() -> Arc<Self> {
-            Arc::new(Self)
-        }
-    }
-
-    impl RepositoryRead for NoOpRepoRead {
-        fn search(&self, _user: User, _q: String) -> Result<SearchResult, SearchErr> {
-            // nothing to do
-            Ok(Vec::new().into())
-        }
-
-        fn all_docs(&self, _user: User) -> Result<SearchResult, SearchErr> {
-            // nothing to do
-            Ok(Vec::new().into())
-        }
-    }
-
-    struct ErroneousRepoWrite;
-
-    impl ErroneousRepoWrite {
-        fn new() -> Arc<Self> {
-            Arc::new(Self)
-        }
-    }
-
-    impl RepositoryWrite for ErroneousRepoWrite {
-        fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
-            Err(IndexerErr::Bus(BusErr::Generic(anyhow!("error"))))
-        }
-
-        fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
-            unimplemented!()
-        }
     }
 }

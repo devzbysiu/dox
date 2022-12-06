@@ -1,13 +1,13 @@
 use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
 use crate::entities::user::User;
-use crate::result::{IndexerErr, SearchErr};
+use crate::result::{BusErr, IndexerErr, SearchErr};
 use crate::testingtools::{pipe, MutexExt, Spy, Tx};
 use crate::use_cases::repository::{
     Repo, RepoRead, RepoWrite, Repository, RepositoryRead, RepositoryWrite, SearchResult,
 };
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use std::sync::Arc;
 use tracing::instrument;
 
@@ -143,5 +143,201 @@ impl RepoSpies {
 
     pub fn delete_called(&self) -> bool {
         self.delete_spy.method_called()
+    }
+}
+
+pub fn working_repo() -> Repo {
+    WorkingRepo::make()
+}
+
+struct WorkingRepo {
+    read: RepoRead,
+    write: RepoWrite,
+}
+
+impl WorkingRepo {
+    fn make() -> Repo {
+        Box::new(Self {
+            read: WorkingRepoRead::new(),
+            write: WorkingRepoWrite::new(),
+        })
+    }
+}
+
+impl Repository for WorkingRepo {
+    fn read(&self) -> RepoRead {
+        self.read.clone()
+    }
+
+    fn write(&self) -> RepoWrite {
+        self.write.clone()
+    }
+}
+
+struct WorkingRepoRead;
+
+impl WorkingRepoRead {
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl RepositoryRead for WorkingRepoRead {
+    fn search(&self, _user: User, _q: String) -> Result<SearchResult, SearchErr> {
+        Err(SearchErr::MissingIndex("error".into()))
+    }
+
+    fn all_docs(&self, _user: User) -> Result<SearchResult, SearchErr> {
+        Err(SearchErr::MissingIndex("error".into()))
+    }
+}
+
+struct WorkingRepoWrite;
+
+impl WorkingRepoWrite {
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl RepositoryWrite for WorkingRepoWrite {
+    fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
+        Ok(())
+    }
+
+    fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
+        Ok(())
+    }
+}
+
+pub fn failing_repo() -> Repo {
+    FailingRepo::make()
+}
+
+struct FailingRepo {
+    read: RepoRead,
+    write: RepoWrite,
+}
+
+impl FailingRepo {
+    fn make() -> Repo {
+        Box::new(Self {
+            read: FailingRepoRead::new(),
+            write: FailingRepoWrite::new(),
+        })
+    }
+}
+
+impl Repository for FailingRepo {
+    fn read(&self) -> RepoRead {
+        self.read.clone()
+    }
+
+    fn write(&self) -> RepoWrite {
+        self.write.clone()
+    }
+}
+
+struct FailingRepoRead;
+
+impl FailingRepoRead {
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl RepositoryRead for FailingRepoRead {
+    fn search(&self, _user: User, _q: String) -> Result<SearchResult, SearchErr> {
+        Err(SearchErr::MissingIndex("error".into()))
+    }
+
+    fn all_docs(&self, _user: User) -> Result<SearchResult, SearchErr> {
+        Err(SearchErr::MissingIndex("error".into()))
+    }
+}
+
+struct FailingRepoWrite;
+
+impl FailingRepoWrite {
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl RepositoryWrite for FailingRepoWrite {
+    fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
+        Err(IndexerErr::Bus(BusErr::Generic(anyhow!("error"))))
+    }
+
+    fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
+        unimplemented!()
+    }
+}
+
+pub fn noop_repo() -> Repo {
+    NoOpRepo::make()
+}
+
+struct NoOpRepo {
+    read: RepoRead,
+    write: RepoWrite,
+}
+
+impl NoOpRepo {
+    fn make() -> Repo {
+        Box::new(Self {
+            read: NoOpRepoRead::new(),
+            write: NoOpRepoWrite::new(),
+        })
+    }
+}
+
+impl Repository for NoOpRepo {
+    fn read(&self) -> RepoRead {
+        self.read.clone()
+    }
+
+    fn write(&self) -> RepoWrite {
+        self.write.clone()
+    }
+}
+
+struct NoOpRepoRead;
+
+impl NoOpRepoRead {
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl RepositoryRead for NoOpRepoRead {
+    fn search(&self, _user: User, _q: String) -> Result<SearchResult, SearchErr> {
+        // nothing to do
+        Ok(Vec::new().into())
+    }
+
+    fn all_docs(&self, _user: User) -> Result<SearchResult, SearchErr> {
+        // nothing to do
+        Ok(Vec::new().into())
+    }
+}
+
+struct NoOpRepoWrite;
+
+impl NoOpRepoWrite {
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl RepositoryWrite for NoOpRepoWrite {
+    fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
+        // nothing to do here
+        Ok(())
+    }
+
+    fn delete(&self, _loc: &Location) -> Result<(), IndexerErr> {
+        // nothing to do here
+        Ok(())
     }
 }
