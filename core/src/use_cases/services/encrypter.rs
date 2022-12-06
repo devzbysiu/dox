@@ -82,9 +82,7 @@ mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
-    use crate::testingtools::services::encrypter::{
-        failing_cipher, noop_cipher, tracked_cipher, working_cipher,
-    };
+    use crate::testingtools::services::encrypter::{failing, noop, tracked, working};
     use crate::testingtools::unit::create_test_shim;
     use crate::use_cases::bus::BusEvent;
 
@@ -95,7 +93,7 @@ mod test {
     fn cipher_is_used_when_encrypt_thumbnail_event_appears() -> Result<()> {
         // given
         init_tracing();
-        let (cipher_spies, cipher) = tracked_cipher(&working_cipher());
+        let (cipher_spies, cipher) = tracked(&working());
         let mut shim = create_test_shim()?;
         Encrypter::new(shim.bus()).run(cipher.write());
 
@@ -112,7 +110,7 @@ mod test {
     fn cipher_is_used_when_encrypt_document_event_appears() -> Result<()> {
         // given
         init_tracing();
-        let (cipher_spies, cipher) = tracked_cipher(&working_cipher());
+        let (cipher_spies, cipher) = tracked(&working());
         let mut shim = create_test_shim()?;
         Encrypter::new(shim.bus()).run(cipher.write());
 
@@ -129,7 +127,7 @@ mod test {
     fn pipeline_finished_message_appears_after_thumbnail_encryption() -> Result<()> {
         // given
         init_tracing();
-        let cipher = noop_cipher();
+        let cipher = noop();
         let mut shim = create_test_shim()?;
         Encrypter::new(shim.bus()).run(cipher.write());
 
@@ -148,7 +146,7 @@ mod test {
     fn pipeline_finished_message_appears_after_document_encryption() -> Result<()> {
         // given
         init_tracing();
-        let cipher = noop_cipher();
+        let cipher = noop();
         let mut shim = create_test_shim()?;
         Encrypter::new(shim.bus()).run(cipher.write());
 
@@ -167,7 +165,7 @@ mod test {
     fn thumbnail_encryption_failed_event_appears_when_thumbnail_encryption_fails() -> Result<()> {
         // given
         init_tracing();
-        let (cipher_spies, cipher) = tracked_cipher(&failing_cipher());
+        let (cipher_spies, cipher) = tracked(&failing());
         let mut shim = create_test_shim()?;
         Encrypter::new(shim.bus()).run(cipher.write());
 
@@ -187,7 +185,7 @@ mod test {
     fn document_encryption_failed_event_appears_when_document_encryption_fails() -> Result<()> {
         // given
         init_tracing();
-        let (cipher_spies, cipher) = tracked_cipher(&failing_cipher());
+        let (cipher_spies, cipher) = tracked(&failing());
         let mut shim = create_test_shim()?;
         Encrypter::new(shim.bus()).run(cipher.write());
 
@@ -207,7 +205,7 @@ mod test {
     fn encrypter_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
-        let cipher = noop_cipher();
+        let cipher = noop();
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
@@ -240,7 +238,7 @@ mod test {
     #[test]
     fn failure_during_thumbnail_encryption_do_not_kill_service() -> Result<()> {
         // given
-        let (cipher_spies, cipher) = tracked_cipher(&failing_cipher());
+        let (cipher_spies, cipher) = tracked(&failing());
         let mut shim = create_test_shim()?;
         Encrypter::new(shim.bus()).run(cipher.write());
         shim.trigger_thumbail_encryption()?;
@@ -258,7 +256,7 @@ mod test {
     #[test]
     fn failure_during_document_encryption_do_not_kill_service() -> Result<()> {
         // given
-        let (cipher_spies, cipher) = tracked_cipher(&failing_cipher());
+        let (cipher_spies, cipher) = tracked(&failing());
         let mut shim = create_test_shim()?;
         Encrypter::new(shim.bus()).run(cipher.write());
         shim.trigger_document_encryption()?;

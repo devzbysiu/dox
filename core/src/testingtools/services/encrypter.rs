@@ -8,7 +8,7 @@ use anyhow::Result;
 use std::sync::Arc;
 use tracing::debug;
 
-pub fn tracked_cipher(cipher: &Cipher) -> (CipherSpies, Cipher) {
+pub fn tracked(cipher: &Cipher) -> (CipherSpies, Cipher) {
     TrackedCipher::wrap(cipher)
 }
 
@@ -81,7 +81,31 @@ impl CipherWriteStrategy for TrackedCipherWrite {
     }
 }
 
-pub fn failing_cipher() -> Cipher {
+pub struct CipherSpies {
+    #[allow(unused)]
+    read_spy: Spy,
+    write_spy: Spy,
+}
+
+impl CipherSpies {
+    fn new(read_spy: Spy, write_spy: Spy) -> Self {
+        Self {
+            read_spy,
+            write_spy,
+        }
+    }
+
+    #[allow(unused)]
+    pub fn decrypt_called(&self) -> bool {
+        self.read_spy.method_called()
+    }
+
+    pub fn encrypt_called(&self) -> bool {
+        self.write_spy.method_called()
+    }
+}
+
+pub fn failing() -> Cipher {
     FailingCipher::make()
 }
 
@@ -137,7 +161,7 @@ impl CipherWriteStrategy for FailingCipherWrite {
     }
 }
 
-pub fn working_cipher() -> Cipher {
+pub fn working() -> Cipher {
     WorkingCipher::make()
 }
 
@@ -193,7 +217,7 @@ impl CipherWriteStrategy for WorkingCipherWrite {
     }
 }
 
-pub fn noop_cipher() -> Cipher {
+pub fn noop() -> Cipher {
     NoOpCipher::make()
 }
 
@@ -248,29 +272,5 @@ impl CipherWriteStrategy for NoOpCipherWrite {
     fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
         // nothing to do
         Ok(Vec::new())
-    }
-}
-
-pub struct CipherSpies {
-    #[allow(unused)]
-    read_spy: Spy,
-    write_spy: Spy,
-}
-
-impl CipherSpies {
-    fn new(read_spy: Spy, write_spy: Spy) -> Self {
-        Self {
-            read_spy,
-            write_spy,
-        }
-    }
-
-    #[allow(unused)]
-    pub fn decrypt_called(&self) -> bool {
-        self.read_spy.method_called()
-    }
-
-    pub fn encrypt_called(&self) -> bool {
-        self.write_spy.method_called()
     }
 }
