@@ -124,32 +124,33 @@ mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
-    use crate::result::BusErr;
-    use crate::testingtools::services::fs::{noop, tracked, working_fs};
+    use crate::testingtools::services::fs::{
+        noop as noop_fs, tracked as tracked_fs, working as working_fs,
+    };
+    use crate::testingtools::services::preprocessor::{
+        factory, failing, noop as noop_preprocessor, tracked, working,
+    };
     use crate::testingtools::unit::create_test_shim;
-    use crate::testingtools::{pipe, MutexExt, Spy, Tx};
 
-    use anyhow::{anyhow, Result};
+    use anyhow::Result;
     use fake::{Fake, Faker};
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    use std::sync::Mutex;
     use std::time::Duration;
 
     #[test]
     fn preprocessor_is_used_to_generate_thumbnail() -> Result<()> {
         // given
         init_tracing();
-        let (spy, preprocessor) = PreprocessorSpy::working();
-        let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
+        let (preprocessor_spies, preprocessor) = tracked(working());
+        let factory_stub = factory(vec![preprocessor]);
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop());
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
         thread::sleep(Duration::from_secs(1)); // allow to start preprocessor
 
         // when
         shim.trigger_preprocessor()?;
 
         // then
-        assert!(spy.method_called());
+        assert!(preprocessor_spies.preprocess_called());
 
         Ok(())
     }
@@ -158,10 +159,9 @@ mod test {
     fn thumbnail_made_event_appears_on_success() -> Result<()> {
         // given
         init_tracing();
-        let preprocessor = Box::new(NoOpPreprocessor);
-        let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
+        let factory_stub = factory(vec![noop_preprocessor()]);
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop());
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -179,10 +179,9 @@ mod test {
     fn thumbnail_generator_emits_encrypt_thumbnail_event_on_success() -> Result<()> {
         // given
         init_tracing();
-        let preprocessor = NoOpPreprocessor::new();
-        let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
+        let factory_stub = factory(vec![noop_preprocessor()]);
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop());
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -201,10 +200,10 @@ mod test {
     fn no_event_appears_when_preprocessor_fails() -> Result<()> {
         // given
         init_tracing();
-        let (spy, failing_preprocessor) = PreprocessorSpy::failing();
-        let factory_stub = PreprocessorFactoryStub::new(vec![failing_preprocessor]);
+        let (preprocessor_spies, preprocessor) = tracked(failing());
+        let factory_stub = factory(vec![preprocessor]);
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop());
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         // when
@@ -213,7 +212,7 @@ mod test {
         shim.ignore_event()?; // ignore NewDocs event
 
         // then
-        assert!(spy.method_called());
+        assert!(preprocessor_spies.preprocess_called());
         assert!(shim.no_events_on_bus());
 
         Ok(())
@@ -223,8 +222,7 @@ mod test {
     fn preprocessor_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
-        let preprocessor = NoOpPreprocessor::new();
-        let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
+        let factory_stub = factory(vec![noop_preprocessor()]);
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
@@ -234,7 +232,7 @@ mod test {
             BusEvent::DocumentEncryptionFailed(Faker.fake()),
             BusEvent::PipelineFinished,
         ];
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop());
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
 
         // when
         shim.send_events(&ignored_events)?;
@@ -256,21 +254,21 @@ mod test {
     fn failure_during_preprocessing_do_not_kill_service() -> Result<()> {
         // given
         init_tracing();
-        let (spy1, failing_prepr1) = PreprocessorSpy::failing();
-        let (spy2, failing_prepr2) = PreprocessorSpy::failing();
-        let factory_stub = PreprocessorFactoryStub::new(vec![failing_prepr1, failing_prepr2]);
+        let (preprocessor_spies1, preprocessor1) = tracked(failing());
+        let (preprocessor_spies2, preprocessor2) = tracked(failing());
+        let factory_stub = factory(vec![preprocessor1, preprocessor2]);
         let mut shim = create_test_shim()?;
-        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop());
+        ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, noop_fs());
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
 
         shim.trigger_preprocessor()?;
-        assert!(spy1.method_called());
+        assert!(preprocessor_spies1.preprocess_called());
 
         // when
         shim.trigger_preprocessor()?;
 
         // then
-        assert!(spy2.method_called());
+        assert!(preprocessor_spies2.preprocess_called());
 
         Ok(())
     }
@@ -279,9 +277,8 @@ mod test {
     fn when_thumbnail_encryption_failed_event_appears_filesystem_removes_thumbnail() -> Result<()> {
         // given
         init_tracing();
-        let preprocessor = NoOpPreprocessor::new();
-        let factory_stub = PreprocessorFactoryStub::new(vec![preprocessor]);
-        let (fs_spies, working_fs) = tracked(working_fs());
+        let factory_stub = factory(vec![noop_preprocessor()]);
+        let (fs_spies, working_fs) = tracked_fs(working_fs());
         let mut shim = create_test_shim()?;
         ThumbnailGenerator::new(Config::default(), shim.bus())?.run(factory_stub, working_fs);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
@@ -293,113 +290,5 @@ mod test {
         assert!(fs_spies.rm_file_called());
 
         Ok(())
-    }
-
-    struct PreprocessorFactoryStub {
-        preprocessor_stubs: Mutex<Vec<Option<Preprocessor>>>,
-        current: AtomicUsize,
-    }
-
-    impl PreprocessorFactoryStub {
-        // NOTE: this bizzare `Vec` of `Preprocessor`s is required because every time the
-        // preprocessor is used, it's `take`n from the extractor stub. It has to be taken because
-        // it's not possible to extract it from withing a `Mutex` without using `Option`. It has to
-        // be inside `Mutex` because it has to be `Sync`, otherwise it won't compile. And finally,
-        // it has to be taken because the trait `ExtractorFactory` is supposed to return owned value.
-        fn new(preprocessor_stubs: Vec<Preprocessor>) -> Box<Self> {
-            let preprocessor_stubs = preprocessor_stubs.into_iter().map(Option::Some).collect();
-            Box::new(Self {
-                preprocessor_stubs: Mutex::new(preprocessor_stubs),
-                current: AtomicUsize::new(0),
-            })
-        }
-    }
-
-    impl PreprocessorFactory for PreprocessorFactoryStub {
-        fn make(&self, _ext: &Ext) -> Preprocessor {
-            let current = self.current.load(Ordering::SeqCst);
-            let mut stubs = self.preprocessor_stubs.lock().expect("poisoned mutex");
-            let preprocessor = stubs[current].take().unwrap();
-            self.current.swap(current + 1, Ordering::SeqCst);
-            preprocessor
-        }
-    }
-
-    struct PreprocessorSpy;
-
-    impl PreprocessorSpy {
-        fn working() -> (Spy, Preprocessor) {
-            let (tx, spy) = pipe();
-            (spy, WorkingPreprocessor::new(tx))
-        }
-
-        fn failing() -> (Spy, Preprocessor) {
-            let (tx, spy) = pipe();
-            (spy, FailingPreprocessor::new(tx))
-        }
-    }
-
-    struct WorkingPreprocessor {
-        tx: Tx,
-    }
-
-    impl WorkingPreprocessor {
-        fn new(tx: Tx) -> Box<Self> {
-            Box::new(Self { tx })
-        }
-    }
-
-    impl FilePreprocessor for WorkingPreprocessor {
-        fn preprocess(
-            &self,
-            location: &Location,
-            _thumbnails_dir: &Path,
-        ) -> std::result::Result<Location, PreprocessorErr> {
-            self.tx
-                .lock()
-                .expect("poisoned mutex")
-                .send(())
-                .expect("failed to send message");
-            Ok(location.clone())
-        }
-    }
-
-    struct FailingPreprocessor {
-        tx: Tx,
-    }
-
-    impl FailingPreprocessor {
-        fn new(tx: Tx) -> Box<Self> {
-            Box::new(Self { tx })
-        }
-    }
-
-    impl FilePreprocessor for FailingPreprocessor {
-        fn preprocess(
-            &self,
-            _loc: &Location,
-            _dir: &Path,
-        ) -> std::result::Result<Location, PreprocessorErr> {
-            self.tx.signal();
-            Err(PreprocessorErr::Bus(BusErr::Generic(anyhow!("error"))))
-        }
-    }
-
-    struct NoOpPreprocessor;
-
-    impl NoOpPreprocessor {
-        fn new() -> Box<Self> {
-            Box::new(Self)
-        }
-    }
-
-    impl FilePreprocessor for NoOpPreprocessor {
-        fn preprocess(
-            &self,
-            location: &Location,
-            _thumbnails_dir: &Path,
-        ) -> Result<Location, PreprocessorErr> {
-            Ok(location.clone())
-        }
     }
 }

@@ -137,7 +137,7 @@ impl FsSpies {
     }
 }
 
-pub fn working_fs() -> Fs {
+pub fn working() -> Fs {
     NoOpFs::new()
 }
 
