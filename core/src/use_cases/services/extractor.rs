@@ -108,8 +108,7 @@ mod test {
         // given
         init_tracing();
         let docs_details: Vec<DocDetails> = Faker.fake();
-        let extractor = stub(docs_details.clone());
-        let factory_stub = factory(vec![extractor]);
+        let factory_stub = factory(vec![stub(docs_details.clone())]);
         let mut shim = create_test_shim()?;
         TxtExtractor::new(shim.bus())?.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
@@ -128,8 +127,7 @@ mod test {
     fn encrypt_document_event_appears_on_success() -> Result<()> {
         // given
         init_tracing();
-        let extractor = stub(Faker.fake());
-        let factory_stub = factory(vec![extractor]);
+        let factory_stub = factory(vec![stub(Faker.fake())]);
         let mut shim = create_test_shim()?;
         TxtExtractor::new(shim.bus())?.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
@@ -172,8 +170,7 @@ mod test {
     fn extractor_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
-        let noop_extractor = noop();
-        let factory_stub = factory(vec![noop_extractor]);
+        let factory_stub = factory(vec![noop()]);
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
             BusEvent::Indexed(Faker.fake()),
