@@ -75,23 +75,21 @@ mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
-    use crate::result::ExtractorErr;
+    use crate::testingtools::services::extractor::{
+        factory, failing, noop, stub, tracked, working,
+    };
     use crate::testingtools::unit::create_test_shim;
-    use crate::testingtools::{pipe, MutexExt, Spy, Tx};
 
     use anyhow::Result;
     use fake::{Fake, Faker};
-    use leptess::tesseract::TessInitError;
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    use std::sync::Mutex;
     use std::time::Duration;
 
     #[test]
     fn extractor_is_used_to_extract_text() -> Result<()> {
         // given
         init_tracing();
-        let (spy, extractor) = ExtractorSpy::working();
-        let factory_stub = ExtractorFactoryStub::new(vec![extractor]);
+        let (extractor_spies, extractor) = tracked(working());
+        let factory_stub = factory(vec![extractor]);
         let mut shim = create_test_shim()?;
         TxtExtractor::new(shim.bus())?.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
@@ -100,7 +98,7 @@ mod test {
         shim.trigger_extractor()?;
 
         // then
-        assert!(spy.method_called());
+        assert!(extractor_spies.extract_called());
 
         Ok(())
     }
@@ -110,8 +108,8 @@ mod test {
         // given
         init_tracing();
         let docs_details: Vec<DocDetails> = Faker.fake();
-        let extractor = ExtractorStub::new(docs_details.clone());
-        let factory_stub = ExtractorFactoryStub::new(vec![extractor]);
+        let extractor = stub(docs_details.clone());
+        let factory_stub = factory(vec![extractor]);
         let mut shim = create_test_shim()?;
         TxtExtractor::new(shim.bus())?.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
@@ -130,8 +128,8 @@ mod test {
     fn encrypt_document_event_appears_on_success() -> Result<()> {
         // given
         init_tracing();
-        let extractor = ExtractorStub::new(Faker.fake());
-        let factory_stub = ExtractorFactoryStub::new(vec![extractor]);
+        let extractor = stub(Faker.fake());
+        let factory_stub = factory(vec![extractor]);
         let mut shim = create_test_shim()?;
         TxtExtractor::new(shim.bus())?.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
@@ -152,8 +150,8 @@ mod test {
     fn no_event_appears_when_extractor_fails() -> Result<()> {
         // given
         init_tracing();
-        let (spy, failing_extractor) = ExtractorSpy::failing();
-        let factory_stub = ExtractorFactoryStub::new(vec![failing_extractor]);
+        let (extractor_spies, extractor) = tracked(failing());
+        let factory_stub = factory(vec![extractor]);
         let mut shim = create_test_shim()?;
         TxtExtractor::new(shim.bus())?.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
@@ -164,7 +162,7 @@ mod test {
         shim.ignore_event()?; // ignore NewDocs event
 
         // then
-        assert!(spy.method_called());
+        assert!(extractor_spies.extract_called());
         assert!(shim.no_events_on_bus());
 
         Ok(())
@@ -174,8 +172,8 @@ mod test {
     fn extractor_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
-        let noop_extractor = NoOpExtractor::new();
-        let factory_stub = ExtractorFactoryStub::new(vec![noop_extractor]);
+        let noop_extractor = noop();
+        let factory_stub = factory(vec![noop_extractor]);
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
             BusEvent::Indexed(Faker.fake()),
@@ -207,141 +205,22 @@ mod test {
     #[test]
     fn failure_during_extraction_do_not_kill_service() -> Result<()> {
         // given
-        let (spy1, failing_extractor1) = ExtractorSpy::failing();
-        let (spy2, failing_extractor2) = ExtractorSpy::failing();
-        let factory_stub = ExtractorFactoryStub::new(vec![failing_extractor1, failing_extractor2]);
+        let (extractor_spies1, extractor1) = tracked(failing());
+        let (extractor_spies2, extractor2) = tracked(failing());
+        let factory_stub = factory(vec![extractor1, extractor2]);
         let mut shim = create_test_shim()?;
         TxtExtractor::new(shim.bus())?.run(factory_stub);
         thread::sleep(Duration::from_secs(1)); // allow to start extractor
-                                               // let mut publ = bus.publisher();
+
         shim.trigger_extractor()?;
-        assert!(spy1.method_called());
+        assert!(extractor_spies1.extract_called());
 
         // when
         shim.trigger_extractor()?;
 
         // then
-        assert!(spy2.method_called());
+        assert!(extractor_spies2.extract_called());
 
         Ok(())
-    }
-
-    struct ExtractorFactoryStub {
-        extractor_stubs: Mutex<Vec<Option<Extractor>>>,
-        current: AtomicUsize,
-    }
-
-    impl ExtractorFactoryStub {
-        // NOTE: this bizzare `Vec` of `Extractor`s is required because every time the extractor is
-        // used, it's `take`n from the extractor stub. It has to be taken because it's not possible
-        // to extract it from withing a `Mutex` without using `Option`. It has to be inside `Mutex`
-        // because it has to be `Sync`, otherwise it won't compile. And finally, it has to be taken
-        // because the trait `ExtractorFactory` is supposed to return owned value.
-        fn new(extractor_stubs: Vec<Extractor>) -> Box<Self> {
-            let extractor_stubs = extractor_stubs.into_iter().map(Option::Some).collect();
-            Box::new(Self {
-                extractor_stubs: Mutex::new(extractor_stubs),
-                current: AtomicUsize::new(0),
-            })
-        }
-    }
-
-    impl ExtractorFactory for ExtractorFactoryStub {
-        fn make(&self, _ext: &Ext) -> Extractor {
-            let current = self.current.load(Ordering::SeqCst);
-            let mut stubs = self.extractor_stubs.lock().expect("poisoned mutex");
-            let extractor = stubs[current].take().unwrap();
-            self.current.swap(current + 1, Ordering::SeqCst);
-            extractor
-        }
-    }
-
-    struct ExtractorSpy;
-
-    impl ExtractorSpy {
-        fn working() -> (Spy, Extractor) {
-            let (tx, spy) = pipe();
-            (spy, WorkingExtractor::new(tx))
-        }
-
-        fn failing() -> (Spy, Extractor) {
-            let (tx, spy) = pipe();
-            (spy, FailingExtractor::new(tx))
-        }
-    }
-
-    struct WorkingExtractor {
-        tx: Tx,
-    }
-
-    impl WorkingExtractor {
-        fn new(tx: Tx) -> Box<Self> {
-            Box::new(Self { tx })
-        }
-    }
-
-    impl DataExtractor for WorkingExtractor {
-        fn extract_data(
-            &self,
-            _location: &Location,
-        ) -> std::result::Result<Vec<DocDetails>, ExtractorErr> {
-            self.tx.signal();
-            Ok(Vec::new())
-        }
-    }
-
-    struct FailingExtractor {
-        tx: Tx,
-    }
-
-    impl FailingExtractor {
-        fn new(tx: Tx) -> Box<Self> {
-            Box::new(Self { tx })
-        }
-    }
-
-    impl DataExtractor for FailingExtractor {
-        fn extract_data(
-            &self,
-            _location: &Location,
-        ) -> std::result::Result<Vec<DocDetails>, ExtractorErr> {
-            self.tx.signal();
-            Err(ExtractorErr::OcrExtract(TessInitError { code: 0 }))
-        }
-    }
-
-    struct ExtractorStub {
-        docs_details: Vec<DocDetails>,
-    }
-
-    impl ExtractorStub {
-        fn new(docs_details: Vec<DocDetails>) -> Box<Self> {
-            Box::new(Self { docs_details })
-        }
-    }
-
-    impl DataExtractor for ExtractorStub {
-        fn extract_data(
-            &self,
-            _location: &Location,
-        ) -> std::result::Result<Vec<DocDetails>, ExtractorErr> {
-            // nothing to do
-            Ok(self.docs_details.clone())
-        }
-    }
-
-    struct NoOpExtractor;
-
-    impl NoOpExtractor {
-        fn new() -> Box<Self> {
-            Box::new(Self)
-        }
-    }
-
-    impl DataExtractor for NoOpExtractor {
-        fn extract_data(&self, _location: &Location) -> Result<Vec<DocDetails>, ExtractorErr> {
-            // nothing to do
-            Ok(Vec::new())
-        }
     }
 }
