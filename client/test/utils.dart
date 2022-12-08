@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-MultiProvider wrapper({
+Future<MultiProvider> wrapper({
   required widget,
   Config? cfg,
   Urls? urls,
@@ -18,12 +18,12 @@ MultiProvider wrapper({
   AuthClient? authCl,
   DocsService? docs,
   DocsState? docsSt,
-}) {
+}) async {
   final config = cfg ?? ConfigMock();
   final urlsProvider = urls ?? Urls(config: config);
-  final signInService
-  final authClient = authCl ?? AuthClient.init()
-  final docsService = docs ?? DocsService(urls: urlsProvider);
+  final signInService = signIn ?? SignInService();
+  final authClient = authCl ?? await AuthClient.init(signIn: signInService);
+  final docsService = docs ?? DocsService(urls: urlsProvider, http: authClient);
   DocsState docsState(_) => docsSt ?? DocsStateImpl(docsService: docsService);
 
   return MultiProvider(
