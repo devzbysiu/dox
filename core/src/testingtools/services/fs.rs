@@ -42,7 +42,6 @@ pub fn tracked(fs: Fs) -> (FsSpies, Fs) {
     TrackedFs::wrap(fs)
 }
 
-// TODO: Implement tracking for the rest of methods in other services
 pub struct TrackedFs {
     fs: Fs,
     load_tx: Tx,
