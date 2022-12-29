@@ -88,7 +88,7 @@ mod test {
         let supported_extensions = vec!["png", "jpg", "jpeg", "webp", "pdf"];
 
         for extension in supported_extensions {
-            let created_file: String = format!("some-file.{}", extension);
+            let created_file: String = format!("some-file.{extension}");
             let file_path = user_dir.join(created_file);
 
             // when
@@ -109,11 +109,11 @@ mod test {
         let user_dir = mk_user_dir(&watched_dir, user_email)?;
         let receiver = FsEventReceiver::new(&watched_dir)?;
         let extension: String = Faker.fake();
-        let created_file: String = format!("some-file.{}", extension);
+        let created_file: String = format!("some-file.{extension}");
         let file_path = user_dir.join(created_file);
 
         // when
-        mk_file(&file_path)?;
+        mk_file(file_path)?;
 
         // then
         assert_ok_eq!(receiver.recv(), DocsEvent::Other);
@@ -146,7 +146,7 @@ mod test {
         let dir_path = user_dir.join(created_dir);
 
         // when
-        mk_dir(&dir_path)?;
+        mk_dir(dir_path)?;
 
         // then
         assert_ok_eq!(receiver.recv(), DocsEvent::Other);
@@ -168,7 +168,7 @@ mod test {
         let dir_path = watched_dir.path().join(created_dir);
 
         // when
-        mk_dir(&dir_path)?;
+        mk_dir(dir_path)?;
 
         // then
         assert_ok_eq!(receiver.recv(), DocsEvent::Other);

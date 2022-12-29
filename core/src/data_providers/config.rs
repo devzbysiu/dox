@@ -347,7 +347,7 @@ index_dir = "/index_dir"
             index_dir: tmp_cfg.path().join("index_dir"),
         };
         let config_content = toml::to_string(&config)?;
-        create_config(&cfg_path, &config_content)?;
+        create_config(&cfg_path, config_content)?;
         let (spy, loader) = ConfigLoaderSpy::create(config);
         let config_resolver = FsConfigResolver::new(loader);
         let path_override = Some(cfg_path);
@@ -369,15 +369,13 @@ index_dir = "/index_dir"
         let cfg_path = tmp_cfg.path().join("dox.toml");
         let watched_dir = tmp_cfg.path().join("watched_dir");
         let dummy_file_content: String = Paragraph(1..2).fake();
-        fs::write(&watched_dir, &dummy_file_content)?; // create file instead of directory
+        fs::write(&watched_dir, dummy_file_content)?; // create file instead of directory
         let config = Config {
             watched_dir: watched_dir.clone(),
-            ..Config::default() // thumbnails_dir: tmp_cfg.path().join("thumbnails_dir"),
-                                // thumbnails_dir: tmp_cfg.path().join("thumbnails_dir"),
-                                // index_dir: tmp_cfg.path().join("index_dir"),
+            ..Config::default()
         };
         let config_content = toml::to_string(&config)?;
-        create_config(&cfg_path, &config_content)?;
+        create_config(&cfg_path, config_content)?;
         let (spy, loader) = ConfigLoaderSpy::create(config);
         let config_resolver = FsConfigResolver::new(loader);
         let path_override = Some(cfg_path);

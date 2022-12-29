@@ -96,7 +96,7 @@ mod test {
         let bus = LocalBus::new()?;
 
         // then
-        let _res = format!("it implements Debug trait: {:?}", bus);
+        let _res = format!("it implements Debug trait: {bus:?}");
 
         Ok(())
     }

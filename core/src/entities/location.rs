@@ -50,9 +50,17 @@ impl SafePathBuf {
             // so for example moving a file won't actually move it thus we can't
             // check this during tests
             #[cfg(not(test))]
-            assert!(path.exists(), "Can't create not existing path '{:?}'", path);
+            assert!(
+                path.exists(),
+                "Can't create not existing path '{path:?}'",
+                path = path
+            );
         }
-        assert!(path.parent().is_some(), "Can't use '{:?}' as path", path);
+        assert!(
+            path.parent().is_some(),
+            "Can't use '{path:?}' as path",
+            path = path
+        );
         Self(path.into())
     }
 

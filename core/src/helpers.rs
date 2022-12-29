@@ -232,7 +232,7 @@ mod test {
 
         for test_case in supported_extensions {
             // when
-            let path = format!("/some-path/here.{}", test_case);
+            let path = format!("/some-path/here.{test_case}");
             let path = Path::new(&path);
 
             // then
@@ -246,7 +246,7 @@ mod test {
         let unsupported_extension: String = Faker.fake(); // anything but supported ones
 
         // when
-        let path = format!("/some-path/here.{}", unsupported_extension);
+        let path = format!("/some-path/here.{unsupported_extension}");
         let path = Path::new(&path);
 
         // then
