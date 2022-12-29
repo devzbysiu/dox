@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:dox/services/doc_scan_service.dart';
+import 'package:dox/services/scan_service.dart';
 import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/log.dart';
 import 'package:dox/utilities/service_locator.dart';
@@ -13,15 +13,15 @@ class AddButton extends StatelessWidget with Log {
   AddButton({
     Key? key,
     DocsService? docsService,
-    DocScanService? docScanService,
+    ScanService? scanService,
   }) : super(key: key) {
     _docsService = docsService ?? getIt<DocsService>();
-    _scanService = docScanService ?? getIt<DocScanService>();
+    _scanService = scanService ?? getIt<ScanService>();
   }
 
   late final DocsService _docsService;
 
-  late final DocScanService _scanService;
+  late final ScanService _scanService;
 
   @override
   Widget build(BuildContext context) {

@@ -14,8 +14,14 @@ const thumbnail = 'thumbnail';
 const fileUrl = 'fileUrl';
 const thumbnailUrl = 'thumbnailUrl';
 
-class DocsService with Log {
-  DocsService({
+abstract class DocsService {
+  Future<List<Document>> fetchAllFiles();
+  Future<List<Document>> searchDocs(String query);
+  Future<Response> uploadDoc(File file);
+}
+
+class DocsServiceImpl with Log implements DocsService {
+  DocsServiceImpl({
     Urls? urls,
     AuthClient? http,
   }) {
@@ -28,6 +34,7 @@ class DocsService with Log {
 
   late final AuthClient _http;
 
+  @override
   Future<List<Document>> fetchAllFiles() async {
     log.fine('fetching all files');
     return await _fetchDocs(_urls.allDocuments());
@@ -62,11 +69,13 @@ class DocsService with Log {
         .toList();
   }
 
+  @override
   Future<List<Document>> searchDocs(String query) async {
     log.fine('searching docs using query: "$query"');
     return _fetchDocs(_urls.search(query));
   }
 
+  @override
   Future<Response> uploadDoc(File file) async {
     log.fine('uploading doc using file: "${file.path}"');
     final jsonBody = await compute(toJson, {'file': file});

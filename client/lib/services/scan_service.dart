@@ -6,9 +6,15 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class DocScanService with Log {
-  const DocScanService();
+abstract class ScanService {
+  Future<File?> scanImage(BuildContext context);
+  Future<File?> pickPdf();
+}
 
+class ScanServiceImpl with Log implements ScanService {
+  const ScanServiceImpl();
+
+  @override
   Future<File?> scanImage(BuildContext context) async {
     try {
       log.fine('launching DocumentScannerFlutter');
@@ -20,6 +26,7 @@ class DocScanService with Log {
     return null;
   }
 
+  @override
   Future<File?> pickPdf() async {
     log.fine('picking PDF');
     final result = await FilePicker.platform.pickFiles(

@@ -1,12 +1,19 @@
+import 'dart:io';
+
 import 'package:dox/models/docs_state.dart';
 import 'package:dox/models/document.dart';
+import 'package:dox/services/scan_service.dart';
+import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/config.dart';
+import 'package:dox/widgets/add_button.dart';
 import 'package:dox/widgets/search_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/src/response.dart';
 import 'package:provider/provider.dart';
 
-Future<MultiProvider> wrap({required Widget widget, DocsState? docsState}) async {
+Future<MultiProvider> wrap(
+    {required Widget widget, DocsState? docsState}) async {
   final docsSt = docsState ?? DocsStateMock();
   return MultiProvider(
     providers: [
@@ -83,4 +90,46 @@ List<Color> connectedColor() {
 
 List<Color> disconnectedColor() {
   return [Colors.blueGrey, Colors.blueGrey];
+}
+
+extension AddButtonExt on AddButton {
+  IconData icon(WidgetTester tester) {
+    final Icon icon = tester.firstWidget(find.byType(Icon));
+    return icon.icon!;
+  }
+}
+
+class DocsServiceMock implements DocsService {
+  @override
+  Future<List<Document>> fetchAllFiles() {
+    // TODO: implement fetchAllFiles
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<Document>> searchDocs(String query) {
+    // TODO: implement searchDocs
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Response> uploadDoc(File file) {
+    // TODO: implement uploadDoc
+    throw UnimplementedError();
+  }
+}
+
+class ScanServiceMock implements ScanService {
+  @override
+  Future<File?> pickPdf() {
+    // TODO: implement pickPdf
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<File?> scanImage(BuildContext context) {
+    // TODO: implement scanImage
+    throw UnimplementedError();
+  }
+
 }

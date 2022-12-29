@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:dox/main.dart' as app;
-import 'package:dox/services/doc_scan_service.dart';
+import 'package:dox/services/scan_service.dart';
 import 'package:dox/services/docs_service.dart';
 import 'package:dox/utilities/config.dart';
 import 'package:dox/utilities/service_locator.dart';
@@ -59,8 +59,8 @@ class DoxMock {
 void unregisterServices() {
   getIt.unregister<Config>();
   getIt.unregister<Urls>();
-  getIt.unregister<DocsService>();
-  getIt.unregister<DocScanService>();
+  getIt.unregister<DocsServiceImpl>();
+  getIt.unregister<ScanServiceImpl>();
 }
 
 String _emptyDocumentsList() => '{ "entries": []}';
