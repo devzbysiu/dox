@@ -5,40 +5,36 @@ import 'package:flutter_test/flutter_test.dart';
 import '../utils.dart';
 
 void main() {
-  testWidgets('SearchInput has a hint message', skip: true, (tester) async {
+  testWidgets('SearchInput has a hint message', (tester) async {
     // given
     final docsState = DocsStateMock();
     const searchInput = SearchInput();
 
     // when
-    await tester
-        .pumpWidget(await wrapper(widget: searchInput, docsSt: docsState));
+    await tester.pumpWidget(await withDocsState(searchInput, docsState));
 
     // then
     expect(searchInput.hintText(tester), equals('Search'));
   });
 
-  testWidgets('SearchInput has a clear button', skip: true, (tester) async {
+  testWidgets('SearchInput has a clear button', (tester) async {
     // given
     final docsState = DocsStateMock();
     const searchInput = SearchInput();
 
     // when
-    await tester
-        .pumpWidget(await wrapper(widget: searchInput, docsSt: docsState));
+    await tester.pumpWidget(await withDocsState(searchInput, docsState));
 
     // then
     expect(find.byType(IconButton), findsOneWidget);
     expect(searchInput.icon(tester), equals(Icons.clear));
   });
 
-  testWidgets('reset() is called on state when clear pressed', skip: true,
-      (tester) async {
+  testWidgets('reset() is called on state when clear pressed', (tester) async {
     // given
     final docsState = DocsStateMock();
     const searchInput = SearchInput();
-    await tester
-        .pumpWidget(await wrapper(widget: searchInput, docsSt: docsState));
+    await tester.pumpWidget(await withDocsState(searchInput, docsState));
 
     // when
     await tester.tap(find.byType(IconButton));
@@ -47,13 +43,11 @@ void main() {
     expect(docsState.wasResetCalled, isTrue);
   });
 
-  testWidgets('After tap on clear button, SearchInput clears', skip: true,
-      (tester) async {
+  testWidgets('After tap on clear button, SearchInput clears', (tester) async {
     // given
     final docsState = DocsStateMock();
     const searchInput = SearchInput();
-    await tester
-        .pumpWidget(await wrapper(widget: searchInput, docsSt: docsState));
+    await tester.pumpWidget(await withDocsState(searchInput, docsState));
     await tester.enterText(find.byType(TextField), 'Search phrase');
     expect(find.text('Search phrase'), findsOneWidget);
 
@@ -64,13 +58,11 @@ void main() {
     expect(find.text('Search phrase'), findsNothing);
   });
 
-  testWidgets('onQueryChanged is called after changing input', skip: true,
-      (tester) async {
+  testWidgets('onQueryChanged is called after changing input', (tester) async {
     // given
     final docsState = DocsStateMock();
     const searchInput = SearchInput();
-    await tester
-        .pumpWidget(await wrapper(widget: searchInput, docsSt: docsState));
+    await tester.pumpWidget(await withDocsState(searchInput, docsState));
     expect(docsState.wasOnQueryChangedCalled, isFalse);
 
     // when

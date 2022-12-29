@@ -34,6 +34,15 @@ Future<MultiProvider> wrapper({
   );
 }
 
+Future<MultiProvider> withDocsState(Widget widget, DocsState docsState) async {
+  return MultiProvider(
+    providers: [
+      ChangeNotifierProvider<DocsState>(create: (_) => docsState),
+    ],
+    child: MaterialApp(home: widget),
+  );
+}
+
 class ConfigMock implements Config {
   @override
   String get baseUrl => 'http://192.168.16.247:8000';
