@@ -1,43 +1,16 @@
 import 'package:dox/models/docs_state.dart';
 import 'package:dox/models/document.dart';
-import 'package:dox/services/docs_service.dart';
-import 'package:dox/services/sign_in_service.dart';
 import 'package:dox/utilities/config.dart';
-import 'package:dox/utilities/http.dart';
-import 'package:dox/utilities/urls.dart';
 import 'package:dox/widgets/search_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-Future<MultiProvider> wrapper({
-  required widget,
-  Config? cfg,
-  Urls? urls,
-  SignInService? signIn,
-  AuthClient? authCl,
-  DocsService? docs,
-  DocsState? docsSt,
-}) async {
-  final config = cfg ?? ConfigMock();
-  final urlsProvider = urls ?? Urls(config: config);
-  final signInService = signIn ?? SignInService();
-  final authClient = authCl ?? await AuthClient.init(signIn: signInService);
-  final docsService = docs ?? DocsService(urls: urlsProvider, http: authClient);
-  DocsState docsState(_) => docsSt ?? DocsStateImpl(docsService: docsService);
-
+Future<MultiProvider> wrap({required Widget widget, DocsState? docsState}) async {
+  final docsSt = docsState ?? DocsStateMock();
   return MultiProvider(
     providers: [
-      ChangeNotifierProvider<DocsState>(create: docsState),
-    ],
-    child: MaterialApp(home: widget),
-  );
-}
-
-Future<MultiProvider> withDocsState(Widget widget, DocsState docsState) async {
-  return MultiProvider(
-    providers: [
-      ChangeNotifierProvider<DocsState>(create: (_) => docsState),
+      ChangeNotifierProvider<DocsState>(create: (_) => docsSt),
     ],
     child: MaterialApp(home: widget),
   );

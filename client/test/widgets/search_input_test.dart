@@ -7,11 +7,10 @@ import '../utils.dart';
 void main() {
   testWidgets('SearchInput has a hint message', (tester) async {
     // given
-    final docsState = DocsStateMock();
     const searchInput = SearchInput();
 
     // when
-    await tester.pumpWidget(await withDocsState(searchInput, docsState));
+    await tester.pumpWidget(await wrap(widget: searchInput));
 
     // then
     expect(searchInput.hintText(tester), equals('Search'));
@@ -19,11 +18,10 @@ void main() {
 
   testWidgets('SearchInput has a clear button', (tester) async {
     // given
-    final docsState = DocsStateMock();
     const searchInput = SearchInput();
 
     // when
-    await tester.pumpWidget(await withDocsState(searchInput, docsState));
+    await tester.pumpWidget(await wrap(widget: searchInput));
 
     // then
     expect(find.byType(IconButton), findsOneWidget);
@@ -34,7 +32,8 @@ void main() {
     // given
     final docsState = DocsStateMock();
     const searchInput = SearchInput();
-    await tester.pumpWidget(await withDocsState(searchInput, docsState));
+    await tester
+        .pumpWidget(await wrap(widget: searchInput, docsState: docsState));
 
     // when
     await tester.tap(find.byType(IconButton));
@@ -45,9 +44,8 @@ void main() {
 
   testWidgets('After tap on clear button, SearchInput clears', (tester) async {
     // given
-    final docsState = DocsStateMock();
     const searchInput = SearchInput();
-    await tester.pumpWidget(await withDocsState(searchInput, docsState));
+    await tester.pumpWidget(await wrap(widget: searchInput));
     await tester.enterText(find.byType(TextField), 'Search phrase');
     expect(find.text('Search phrase'), findsOneWidget);
 
@@ -62,7 +60,8 @@ void main() {
     // given
     final docsState = DocsStateMock();
     const searchInput = SearchInput();
-    await tester.pumpWidget(await withDocsState(searchInput, docsState));
+    await tester
+        .pumpWidget(await wrap(widget: searchInput, docsState: docsState));
     expect(docsState.wasOnQueryChangedCalled, isFalse);
 
     // when
