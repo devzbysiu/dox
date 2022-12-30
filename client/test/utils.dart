@@ -29,6 +29,13 @@ class ConfigMock implements Config {
 }
 
 class DocsStateMock extends ChangeNotifier implements DocsState {
+  DocsStateMock({
+    this.loading = false,
+    this.docs = const [],
+    this.resetCalled = false,
+    this.onQueryChangedCalled = false,
+  });
+
   bool loading;
 
   List<Document> docs;
@@ -36,13 +43,6 @@ class DocsStateMock extends ChangeNotifier implements DocsState {
   bool resetCalled;
 
   bool onQueryChangedCalled;
-
-  DocsStateMock({
-    this.loading = false,
-    this.docs = const [],
-    this.resetCalled = false,
-    this.onQueryChangedCalled = false,
-  });
 
   @override
   bool get isLoading => loading;
@@ -120,15 +120,28 @@ class DocsServiceMock implements DocsService {
 }
 
 class ScanServiceMock implements ScanService {
+  ScanServiceMock({
+    this.pickPdfCalled = false,
+    this.scanImageCalled = false,
+  });
+
+  bool pickPdfCalled;
+
+  bool get wasPickPdfCalled => pickPdfCalled;
+
+  bool scanImageCalled;
+
+  bool get wasScanImageCalled => scanImageCalled;
+
   @override
   Future<File?> pickPdf() {
-    // TODO: implement pickPdf
-    throw UnimplementedError();
+    pickPdfCalled = true;
+    return Future.value(null);
   }
 
   @override
   Future<File?> scanImage(BuildContext context) {
-    // TODO: implement scanImage
-    throw UnimplementedError();
+    scanImageCalled = true;
+    return Future.value(null);
   }
 }

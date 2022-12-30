@@ -77,4 +77,46 @@ void main() {
     // then
     expect(find.text('Scan document'), findsOneWidget);
   });
+
+  testWidgets('Tap on Pick PDF button, scanService is used', (tester) async {
+    // given
+    final docsServiceMock = DocsServiceMock();
+    final scanServiceMock = ScanServiceMock();
+    final addButton = AddButton(
+      docsService: docsServiceMock,
+      scanService: scanServiceMock,
+    );
+    await tester.pumpWidget(await wrap(widget: addButton));
+    await tester.tap(find.byType(Icon));
+    await tester.pump();
+    expect(scanServiceMock.wasPickPdfCalled, isFalse);
+
+    // when
+    await tester.tap(find.text('Pick PDF'));
+    await tester.pump();
+
+    // then
+    expect(scanServiceMock.wasPickPdfCalled, isTrue);
+  });
+
+  testWidgets('Tap on Scan doc button, scanService is used', (tester) async {
+    // given
+    final docsServiceMock = DocsServiceMock();
+    final scanServiceMock = ScanServiceMock();
+    final addButton = AddButton(
+      docsService: docsServiceMock,
+      scanService: scanServiceMock,
+    );
+    await tester.pumpWidget(await wrap(widget: addButton));
+    await tester.tap(find.byType(Icon));
+    await tester.pump();
+    expect(scanServiceMock.wasScanImageCalled, isFalse);
+
+    // when
+    await tester.tap(find.text('Scan document'));
+    await tester.pump();
+
+    // then
+    expect(scanServiceMock.wasScanImageCalled, isTrue);
+  });
 }
