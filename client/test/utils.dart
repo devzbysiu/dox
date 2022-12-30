@@ -100,22 +100,40 @@ extension AddButtonExt on AddButton {
 }
 
 class DocsServiceMock implements DocsService {
+  DocsServiceMock({
+    this.fetchAllFilesCalled = false,
+    this.searchDocsCalled = false,
+    this.uploadDocCalled = false,
+  });
+
+  bool fetchAllFilesCalled;
+
+  bool get wasFetchAllFilesCalled => fetchAllFilesCalled;
+
+  bool searchDocsCalled;
+
+  bool get wasSearchDocsCalled => searchDocsCalled;
+
+  bool uploadDocCalled;
+
+  bool get wasUploadDocCalled => uploadDocCalled;
+
   @override
   Future<List<Document>> fetchAllFiles() {
-    // TODO: implement fetchAllFiles
-    throw UnimplementedError();
+    fetchAllFilesCalled = true;
+    return Future.value(List.empty());
   }
 
   @override
   Future<List<Document>> searchDocs(String query) {
-    // TODO: implement searchDocs
-    throw UnimplementedError();
+    searchDocsCalled = true;
+    return Future.value(List.empty());
   }
 
   @override
   Future<Response> uploadDoc(File file) {
-    // TODO: implement uploadDoc
-    throw UnimplementedError();
+    uploadDocCalled = true;
+    return Future.value(Response('', 200));
   }
 }
 
@@ -136,12 +154,12 @@ class ScanServiceMock implements ScanService {
   @override
   Future<File?> pickPdf() {
     pickPdfCalled = true;
-    return Future.value(null);
+    return Future.value(File("/some/path"));
   }
 
   @override
   Future<File?> scanImage(BuildContext context) {
     scanImageCalled = true;
-    return Future.value(null);
+    return Future.value(File("/some/path"));
   }
 }
