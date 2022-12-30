@@ -131,5 +131,4 @@ class ScanServiceMock implements ScanService {
     // TODO: implement scanImage
     throw UnimplementedError();
   }
-
 }
