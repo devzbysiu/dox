@@ -104,6 +104,7 @@ class DocsServiceSpy implements DocsService {
     this.fetchAllFilesCalled = false,
     this.searchDocsCalled = false,
     this.uploadDocCalled = false,
+    this.uploadStatusCode = 201,
   });
 
   bool fetchAllFilesCalled;
@@ -117,6 +118,8 @@ class DocsServiceSpy implements DocsService {
   bool uploadDocCalled;
 
   bool get wasUploadDocCalled => uploadDocCalled;
+
+  int uploadStatusCode;
 
   @override
   Future<List<Document>> fetchAllFiles() {
@@ -133,7 +136,7 @@ class DocsServiceSpy implements DocsService {
   @override
   Future<Response> uploadDoc(File file) {
     uploadDocCalled = true;
-    return Future.value(Response('', 200));
+    return Future.value(Response('', uploadStatusCode));
   }
 }
 

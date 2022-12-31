@@ -207,4 +207,48 @@ void main() {
     // then
     expect(docsServiceSpy.wasUploadDocCalled, isFalse);
   });
+
+  // NOTE: When sending fails, the toast is shown, but currently, I did not find
+  // any way to test if toast is visible.
+  testWidgets('When sending PDF failed, nothing happens', (tester) async {
+    // given
+    final docsServiceSpy = DocsServiceSpy(uploadStatusCode: 500);
+    final scanServiceSpy = ScanServiceSpy(scannedFile: anyFile);
+    final addButton = AddButton(
+      docsService: docsServiceSpy,
+      scanService: scanServiceSpy,
+    );
+    await tester.pumpWidget(await wrap(widget: addButton));
+    await tester.tap(find.byType(Icon));
+    await tester.pump();
+
+    // when
+    await tester.tap(find.text('Pick PDF'));
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+
+    // then
+    // no errors
+  });
+
+  // NOTE: When sending fails, the toast is shown, but currently, I did not find
+  // any way to test if toast is visible.
+  testWidgets('When sending doc failed, nothing happens', (tester) async {
+    // given
+    final docsServiceSpy = DocsServiceSpy(uploadStatusCode: 500);
+    final scanServiceSpy = ScanServiceSpy(scannedFile: anyFile);
+    final addButton = AddButton(
+      docsService: docsServiceSpy,
+      scanService: scanServiceSpy,
+    );
+    await tester.pumpWidget(await wrap(widget: addButton));
+    await tester.tap(find.byType(Icon));
+    await tester.pump();
+
+    // when
+    await tester.tap(find.text('Scan document'));
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+
+    // then
+    // no errors
+  });
 }
