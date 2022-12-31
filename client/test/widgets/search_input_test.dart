@@ -30,16 +30,16 @@ void main() {
 
   testWidgets('reset() is called on state when clear pressed', (tester) async {
     // given
-    final docsState = DocsStateSpy();
+    final docsStateSpy = DocsStateSpy();
     const searchInput = SearchInput();
     await tester
-        .pumpWidget(await wrap(widget: searchInput, docsState: docsState));
+        .pumpWidget(await wrap(widget: searchInput, docsState: docsStateSpy));
 
     // when
     await tester.tap(find.byType(IconButton));
 
     // then
-    expect(docsState.wasResetCalled, isTrue);
+    expect(docsStateSpy.wasResetCalled, isTrue);
   });
 
   testWidgets('After tap on clear button, SearchInput clears', (tester) async {
@@ -58,16 +58,16 @@ void main() {
 
   testWidgets('onQueryChanged is called after changing input', (tester) async {
     // given
-    final docsState = DocsStateSpy();
+    final docsStateSpy = DocsStateSpy();
     const searchInput = SearchInput();
     await tester
-        .pumpWidget(await wrap(widget: searchInput, docsState: docsState));
-    expect(docsState.wasOnQueryChangedCalled, isFalse);
+        .pumpWidget(await wrap(widget: searchInput, docsState: docsStateSpy));
+    expect(docsStateSpy.wasOnQueryChangedCalled, isFalse);
 
     // when
     await tester.enterText(find.byType(TextField), 'Search phrase');
 
     // then
-    expect(docsState.wasOnQueryChangedCalled, isTrue);
+    expect(docsStateSpy.wasOnQueryChangedCalled, isTrue);
   });
 }

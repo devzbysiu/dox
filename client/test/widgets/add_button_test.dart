@@ -11,11 +11,11 @@ void main() {
 
   testWidgets('AddButton is initially closed', (tester) async {
     // given
-    final docsServiceMock = DocsServiceSpy();
-    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
+    final docsServiceSpy = DocsServiceSpy();
+    final scanServiceSpy = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
-      docsService: docsServiceMock,
-      scanService: scanServiceMock,
+      docsService: docsServiceSpy,
+      scanService: scanServiceSpy,
     );
 
     // when
@@ -27,11 +27,11 @@ void main() {
 
   testWidgets('When tapped, it unveils two more buttons', (tester) async {
     // given
-    final docsServiceMock = DocsServiceSpy();
-    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
+    final docsServiceSpy = DocsServiceSpy();
+    final scanServiceSpy = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
-      docsService: docsServiceMock,
-      scanService: scanServiceMock,
+      docsService: docsServiceSpy,
+      scanService: scanServiceSpy,
     );
     await tester.pumpWidget(await wrap(widget: addButton));
     expect(find.byType(Icon), findsOneWidget);
@@ -46,11 +46,11 @@ void main() {
 
   testWidgets('When tapped, I can find Pick PDF button', (tester) async {
     // given
-    final docsServiceMock = DocsServiceSpy();
-    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
+    final docsServiceSpy = DocsServiceSpy();
+    final scanServiceSpy = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
-      docsService: docsServiceMock,
-      scanService: scanServiceMock,
+      docsService: docsServiceSpy,
+      scanService: scanServiceSpy,
     );
     await tester.pumpWidget(await wrap(widget: addButton));
     expect(find.text('Pick PDF'), findsNothing);
@@ -65,11 +65,11 @@ void main() {
 
   testWidgets('When tapped, I can find Scan document button', (tester) async {
     // given
-    final docsServiceMock = DocsServiceSpy();
-    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
+    final docsServiceSpy = DocsServiceSpy();
+    final scanServiceSpy = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
-      docsService: docsServiceMock,
-      scanService: scanServiceMock,
+      docsService: docsServiceSpy,
+      scanService: scanServiceSpy,
     );
     await tester.pumpWidget(await wrap(widget: addButton));
     expect(find.text('Scan document'), findsNothing);
@@ -84,127 +84,127 @@ void main() {
 
   testWidgets('Tap on Pick PDF button triggers PDF picker', (tester) async {
     // given
-    final docsServiceMock = DocsServiceSpy();
-    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
+    final docsServiceSpy = DocsServiceSpy();
+    final scanServiceSpy = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
-      docsService: docsServiceMock,
-      scanService: scanServiceMock,
+      docsService: docsServiceSpy,
+      scanService: scanServiceSpy,
     );
     await tester.pumpWidget(await wrap(widget: addButton));
     await tester.tap(find.byType(Icon));
     await tester.pump();
-    expect(scanServiceMock.wasPickPdfCalled, isFalse);
+    expect(scanServiceSpy.wasPickPdfCalled, isFalse);
 
     // when
     await tester.tap(find.text('Pick PDF'));
     await tester.pump();
 
     // then
-    expect(scanServiceMock.wasPickPdfCalled, isTrue);
+    expect(scanServiceSpy.wasPickPdfCalled, isTrue);
   });
 
   testWidgets('Tap on Scan doc button triggers doc scanner', (tester) async {
     // given
-    final docsServiceMock = DocsServiceSpy();
-    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
+    final docsServiceSpy = DocsServiceSpy();
+    final scanServiceSpy = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
-      docsService: docsServiceMock,
-      scanService: scanServiceMock,
+      docsService: docsServiceSpy,
+      scanService: scanServiceSpy,
     );
     await tester.pumpWidget(await wrap(widget: addButton));
     await tester.tap(find.byType(Icon));
     await tester.pump();
-    expect(scanServiceMock.wasScanImageCalled, isFalse);
+    expect(scanServiceSpy.wasScanImageCalled, isFalse);
 
     // when
     await tester.tap(find.text('Scan document'));
     await tester.pump();
 
     // then
-    expect(scanServiceMock.wasScanImageCalled, isTrue);
+    expect(scanServiceSpy.wasScanImageCalled, isTrue);
   });
 
   testWidgets('Tap on Pick PDF button, PDF is sent', (tester) async {
     // given
-    final docsServiceMock = DocsServiceSpy();
-    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
+    final docsServiceSpy = DocsServiceSpy();
+    final scanServiceSpy = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
-      docsService: docsServiceMock,
-      scanService: scanServiceMock,
+      docsService: docsServiceSpy,
+      scanService: scanServiceSpy,
     );
     await tester.pumpWidget(await wrap(widget: addButton));
     await tester.tap(find.byType(Icon));
     await tester.pump();
-    expect(docsServiceMock.wasUploadDocCalled, isFalse);
+    expect(docsServiceSpy.wasUploadDocCalled, isFalse);
 
     // when
     await tester.tap(find.text('Pick PDF'));
     await tester.pump();
 
     // then
-    expect(docsServiceMock.wasUploadDocCalled, isTrue);
+    expect(docsServiceSpy.wasUploadDocCalled, isTrue);
   });
 
   testWidgets('Tap on Scan doc button, doc is sent', (tester) async {
     // given
-    final docsServiceMock = DocsServiceSpy();
-    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
+    final docsServiceSpy = DocsServiceSpy();
+    final scanServiceSpy = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
-      docsService: docsServiceMock,
-      scanService: scanServiceMock,
+      docsService: docsServiceSpy,
+      scanService: scanServiceSpy,
     );
     await tester.pumpWidget(await wrap(widget: addButton));
     await tester.tap(find.byType(Icon));
     await tester.pump();
-    expect(docsServiceMock.wasUploadDocCalled, isFalse);
+    expect(docsServiceSpy.wasUploadDocCalled, isFalse);
 
     // when
     await tester.tap(find.text('Scan document'));
     await tester.pump();
 
     // then
-    expect(docsServiceMock.wasUploadDocCalled, isTrue);
+    expect(docsServiceSpy.wasUploadDocCalled, isTrue);
   });
 
   testWidgets('PDF is not send when selected file is null', (tester) async {
     // given
-    final docsServiceMock = DocsServiceSpy();
-    final scanServiceMock = ScanServiceSpy(scannedFile: null);
+    final docsServiceSpy = DocsServiceSpy();
+    final scanServiceSpy = ScanServiceSpy(scannedFile: null);
     final addButton = AddButton(
-      docsService: docsServiceMock,
-      scanService: scanServiceMock,
+      docsService: docsServiceSpy,
+      scanService: scanServiceSpy,
     );
     await tester.pumpWidget(await wrap(widget: addButton));
     await tester.tap(find.byType(Icon));
     await tester.pump();
-    expect(docsServiceMock.wasUploadDocCalled, isFalse);
+    expect(docsServiceSpy.wasUploadDocCalled, isFalse);
 
     // when
     await tester.tap(find.text('Pick PDF'));
     await tester.pump();
 
     // then
-    expect(docsServiceMock.wasUploadDocCalled, isFalse);
+    expect(docsServiceSpy.wasUploadDocCalled, isFalse);
   });
 
   testWidgets('Doc is not send when selected file is null', (tester) async {
     // given
-    final docsServiceMock = DocsServiceSpy();
-    final scanServiceMock = ScanServiceSpy(scannedFile: null);
+    final docsServiceSpy = DocsServiceSpy();
+    final scanServiceSpy = ScanServiceSpy(scannedFile: null);
     final addButton = AddButton(
-      docsService: docsServiceMock,
-      scanService: scanServiceMock,
+      docsService: docsServiceSpy,
+      scanService: scanServiceSpy,
     );
     await tester.pumpWidget(await wrap(widget: addButton));
     await tester.tap(find.byType(Icon));
     await tester.pump();
-    expect(docsServiceMock.wasUploadDocCalled, isFalse);
+    expect(docsServiceSpy.wasUploadDocCalled, isFalse);
 
     // when
     await tester.tap(find.text('Scan document'));
     await tester.pump();
 
     // then
-    expect(docsServiceMock.wasUploadDocCalled, isFalse);
+    expect(docsServiceSpy.wasUploadDocCalled, isFalse);
   });
 }
