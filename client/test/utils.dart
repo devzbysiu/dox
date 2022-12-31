@@ -140,6 +140,44 @@ class DocsServiceSpy implements DocsService {
   }
 }
 
+class FailingDocsServiceSpy implements DocsService {
+  FailingDocsServiceSpy({
+    this.fetchAllFilesCalled = false,
+    this.searchDocsCalled = false,
+    this.uploadDocCalled = false,
+  });
+
+  bool fetchAllFilesCalled;
+
+  bool get wasFetchAllFilesCalled => fetchAllFilesCalled;
+
+  bool searchDocsCalled;
+
+  bool get wasSearchDocsCalled => searchDocsCalled;
+
+  bool uploadDocCalled;
+
+  bool get wasUploadDocCalled => uploadDocCalled;
+
+  @override
+  Future<List<Document>> fetchAllFiles() {
+    fetchAllFilesCalled = true;
+    throw Exception('Failed to fetch all files');
+  }
+
+  @override
+  Future<List<Document>> searchDocs(String query) {
+    searchDocsCalled = true;
+    throw Exception('Failed to search docs');
+  }
+
+  @override
+  Future<Response> uploadDoc(File file) {
+    uploadDocCalled = true;
+    throw Exception('Failed to upload doc');
+  }
+}
+
 class ScanServiceSpy implements ScanService {
   ScanServiceSpy({
     this.pickPdfCalled = false,

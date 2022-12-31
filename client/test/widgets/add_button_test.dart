@@ -251,4 +251,27 @@ void main() {
     // then
     // no errors
   });
+
+  // NOTE: When sending is broken, the exception is handles and toast is shown,
+  // but currently, I did not find a way to test if toast is visible.
+  testWidgets('When sending is broken, nothing happens', (tester) async {
+    // given
+    final failingDocsServiceSpy = FailingDocsServiceSpy();
+    final scanServiceSpy = ScanServiceSpy(scannedFile: anyFile);
+    final addButton = AddButton(
+      docsService: failingDocsServiceSpy,
+      scanService: scanServiceSpy,
+    );
+    await tester.pumpWidget(await wrap(widget: addButton));
+    await tester.tap(find.byType(Icon));
+    await tester.pump();
+    expect(failingDocsServiceSpy.wasUploadDocCalled, isFalse);
+
+    // when
+    await tester.tap(find.text('Scan document'));
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+
+    // then
+    expect(failingDocsServiceSpy.wasUploadDocCalled, isTrue);
+  });
 }
