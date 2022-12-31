@@ -141,6 +141,7 @@ class ScanServiceMock implements ScanService {
   ScanServiceMock({
     this.pickPdfCalled = false,
     this.scanImageCalled = false,
+    required this.scannedFile,
   });
 
   bool pickPdfCalled;
@@ -151,15 +152,17 @@ class ScanServiceMock implements ScanService {
 
   bool get wasScanImageCalled => scanImageCalled;
 
+  File? scannedFile;
+
   @override
   Future<File?> pickPdf() {
     pickPdfCalled = true;
-    return Future.value(File("/some/path"));
+    return Future.value(scannedFile);
   }
 
   @override
   Future<File?> scanImage(BuildContext context) {
     scanImageCalled = true;
-    return Future.value(File("/some/path"));
+    return Future.value(scannedFile);
   }
 }

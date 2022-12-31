@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dox/widgets/add_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,10 +7,12 @@ import 'package:flutter_test/flutter_test.dart';
 import '../utils.dart';
 
 void main() {
+  final anyFile = File('/some/path');
+
   testWidgets('AddButton is initially closed', (tester) async {
     // given
     final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock();
+    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -24,7 +28,7 @@ void main() {
   testWidgets('When tapped, it unveils two more buttons', (tester) async {
     // given
     final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock();
+    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -43,7 +47,7 @@ void main() {
   testWidgets('When tapped, I can find Pick PDF button', (tester) async {
     // given
     final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock();
+    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -62,7 +66,7 @@ void main() {
   testWidgets('When tapped, I can find Scan document button', (tester) async {
     // given
     final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock();
+    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -81,7 +85,7 @@ void main() {
   testWidgets('Tap on Pick PDF button triggers PDF picker', (tester) async {
     // given
     final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock();
+    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -102,7 +106,7 @@ void main() {
   testWidgets('Tap on Scan doc button triggers doc scanner', (tester) async {
     // given
     final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock();
+    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -123,7 +127,7 @@ void main() {
   testWidgets('Tap on Pick PDF button, PDF is sent', (tester) async {
     // given
     final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock();
+    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -141,10 +145,10 @@ void main() {
     expect(docsServiceMock.wasUploadDocCalled, isTrue);
   });
 
-  testWidgets('Tap on Scan doc button doc is sent', (tester) async {
+  testWidgets('Tap on Scan doc button, doc is sent', (tester) async {
     // given
     final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock();
+    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -160,5 +164,47 @@ void main() {
 
     // then
     expect(docsServiceMock.wasUploadDocCalled, isTrue);
+  });
+
+  testWidgets('PDF is not send when selected file is null', (tester) async {
+    // given
+    final docsServiceMock = DocsServiceMock();
+    final scanServiceMock = ScanServiceMock(scannedFile: null);
+    final addButton = AddButton(
+      docsService: docsServiceMock,
+      scanService: scanServiceMock,
+    );
+    await tester.pumpWidget(await wrap(widget: addButton));
+    await tester.tap(find.byType(Icon));
+    await tester.pump();
+    expect(docsServiceMock.wasUploadDocCalled, isFalse);
+
+    // when
+    await tester.tap(find.text('Pick PDF'));
+    await tester.pump();
+
+    // then
+    expect(docsServiceMock.wasUploadDocCalled, isFalse);
+  });
+
+  testWidgets('Doc is not send when selected file is null', (tester) async {
+    // given
+    final docsServiceMock = DocsServiceMock();
+    final scanServiceMock = ScanServiceMock(scannedFile: null);
+    final addButton = AddButton(
+      docsService: docsServiceMock,
+      scanService: scanServiceMock,
+    );
+    await tester.pumpWidget(await wrap(widget: addButton));
+    await tester.tap(find.byType(Icon));
+    await tester.pump();
+    expect(docsServiceMock.wasUploadDocCalled, isFalse);
+
+    // when
+    await tester.tap(find.text('Scan document'));
+    await tester.pump();
+
+    // then
+    expect(docsServiceMock.wasUploadDocCalled, isFalse);
   });
 }
