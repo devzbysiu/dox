@@ -11,8 +11,8 @@ void main() {
 
   testWidgets('AddButton is initially closed', (tester) async {
     // given
-    final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
+    final docsServiceMock = DocsServiceSpy();
+    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -27,8 +27,8 @@ void main() {
 
   testWidgets('When tapped, it unveils two more buttons', (tester) async {
     // given
-    final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
+    final docsServiceMock = DocsServiceSpy();
+    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -46,8 +46,8 @@ void main() {
 
   testWidgets('When tapped, I can find Pick PDF button', (tester) async {
     // given
-    final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
+    final docsServiceMock = DocsServiceSpy();
+    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -65,8 +65,8 @@ void main() {
 
   testWidgets('When tapped, I can find Scan document button', (tester) async {
     // given
-    final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
+    final docsServiceMock = DocsServiceSpy();
+    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -84,8 +84,8 @@ void main() {
 
   testWidgets('Tap on Pick PDF button triggers PDF picker', (tester) async {
     // given
-    final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
+    final docsServiceMock = DocsServiceSpy();
+    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -105,8 +105,8 @@ void main() {
 
   testWidgets('Tap on Scan doc button triggers doc scanner', (tester) async {
     // given
-    final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
+    final docsServiceMock = DocsServiceSpy();
+    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -126,8 +126,8 @@ void main() {
 
   testWidgets('Tap on Pick PDF button, PDF is sent', (tester) async {
     // given
-    final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
+    final docsServiceMock = DocsServiceSpy();
+    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -147,8 +147,8 @@ void main() {
 
   testWidgets('Tap on Scan doc button, doc is sent', (tester) async {
     // given
-    final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock(scannedFile: anyFile);
+    final docsServiceMock = DocsServiceSpy();
+    final scanServiceMock = ScanServiceSpy(scannedFile: anyFile);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -168,8 +168,8 @@ void main() {
 
   testWidgets('PDF is not send when selected file is null', (tester) async {
     // given
-    final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock(scannedFile: null);
+    final docsServiceMock = DocsServiceSpy();
+    final scanServiceMock = ScanServiceSpy(scannedFile: null);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,
@@ -189,8 +189,8 @@ void main() {
 
   testWidgets('Doc is not send when selected file is null', (tester) async {
     // given
-    final docsServiceMock = DocsServiceMock();
-    final scanServiceMock = ScanServiceMock(scannedFile: null);
+    final docsServiceMock = DocsServiceSpy();
+    final scanServiceMock = ScanServiceSpy(scannedFile: null);
     final addButton = AddButton(
       docsService: docsServiceMock,
       scanService: scanServiceMock,

@@ -14,7 +14,7 @@ import 'package:provider/provider.dart';
 
 Future<MultiProvider> wrap(
     {required Widget widget, DocsState? docsState}) async {
-  final docsSt = docsState ?? DocsStateMock();
+  final docsSt = docsState ?? DocsStateSpy();
   return MultiProvider(
     providers: [
       ChangeNotifierProvider<DocsState>(create: (_) => docsSt),
@@ -28,8 +28,8 @@ class ConfigMock implements Config {
   String get baseUrl => 'http://192.168.16.247:8000';
 }
 
-class DocsStateMock extends ChangeNotifier implements DocsState {
-  DocsStateMock({
+class DocsStateSpy extends ChangeNotifier implements DocsState {
+  DocsStateSpy({
     this.loading = false,
     this.docs = const [],
     this.resetCalled = false,
@@ -99,8 +99,8 @@ extension AddButtonExt on AddButton {
   }
 }
 
-class DocsServiceMock implements DocsService {
-  DocsServiceMock({
+class DocsServiceSpy implements DocsService {
+  DocsServiceSpy({
     this.fetchAllFilesCalled = false,
     this.searchDocsCalled = false,
     this.uploadDocCalled = false,
@@ -137,8 +137,8 @@ class DocsServiceMock implements DocsService {
   }
 }
 
-class ScanServiceMock implements ScanService {
-  ScanServiceMock({
+class ScanServiceSpy implements ScanService {
+  ScanServiceSpy({
     this.pickPdfCalled = false,
     this.scanImageCalled = false,
     required this.scannedFile,

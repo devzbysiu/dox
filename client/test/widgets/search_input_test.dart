@@ -30,7 +30,7 @@ void main() {
 
   testWidgets('reset() is called on state when clear pressed', (tester) async {
     // given
-    final docsState = DocsStateMock();
+    final docsState = DocsStateSpy();
     const searchInput = SearchInput();
     await tester
         .pumpWidget(await wrap(widget: searchInput, docsState: docsState));
@@ -58,7 +58,7 @@ void main() {
 
   testWidgets('onQueryChanged is called after changing input', (tester) async {
     // given
-    final docsState = DocsStateMock();
+    final docsState = DocsStateSpy();
     const searchInput = SearchInput();
     await tester
         .pumpWidget(await wrap(widget: searchInput, docsState: docsState));
