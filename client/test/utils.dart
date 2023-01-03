@@ -4,6 +4,7 @@ import 'package:dox/models/docs_state.dart';
 import 'package:dox/models/document.dart';
 import 'package:dox/services/scan_service.dart';
 import 'package:dox/services/docs_service.dart';
+import 'package:dox/services/sign_in_service.dart';
 import 'package:dox/utilities/config.dart';
 import 'package:dox/widgets/add_button.dart';
 import 'package:dox/widgets/search_input.dart';
@@ -205,5 +206,15 @@ class ScanServiceSpy implements ScanService {
   Future<File?> scanImage(BuildContext context) {
     scanImageCalled = true;
     return Future.value(scannedFile);
+  }
+}
+
+class SignInServiceDummy implements SignInService {
+  @override
+  Map<String, String> get authHeaders => <String, String>{};
+
+  @override
+  Future<void> signIn() {
+    throw UnimplementedError();
   }
 }
