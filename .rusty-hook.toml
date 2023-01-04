@@ -1,5 +1,6 @@
 [hooks]
-pre-commit = "cd ./core && cargo make clip && cargo make test"
+#pre-commit = "cd ./core && cargo make clip && cargo make test"
+pre-commit = "./build.sh"
 
 [logging]
 verbose = true
