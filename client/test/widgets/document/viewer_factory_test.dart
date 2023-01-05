@@ -1,3 +1,4 @@
+import 'package:dox/screens/incorrect_file.dart';
 import 'package:dox/widgets/document/image_viewer.dart';
 import 'package:dox/widgets/document/pdf_viewer.dart';
 import 'package:dox/widgets/document/viewer_factory.dart';
@@ -30,5 +31,18 @@ void main() {
 
     // then
     expect(find.byType(PdfViewer), findsOneWidget);
+  });
+
+  testWidgets('It returns IncorrectFileScreen for wrong files', (tester) async {
+    // given
+    final signInService = SignInServiceDummy();
+    final badUri = Uri(scheme: 'https', host: 'some-host', path: 'file.docx');
+    final widget = ViewerFactory.from(badUri, signInService: signInService);
+
+    // when
+    await tester.pumpWidget(await wrap(widget: widget));
+
+    // then
+    expect(find.byType(IncorrectFileScreen), findsOneWidget);
   });
 }
