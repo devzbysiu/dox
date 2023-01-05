@@ -72,7 +72,7 @@ function client_changed() {
 function client_build() {
   debug "Building client..."
   pushd ./client
-  dart format .
+  dart format --set-exit-if-changed .
   flutter test
   popd
 }
