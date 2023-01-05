@@ -21,7 +21,7 @@ CHANGES_IN_CORE=1 # no changes
 BOLD="\e[1";
 ENDCOLOR="\e[0m";
 
-# font color selection
+# font color
 CYAN="36";
 
 # bg color
