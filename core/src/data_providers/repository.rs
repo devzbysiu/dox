@@ -196,9 +196,9 @@ impl RepositoryWrite for TantivyWrite {
             let thumbnail = schema.get_field(&Fields::Thumbnail.to_string()).unwrap();
             debug!("indexing {:?}", doc_detail.filename);
             index_writer.add_document(doc!(
-                    filename => doc_detail.filename.stem(),
+                    filename => doc_detail.filename.clone(),
                     body => doc_detail.body.clone(),
-                    thumbnail => doc_detail.thumbnail.stem(),
+                    thumbnail => doc_detail.thumbnail.clone(),
             ))?;
             debug!("commiting new doc");
             index_writer.commit()?;

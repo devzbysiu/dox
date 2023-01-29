@@ -5,7 +5,9 @@ use crate::result::WrongNameErr;
 use fake::{Dummy, Fake};
 use serde::Deserialize;
 use std::{fmt::Display, path::Path};
+use tantivy::schema::Value;
 
+// TODO: Cover this with tests
 #[derive(Debug, Dummy, Clone, Deserialize, Eq, PartialEq, PartialOrd, Ord)]
 #[serde(transparent)]
 pub struct Filename {
@@ -15,7 +17,7 @@ pub struct Filename {
 impl Filename {
     pub fn new<S: Into<String>>(filename: S) -> Result<Self, WrongNameErr> {
         let filename = filename.into();
-        if filename.is_empty() {
+        if Path::new(&filename).filestem().is_empty() {
             Err(WrongNameErr::EmptyFilename)
         } else {
             Ok(Self { filename })
@@ -32,9 +34,11 @@ impl Filename {
             Some(_) | None => false,
         }
     }
+}
 
-    pub fn stem(&self) -> String {
-        Path::new(&self.filename).filename()
+impl From<Filename> for Value {
+    fn from(value: Filename) -> Self {
+        Value::Str(value.filename)
     }
 }
 
@@ -57,6 +61,7 @@ impl From<&SafePathBuf> for Filename {
     }
 }
 
+// TODO: Cover this with tests
 #[derive(Debug, Dummy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Thumbnailname {
     thumbnail: String,
@@ -65,15 +70,17 @@ pub struct Thumbnailname {
 impl Thumbnailname {
     pub fn new<S: Into<String>>(thumbnail: S) -> Result<Self, WrongNameErr> {
         let thumbnail = thumbnail.into();
-        if thumbnail.is_empty() {
+        if Path::new(&thumbnail).filestem().is_empty() {
             Err(WrongNameErr::EmptyThumbnailname)
         } else {
             Ok(Self { thumbnail })
         }
     }
+}
 
-    pub fn stem(&self) -> String {
-        Path::new(&self.thumbnail).filename()
+impl From<Thumbnailname> for Value {
+    fn from(value: Thumbnailname) -> Self {
+        Value::Str(value.thumbnail)
     }
 }
 
