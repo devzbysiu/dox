@@ -52,14 +52,14 @@ impl SafePathBuf {
             #[cfg(not(test))]
             assert!(
                 path.exists(),
-                "Can't create not existing path '{path:?}'",
-                path = path
+                "Can't create not existing path '{}'",
+                path.display()
             );
         }
         assert!(
             path.parent().is_some(),
-            "Can't use '{path:?}' as path",
-            path = path
+            "Can't use '{}' as path",
+            path.display()
         );
         Self(path.into())
     }
