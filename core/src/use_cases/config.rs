@@ -108,6 +108,10 @@ fn thumbnails_dir_default() -> PathBuf {
 mod test {
     use super::*;
 
+    use anyhow::Result;
+    use fake::{Fake, Faker};
+    use tempfile::tempdir;
+
     #[test]
     fn test_default_config() {
         // given
@@ -123,5 +127,26 @@ mod test {
 
         // then
         assert_eq!(cfg, default_cfg);
+    }
+
+    #[test]
+    fn thumbnail_path_returns_correct_joined_path() -> Result<()> {
+        // given
+        let thumbnails_dir = tempdir()?;
+        let config = Config {
+            thumbnails_dir: thumbnails_dir.path().to_path_buf(),
+            ..Default::default()
+        };
+        let user: User = Faker.fake();
+        let filename: String = Faker.fake();
+        let relative_path = format!("{}/{}", base64::encode(&user.email), &filename);
+
+        // when
+        let thumbnails_path = config.thumbnail_path(&user, &filename);
+
+        // then
+        assert_eq!(thumbnails_path, thumbnails_dir.path().join(relative_path));
+
+        Ok(())
     }
 }
