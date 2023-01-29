@@ -4,7 +4,6 @@
 use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
 use crate::entities::user::User;
-use crate::helpers::PathRefExt;
 use crate::result::{IndexerErr, RepositoryErr, SearchErr};
 use crate::use_cases::config::Config;
 use crate::use_cases::repository::{
@@ -195,11 +194,11 @@ impl RepositoryWrite for TantivyWrite {
             let filename = schema.get_field(&Fields::Filename.to_string()).unwrap();
             let body = schema.get_field(&Fields::Body.to_string()).unwrap();
             let thumbnail = schema.get_field(&Fields::Thumbnail.to_string()).unwrap();
-            debug!("indexing {}", doc_detail.filename);
+            debug!("indexing {:?}", doc_detail.filename);
             index_writer.add_document(doc!(
-                    filename => doc_detail.filename.clone(),
+                    filename => doc_detail.filename.stem(),
                     body => doc_detail.body.clone(),
-                    thumbnail => doc_detail.thumbnail.clone(),
+                    thumbnail => doc_detail.thumbnail.stem(),
             ))?;
             debug!("commiting new doc");
             index_writer.commit()?;
@@ -290,6 +289,7 @@ mod test {
     use super::*;
 
     use crate::configuration::telemetry::init_tracing;
+    use crate::entities::file::{Filename, Thumbnailname};
     use crate::entities::user::FAKE_USER_EMAIL;
     use crate::testingtools::{
         docs_dir_path, index_dir_path, thumbnails_dir_path, watched_dir_path,
@@ -344,11 +344,36 @@ mod test {
         let user_email = FAKE_USER_EMAIL;
         let user = User::new(user_email);
         let tuples_to_index = vec![
-            DocDetails::new(user.clone(), "filename1", "body1", "thumbnail1"),
-            DocDetails::new(user.clone(), "filename2", "body2", "thumbnail2"),
-            DocDetails::new(user.clone(), "filename3", "body3", "thumbnail3"),
-            DocDetails::new(user.clone(), "filename4", "body4", "thumbnail4"),
-            DocDetails::new(user.clone(), "filename5", "body5", "thumbnail5"),
+            DocDetails::new(
+                Filename::new("filename1")?,
+                "body1",
+                Thumbnailname::new("thumbnail1")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename2")?,
+                "body2",
+                Thumbnailname::new("thumbnail2")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename3")?,
+                "body3",
+                Thumbnailname::new("thumbnail3")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename4")?,
+                "body4",
+                Thumbnailname::new("thumbnail4")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename5")?,
+                "body5",
+                Thumbnailname::new("thumbnail5")?,
+                user.clone(),
+            ),
         ];
 
         // when
@@ -381,11 +406,36 @@ mod test {
         let repo = TantivyRepository::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
-            DocDetails::new(user.clone(), "filename1", "body", "thumbnail1"),
-            DocDetails::new(user.clone(), "filename2", "text", "thumbnail2"),
-            DocDetails::new(user.clone(), "filename3", "information", "thumbnail3"),
-            DocDetails::new(user.clone(), "filename4", "not important", "thumbnail4"),
-            DocDetails::new(user.clone(), "filename5", "and last line", "thumbnail5"),
+            DocDetails::new(
+                Filename::new("filename1")?,
+                "body",
+                Thumbnailname::new("thumbnail1")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename2")?,
+                "text",
+                Thumbnailname::new("thumbnail2")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename3")?,
+                "information",
+                Thumbnailname::new("thumbnail3")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename4")?,
+                "not important",
+                Thumbnailname::new("thumbnail4")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename5")?,
+                "and last line",
+                Thumbnailname::new("thumbnail5")?,
+                user.clone(),
+            ),
         ];
 
         // when
@@ -409,9 +459,24 @@ mod test {
         let repo = TantivyRepository::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
-            DocDetails::new(user.clone(), "filename1", "some body", "thumbnail1"),
-            DocDetails::new(user.clone(), "filename2", "another text here", "thumbnail2"),
-            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
+            DocDetails::new(
+                Filename::new("filename1")?,
+                "some body",
+                Thumbnailname::new("thumbnail1")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename2")?,
+                "another text here",
+                Thumbnailname::new("thumbnail2")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename3")?,
+                "unique word: 9fZX",
+                Thumbnailname::new("thumbnail3")?,
+                user.clone(),
+            ),
         ];
 
         // when
@@ -439,11 +504,36 @@ mod test {
         let repo = TantivyRepository::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
-            DocDetails::new(user.clone(), "filename1", "some body", "thumbnail1"),
-            DocDetails::new(user.clone(), "filename2", "another text here", "thumbnail2"),
-            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
-            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
-            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
+            DocDetails::new(
+                Filename::new("filename1")?,
+                "some body",
+                Thumbnailname::new("thumbnail1")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename2")?,
+                "another text here",
+                Thumbnailname::new("thumbnail2")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename3")?,
+                "unique word: 9fZX",
+                Thumbnailname::new("thumbnail3")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename3")?,
+                "unique word: 9fZX",
+                Thumbnailname::new("thumbnail3")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename3")?,
+                "unique word: 9fZX",
+                Thumbnailname::new("thumbnail3")?,
+                user.clone(),
+            ),
         ];
         repo.write().index(&tuples_to_index)?;
         let res = repo.read().search(user.clone(), "9fZX".into())?;
@@ -477,11 +567,36 @@ mod test {
         let repo = TantivyRepository::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
-            DocDetails::new(user.clone(), "filename1", "some body", "thumbnail1"),
-            DocDetails::new(user.clone(), "filename2", "another text here", "thumbnail2"),
-            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
-            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
-            DocDetails::new(user.clone(), "filename3", "unique word: 9fZX", "thumbnail3"),
+            DocDetails::new(
+                Filename::new("filename1")?,
+                "some body",
+                Thumbnailname::new("thumbnail1")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename2")?,
+                "another text here",
+                Thumbnailname::new("thumbnail2")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename3")?,
+                "unique word: 9fZX",
+                Thumbnailname::new("thumbnail3")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename3")?,
+                "unique word: 9fZX",
+                Thumbnailname::new("thumbnail3")?,
+                user.clone(),
+            ),
+            DocDetails::new(
+                Filename::new("filename3")?,
+                "unique word: 9fZX",
+                Thumbnailname::new("thumbnail3")?,
+                user.clone(),
+            ),
         ];
         repo.write().index(&tuples_to_index)?;
         let res = repo.read().search(user.clone(), "9fZX".into())?;

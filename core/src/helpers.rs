@@ -1,11 +1,10 @@
-use tracing::instrument;
-
 use crate::entities::extension::Ext;
 use crate::result::GeneralErr;
 
 use std::convert::TryFrom;
 use std::fs::DirEntry;
 use std::path::Path;
+use tracing::instrument;
 
 pub trait DirEntryExt {
     fn filename(&self) -> String;
@@ -30,6 +29,7 @@ pub trait PathRefExt {
     fn rel_path(&self) -> String;
     fn rel_stem(&self) -> String;
     fn is_in_user_dir(&self) -> bool;
+    // TODO: Make it consistent - now it's here and inside `Filename`
     fn has_supported_extension(&self) -> bool;
 }
 

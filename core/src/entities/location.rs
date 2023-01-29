@@ -74,6 +74,10 @@ impl SafePathBuf {
     pub fn parent(&self) -> &Path {
         self.0.parent().unwrap() // can unwrap because it's checked during construction
     }
+
+    pub fn filename(&self) -> String {
+        self.0.filename()
+    }
 }
 
 impl AsRef<PathBuf> for SafePathBuf {

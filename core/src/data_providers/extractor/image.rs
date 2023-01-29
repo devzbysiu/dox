@@ -1,8 +1,8 @@
 //! Allows to extract text from image using OCR.
 use crate::entities::document::DocDetails;
+use crate::entities::file::{Filename, Thumbnailname};
 use crate::entities::location::{Location, SafePathBuf};
 use crate::entities::user::User;
-use crate::helpers::PathRefExt;
 use crate::result::ExtractorErr;
 use crate::use_cases::services::extractor::DataExtractor;
 
@@ -36,13 +36,11 @@ fn extract_details(path: &SafePathBuf) -> Result<DocDetails, ExtractorErr> {
     // each time than sharing it between threads
     let mut lt = LepTess::new(None, "pol")?;
     lt.set_image(path)?;
+    let filename = Filename::from(path);
+    let thumbnailname = Thumbnailname::from(path);
+    let body = lt.get_utf8_text()?;
     let user = User::try_from(path)?;
-    Ok(DocDetails::new(
-        user,
-        path,
-        lt.get_utf8_text()?,
-        path.filename(),
-    ))
+    Ok(DocDetails::new(filename, body, thumbnailname, user))
 }
 
 #[cfg(test)]
@@ -66,16 +64,16 @@ mod test {
         result.sort();
 
         // then
-        let first_doc_details = &result[0];
-        let second_doc_details = &result[1];
+        let first_doc = &result[0];
+        let second_doc = &result[1];
 
-        assert!(first_doc_details.body.contains("W odpowiedzi na pismo"));
-        assert_eq!(first_doc_details.filename, "doc1.png");
-        assert_eq!(first_doc_details.thumbnail, "doc1.png");
+        assert!(first_doc.body.contains("W odpowiedzi na pismo"));
+        assert_eq!(first_doc.filename, Filename::new("doc1.png")?);
+        assert_eq!(first_doc.thumbnail, Thumbnailname::new("doc1.png")?);
 
-        assert!(second_doc_details.body.contains("Szanowny Panie"));
-        assert_eq!(second_doc_details.filename, "doc3.jpg");
-        assert_eq!(second_doc_details.thumbnail, "doc3.jpg");
+        assert!(second_doc.body.contains("Szanowny Panie"));
+        assert_eq!(second_doc.filename, Filename::new("doc3.jpg")?);
+        assert_eq!(second_doc.thumbnail, Thumbnailname::new("doc3.jpg")?);
 
         Ok(())
     }

@@ -1,3 +1,4 @@
+use crate::entities::file::{Filename, Thumbnailname};
 use crate::entities::user::{User, FAKE_USER_EMAIL};
 use crate::use_cases::config::Config;
 
@@ -88,11 +89,17 @@ impl TestConfig {
     }
 
     pub fn thumbnail_path<S: Into<String>>(&self, name: S) -> PathBuf {
-        self.value.thumbnail_path(&User::new(FAKE_USER_EMAIL), name)
+        let name = name.into();
+        let thumbnailname = Thumbnailname::new(name).expect("Failed to create thumbnail name");
+        self.value
+            .thumbnail_path(&User::new(FAKE_USER_EMAIL), &thumbnailname)
     }
 
     pub fn doc_path<S: Into<String>>(&self, name: S) -> PathBuf {
-        self.value.document_path(&User::new(FAKE_USER_EMAIL), name)
+        let name = name.into();
+        let filename = Filename::new(name).expect("Failed to create filename");
+        self.value
+            .document_path(&User::new(FAKE_USER_EMAIL), &filename)
     }
 }
 

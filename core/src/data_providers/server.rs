@@ -1,6 +1,6 @@
 use crate::entities::extension::supported_extensions;
+use crate::entities::file::{Filename, Thumbnailname};
 use crate::entities::user::User;
-use crate::helpers::PathRefExt;
 use crate::result::{DocumentReadErr, DocumentSaveErr, SearchErr, ThumbnailReadErr};
 use crate::use_cases::cipher::CipherRead;
 use crate::use_cases::config::Config;
@@ -12,7 +12,6 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{get, post, State};
-use std::path::Path;
 use tracing::instrument;
 
 type Cfg = State<Config>;
@@ -36,7 +35,8 @@ pub fn search(user: User, q: String, repo: &Repo) -> SearchRes {
 #[instrument(skip(fs, cipher))]
 #[get("/thumbnail/<name>")]
 pub fn thumbnail(user: User, name: String, cfg: &Cfg, fs: &Fs, cipher: &Cipher) -> GetThumbRes {
-    let buf = fs.load(cfg.thumbnail_path(&user, name))?;
+    let filename = Thumbnailname::new(name)?;
+    let buf = fs.load(cfg.thumbnail_path(&user, &filename))?;
     Ok(Some(cipher.decrypt(&buf).context("Image decrypt failed.")?))
 }
 
@@ -50,7 +50,8 @@ pub fn all_thumbnails(user: User, repo: &Repo) -> GetAllThumbsRes {
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[get("/document/<name>")]
 pub fn document(user: User, name: String, cfg: &Cfg, fs: &Fs, cipher: &Cipher) -> GetDocRes {
-    let buf = fs.load(cfg.document_path(&user, name))?;
+    let filename = Filename::new(name)?;
+    let buf = fs.load(cfg.document_path(&user, &filename))?;
     Ok(Some(cipher.decrypt(&buf).context("Doc decrypt failed.")?))
 }
 
@@ -58,9 +59,11 @@ pub fn document(user: User, name: String, cfg: &Cfg, fs: &Fs, cipher: &Cipher) -
 #[allow(clippy::needless_pass_by_value)] // rocket requires pass by value here
 #[post("/document/upload", data = "<doc>")]
 pub fn receive_document(user: User, doc: Doc, cfg: &Cfg, fs: &Fs) -> PostDocRes {
-    let filename = Path::new(&doc.filename);
-    if !filename.has_supported_extension() {
-        return Ok((Status::UnsupportedMediaType, wrong_extension_msg(filename)));
+    if !doc.filename.has_supported_extension() {
+        return Ok((
+            Status::UnsupportedMediaType,
+            wrong_extension_msg(&doc.filename),
+        ));
     }
     let to = cfg.watched_path(&user, &doc.filename);
     let doc = base64::decode(&doc.body).context("Failed to decode body.")?;
@@ -68,22 +71,24 @@ pub fn receive_document(user: User, doc: Doc, cfg: &Cfg, fs: &Fs) -> PostDocRes 
     Ok((Status::Created, String::new()))
 }
 
-fn wrong_extension_msg<P: AsRef<Path>>(filename: P) -> String {
+fn wrong_extension_msg(filename: &Filename) -> String {
     format!(
         "File '{}' has unsupported extension. Those are supported: {:?}.",
-        filename.as_ref().display(),
+        filename,
         supported_extensions()
     )
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Document {
-    filename: String,
+    filename: Filename,
     body: String,
 }
 
 #[cfg(test)]
 mod test {
+    use std::fmt::Display;
+
     use crate::configuration::telemetry::init_tracing;
     use crate::testingtools::api::doc;
     use crate::testingtools::app::{start_test_app, test_app};
@@ -181,11 +186,8 @@ mod test {
         Ok(())
     }
 
-    fn wrong_extension_msg<S: Into<String>>(filename: S) -> String {
-        format!(
-            "File '{}' has unsupported extension. Those are supported: [Png, Jpg, Webp, Pdf].",
-            filename.into()
-        )
+    fn wrong_extension_msg<D: Display>(filename: D) -> String {
+        format!("File '{filename}' has unsupported extension. Those are supported: [Png, Jpg, Webp, Pdf].")
     }
 
     #[test]

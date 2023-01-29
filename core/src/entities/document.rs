@@ -1,32 +1,31 @@
 //! Abstraction of the document data used to index the document.
+use crate::entities::file::{Filename, Thumbnailname};
 use crate::entities::user::User;
-use crate::helpers::PathRefExt;
 
 use fake::{Dummy, Fake};
-use std::path::Path;
 
 /// Data of the document.
 ///
 /// The values in this structure are used to do the indexing.
 #[derive(Debug, PartialOrd, Clone, Ord, Eq, PartialEq, Dummy)]
 pub struct DocDetails {
-    pub filename: String,
+    pub filename: Filename,
     pub body: String,
-    pub thumbnail: String,
+    pub thumbnail: Thumbnailname,
     pub user: User,
 }
 
 impl DocDetails {
-    pub fn new<P: AsRef<Path>, S: Into<String>>(
-        user: User,
-        path: P,
+    pub fn new<S: Into<String>>(
+        filename: Filename,
         body: S,
-        thumbnail: S,
+        thumbnail: Thumbnailname,
+        user: User,
     ) -> Self {
         Self {
-            filename: path.filename(),
+            filename,
             body: body.into(),
-            thumbnail: thumbnail.into(),
+            thumbnail,
             user,
         }
     }

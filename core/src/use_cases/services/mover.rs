@@ -1,6 +1,5 @@
 //! Abstraction for moving received document to correct place.
 use crate::entities::location::{Location, SafePathBuf};
-use crate::helpers::PathRefExt;
 use crate::result::MoverErr;
 use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher};
 use crate::use_cases::config::Config;

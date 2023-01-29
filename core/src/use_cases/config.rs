@@ -2,9 +2,12 @@
 //!
 //! The actual place where the config will be saved to or read from is not tight to this interface
 //! and it's considered to be implementation detail.
-use crate::{entities::user::User, result::ConfigurationErr};
+use crate::entities::file::{Filename, Thumbnailname};
+use crate::entities::user::User;
+use crate::result::ConfigurationErr;
 
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
 pub type CfgResolver = Box<dyn ConfigResolver>;
@@ -49,24 +52,21 @@ pub struct Config {
 }
 
 impl Config {
-    // TODO: Either add precondition for empty `name`, or introduce safe type - like Filename
-    pub fn thumbnail_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
+    pub fn thumbnail_path(&self, user: &User, name: &Thumbnailname) -> PathBuf {
         self.thumbnails_dir.join(relative_path(user, name))
     }
 
-    // TODO: Same as above - use safe type for `name`
-    pub fn document_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
+    pub fn document_path(&self, user: &User, name: &Filename) -> PathBuf {
         self.docs_dir.join(relative_path(user, name))
     }
 
-    // TODO: Same as above - use safe type for `name`
-    pub fn watched_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
+    pub fn watched_path(&self, user: &User, name: &Filename) -> PathBuf {
         self.watched_dir.join(relative_path(user, name))
     }
 }
 
-fn relative_path<S: Into<String>>(user: &User, filename: S) -> String {
-    format!("{}/{}", base64::encode(&user.email), filename.into())
+fn relative_path<D: Display>(user: &User, filename: &D) -> String {
+    format!("{}/{}", base64::encode(&user.email), filename)
 }
 
 impl Default for Config {
@@ -138,11 +138,11 @@ mod test {
             ..Default::default()
         };
         let user: User = Faker.fake();
-        let filename: String = Faker.fake();
-        let relative_path = format!("{}/{}", base64::encode(&user.email), &filename);
+        let thumbnailname: Thumbnailname = Faker.fake();
+        let relative_path = format!("{}/{}", base64::encode(&user.email), &thumbnailname);
 
         // when
-        let thumbnail_path = config.thumbnail_path(&user, &filename);
+        let thumbnail_path = config.thumbnail_path(&user, &thumbnailname);
 
         // then
         assert_eq!(thumbnail_path, thumbnails_dir.path().join(relative_path));
@@ -159,7 +159,7 @@ mod test {
             ..Default::default()
         };
         let user: User = Faker.fake();
-        let filename: String = Faker.fake();
+        let filename: Filename = Faker.fake();
         let relative_path = format!("{}/{}", base64::encode(&user.email), &filename);
 
         // when
@@ -180,7 +180,7 @@ mod test {
             ..Default::default()
         };
         let user: User = Faker.fake();
-        let filename: String = Faker.fake();
+        let filename: Filename = Faker.fake();
         let relative_path = format!("{}/{}", base64::encode(&user.email), &filename);
 
         // when

@@ -1,5 +1,6 @@
 //! Allows to extract text from PDF.
 use crate::entities::document::DocDetails;
+use crate::entities::file::{Filename, Thumbnailname};
 use crate::entities::location::{Location, SafePathBuf};
 use crate::entities::user::User;
 use crate::helpers::PathRefExt;
@@ -35,12 +36,14 @@ impl DataExtractor for FromPdf {
 #[instrument]
 fn extract(path: &SafePathBuf) -> Result<DocDetails, ExtractorErr> {
     let user = User::try_from(path)?;
+    let filename = Filename::from(path);
     let text = extract_text(path)?;
+    let thumbnailname = Thumbnailname::new(thumbnail_name(path))?;
     trace!("extracted text: '{}'", text);
-    Ok(DocDetails::new(user, path, text, thumbnail(path)))
+    Ok(DocDetails::new(filename, text, thumbnailname, user))
 }
 
-fn thumbnail<P: AsRef<Path>>(path: P) -> String {
+fn thumbnail_name<P: AsRef<Path>>(path: P) -> String {
     format!("{}.png", path.filestem())
 }
 
@@ -65,16 +68,16 @@ mod test {
         result.sort();
 
         // then
-        let first_doc_details = &result[0];
-        let second_doc_details = &result[1];
+        let first_doc = &result[0];
+        let second_doc = &result[1];
 
-        assert!(first_doc_details.body.contains("Jak zainstalować scaner"));
-        assert_eq!(first_doc_details.filename, "doc1.pdf");
-        assert_eq!(first_doc_details.thumbnail, "doc1.png");
+        assert!(first_doc.body.contains("Jak zainstalować scaner"));
+        assert_eq!(first_doc.filename, Filename::new("doc1.pdf")?);
+        assert_eq!(first_doc.thumbnail, Thumbnailname::new("doc1.png")?);
 
-        assert!(second_doc_details.body.contains("Podmiot powierzający"));
-        assert_eq!(second_doc_details.filename, "doc2.pdf");
-        assert_eq!(second_doc_details.thumbnail, "doc2.png");
+        assert!(second_doc.body.contains("Podmiot powierzający"));
+        assert_eq!(second_doc.filename, Filename::new("doc2.pdf")?);
+        assert_eq!(second_doc.thumbnail, Thumbnailname::new("doc2.png")?);
 
         Ok(())
     }

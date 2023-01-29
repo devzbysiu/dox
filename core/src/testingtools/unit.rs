@@ -2,7 +2,6 @@ use crate::configuration::factories::event_bus;
 use crate::entities::document::DocDetails;
 use crate::entities::location::{Location, SafePathBuf};
 use crate::entities::user::FAKE_USER_EMAIL;
-use crate::helpers::PathRefExt;
 use crate::testingtools::TestConfig;
 use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher, EventSubscriber};
 use crate::use_cases::receiver::DocsEvent;

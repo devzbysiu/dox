@@ -26,6 +26,18 @@ pub enum ThumbnailReadErr {
 
     #[error("Failed to load thumbnail.")]
     Load(#[from] FsErr),
+
+    #[error("Incorrect file name.")]
+    WrongName(#[from] WrongNameErr),
+}
+
+#[derive(Debug, Error)]
+pub enum WrongNameErr {
+    #[error("Filename cannot be empty.")]
+    EmptyFilename,
+
+    #[error("Thumbnailname cannot be empty.")]
+    EmptyThumbnailname,
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for ThumbnailReadErr {
@@ -33,6 +45,7 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for ThumbnailReadErr {
         Err(match self {
             Self::Load(FsErr::Io(e)) if e.kind() == NotFound => Status::NotFound,
             Self::Unexpected(_) | Self::Load(_) => Status::InternalServerError,
+            Self::WrongName(_) => Status::UnprocessableEntity,
         })
     }
 }
@@ -56,6 +69,9 @@ pub enum DocumentReadErr {
 
     #[error("Failed to load document.")]
     Load(#[from] FsErr),
+
+    #[error("Incorrect file name.")]
+    WrongFilename(#[from] WrongNameErr),
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for DocumentReadErr {
@@ -63,6 +79,7 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for DocumentReadErr {
         Err(match self {
             Self::Load(FsErr::Io(e)) if e.kind() == NotFound => Status::NotFound,
             Self::Unexpected(_) | Self::Load(_) => Status::InternalServerError,
+            Self::WrongFilename(_) => Status::UnprocessableEntity,
         })
     }
 }
@@ -110,6 +127,9 @@ pub enum ExtractorErr {
 
     #[error("Error when converting to User.")]
     UserConversion(#[from] UserConvErr),
+
+    #[error("Error while creating Thumbnailname")]
+    ThumbnailnameCreation(#[from] WrongNameErr),
 
     #[error("Error when publishing bus event.")]
     Publisher(#[from] BusErr),
