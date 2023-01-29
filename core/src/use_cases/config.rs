@@ -49,12 +49,12 @@ pub struct Config {
 }
 
 impl Config {
-    // TODO: Either add precondition for empty name, or introduce safe type - liek Filename
+    // TODO: Either add precondition for empty `name`, or introduce safe type - like Filename
     pub fn thumbnail_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
         self.thumbnails_dir.join(relative_path(user, name))
     }
 
-    // TODO: Cover this with tests
+    // TODO: Same as above - use safe type for `name`
     pub fn document_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
         self.docs_dir.join(relative_path(user, name))
     }
@@ -142,10 +142,31 @@ mod test {
         let relative_path = format!("{}/{}", base64::encode(&user.email), &filename);
 
         // when
-        let thumbnails_path = config.thumbnail_path(&user, &filename);
+        let thumbnail_path = config.thumbnail_path(&user, &filename);
 
         // then
-        assert_eq!(thumbnails_path, thumbnails_dir.path().join(relative_path));
+        assert_eq!(thumbnail_path, thumbnails_dir.path().join(relative_path));
+
+        Ok(())
+    }
+
+    #[test]
+    fn document_path_returns_correct_joined_path() -> Result<()> {
+        // given
+        let documents_dir = tempdir()?;
+        let config = Config {
+            docs_dir: documents_dir.path().to_path_buf(),
+            ..Default::default()
+        };
+        let user: User = Faker.fake();
+        let filename: String = Faker.fake();
+        let relative_path = format!("{}/{}", base64::encode(&user.email), &filename);
+
+        // when
+        let document_path = config.document_path(&user, &filename);
+
+        // then
+        assert_eq!(document_path, documents_dir.path().join(relative_path));
 
         Ok(())
     }
