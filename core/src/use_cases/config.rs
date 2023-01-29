@@ -59,7 +59,7 @@ impl Config {
         self.docs_dir.join(relative_path(user, name))
     }
 
-    // TODO: Cover this with tests
+    // TODO: Same as above - use safe type for `name`
     pub fn watched_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
         self.watched_dir.join(relative_path(user, name))
     }
@@ -167,6 +167,27 @@ mod test {
 
         // then
         assert_eq!(document_path, documents_dir.path().join(relative_path));
+
+        Ok(())
+    }
+
+    #[test]
+    fn watched_path_returns_correct_joined_path() -> Result<()> {
+        // given
+        let watched_dir = tempdir()?;
+        let config = Config {
+            watched_dir: watched_dir.path().to_path_buf(),
+            ..Default::default()
+        };
+        let user: User = Faker.fake();
+        let filename: String = Faker.fake();
+        let relative_path = format!("{}/{}", base64::encode(&user.email), &filename);
+
+        // when
+        let watched_path = config.watched_path(&user, &filename);
+
+        // then
+        assert_eq!(watched_path, watched_dir.path().join(relative_path));
 
         Ok(())
     }
