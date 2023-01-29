@@ -49,7 +49,7 @@ pub struct Config {
 }
 
 impl Config {
-    // TODO: Cover this with tests
+    // TODO: Either add precondition for empty name, or introduce safe type - liek Filename
     pub fn thumbnail_path<S: Into<String>>(&self, user: &User, name: S) -> PathBuf {
         self.thumbnails_dir.join(relative_path(user, name))
     }
