@@ -1,5 +1,4 @@
 use crate::entities::location::SafePathBuf;
-use crate::helpers::PathRefExt;
 use crate::result::WrongNameErr;
 
 use fake::{Dummy, Fake};
@@ -7,7 +6,6 @@ use serde::Deserialize;
 use std::{fmt::Display, path::Path};
 use tantivy::schema::Value;
 
-// TODO: Cover this with tests
 #[derive(Debug, Dummy, Clone, Deserialize, Eq, PartialEq, PartialOrd, Ord)]
 #[serde(transparent)]
 pub struct Filename {
@@ -17,7 +15,7 @@ pub struct Filename {
 impl Filename {
     pub fn new<S: Into<String>>(filename: S) -> Result<Self, WrongNameErr> {
         let filename = filename.into();
-        if Path::new(&filename).filestem().is_empty() {
+        if Path::new(&filename).file_stem().is_none() {
             Err(WrongNameErr::EmptyFilename)
         } else {
             Ok(Self { filename })
@@ -70,7 +68,7 @@ pub struct Thumbnailname {
 impl Thumbnailname {
     pub fn new<S: Into<String>>(thumbnail: S) -> Result<Self, WrongNameErr> {
         let thumbnail = thumbnail.into();
-        if Path::new(&thumbnail).filestem().is_empty() {
+        if Path::new(&thumbnail).file_stem().is_none() {
             Err(WrongNameErr::EmptyThumbnailname)
         } else {
             Ok(Self { thumbnail })
@@ -94,5 +92,65 @@ impl From<&SafePathBuf> for Thumbnailname {
 impl Display for Thumbnailname {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.thumbnail)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use claim::{assert_err, assert_ok};
+    use fake::{Fake, Faker};
+
+    #[test]
+    fn filename_can_be_created_with_non_empty_stem_and_extension() {
+        // given
+        let stem: String = Faker.fake();
+        let extension: String = Faker.fake();
+        let valid_name = format!("{stem}.{extension}");
+
+        // when
+        let filename = Filename::new(valid_name);
+
+        // then
+        assert_ok!(filename);
+    }
+
+    #[test]
+    fn filename_can_be_created_with_empty_extension() {
+        // given
+        let stem: String = Faker.fake();
+        let extension = String::new();
+        let valid_name = format!("{stem}.{extension}");
+
+        // when
+        let filename = Filename::new(valid_name);
+
+        // then
+        assert_ok!(filename);
+    }
+
+    #[test]
+    fn filename_can_be_created_without_extension() {
+        // given
+        let valid_name: String = Faker.fake();
+
+        // when
+        let filename = Filename::new(valid_name);
+
+        // then
+        assert_ok!(filename);
+    }
+
+    #[test]
+    fn filename_cannot_be_created_with_empty_name() {
+        // given
+        let invalid_name = String::new();
+
+        // when
+        let filename = Filename::new(invalid_name);
+
+        // then
+        assert_err!(filename);
     }
 }
