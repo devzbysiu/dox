@@ -24,8 +24,10 @@ use tantivy::collector::TopDocs;
 use tantivy::directory::MmapDirectory;
 use tantivy::query::{AllQuery, FuzzyTermQuery, Query};
 use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
-use tantivy::{doc, DocAddress, Index, LeasedItem, ReloadPolicy, Term};
+use tantivy::{doc, DocAddress, Index, ReloadPolicy, Searcher, Term};
 use tracing::{debug, error, instrument, warn};
+
+type TantivyDocs = Vec<(f32, DocAddress)>;
 
 pub struct TantivyRepository {
     read: RepoRead,
@@ -239,9 +241,6 @@ impl RepositoryWrite for TantivyWrite {
 fn term<S: Into<String>>(field: Field, filename: S) -> Term {
     Term::from_field_text(field, &filename.into())
 }
-
-type Searcher = LeasedItem<tantivy::Searcher>;
-type TantivyDocs = Vec<(f32, DocAddress)>;
 
 enum Fields {
     Filename,
