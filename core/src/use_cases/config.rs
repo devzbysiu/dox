@@ -6,6 +6,8 @@ use crate::entities::file::{Filename, Thumbnailname};
 use crate::entities::user::User;
 use crate::result::ConfigurationErr;
 
+use base64::engine::general_purpose::STANDARD as b64;
+use base64::Engine;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
@@ -66,7 +68,7 @@ impl Config {
 }
 
 fn relative_path<D: Display>(user: &User, filename: &D) -> String {
-    format!("{}/{}", base64::encode(&user.email), filename)
+    format!("{}/{}", b64.encode(&user.email), filename)
 }
 
 impl Default for Config {
@@ -139,7 +141,7 @@ mod test {
         };
         let user: User = Faker.fake();
         let thumbnailname: Thumbnailname = Faker.fake();
-        let relative_path = format!("{}/{}", base64::encode(&user.email), &thumbnailname);
+        let relative_path = format!("{}/{}", b64.encode(&user.email), &thumbnailname);
 
         // when
         let thumbnail_path = config.thumbnail_path(&user, &thumbnailname);
@@ -160,7 +162,7 @@ mod test {
         };
         let user: User = Faker.fake();
         let filename: Filename = Faker.fake();
-        let relative_path = format!("{}/{}", base64::encode(&user.email), &filename);
+        let relative_path = format!("{}/{}", b64.encode(&user.email), &filename);
 
         // when
         let document_path = config.document_path(&user, &filename);
@@ -181,7 +183,7 @@ mod test {
         };
         let user: User = Faker.fake();
         let filename: Filename = Faker.fake();
-        let relative_path = format!("{}/{}", base64::encode(&user.email), &filename);
+        let relative_path = format!("{}/{}", b64.encode(&user.email), &filename);
 
         // when
         let watched_path = config.watched_path(&user, &filename);

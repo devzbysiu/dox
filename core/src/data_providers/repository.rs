@@ -11,6 +11,8 @@ use crate::use_cases::repository::{
     SearchResult,
 };
 
+use base64::engine::general_purpose::STANDARD as b64;
+use base64::Engine;
 use core::fmt;
 use dashmap::DashMap;
 use std::convert::TryInto;
@@ -158,7 +160,7 @@ impl TantivyWrite {
 
     fn insert_idx_if_missing(&self, user: &User) -> Result<(), IndexerErr> {
         if !self.indexes.contains_key(user) {
-            let idx_dir = self.idx_root.join(base64::encode(&user.email));
+            let idx_dir = self.idx_root.join(b64.encode(&user.email));
             debug!(
                 "creating new index directory for '{}' under path '{}'",
                 user.email,

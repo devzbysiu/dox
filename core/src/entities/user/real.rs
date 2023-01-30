@@ -4,6 +4,8 @@ use crate::helpers::PathRefExt;
 use crate::result::UserConvErr;
 
 use async_once_cell::OnceCell;
+use base64::engine::general_purpose::STANDARD as b64;
+use base64::Engine;
 use jwks_client::keyset::KeyStore;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
@@ -15,7 +17,7 @@ impl TryFrom<&SafePathBuf> for User {
     fn try_from(path: &SafePathBuf) -> Result<Self, Self::Error> {
         let parent_dir = path.parent();
         let parent_name = parent_dir.filename();
-        let user_email = base64::decode(parent_name)?;
+        let user_email = b64.decode(parent_name)?;
         let user_email = String::from_utf8(user_email)?;
         Ok(User::new(user_email))
     }

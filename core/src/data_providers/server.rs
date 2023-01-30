@@ -8,6 +8,8 @@ use crate::use_cases::fs::Fs as Filesystem;
 use crate::use_cases::repository::{RepoRead, SearchResult};
 
 use anyhow::Context;
+use base64::engine::general_purpose::STANDARD as b64;
+use base64::Engine;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
@@ -66,7 +68,7 @@ pub fn receive_document(user: User, doc: Doc, cfg: &Cfg, fs: &Fs) -> PostDocRes 
         ));
     }
     let to = cfg.watched_path(&user, &doc.filename);
-    let doc = base64::decode(&doc.body).context("Failed to decode body.")?;
+    let doc = b64.decode(&doc.body).context("Failed to decode body.")?;
     fs.save(to, &doc).context("Failed to save document.")?;
     Ok((Status::Created, String::new()))
 }

@@ -726,7 +726,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-once-cell",
- "base64 0.13.1",
+ "base64 0.21.0",
  "cairo-rs",
  "chacha20poly1305",
  "claim",

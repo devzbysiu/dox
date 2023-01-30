@@ -1,6 +1,8 @@
 use crate::entities::extension::Ext;
 use crate::result::GeneralErr;
 
+use base64::engine::general_purpose::STANDARD as b64;
+use base64::Engine;
 use std::convert::TryFrom;
 use std::fs::DirEntry;
 use std::path::Path;
@@ -97,7 +99,7 @@ impl<T: AsRef<Path>> PathRefExt for T {
     fn is_in_user_dir(&self) -> bool {
         // TODO: Add email validation and confirmation that the path is utf8 encoded
         let dir_name = self.parent_name();
-        base64::decode(dir_name).is_ok()
+        b64.decode(dir_name).is_ok()
     }
 
     fn has_supported_extension(&self) -> bool {

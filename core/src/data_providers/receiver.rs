@@ -55,6 +55,8 @@ mod test {
     use super::*;
 
     use anyhow::Result;
+    use base64::engine::general_purpose::STANDARD as b64;
+    use base64::Engine;
     use claim::{assert_ok, assert_ok_eq};
     use fake::faker::filesystem::en::FileName;
     use fake::faker::internet::en::SafeEmail;
@@ -124,7 +126,7 @@ mod test {
     fn mk_user_dir<P: AsRef<Path>, S: Into<String>>(base_path: P, email: S) -> Result<PathBuf> {
         let base_path = base_path.as_ref();
         let email = email.into();
-        let user_dir = base_path.join(base64::encode(email));
+        let user_dir = base_path.join(b64.encode(email));
         create_dir_all(&user_dir)?;
         Ok(user_dir)
     }

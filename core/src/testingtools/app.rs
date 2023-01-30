@@ -13,6 +13,8 @@ use crate::use_cases::fs::Fs;
 use crate::use_cases::repository::Repo;
 
 use anyhow::Result;
+use base64::engine::general_purpose::STANDARD as b64;
+use base64::Engine;
 use rocket::local::blocking::Client;
 use rocket::serde::json::json;
 use std::convert::TryInto;
@@ -96,7 +98,7 @@ impl App {
     }
 
     pub fn upload_doc<P: AsRef<Path>>(&self, path: P) -> Result<ApiResponse> {
-        let body = base64::encode(fs::read(&path)?);
+        let body = b64.encode(fs::read(&path)?);
         let filename = path.filename();
         self.client
             .post("/document/upload")

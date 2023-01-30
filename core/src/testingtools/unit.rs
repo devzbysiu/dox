@@ -7,6 +7,8 @@ use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher, EventSubscriber}
 use crate::use_cases::receiver::DocsEvent;
 
 use anyhow::{anyhow, Result};
+use base64::engine::general_purpose::STANDARD as b64;
+use base64::Engine;
 use std::fs::{self, create_dir_all};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
@@ -42,7 +44,7 @@ impl SubscriberExt for EventSubscriber {
 pub fn create_test_shim() -> Result<TestShim> {
     let (tx, rx) = channel();
     let rx = Some(rx);
-    let test_file = mk_file(base64::encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
+    let test_file = mk_file(b64.encode(FAKE_USER_EMAIL), "some-file.jpg".into())?;
     let bus = event_bus()?;
     let publ = bus.publisher();
     let sub = bus.subscriber();
