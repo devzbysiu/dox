@@ -153,4 +153,56 @@ mod test {
         // then
         assert_err!(filename);
     }
+
+    #[test]
+    fn thumbnailname_can_be_created_with_non_empty_stem_and_extension() {
+        // given
+        let stem: String = Faker.fake();
+        let extension: String = Faker.fake();
+        let valid_name = format!("{stem}.{extension}");
+
+        // when
+        let thumbnailname = Thumbnailname::new(valid_name);
+
+        // then
+        assert_ok!(thumbnailname);
+    }
+
+    #[test]
+    fn thumbnailname_can_be_created_with_empty_extension() {
+        // given
+        let stem: String = Faker.fake();
+        let extension = String::new();
+        let valid_name = format!("{stem}.{extension}");
+
+        // when
+        let thumbnailname = Thumbnailname::new(valid_name);
+
+        // then
+        assert_ok!(thumbnailname);
+    }
+
+    #[test]
+    fn thumbnailname_can_be_created_without_extension() {
+        // given
+        let valid_name: String = Faker.fake();
+
+        // when
+        let thumbnailname = Thumbnailname::new(valid_name);
+
+        // then
+        assert_ok!(thumbnailname);
+    }
+
+    #[test]
+    fn thumbnailname_cannot_be_created_with_empty_name() {
+        // given
+        let invalid_name = String::new();
+
+        // when
+        let thumbnailname = Thumbnailname::new(invalid_name);
+
+        // then
+        assert_err!(thumbnailname);
+    }
 }
