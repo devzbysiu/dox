@@ -14,12 +14,12 @@
     <tr>
       <td>
         <p>
-          <img src="https://img.shields.io/github/workflow/status/devzbysiu/dox/core-ci?style=for-the-badge" alt="Core CI status badge" />
+          <img src="https://img.shields.io/github/actions/workflow/status/devzbysiu/dox/core-ci.yml?style=for-the-badge" alt="Core CI status badge" />
         </p>
       </td>
       <td>
         <p>
-          <img src="https://img.shields.io/github/workflow/status/devzbysiu/dox/client-ci?style=for-the-badge" alt="Core CI status badge" />
+          <img src="https://img.shields.io/github/actions/workflow/status/devzbysiu/dox/client-ci.yml?style=for-the-badge" alt="Core CI status badge" />
         </p>
       </td>
     </tr>
