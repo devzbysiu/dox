@@ -7,6 +7,7 @@ use crate::helpers::PathRefExt;
 use crate::result::GeneralErr;
 
 use fake::{Dummy, Fake};
+use std::convert::TryFrom;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use tracing::instrument;
@@ -65,7 +66,11 @@ impl SafePathBuf {
     }
 
     pub fn ext(&self) -> Result<Ext, GeneralErr> {
-        self.0.ext()
+        let path = &self.0;
+        match path.extension() {
+            Some(ext) => Ok(Ext::try_from(ext.to_str().unwrap())?),
+            None => Err(GeneralErr::InvalidExtension),
+        }
     }
 
     // unused is allowed because this fn is used in #[cfg(not(test))]

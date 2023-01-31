@@ -1,12 +1,7 @@
-use crate::entities::extension::Ext;
-use crate::result::GeneralErr;
-
 use base64::engine::general_purpose::STANDARD as b64;
 use base64::Engine;
-use std::convert::TryFrom;
 use std::fs::DirEntry;
 use std::path::Path;
-use tracing::instrument;
 
 pub trait DirEntryExt {
     fn filename(&self) -> String;
@@ -19,7 +14,6 @@ impl DirEntryExt for DirEntry {
 }
 
 pub trait PathRefExt {
-    fn ext(&self) -> Result<Ext, GeneralErr>;
     fn str(&self) -> &str;
     fn string(&self) -> String;
     fn filestem(&self) -> String;
@@ -36,15 +30,6 @@ pub trait PathRefExt {
 }
 
 impl<T: AsRef<Path>> PathRefExt for T {
-    #[instrument(skip(self))]
-    fn ext(&self) -> Result<Ext, GeneralErr> {
-        let path = self.as_ref();
-        match path.extension() {
-            Some(ext) => Ok(Ext::try_from(ext.to_str().unwrap())?),
-            None => Err(GeneralErr::InvalidExtension),
-        }
-    }
-
     fn str(&self) -> &str {
         self.as_ref().to_str().expect("path is not utf8")
     }
@@ -138,39 +123,6 @@ mod test {
         assert_eq!(filename, entry.filename());
 
         Ok(())
-    }
-
-    #[test]
-    fn test_ext_for_supported_extensions() -> Result<()> {
-        // given
-        let test_cases = vec![
-            ("png", Ext::Png),
-            ("jpg", Ext::Jpg),
-            ("jpeg", Ext::Jpg),
-            ("webp", Ext::Webp),
-            ("pdf", Ext::Pdf),
-        ];
-
-        for test_case in test_cases {
-            // when
-            let path = format!("/some-path/here.{}", test_case.0);
-            let path = Path::new(&path);
-
-            // then
-            assert_eq!(path.ext()?, test_case.1);
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    #[should_panic(expected = "failed to create extension from 'txt'")]
-    fn test_ext_for_not_supported_extensions() {
-        // given
-        let path = Path::new("/not-supported/extension.txt");
-
-        // then
-        let _ = path.ext(); // should panic
     }
 
     #[test]
