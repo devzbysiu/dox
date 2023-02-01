@@ -22,7 +22,8 @@ pub struct Pdf;
 impl Pdf {
     #[instrument(skip(self))]
     fn generate(&self, pdf_path: &SafePathBuf, out_path: &Path) -> Result<(), PreprocessorErr> {
-        create_dir_all(out_path.parent_path())?;
+        let parent_path = out_path.parent().expect("failed to get parent dir");
+        create_dir_all(parent_path)?;
         let page = first_page(pdf_path)?;
         let surface = paint_background_and_scale(&page)?;
         debug!("writing thumbnail to: '{}'", out_path.display());
@@ -33,7 +34,7 @@ impl Pdf {
 }
 
 fn first_page<P: AsRef<Path>>(pdf_path: P) -> Result<PopplerPage, PreprocessorErr> {
-    debug!("getting first page of PDF '{}'", pdf_path.as_ref().string());
+    debug!("getting first page of PDF '{}'", pdf_path.str());
     let doc: PopplerDocument = PopplerDocument::new_from_file(pdf_path, "")?;
     Ok(doc
         .get_page(FIRST)

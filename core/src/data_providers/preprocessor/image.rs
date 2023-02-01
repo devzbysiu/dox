@@ -1,5 +1,4 @@
 use crate::entities::location::Location;
-use crate::helpers::PathRefExt;
 use crate::result::{GeneralErr, PreprocessorErr};
 use crate::use_cases::services::preprocessor::FilePreprocessor;
 use std::fs::{self, create_dir_all};
@@ -27,7 +26,8 @@ impl FilePreprocessor for Image {
                 ));
             }
             let target_path = target_dir.join(p.rel_path());
-            create_dir_all(target_path.parent_path())?;
+            let parent_path = target_path.parent().expect("failed to get parent dir");
+            create_dir_all(parent_path)?;
             debug!("moving '{:?}' to '{}'", p, target_path.display());
             fs::copy(p, &target_path)?;
             result_paths.push(target_path.into());
@@ -42,6 +42,7 @@ mod test {
 
     use crate::entities::location::SafePathBuf;
     use crate::helpers::DirEntryExt;
+    use crate::helpers::PathRefExt;
 
     use anyhow::Result;
     use claim::assert_err;

@@ -1,6 +1,5 @@
 use crate::entities::location::SafePathBuf;
 use crate::entities::user::User;
-use crate::helpers::PathRefExt;
 use crate::result::UserConvErr;
 
 use async_once_cell::OnceCell;
@@ -15,8 +14,7 @@ impl TryFrom<&SafePathBuf> for User {
     type Error = UserConvErr;
 
     fn try_from(path: &SafePathBuf) -> Result<Self, Self::Error> {
-        let parent_dir = path.parent();
-        let parent_name = parent_dir.filename();
+        let parent_name = path.parent_name();
         let user_email = b64.decode(parent_name)?;
         let user_email = String::from_utf8(user_email)?;
         Ok(User::new(user_email))

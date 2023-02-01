@@ -3,9 +3,10 @@
 //! This is medium agnostic, so the particular way the documents are read is part of the
 //! implementation.
 use crate::entities::extension::Ext;
-use crate::helpers::PathRefExt;
 use crate::result::GeneralErr;
 
+use base64::engine::general_purpose::STANDARD as b64;
+use base64::Engine;
 use fake::{Dummy, Fake};
 use std::convert::TryFrom;
 use std::fmt::Display;
@@ -35,7 +36,7 @@ impl Location {
     }
 }
 
-// TODO: Is this always true? Think about the case when `SafePathBuf` us used in
+// TODO: Is this `always present` true? Think about the case when `SafePathBuf` us used in
 // [`std::fs::remove_file`] and similar.
 /// Represents a path of resource which is always present.
 ///
@@ -80,9 +81,68 @@ impl SafePathBuf {
         self.0.parent().unwrap() // can unwrap because it's checked during construction
     }
 
-    pub fn filename(&self) -> String {
-        self.0.filename()
+    pub fn is_file(&self) -> bool {
+        self.0.is_file()
     }
+
+    pub fn has_valid_ext(&self) -> bool {
+        let path = &self.0;
+        let Some(extension) = path.extension() else {
+            return false;
+        };
+        match extension.to_str() {
+            Some("png" | "jpg" | "jpeg" | "webp" | "pdf") => true,
+            Some(_) | None => false,
+        }
+    }
+
+    // TODO: Cover this with tests
+    pub fn is_in_user_dir(&self) -> bool {
+        // TODO: Add email validation and confirmation that the path is utf8 encoded
+        let dir_name = self.parent_name();
+        b64.decode(dir_name).is_ok()
+    }
+
+    // TODO: Cover this with tests
+    pub fn rel_stem(&self) -> String {
+        format!("{}/{}", self.parent_name(), self.filestem())
+    }
+
+    // TODO: Cover this with tests
+    pub fn rel_path(&self) -> String {
+        format!("{}/{}", self.parent_name(), self.filename())
+    }
+
+    // TODO: Cover this with tests
+    pub fn parent_name(&self) -> String {
+        filename_to_string(self.parent_path())
+    }
+
+    // TODO: Cover this with tests
+    pub fn parent_path(&self) -> &Path {
+        self.0.parent().expect("failed to get parent dir")
+    }
+
+    pub fn filestem(&self) -> String {
+        let path = &self.0;
+        path.file_stem()
+            .unwrap_or_else(|| panic!("path '{}' does not have a filestem", path.display()))
+            .to_string_lossy()
+            .to_string()
+    }
+
+    // TODO: Cover this with tests
+    pub fn filename(&self) -> String {
+        filename_to_string(&self.0)
+    }
+}
+
+fn filename_to_string<P: AsRef<Path>>(path: P) -> String {
+    let path = path.as_ref();
+    path.file_name()
+        .unwrap_or_else(|| panic!("path '{}' does not have a filename", path.display()))
+        .to_string_lossy()
+        .to_string()
 }
 
 impl AsRef<PathBuf> for SafePathBuf {
@@ -112,5 +172,70 @@ impl From<&str> for SafePathBuf {
 impl Display for SafePathBuf {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0.display())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use fake::{Fake, Faker};
+
+    #[test]
+    fn has_supported_extension_returns_true_for_supported_extensions() {
+        // given
+        let supported_extensions = vec!["png", "jpg", "jpeg", "webp", "pdf"];
+
+        for test_case in supported_extensions {
+            // when
+            let path = format!("/some-path/here.{test_case}");
+            let path = SafePathBuf::new(&path);
+
+            // then
+            assert!(path.has_valid_ext());
+        }
+    }
+
+    #[test]
+    fn false_is_returned_by_has_supported_extension_for_unsupported_extensions() {
+        // given
+        let unsupported_extension: String = Faker.fake(); // anything but supported ones
+
+        // when
+        let path = format!("/some-path/here.{unsupported_extension}");
+        let path = SafePathBuf::new(path);
+
+        // then
+        assert!(!path.has_valid_ext());
+    }
+
+    #[test]
+    fn test_filestem_in_path_ref_ext() {
+        // given
+        let path = SafePathBuf::from("/some-path/here");
+
+        // when
+        let filestem = path.filestem();
+
+        // then
+        assert_eq!(
+            path.0.file_stem().unwrap().to_string_lossy().to_string(),
+            filestem
+        );
+    }
+
+    #[test]
+    fn test_filename_in_path_ref_ext() {
+        // given
+        let path = SafePathBuf::from("/some-path/here");
+
+        // when
+        let filename = path.filename();
+
+        // then
+        assert_eq!(
+            path.0.file_name().unwrap().to_string_lossy().to_string(),
+            filename
+        );
     }
 }

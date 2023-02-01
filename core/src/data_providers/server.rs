@@ -127,7 +127,7 @@ mod test {
         assert_eq!(res.body, r#"{"entries":[]}"#);
 
         // when
-        app.upload_doc(doc("doc1.pdf"))?;
+        app.upload_doc(&doc("doc1.pdf"))?;
         app.wait_til_indexed();
 
         // TODO: for some reason, only one word search is working - fix it
@@ -155,7 +155,7 @@ mod test {
         assert_eq!(res.body, r#"{"entries":[]}"#);
 
         // when
-        app.upload_doc(doc("doc1.png"))?;
+        app.upload_doc(&doc("doc1.png"))?;
         app.wait_til_indexed();
 
         // TODO: for some reason, only one word search is working - fix it
@@ -179,7 +179,7 @@ mod test {
         let wrong_doc = "no-extension-doc";
 
         // when
-        let res = app.upload_doc(doc(wrong_doc))?;
+        let res = app.upload_doc(&doc(wrong_doc))?;
 
         // then
         assert_eq!(res.status, Status::from_code(415).unwrap());
@@ -200,7 +200,7 @@ mod test {
         let wrong_doc = "unsupported-extension-doc.abc";
 
         // when
-        let res = app.upload_doc(doc(wrong_doc))?;
+        let res = app.upload_doc(&doc(wrong_doc))?;
 
         // then
         assert_eq!(res.status, Status::from_code(415).unwrap());
@@ -277,7 +277,7 @@ mod test {
             .with_tracked_failing_cipher()
             .with_tracked_fs()
             .start()?;
-        let res = app.upload_doc(doc("doc1.pdf"))?;
+        let res = app.upload_doc(&doc("doc1.pdf"))?;
         assert_eq!(res.status, Status::Created);
 
         // when
@@ -298,7 +298,7 @@ mod test {
             .with_tracked_failing_cipher()
             .with_tracked_fs()
             .start()?;
-        let res = app.upload_doc(doc("doc1.pdf"))?;
+        let res = app.upload_doc(&doc("doc1.pdf"))?;
         assert_eq!(res.status, Status::Created);
 
         // when

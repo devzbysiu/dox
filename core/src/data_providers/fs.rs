@@ -2,7 +2,6 @@
 //!
 //! It uses just regular File System primitives to provide persistence.
 use crate::entities::location::SafePathBuf;
-use crate::helpers::PathRefExt;
 use crate::result::FsErr;
 use crate::use_cases::fs::Filesystem;
 
@@ -17,7 +16,7 @@ pub struct LocalFs;
 impl Filesystem for LocalFs {
     #[instrument(skip(self, buf))]
     fn save(&self, uri: PathBuf, buf: &[u8]) -> Result<(), FsErr> {
-        let parent_dir = uri.parent_path();
+        let parent_dir = uri.parent().expect("failed to get parent dir");
         if !parent_dir.exists() {
             create_dir_all(parent_dir)?;
             // NOTE: this is needed because when file creation happens immediately after directory

@@ -1,4 +1,4 @@
-use crate::helpers::PathRefExt;
+use crate::entities::location::SafePathBuf;
 use crate::result::EventReceiverErr;
 use crate::use_cases::receiver::{DocsEvent, EventReceiver};
 
@@ -29,9 +29,15 @@ impl FsEventReceiver {
 impl EventReceiver for FsEventReceiver {
     fn recv(&self) -> Result<DocsEvent, EventReceiverErr> {
         match self.watcher_rx.recv() {
-            Ok(DebouncedEvent::Create(path)) if is_valid(&path) => {
-                debug!("new doc detected: {}", path.display());
-                Ok(DocsEvent::Created(path.into()))
+            Ok(DebouncedEvent::Create(path)) => {
+                let safepath = SafePathBuf::new(path);
+                if safepath.is_file() && safepath.has_valid_ext() && safepath.is_in_user_dir() {
+                    debug!("new doc detected: {safepath}");
+                    Ok(DocsEvent::Created(safepath))
+                } else {
+                    warn!("invalid path: {safepath}");
+                    Ok(DocsEvent::Other)
+                }
             }
             Ok(e) => {
                 warn!("this FS event is not supported in FsEventReceiver: {:?}", e);
@@ -43,11 +49,6 @@ impl EventReceiver for FsEventReceiver {
             }
         }
     }
-}
-
-fn is_valid<P: AsRef<Path>>(path: P) -> bool {
-    let path = path.as_ref();
-    path.is_file() && path.has_supported_extension() && path.is_in_user_dir()
 }
 
 #[cfg(test)]

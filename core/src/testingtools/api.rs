@@ -1,3 +1,5 @@
+use crate::entities::location::SafePathBuf;
+
 use anyhow::Result;
 use retry::delay::Fixed;
 use retry::{retry, OperationResult};
@@ -6,12 +8,11 @@ use rocket::local::blocking::Client;
 use rocket::local::blocking::LocalResponse;
 use std::convert::TryFrom;
 use std::io::Read;
-use std::path::PathBuf;
 use thiserror::Error;
 use tracing::debug;
 
-pub fn doc<S: Into<String>>(name: S) -> PathBuf {
-    PathBuf::from(format!("res/{}", name.into()))
+pub fn doc<S: Into<String>>(name: S) -> SafePathBuf {
+    SafePathBuf::new(format!("res/{}", name.into()))
 }
 
 pub struct ApiResponse {

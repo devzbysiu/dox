@@ -1,5 +1,5 @@
 use crate::configuration::factories::{fs, repository, Context};
-use crate::helpers::PathRefExt;
+use crate::entities::location::SafePathBuf;
 use crate::startup::rocket;
 use crate::testingtools::api::ApiResponse;
 use crate::testingtools::services::encrypter::{
@@ -19,7 +19,6 @@ use rocket::local::blocking::Client;
 use rocket::serde::json::json;
 use std::convert::TryInto;
 use std::fs;
-use std::path::Path;
 use tracing::debug;
 use urlencoding::encode;
 
@@ -97,8 +96,8 @@ impl App {
         self.client.get(url.into()).dispatch().try_into()
     }
 
-    pub fn upload_doc<P: AsRef<Path>>(&self, path: P) -> Result<ApiResponse> {
-        let body = b64.encode(fs::read(&path)?);
+    pub fn upload_doc(&self, path: &SafePathBuf) -> Result<ApiResponse> {
+        let body = b64.encode(fs::read(path)?);
         let filename = path.filename();
         self.client
             .post("/document/upload")

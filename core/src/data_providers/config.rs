@@ -379,7 +379,7 @@ index_dir = "/index_dir"
         let (spy, loader) = ConfigLoaderSpy::create(config);
         let config_resolver = FsConfigResolver::new(loader);
         let path_override = Some(cfg_path);
-        let err_msg = format!("It needs to be a directory: '{}'", watched_dir.string());
+        let err_msg = format!("It needs to be a directory: '{}'", watched_dir.str());
 
         // when
         let res = config_resolver.handle_config(path_override);

@@ -3,7 +3,6 @@ use crate::entities::document::DocDetails;
 use crate::entities::file::{Filename, Thumbnailname};
 use crate::entities::location::{Location, SafePathBuf};
 use crate::entities::user::User;
-use crate::helpers::PathRefExt;
 use crate::result::ExtractorErr;
 use crate::use_cases::services::extractor::DataExtractor;
 
@@ -11,7 +10,6 @@ use pdf_extract::extract_text;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::convert::TryFrom;
 use std::fmt::Debug;
-use std::path::Path;
 use tracing::{instrument, trace};
 
 /// Extracts text from PDF file.
@@ -43,7 +41,7 @@ fn extract(path: &SafePathBuf) -> Result<DocDetails, ExtractorErr> {
     Ok(DocDetails::new(filename, text, thumbnailname, user))
 }
 
-fn thumbnail_name<P: AsRef<Path>>(path: P) -> String {
+fn thumbnail_name(path: &SafePathBuf) -> String {
     format!("{}.png", path.filestem())
 }
 
