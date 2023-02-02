@@ -74,7 +74,7 @@ impl FilePreprocessor for Pdf {
 mod test {
     use super::*;
 
-    use crate::helpers::DirEntryExt;
+    use crate::data_providers::preprocessor::test::DirEntryExt;
 
     use anyhow::Result;
     use claim::assert_err;
@@ -112,7 +112,7 @@ mod test {
         let user_dir = tmp_dir.path().read_dir()?.next().unwrap()?;
 
         // then
-        assert_eq!(user_dir.filename(), "res");
+        assert_eq!(user_dir.name(), "res");
         assert_eq!(user_dir.path().first_filename(), "doc1.png");
 
         Ok(())

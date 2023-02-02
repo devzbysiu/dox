@@ -5,6 +5,9 @@ use crate::data_providers::preprocessor::pdf::Pdf;
 use crate::entities::extension::Ext;
 use crate::use_cases::services::preprocessor::{Preprocessor, PreprocessorFactory};
 
+#[cfg(test)]
+pub use test::DirEntryExt;
+
 pub mod image;
 pub mod pdf;
 
@@ -37,6 +40,7 @@ mod test {
     use crate::helpers::PathRefExt;
 
     use anyhow::Result;
+    use std::fs::{read_dir, DirEntry, File};
     use tempfile::tempdir;
 
     #[test]
@@ -64,6 +68,32 @@ mod test {
             assert_eq!(tmp_dir.path().first_filename(), "res");
             assert_eq!(tmp_dir.path().join("res").first_filename(), test_case.2);
         }
+
+        Ok(())
+    }
+
+    pub trait DirEntryExt {
+        fn name(&self) -> String;
+    }
+
+    impl DirEntryExt for DirEntry {
+        fn name(&self) -> String {
+            self.file_name().to_str().unwrap().to_string()
+        }
+    }
+
+    #[test]
+    fn test_name_in_dir_entry_ext() -> Result<()> {
+        // given
+        let tmp_dir = tempdir()?;
+        File::create(tmp_dir.path().join("test-file"))?;
+
+        // when
+        let entry = read_dir(&tmp_dir)?.next().unwrap()?;
+        let filename = entry.file_name().to_str().unwrap().to_string();
+
+        // then
+        assert_eq!(filename, entry.name());
 
         Ok(())
     }

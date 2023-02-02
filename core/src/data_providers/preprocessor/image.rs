@@ -40,8 +40,8 @@ impl FilePreprocessor for Image {
 mod test {
     use super::*;
 
+    use crate::data_providers::preprocessor::test::DirEntryExt;
     use crate::entities::location::SafePathBuf;
-    use crate::helpers::DirEntryExt;
     use crate::helpers::PathRefExt;
 
     use anyhow::Result;
@@ -80,7 +80,7 @@ mod test {
         let user_dir = tmp_dir.path().read_dir()?.next().unwrap()?;
 
         // then
-        assert_eq!(user_dir.filename(), "res");
+        assert_eq!(user_dir.name(), "res");
         assert_eq!(user_dir.path().first_filename(), "doc1.png");
 
         Ok(())
