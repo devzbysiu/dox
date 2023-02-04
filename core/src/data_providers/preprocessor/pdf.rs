@@ -74,7 +74,7 @@ impl FilePreprocessor for Pdf {
 mod test {
     use super::*;
 
-    use crate::data_providers::preprocessor::test::DirEntryExt;
+    use crate::data_providers::preprocessor::DirEntryExt;
 
     use anyhow::Result;
     use claim::assert_err;

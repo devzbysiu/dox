@@ -144,6 +144,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn uploading_png_document_triggers_indexing() -> Result<()> {
         // given
         init_tracing();

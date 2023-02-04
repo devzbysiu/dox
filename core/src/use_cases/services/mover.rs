@@ -65,7 +65,7 @@ impl DocumentMover {
 }
 
 #[instrument(skip(fs, publ))]
-fn move_document(loc: &Location, fs: &Fs, dir: &PathBuf, mut publ: EventPublisher) -> Result<()> {
+fn move_document(loc: &Location, fs: &Fs, dir: &PathBuf, publ: EventPublisher) -> Result<()> {
     let Location::FS(paths) = loc;
     let mut dst_paths = Vec::new();
     for path in paths {

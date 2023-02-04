@@ -42,7 +42,7 @@ impl TxtExtractor {
         let extractor = factory.make(&loc.extension()?);
         let publ = self.bus.publisher();
         self.tp.spawn(move || {
-            if let Err(e) = extract(loc, &extractor, publ) {
+            if let Err(e) = extract(loc, &extractor, &publ) {
                 error!("extraction failed: '{}'", e);
             }
         });
@@ -50,7 +50,7 @@ impl TxtExtractor {
     }
 }
 
-fn extract(loc: Location, extr: &Extractor, mut publ: EventPublisher) -> Result<()> {
+fn extract(loc: Location, extr: &Extractor, publ: &EventPublisher) -> Result<()> {
     publ.send(BusEvent::DataExtracted(extr.extract_data(&loc)?))?;
     debug!("extraction finished");
     debug!("sending encryption request for: '{:?}'", loc);

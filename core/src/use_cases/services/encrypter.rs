@@ -25,7 +25,7 @@ impl Encrypter {
         // TODO: improve tracing of threads somehow. Currently, it's hard to debug because threads
         // do not appear as separate tracing's scopes
         thread::spawn(move || -> Result<()> {
-            let mut publ = self.bus.publisher();
+            let publ = self.bus.publisher();
             loop {
                 let ev = sub.recv()?;
                 match ev.clone() {

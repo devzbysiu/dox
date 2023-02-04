@@ -27,7 +27,7 @@ impl FileWatcher {
         debug!("spawning watching thread");
         thread::spawn(move || -> Result<()> {
             debug!("watching thread spawned");
-            let mut publ = self.bus.publisher();
+            let publ = self.bus.publisher();
             loop {
                 trace!("waiting for event from watcher");
                 match receiver.recv() {

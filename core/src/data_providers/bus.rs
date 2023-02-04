@@ -2,6 +2,7 @@
 //!
 //! It uses [`eventador`] library to build local event bus implementation.
 use std::fmt::Debug;
+use std::sync::{Arc, Mutex};
 
 use crate::result::BusErr;
 use crate::use_cases::bus::{
@@ -33,11 +34,11 @@ impl Debug for LocalBus {
 
 impl Bus for LocalBus {
     fn subscriber(&self) -> EventSubscriber {
-        Box::new(LocalSubscriber::new(self.eventador.subscribe()))
+        Arc::new(LocalSubscriber::new(self.eventador.subscribe()))
     }
 
     fn publisher(&self) -> EventPublisher {
-        Box::new(LocalPublisher::new(self.eventador.publisher()))
+        Arc::new(LocalPublisher::new(self.eventador.publisher()))
     }
 }
 
@@ -64,18 +65,20 @@ impl Subscriber for LocalSubscriber {
 ///
 /// It allows to send [`Event`]s.
 pub struct LocalPublisher {
-    publ: eventador::Publisher,
+    publ: Arc<Mutex<eventador::Publisher>>,
 }
 
 impl LocalPublisher {
     fn new(publ: eventador::Publisher) -> Self {
+        let publ = Arc::new(Mutex::new(publ));
         Self { publ }
     }
 }
 
 impl Publisher for LocalPublisher {
-    fn send(&mut self, event: BusEvent) -> Result<(), BusErr> {
-        self.publ.send(event);
+    fn send(&self, event: BusEvent) -> Result<(), BusErr> {
+        let mut publ = self.publ.lock().expect("poisoned mutex");
+        publ.send(event);
         Ok(())
     }
 }
@@ -114,7 +117,7 @@ mod test {
     fn events_can_be_send_via_publisher() -> Result<()> {
         // given
         let bus = LocalBus::new()?;
-        let mut publ = bus.publisher();
+        let publ = bus.publisher();
 
         // when
         let res = publ.send(BusEvent::PipelineFinished);
@@ -129,7 +132,7 @@ mod test {
     fn event_sent_can_be_received_only_one_time_by_the_same_subscriber() -> Result<()> {
         // given
         let bus = LocalBus::new()?;
-        let mut publ = bus.publisher();
+        let publ = bus.publisher();
         let sub = bus.subscriber();
 
         // when
@@ -146,7 +149,7 @@ mod test {
     fn each_subscriber_receive_its_own_copy_of_the_message() -> Result<()> {
         // given
         let bus = LocalBus::new()?;
-        let mut publ = bus.publisher();
+        let publ = bus.publisher();
         let sub1 = bus.subscriber();
         let sub2 = bus.subscriber();
 

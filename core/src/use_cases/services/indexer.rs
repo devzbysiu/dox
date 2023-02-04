@@ -60,7 +60,7 @@ impl Indexer {
 }
 
 #[instrument(skip(repo, publ))]
-fn index(doc_details: &[DocDetails], repo: &RepoWrite, mut publ: EventPublisher) -> Result<()> {
+fn index(doc_details: &[DocDetails], repo: &RepoWrite, publ: EventPublisher) -> Result<()> {
     debug!("start indexing docs");
     repo.index(doc_details)?;
     debug!("docs indexed");
@@ -69,7 +69,7 @@ fn index(doc_details: &[DocDetails], repo: &RepoWrite, mut publ: EventPublisher)
 }
 
 #[instrument(skip(repo, publ))]
-fn cleanup(loc: &Location, repo: &RepoWrite, mut publ: EventPublisher) -> Result<()> {
+fn cleanup(loc: &Location, repo: &RepoWrite, publ: EventPublisher) -> Result<()> {
     repo.delete(loc)?;
     publ.send(BusEvent::DataRemoved)?;
     Ok(())

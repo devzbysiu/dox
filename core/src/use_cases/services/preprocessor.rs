@@ -51,7 +51,7 @@ impl ThumbnailGenerator {
     fn do_thumbnail(&self, loc: Location, factory: &PreprocessorCreator) -> Result<()> {
         debug!("NewDocs in: '{:?}', starting preprocessing", loc);
         let preprocessor = factory.make(&loc.extension()?);
-        let publ = self.bus.publisher();
+        let publ = self.bus.publisher().clone();
         let dir = self.cfg.thumbnails_dir.clone();
         self.tp.spawn(move || {
             if let Err(e) = preprocess(&loc, &preprocessor, &dir, publ) {
@@ -79,7 +79,7 @@ fn preprocess(
     loc: &Location,
     prepr: &Preprocessor,
     dir: &PathBuf,
-    mut publ: EventPublisher,
+    publ: EventPublisher,
 ) -> Result<()> {
     let thumbnails_dir = dir.as_ref();
     let thumbnail_loc = prepr.preprocess(loc, thumbnails_dir)?;
@@ -91,7 +91,7 @@ fn preprocess(
 }
 
 #[instrument(skip(fs, publ))]
-fn remove_thumbnail(loc: &Location, fs: &Fs, mut publ: EventPublisher) -> Result<()> {
+fn remove_thumbnail(loc: &Location, fs: &Fs, publ: EventPublisher) -> Result<()> {
     let Location::FS(paths) = loc;
     for path in paths {
         fs.rm_file(path)?;

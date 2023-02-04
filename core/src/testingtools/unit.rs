@@ -10,11 +10,10 @@ use anyhow::{anyhow, Result};
 use base64::engine::general_purpose::STANDARD as b64;
 use base64::Engine;
 use std::fs::{self, create_dir_all};
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
 use std::thread;
 use std::time::Duration;
 use tempfile::{tempdir, TempDir};
-use tracing::debug;
 
 pub trait SubscriberExt {
     fn try_recv(self, timeout: Duration) -> Result<BusEvent>;
@@ -128,14 +127,30 @@ impl TestShim {
         Ok(())
     }
 
-    // TODO: this should have timeout, otherwise it will hung the tests.
-    // Currently, timeout is implemented in [`SubscriberExt`] but it spawns separate thread for
-    // waiting for an event. Because of that, it consumes `self` and this cannot be done here
-    // because I'm accepting `&self`.
     pub fn event_on_bus(&self, event: &BusEvent) -> Result<bool> {
-        let received = self.sub.recv()?;
-        debug!("received event: {:?}", received);
-        Ok(*event == received)
+        // let received = self.sub.recv()?;
+        // debug!("received event: {:?}", received);
+        // Ok(*event == received)
+
+        let (tx, rx) = channel();
+        let sub = self.sub.clone();
+        let t = thread::spawn(move || -> Result<()> {
+            tx.send(sub.recv()?)?;
+            Ok(())
+        });
+
+        thread::sleep(Duration::from_secs(2));
+
+        match rx.try_recv() {
+            Ok(received) => Ok(*event == received),
+            Err(TryRecvError::Empty) => {
+                drop(rx);
+                drop(t);
+                // receiving event took more than 2 seconds
+                Ok(false)
+            }
+            Err(TryRecvError::Disconnected) => unreachable!(),
+        }
     }
 
     pub fn test_location(&self) -> Location {
