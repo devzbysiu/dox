@@ -1,4 +1,4 @@
-use crate::configuration::factories::{fs, repository, Context};
+use crate::configuration::factories::{fs, state, Context};
 use crate::entities::location::SafePathBuf;
 use crate::startup::rocket;
 use crate::testingtools::api::ApiResponse;
@@ -28,7 +28,7 @@ pub fn start_test_app() -> Result<App> {
     Ok(App {
         client,
         config,
-        repo_spies: None,
+        state_spies: None,
         cipher_spies: None,
         fs_spies: None,
     })
@@ -39,7 +39,7 @@ pub fn test_app() -> Result<AppBuilder> {
     Ok(AppBuilder {
         ctx: Some(Context::new(&config)?),
         config: Some(config),
-        repo_spies: None,
+        state_spies: None,
         cipher_spies: None,
         fs_spies: None,
     })
@@ -49,7 +49,7 @@ pub struct App {
     client: Client,
     #[allow(unused)]
     config: TestConfig,
-    repo_spies: Option<StateSpies>,
+    state_spies: Option<StateSpies>,
     #[allow(unused)]
     cipher_spies: Option<CipherSpies>,
     fs_spies: Option<FsSpies>,
@@ -57,7 +57,7 @@ pub struct App {
 
 impl App {
     pub fn wait_til_indexed(&mut self) {
-        self.repo_spies().index_called();
+        self.state_spies().index_called();
     }
 
     #[allow(unused)]
@@ -69,10 +69,10 @@ impl App {
         self.fs_spies().rm_file_called();
     }
 
-    fn repo_spies(&self) -> &StateSpies {
-        self.repo_spies
+    fn state_spies(&self) -> &StateSpies {
+        self.state_spies
             .as_ref()
-            .unwrap_or_else(|| panic!("uninitialized tracked repo spies"))
+            .unwrap_or_else(|| panic!("uninitialized tracked state spies"))
     }
 
     fn cipher_spies(&self) -> &CipherSpies {
@@ -136,18 +136,18 @@ impl App {
 pub struct AppBuilder {
     config: Option<TestConfig>,
     ctx: Option<Context>,
-    repo_spies: Option<StateSpies>,
+    state_spies: Option<StateSpies>,
     cipher_spies: Option<CipherSpies>,
     fs_spies: Option<FsSpies>,
 }
 
 impl AppBuilder {
-    pub fn with_tracked_repo(mut self) -> Result<Self> {
+    pub fn with_tracked_state(mut self) -> Result<Self> {
         let cfg = self.config.as_ref().unwrap();
-        let (repo_spies, tracked_repo) = tracked(&repository(cfg)?);
+        let (state_spies, tracked_state) = tracked(&state(cfg)?);
         let ctx = self.ctx.as_mut().unwrap();
-        ctx.with_repo(tracked_repo);
-        self.repo_spies = Some(repo_spies);
+        ctx.with_state(tracked_state);
+        self.state_spies = Some(state_spies);
         Ok(self)
     }
 
@@ -175,14 +175,14 @@ impl AppBuilder {
 
     pub fn start(mut self) -> Result<App> {
         let client = Client::tracked(rocket(self.context()))?;
-        let repo_spies = self.repo_spies();
+        let state_spies = self.state_spies();
         let config = self.config();
         let cipher_spies = self.cipher_spies();
         let fs_spies = self.fs_spies();
         Ok(App {
             client,
             config,
-            repo_spies,
+            state_spies,
             cipher_spies,
             fs_spies,
         })
@@ -194,8 +194,8 @@ impl AppBuilder {
             .unwrap_or_else(|| panic!("uninitialized context"))
     }
 
-    fn repo_spies(&mut self) -> Option<StateSpies> {
-        self.repo_spies.take()
+    fn state_spies(&mut self) -> Option<StateSpies> {
+        self.state_spies.take()
     }
 
     fn cipher_spies(&mut self) -> Option<CipherSpies> {
@@ -214,8 +214,8 @@ impl AppBuilder {
 }
 
 impl Context {
-    pub fn with_repo(&mut self, repo: State) -> &Self {
-        self.repo = repo;
+    pub fn with_state(&mut self, state: State) -> &Self {
+        self.state = state;
         self
     }
 

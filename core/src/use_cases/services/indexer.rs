@@ -20,8 +20,8 @@ impl Indexer {
         Ok(Self { bus, tp })
     }
 
-    #[instrument(skip(self, repo))]
-    pub fn run(self, repo: StateWriter) {
+    #[instrument(skip(self, state))]
+    pub fn run(self, state: StateWriter) {
         // TODO: think about num_threads
         // TODO: should threadpool be shared between services?
         // TODO: should threadpool have it's own abstraction here?
@@ -29,48 +29,48 @@ impl Indexer {
         thread::spawn(move || -> Result<()> {
             loop {
                 match sub.recv()? {
-                    BusEvent::DataExtracted(doc_details) => self.index(doc_details, repo.clone()),
-                    BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(loc, repo.clone()),
+                    BusEvent::DataExtracted(doc_details) => self.index(doc_details, state.clone()),
+                    BusEvent::DocumentEncryptionFailed(loc) => self.cleanup(loc, state.clone()),
                     e => trace!("event not supported in indexer: '{:?}'", e),
                 }
             }
         });
     }
 
-    #[instrument(skip(self, repo))]
-    fn index(&self, doc_details: Vec<DocDetails>, repo: StateWriter) {
+    #[instrument(skip(self, state))]
+    fn index(&self, doc_details: Vec<DocDetails>, state: StateWriter) {
         let publ = self.bus.publisher();
         self.tp.spawn(move || {
-            if let Err(e) = index(&doc_details, &repo, publ) {
+            if let Err(e) = index(&doc_details, &state, publ) {
                 error!("indexing failed: '{}'", e);
             }
         });
     }
 
-    #[instrument(skip(self, repo))]
-    fn cleanup(&self, loc: Location, repo: StateWriter) {
+    #[instrument(skip(self, state))]
+    fn cleanup(&self, loc: Location, state: StateWriter) {
         debug!("pipeline failed, removing index data");
         let publ = self.bus.publisher();
         self.tp.spawn(move || {
-            if let Err(e) = cleanup(&loc, &repo, publ) {
+            if let Err(e) = cleanup(&loc, &state, publ) {
                 error!("cleanup failed: '{}'", e);
             }
         });
     }
 }
 
-#[instrument(skip(repo, publ))]
-fn index(doc_details: &[DocDetails], repo: &StateWriter, publ: EventPublisher) -> Result<()> {
+#[instrument(skip(state, publ))]
+fn index(doc_details: &[DocDetails], state: &StateWriter, publ: EventPublisher) -> Result<()> {
     debug!("start indexing docs");
-    repo.index(doc_details)?;
+    state.index(doc_details)?;
     debug!("docs indexed");
     publ.send(BusEvent::Indexed(doc_details.to_vec()))?;
     Ok(())
 }
 
-#[instrument(skip(repo, publ))]
-fn cleanup(loc: &Location, repo: &StateWriter, publ: EventPublisher) -> Result<()> {
-    repo.delete(loc)?;
+#[instrument(skip(state, publ))]
+fn cleanup(loc: &Location, state: &StateWriter, publ: EventPublisher) -> Result<()> {
+    state.delete(loc)?;
     publ.send(BusEvent::DataRemoved)?;
     Ok(())
 }
@@ -88,18 +88,18 @@ mod test {
     use fake::{Fake, Faker};
 
     #[test]
-    fn repo_write_is_used_to_index_data() -> Result<()> {
+    fn state_writer_is_used_to_index_data() -> Result<()> {
         // given
         init_tracing();
-        let (repo_spies, repo) = tracked(&working());
+        let (state_spies, state) = tracked(&working());
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo.writer());
+        Indexer::new(shim.bus())?.run(state.writer());
 
         // when
         shim.trigger_indexer(Faker.fake())?;
 
         // then
-        assert!(repo_spies.index_called());
+        assert!(state_spies.index_called());
 
         Ok(())
     }
@@ -108,9 +108,9 @@ mod test {
     fn indexed_event_is_send_on_success() -> Result<()> {
         // given
         init_tracing();
-        let repo = noop();
+        let state = noop();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo.writer());
+        Indexer::new(shim.bus())?.run(state.writer());
         let doc_details: Vec<DocDetails> = Faker.fake();
 
         // when
@@ -128,10 +128,10 @@ mod test {
     fn indexed_event_contains_docs_details_received_from_data_extracted_event() -> Result<()> {
         // given
         init_tracing();
-        let repo = noop();
+        let state = noop();
         let mut shim = create_test_shim()?;
         let docs_details: Vec<DocDetails> = Faker.fake();
-        Indexer::new(shim.bus())?.run(repo.writer());
+        Indexer::new(shim.bus())?.run(state.writer());
 
         // when
         shim.trigger_indexer(docs_details.clone())?;
@@ -148,9 +148,9 @@ mod test {
     fn no_event_is_send_when_indexing_error_occurs() -> Result<()> {
         // given
         init_tracing();
-        let repo = failing();
+        let state = failing();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo.writer());
+        Indexer::new(shim.bus())?.run(state.writer());
 
         // when
         shim.trigger_indexer(Faker.fake())?;
@@ -167,7 +167,7 @@ mod test {
     fn indexer_ignores_other_bus_events() -> Result<()> {
         // given
         init_tracing();
-        let repo = noop();
+        let state = noop();
         let mut shim = create_test_shim()?;
         let ignored_events = [
             BusEvent::NewDocs(Faker.fake()),
@@ -179,7 +179,7 @@ mod test {
             BusEvent::ThumbnailRemoved,
             BusEvent::PipelineFinished,
         ];
-        Indexer::new(shim.bus())?.run(repo.writer());
+        Indexer::new(shim.bus())?.run(state.writer());
 
         // when
         shim.send_events(&ignored_events)?;
@@ -200,34 +200,34 @@ mod test {
     fn failure_during_indexing_do_not_kill_service() -> Result<()> {
         // given
         init_tracing();
-        let (repo_spies, repo) = tracked(&failing());
+        let (state_spies, state) = tracked(&failing());
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo.writer());
+        Indexer::new(shim.bus())?.run(state.writer());
         shim.trigger_indexer(Faker.fake())?;
-        assert!(repo_spies.index_called());
+        assert!(state_spies.index_called());
 
         // when
         shim.trigger_indexer(Faker.fake())?;
 
         // then
-        assert!(repo_spies.index_called());
+        assert!(state_spies.index_called());
 
         Ok(())
     }
 
     #[test]
-    fn repo_removes_data_when_document_encryption_failed_event_appears() -> Result<()> {
+    fn state_removes_data_when_document_encryption_failed_event_appears() -> Result<()> {
         // given
         init_tracing();
-        let (repo_spies, repo) = tracked(&noop());
+        let (state_spies, state) = tracked(&noop());
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo.writer());
+        Indexer::new(shim.bus())?.run(state.writer());
 
         // when
         shim.trigger_document_encryption_failure()?;
 
         // then
-        assert!(repo_spies.delete_called());
+        assert!(state_spies.delete_called());
 
         Ok(())
     }

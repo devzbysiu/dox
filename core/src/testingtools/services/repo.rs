@@ -11,8 +11,8 @@ use anyhow::{anyhow, Result};
 use std::sync::Arc;
 use tracing::instrument;
 
-pub fn tracked(repo: &State) -> (StateSpies, State) {
-    TrackedState::wrap(repo)
+pub fn tracked(state: &State) -> (StateSpies, State) {
+    TrackedState::wrap(state)
 }
 
 pub struct TrackedState {
@@ -21,7 +21,7 @@ pub struct TrackedState {
 }
 
 impl TrackedState {
-    fn wrap(repo: &State) -> (StateSpies, State) {
+    fn wrap(state: &State) -> (StateSpies, State) {
         let (search_tx, search_spy) = pipe();
         let (all_docs_tx, all_docs_spy) = pipe();
 
@@ -31,8 +31,8 @@ impl TrackedState {
         (
             StateSpies::new(search_spy, all_docs_spy, index_spy, delete_spy),
             Box::new(Self {
-                reader: TrackedStateReader::create(repo.reader(), search_tx, all_docs_tx),
-                writer: TrackedStateWriter::create(repo.writer(), index_tx, delete_tx),
+                reader: TrackedStateReader::create(state.reader(), search_tx, all_docs_tx),
+                writer: TrackedStateWriter::create(state.writer(), index_tx, delete_tx),
             }),
         )
     }

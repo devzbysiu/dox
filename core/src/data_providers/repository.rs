@@ -4,7 +4,7 @@
 use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
 use crate::entities::user::User;
-use crate::result::{IndexerErr, RepositoryErr, SearchErr};
+use crate::result::{IndexerErr, SearchErr, StateErr};
 use crate::use_cases::config::Config;
 use crate::use_cases::repository::{
     AppState, AppStateReader, AppStateWriter, SearchEntry, SearchResult, State, StateReader,
@@ -35,9 +35,9 @@ pub struct TantivyState {
 }
 
 impl TantivyState {
-    pub fn create(cfg: &Config) -> Result<State, RepositoryErr> {
+    pub fn create(cfg: &Config) -> Result<State, StateErr> {
         if cfg.index_dir.exists() && cfg.index_dir.is_file() {
-            return Err(RepositoryErr::InvalidIndexPath(format!(
+            return Err(StateErr::InvalidIndexPath(format!(
                 "It needs to be a directory: '{}'",
                 cfg.index_dir.display()
             )));
@@ -345,7 +345,7 @@ mod test {
         // given
         init_tracing();
         let config = create_config()?;
-        let repo = TantivyState::create(&config)?;
+        let state = TantivyState::create(&config)?;
         let user_email = FAKE_USER_EMAIL;
         let user = User::new(user_email);
         let tuples_to_index = vec![
@@ -382,10 +382,10 @@ mod test {
         ];
 
         // when
-        repo.writer().index(&tuples_to_index)?;
+        state.writer().index(&tuples_to_index)?;
         // TODO: this test should check only indexing but it's also
         // searching via all_documents
-        let all_docs = repo.reader().all_docs(user)?;
+        let all_docs = state.reader().all_docs(user)?;
 
         // then
         assert_eq!(
@@ -408,7 +408,7 @@ mod test {
         // given
         init_tracing();
         let config = create_config()?;
-        let repo = TantivyState::create(&config)?;
+        let state = TantivyState::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
             DocDetails::new(
@@ -444,8 +444,8 @@ mod test {
         ];
 
         // when
-        repo.writer().index(&tuples_to_index)?;
-        let results = repo.reader().search(user, "line".into())?;
+        state.writer().index(&tuples_to_index)?;
+        let results = state.reader().search(user, "line".into())?;
 
         // then
         assert_eq!(
@@ -461,7 +461,7 @@ mod test {
         // given
         init_tracing();
         let config = create_config()?;
-        let repo = TantivyState::create(&config)?;
+        let state = TantivyState::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
             DocDetails::new(
@@ -485,11 +485,11 @@ mod test {
         ];
 
         // when
-        repo.writer().index(&tuples_to_index)?;
+        state.writer().index(&tuples_to_index)?;
         // NOTE: it's not the same word as above, two letters of fuzziness is fine
-        let first_results = repo.reader().search(user.clone(), "9fAB".into())?;
+        let first_results = state.reader().search(user.clone(), "9fAB".into())?;
         // NOTE: three letters is too much
-        let second_results = repo.reader().search(user, "9ABC".into())?;
+        let second_results = state.reader().search(user, "9ABC".into())?;
 
         // then
         assert_eq!(
@@ -506,7 +506,7 @@ mod test {
         // given
         init_tracing();
         let config = create_config()?;
-        let repo = TantivyState::create(&config)?;
+        let state = TantivyState::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
             DocDetails::new(
@@ -540,8 +540,8 @@ mod test {
                 user.clone(),
             ),
         ];
-        repo.writer().index(&tuples_to_index)?;
-        let res = repo.reader().search(user.clone(), "9fZX".into())?;
+        state.writer().index(&tuples_to_index)?;
+        let res = state.reader().search(user.clone(), "9fZX".into())?;
         assert_eq!(
             res,
             vec![
@@ -555,8 +555,8 @@ mod test {
         let loc = Location::FS(vec!["/any/path/filename3".into()]);
 
         // when
-        repo.writer().delete(&loc)?;
-        let res = repo.reader().search(user, "9fZX".into())?;
+        state.writer().delete(&loc)?;
+        let res = state.reader().search(user, "9fZX".into())?;
 
         // then
         assert_eq!(res, Vec::new().into());
@@ -569,7 +569,7 @@ mod test {
         // given
         init_tracing();
         let config = create_config()?;
-        let repo = TantivyState::create(&config)?;
+        let state = TantivyState::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
             DocDetails::new(
@@ -603,8 +603,8 @@ mod test {
                 user.clone(),
             ),
         ];
-        repo.writer().index(&tuples_to_index)?;
-        let res = repo.reader().search(user.clone(), "9fZX".into())?;
+        state.writer().index(&tuples_to_index)?;
+        let res = state.reader().search(user.clone(), "9fZX".into())?;
         assert_eq!(
             res,
             vec![
@@ -618,8 +618,8 @@ mod test {
         let loc = Location::FS(vec!["/any/path/thumbnail3".into()]);
 
         // when
-        repo.writer().delete(&loc)?;
-        let res = repo.reader().search(user, "9fZX".into())?;
+        state.writer().delete(&loc)?;
+        let res = state.reader().search(user, "9fZX".into())?;
 
         // then
         assert_eq!(res, Vec::new().into());
@@ -632,14 +632,14 @@ mod test {
         // given
         init_tracing();
         let config = create_config()?;
-        let repo = TantivyState::create(&config)?;
+        let state = TantivyState::create(&config)?;
         // NOTE: Index data under fake user (inside `tuples_to_index`), then `delete` with test
         // `User` implementation which is different user
-        repo.writer().index(&[Faker.fake()])?;
+        state.writer().index(&[Faker.fake()])?;
         let loc = Location::FS(vec![Faker.fake()]);
 
         // when
-        let res = repo.writer().delete(&loc);
+        let res = state.writer().delete(&loc);
 
         // then
         assert!(matches!(res, Err(IndexerErr::NoIndex(_))));

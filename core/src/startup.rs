@@ -22,7 +22,7 @@ use tracing::{debug, instrument};
 pub fn rocket(ctx: Context) -> Rocket<Build> {
     let fs = ctx.fs.clone();
     let cfg = ctx.cfg.clone();
-    let (repo_read, cipher_read) = setup_core(ctx).expect("failed to setup core");
+    let (state_reader, cipher_read) = setup_core(ctx).expect("failed to setup core");
 
     debug!("starting server...");
     rocket::build()
@@ -36,7 +36,7 @@ pub fn rocket(ctx: Context) -> Rocket<Build> {
                 receive_document
             ],
         )
-        .manage(repo_read)
+        .manage(state_reader)
         .manage(cipher_read)
         .manage(fs)
         .manage(cfg)
@@ -50,7 +50,7 @@ fn setup_core(ctx: Context) -> Result<(StateReader, CipherRead), SetupErr> {
         event_watcher,
         preprocessor_factory,
         extractor_factory,
-        repo,
+        state,
         cipher,
     } = ctx;
 
@@ -65,8 +65,8 @@ fn setup_core(ctx: Context) -> Result<(StateReader, CipherRead), SetupErr> {
     document_mover.run(fs.clone());
     thumbnail_generator.run(preprocessor_factory, fs);
     extractor.run(extractor_factory);
-    indexer.run(repo.writer());
+    indexer.run(state.writer());
     encrypter.run(cipher.write());
 
-    Ok((repo.reader(), cipher.read()))
+    Ok((state.reader(), cipher.read()))
 }

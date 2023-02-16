@@ -19,7 +19,7 @@ use tracing::instrument;
 type Cfg = State<Config>;
 type Fs = State<Filesystem>;
 type Cipher = State<CipherRead>;
-type Repo = State<StateReader>;
+type AppState = State<StateReader>;
 type Doc = Json<Document>;
 
 type SearchRes = Result<Json<SearchResult>, SearchErr>;
@@ -28,10 +28,10 @@ type GetAllThumbsRes = Result<Json<SearchResult>, ThumbnailReadErr>;
 type GetDocRes = Result<Option<Vec<u8>>, DocumentReadErr>;
 type PostDocRes = Result<(Status, String), DocumentSaveErr>;
 
-#[instrument(skip(repo))]
+#[instrument(skip(state))]
 #[get("/search?<q>")]
-pub fn search(user: User, q: String, repo: &Repo) -> SearchRes {
-    Ok(Json(repo.search(user, q).context("Searching failed.")?))
+pub fn search(user: User, q: String, state: &AppState) -> SearchRes {
+    Ok(Json(state.search(user, q).context("Searching failed.")?))
 }
 
 #[instrument(skip(fs, cipher))]
@@ -42,10 +42,10 @@ pub fn thumbnail(user: User, name: String, cfg: &Cfg, fs: &Fs, cipher: &Cipher) 
     Ok(Some(cipher.decrypt(&buf).context("Image decrypt failed.")?))
 }
 
-#[instrument(skip(repo))]
+#[instrument(skip(state))]
 #[get("/thumbnails/all")]
-pub fn all_thumbnails(user: User, repo: &Repo) -> GetAllThumbsRes {
-    Ok(Json(repo.all_docs(user).context("Failed to read docs.")?))
+pub fn all_thumbnails(user: User, state: &AppState) -> GetAllThumbsRes {
+    Ok(Json(state.all_docs(user).context("Failed to read docs.")?))
 }
 
 #[instrument(skip(fs, cipher))]
@@ -119,7 +119,7 @@ mod test {
     fn uploading_pdf_document_triggers_indexing() -> Result<()> {
         // given
         init_tracing();
-        let mut app = test_app()?.with_tracked_repo()?.start()?;
+        let mut app = test_app()?.with_tracked_state()?.start()?;
         let search_term = "zdjęcie";
 
         let res = app.search(search_term)?;
@@ -148,7 +148,7 @@ mod test {
     fn uploading_png_document_triggers_indexing() -> Result<()> {
         // given
         init_tracing();
-        let mut app = test_app()?.with_tracked_repo()?.start()?;
+        let mut app = test_app()?.with_tracked_state()?.start()?;
         let search_term = "Parlamentarny";
 
         let res = app.search(search_term)?;

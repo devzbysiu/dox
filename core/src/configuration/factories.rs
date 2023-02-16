@@ -6,7 +6,7 @@ use crate::data_providers::fs::LocalFs;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::receiver::FsEventReceiver;
 use crate::data_providers::repository::TantivyState;
-use crate::result::{BusErr, EventReceiverErr, RepositoryErr, SetupErr};
+use crate::result::{BusErr, EventReceiverErr, SetupErr, StateErr};
 use crate::use_cases::bus::EventBus;
 use crate::use_cases::cipher::Cipher;
 use crate::use_cases::config::{CfgLoader, CfgResolver, Config};
@@ -25,7 +25,7 @@ pub struct Context {
     pub event_watcher: EventRecv,
     pub preprocessor_factory: PreprocessorCreator,
     pub extractor_factory: ExtractorCreator,
-    pub repo: State,
+    pub state: State,
     pub cipher: Cipher,
 }
 
@@ -39,7 +39,7 @@ impl Context {
             event_watcher: event_watcher(cfg)?,
             preprocessor_factory: preprocessor_factory(),
             extractor_factory: extractor_factory(),
-            repo: repository(cfg)?,
+            state: state(cfg)?,
             cipher: cipher(),
         })
     }
@@ -65,7 +65,7 @@ pub fn extractor_factory() -> ExtractorCreator {
     Box::new(ExtractorFactoryImpl)
 }
 
-pub fn repository<C: AsRef<Config>>(cfg: &C) -> Result<State, RepositoryErr> {
+pub fn state<C: AsRef<Config>>(cfg: &C) -> Result<State, StateErr> {
     let cfg = cfg.as_ref();
     TantivyState::create(cfg)
 }

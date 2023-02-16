@@ -265,8 +265,8 @@ pub enum EventReceiverErr {
 }
 
 #[derive(Debug, Error)]
-pub enum RepositoryErr {
-    #[error("Failed to create repository.")]
+pub enum StateErr {
+    #[error("Failed to create state.")]
     Creation(#[from] notify::Error),
 
     #[error("Invalid index path: '{0}'")]
@@ -353,8 +353,8 @@ pub enum SetupErr {
     #[error("Failed to create receiver.")]
     EventReceiver(#[from] EventReceiverErr),
 
-    #[error("Failed to create repository.")]
-    Repository(#[from] RepositoryErr),
+    #[error("Failed to create state.")]
+    State(#[from] StateErr),
 
     #[error("Failed to run document mover.")]
     Mover(#[from] MoverErr),
