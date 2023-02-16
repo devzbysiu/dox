@@ -4,17 +4,17 @@ use crate::result::CipherErr;
 use std::sync::Arc;
 
 pub type Cipher = Box<dyn CipherStrategy>;
-pub type CipherRead = Arc<dyn CipherReadStrategy>;
-pub type CipherWrite = Arc<dyn CipherWriteStrategy>;
+pub type CipherReader = Arc<dyn CipherReaderStrategy>;
+pub type CipherWriter = Arc<dyn CipherWriterStrategy>;
 
 /// Exposes tools for decrypting (`read`) and encrypting (`write`) data.
 pub trait CipherStrategy: Send {
-    fn read(&self) -> CipherRead;
-    fn write(&self) -> CipherWrite;
+    fn reader(&self) -> CipherReader;
+    fn writer(&self) -> CipherWriter;
 }
 
 /// Abstracts decrypting data.
-pub trait CipherReadStrategy: Sync + Send {
+pub trait CipherReaderStrategy: Sync + Send {
     /// Decrypts data passed in `buf` buffer.
     ///
     /// Returns `Vec` containing decrypted data.
@@ -22,7 +22,7 @@ pub trait CipherReadStrategy: Sync + Send {
 }
 
 /// Abstracts encrypting data.
-pub trait CipherWriteStrategy: Sync + Send {
+pub trait CipherWriterStrategy: Sync + Send {
     /// Encrypts data passed in `buf` buffer.
     ///
     /// Returns `Vec` containing encrypted data.

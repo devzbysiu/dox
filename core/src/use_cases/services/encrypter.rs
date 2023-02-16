@@ -1,7 +1,7 @@
 use crate::entities::location::{Location, SafePathBuf};
 use crate::result::EncrypterErr;
 use crate::use_cases::bus::{BusEvent, EventBus};
-use crate::use_cases::cipher::CipherWrite;
+use crate::use_cases::cipher::CipherWriter;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use std::fs;
@@ -20,7 +20,7 @@ impl Encrypter {
     }
 
     #[instrument(skip(self, cipher))]
-    pub fn run(self, cipher: CipherWrite) {
+    pub fn run(self, cipher: CipherWriter) {
         let sub = self.bus.subscriber();
         // TODO: improve tracing of threads somehow. Currently, it's hard to debug because threads
         // do not appear as separate tracing's scopes
@@ -45,7 +45,7 @@ impl Encrypter {
     }
 }
 
-fn encrypt_all(location: &Location, cipher: &CipherWrite) -> Result<bool> {
+fn encrypt_all(location: &Location, cipher: &CipherWriter) -> Result<bool> {
     debug!("encryption request: '{:?}', starting encryption", location);
     let Location::FS(paths) = location;
     paths
@@ -63,7 +63,7 @@ fn report_errors(res: &Result<()>) {
     }
 }
 
-fn encrypt(cipher: &CipherWrite, path: &SafePathBuf) -> Result<()> {
+fn encrypt(cipher: &CipherWriter, path: &SafePathBuf) -> Result<()> {
     let encrypted = cipher.encrypt(&fs::read(path)?)?;
     fs::write(path, encrypted)?;
     Ok(())
@@ -95,7 +95,7 @@ mod test {
         init_tracing();
         let (cipher_spies, cipher) = tracked(&working());
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(cipher.write());
+        Encrypter::new(shim.bus()).run(cipher.writer());
 
         // when
         shim.trigger_thumbail_encryption()?;
@@ -112,7 +112,7 @@ mod test {
         init_tracing();
         let (cipher_spies, cipher) = tracked(&working());
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(cipher.write());
+        Encrypter::new(shim.bus()).run(cipher.writer());
 
         // when
         shim.trigger_document_encryption()?;
@@ -129,7 +129,7 @@ mod test {
         init_tracing();
         let cipher = noop();
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(cipher.write());
+        Encrypter::new(shim.bus()).run(cipher.writer());
 
         // when
         shim.trigger_thumbail_encryption()?;
@@ -148,7 +148,7 @@ mod test {
         init_tracing();
         let cipher = noop();
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(cipher.write());
+        Encrypter::new(shim.bus()).run(cipher.writer());
 
         // when
         shim.trigger_document_encryption()?;
@@ -167,7 +167,7 @@ mod test {
         init_tracing();
         let (cipher_spies, cipher) = tracked(&failing());
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(cipher.write());
+        Encrypter::new(shim.bus()).run(cipher.writer());
 
         // when
         shim.trigger_thumbail_encryption()?;
@@ -187,7 +187,7 @@ mod test {
         init_tracing();
         let (cipher_spies, cipher) = tracked(&failing());
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(cipher.write());
+        Encrypter::new(shim.bus()).run(cipher.writer());
 
         // when
         shim.trigger_document_encryption()?;
@@ -216,7 +216,7 @@ mod test {
             BusEvent::ThumbnailRemoved,
             BusEvent::DataRemoved,
         ];
-        Encrypter::new(shim.bus()).run(cipher.write());
+        Encrypter::new(shim.bus()).run(cipher.writer());
 
         // when
         shim.send_events(&ignored_events)?;
@@ -240,7 +240,7 @@ mod test {
         // given
         let (cipher_spies, cipher) = tracked(&failing());
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(cipher.write());
+        Encrypter::new(shim.bus()).run(cipher.writer());
         shim.trigger_thumbail_encryption()?;
         assert!(cipher_spies.encrypt_called());
 
@@ -258,7 +258,7 @@ mod test {
         // given
         let (cipher_spies, cipher) = tracked(&failing());
         let mut shim = create_test_shim()?;
-        Encrypter::new(shim.bus()).run(cipher.write());
+        Encrypter::new(shim.bus()).run(cipher.writer());
         shim.trigger_document_encryption()?;
         assert!(cipher_spies.encrypt_called());
 

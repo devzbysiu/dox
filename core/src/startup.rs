@@ -5,7 +5,7 @@ use crate::data_providers::server::{
     all_thumbnails, document, receive_document, search, thumbnail,
 };
 use crate::result::SetupErr;
-use crate::use_cases::cipher::CipherRead;
+use crate::use_cases::cipher::CipherReader;
 use crate::use_cases::services::encrypter::Encrypter;
 use crate::use_cases::services::extractor::TxtExtractor;
 use crate::use_cases::services::indexer::Indexer;
@@ -22,7 +22,7 @@ use tracing::{debug, instrument};
 pub fn rocket(ctx: Context) -> Rocket<Build> {
     let fs = ctx.fs.clone();
     let cfg = ctx.cfg.clone();
-    let (state_reader, cipher_read) = setup_core(ctx).expect("failed to setup core");
+    let (state_reader, cipher_reader) = setup_core(ctx).expect("failed to setup core");
 
     debug!("starting server...");
     rocket::build()
@@ -37,12 +37,12 @@ pub fn rocket(ctx: Context) -> Rocket<Build> {
             ],
         )
         .manage(state_reader)
-        .manage(cipher_read)
+        .manage(cipher_reader)
         .manage(fs)
         .manage(cfg)
 }
 
-fn setup_core(ctx: Context) -> Result<(StateReader, CipherRead), SetupErr> {
+fn setup_core(ctx: Context) -> Result<(StateReader, CipherReader), SetupErr> {
     let Context {
         cfg,
         bus,
@@ -66,7 +66,7 @@ fn setup_core(ctx: Context) -> Result<(StateReader, CipherRead), SetupErr> {
     thumbnail_generator.run(preprocessor_factory, fs);
     extractor.run(extractor_factory);
     indexer.run(state.writer());
-    encrypter.run(cipher.write());
+    encrypter.run(cipher.writer());
 
-    Ok((state.reader(), cipher.read()))
+    Ok((state.reader(), cipher.reader()))
 }

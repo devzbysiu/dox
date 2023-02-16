@@ -2,7 +2,7 @@ use crate::entities::extension::supported_extensions;
 use crate::entities::file::{Filename, Thumbnailname};
 use crate::entities::user::User;
 use crate::result::{DocumentReadErr, DocumentSaveErr, SearchErr, ThumbnailReadErr};
-use crate::use_cases::cipher::CipherRead;
+use crate::use_cases::cipher::CipherReader;
 use crate::use_cases::config::Config;
 use crate::use_cases::fs::Fs as Filesystem;
 use crate::use_cases::state::{SearchResult, StateReader};
@@ -18,7 +18,7 @@ use tracing::instrument;
 
 type Cfg = State<Config>;
 type Fs = State<Filesystem>;
-type Cipher = State<CipherRead>;
+type Cipher = State<CipherReader>;
 type AppState = State<StateReader>;
 type Doc = Json<Document>;
 

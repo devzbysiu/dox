@@ -1,7 +1,7 @@
 use crate::result::CipherErr;
 use crate::testingtools::{pipe, MutexExt, Spy, Tx};
 use crate::use_cases::cipher::{
-    Cipher, CipherRead, CipherReadStrategy, CipherStrategy, CipherWrite, CipherWriteStrategy,
+    Cipher, CipherReader, CipherReaderStrategy, CipherStrategy, CipherWriter, CipherWriterStrategy,
 };
 
 use anyhow::Result;
@@ -13,8 +13,8 @@ pub fn tracked(cipher: &Cipher) -> (CipherSpies, Cipher) {
 }
 
 pub struct TrackedCipher {
-    read: CipherRead,
-    write: CipherWrite,
+    reader: CipherReader,
+    writer: CipherWriter,
 }
 
 impl TrackedCipher {
@@ -25,53 +25,53 @@ impl TrackedCipher {
         (
             CipherSpies::new(read_spy, write_spy),
             Box::new(Self {
-                read: TrackedCipherRead::create(cipher.read(), read_tx),
-                write: TrackedCipherWrite::create(cipher.write(), write_tx),
+                reader: TrackedCipherRead::create(cipher.reader(), read_tx),
+                writer: TrackedCipherWrite::create(cipher.writer(), write_tx),
             }),
         )
     }
 }
 
 impl CipherStrategy for TrackedCipher {
-    fn read(&self) -> CipherRead {
-        self.read.clone()
+    fn reader(&self) -> CipherReader {
+        self.reader.clone()
     }
 
-    fn write(&self) -> CipherWrite {
-        self.write.clone()
+    fn writer(&self) -> CipherWriter {
+        self.writer.clone()
     }
 }
 
 pub struct TrackedCipherRead {
-    read: CipherRead,
+    reader: CipherReader,
     #[allow(unused)]
     tx: Tx,
 }
 
 impl TrackedCipherRead {
-    fn create(read: CipherRead, tx: Tx) -> CipherRead {
-        Arc::new(Self { read, tx })
+    fn create(reader: CipherReader, tx: Tx) -> CipherReader {
+        Arc::new(Self { reader, tx })
     }
 }
 
-impl CipherReadStrategy for TrackedCipherRead {
+impl CipherReaderStrategy for TrackedCipherRead {
     fn decrypt(&self, src_buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
-        self.read.decrypt(src_buf)
+        self.reader.decrypt(src_buf)
     }
 }
 
 pub struct TrackedCipherWrite {
-    write: CipherWrite,
+    write: CipherWriter,
     tx: Tx,
 }
 
 impl TrackedCipherWrite {
-    fn create(write: CipherWrite, tx: Tx) -> CipherWrite {
+    fn create(write: CipherWriter, tx: Tx) -> CipherWriter {
         Arc::new(Self { write, tx })
     }
 }
 
-impl CipherWriteStrategy for TrackedCipherWrite {
+impl CipherWriterStrategy for TrackedCipherWrite {
     fn encrypt(&self, src_buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
         debug!("before encrypting");
         self.tx.signal();
@@ -83,25 +83,25 @@ impl CipherWriteStrategy for TrackedCipherWrite {
 
 pub struct CipherSpies {
     #[allow(unused)]
-    read_spy: Spy,
-    write_spy: Spy,
+    reader_spy: Spy,
+    writer_spy: Spy,
 }
 
 impl CipherSpies {
-    fn new(read_spy: Spy, write_spy: Spy) -> Self {
+    fn new(reader_spy: Spy, writer_spy: Spy) -> Self {
         Self {
-            read_spy,
-            write_spy,
+            reader_spy,
+            writer_spy,
         }
     }
 
     #[allow(unused)]
     pub fn decrypt_called(&self) -> bool {
-        self.read_spy.method_called()
+        self.reader_spy.method_called()
     }
 
     pub fn encrypt_called(&self) -> bool {
-        self.write_spy.method_called()
+        self.writer_spy.method_called()
     }
 }
 
@@ -110,52 +110,52 @@ pub fn failing() -> Cipher {
 }
 
 pub struct FailingCipher {
-    read: CipherRead,
-    write: CipherWrite,
+    reader: CipherReader,
+    writer: CipherWriter,
 }
 
 impl FailingCipher {
     fn make() -> Cipher {
         Box::new(Self {
-            read: FailingCipherRead::new(),
-            write: FailingCipherWrite::new(),
+            reader: FailingCipherReader::new(),
+            writer: FailingCipherWriter::new(),
         })
     }
 }
 
 impl CipherStrategy for FailingCipher {
-    fn read(&self) -> CipherRead {
-        self.read.clone()
+    fn reader(&self) -> CipherReader {
+        self.reader.clone()
     }
 
-    fn write(&self) -> CipherWrite {
-        self.write.clone()
+    fn writer(&self) -> CipherWriter {
+        self.writer.clone()
     }
 }
 
-pub struct FailingCipherRead;
+pub struct FailingCipherReader;
 
-impl FailingCipherRead {
+impl FailingCipherReader {
     pub fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
 
-impl CipherReadStrategy for FailingCipherRead {
+impl CipherReaderStrategy for FailingCipherReader {
     fn decrypt(&self, _src_buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
         Err(CipherErr::Chacha(chacha20poly1305::Error))
     }
 }
 
-pub struct FailingCipherWrite;
+pub struct FailingCipherWriter;
 
-impl FailingCipherWrite {
+impl FailingCipherWriter {
     pub fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
 
-impl CipherWriteStrategy for FailingCipherWrite {
+impl CipherWriterStrategy for FailingCipherWriter {
     fn encrypt(&self, _src_buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
         Err(CipherErr::Chacha(chacha20poly1305::Error))
     }
@@ -166,52 +166,52 @@ pub fn working() -> Cipher {
 }
 
 struct WorkingCipher {
-    read: CipherRead,
-    write: CipherWrite,
+    reader: CipherReader,
+    writer: CipherWriter,
 }
 
 impl WorkingCipher {
     fn make() -> Cipher {
         Box::new(Self {
-            read: WorkingCipherRead::new(),
-            write: WorkingCipherWrite::new(),
+            reader: WorkingCipherReader::new(),
+            writer: WorkingCipherWriter::new(),
         })
     }
 }
 
 impl CipherStrategy for WorkingCipher {
-    fn read(&self) -> CipherRead {
-        self.read.clone()
+    fn reader(&self) -> CipherReader {
+        self.reader.clone()
     }
 
-    fn write(&self) -> CipherWrite {
-        self.write.clone()
+    fn writer(&self) -> CipherWriter {
+        self.writer.clone()
     }
 }
 
-struct WorkingCipherRead;
+struct WorkingCipherReader;
 
-impl WorkingCipherRead {
+impl WorkingCipherReader {
     fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
 
-impl CipherReadStrategy for WorkingCipherRead {
+impl CipherReaderStrategy for WorkingCipherReader {
     fn decrypt(&self, _buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
         Ok(Vec::new())
     }
 }
 
-struct WorkingCipherWrite;
+struct WorkingCipherWriter;
 
-impl WorkingCipherWrite {
+impl WorkingCipherWriter {
     fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
 
-impl CipherWriteStrategy for WorkingCipherWrite {
+impl CipherWriterStrategy for WorkingCipherWriter {
     fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
         Ok(Vec::new())
     }
@@ -222,53 +222,53 @@ pub fn noop() -> Cipher {
 }
 
 struct NoOpCipher {
-    read: CipherRead,
-    write: CipherWrite,
+    reader: CipherReader,
+    writer: CipherWriter,
 }
 
 impl NoOpCipher {
     fn make() -> Cipher {
         Box::new(Self {
-            read: NoOpCipherRead::new(),
-            write: NoOpCipherWrite::new(),
+            reader: NoOpCipherReader::new(),
+            writer: NoOpCipherWriter::new(),
         })
     }
 }
 
 impl CipherStrategy for NoOpCipher {
-    fn read(&self) -> CipherRead {
-        self.read.clone()
+    fn reader(&self) -> CipherReader {
+        self.reader.clone()
     }
 
-    fn write(&self) -> CipherWrite {
-        self.write.clone()
+    fn writer(&self) -> CipherWriter {
+        self.writer.clone()
     }
 }
 
-struct NoOpCipherRead;
+struct NoOpCipherReader;
 
-impl NoOpCipherRead {
+impl NoOpCipherReader {
     fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
 
-impl CipherReadStrategy for NoOpCipherRead {
+impl CipherReaderStrategy for NoOpCipherReader {
     fn decrypt(&self, _buf: &[u8]) -> Result<Vec<u8>, CipherErr> {
         // nothing to do
         Ok(Vec::new())
     }
 }
 
-struct NoOpCipherWrite;
+struct NoOpCipherWriter;
 
-impl NoOpCipherWrite {
+impl NoOpCipherWriter {
     fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
 
-impl CipherWriteStrategy for NoOpCipherWrite {
+impl CipherWriterStrategy for NoOpCipherWriter {
     fn encrypt(&self, _src_buf: &[u8]) -> std::result::Result<Vec<u8>, CipherErr> {
         // nothing to do
         Ok(Vec::new())
