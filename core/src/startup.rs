@@ -6,13 +6,13 @@ use crate::data_providers::server::{
 };
 use crate::result::SetupErr;
 use crate::use_cases::cipher::CipherRead;
-use crate::use_cases::repository::StateReader;
 use crate::use_cases::services::encrypter::Encrypter;
 use crate::use_cases::services::extractor::TxtExtractor;
 use crate::use_cases::services::indexer::Indexer;
 use crate::use_cases::services::mover::DocumentMover;
 use crate::use_cases::services::preprocessor::ThumbnailGenerator;
 use crate::use_cases::services::watcher::FileWatcher;
+use crate::use_cases::state::StateReader;
 
 use rocket::{routes, Build, Rocket};
 use tracing::{debug, instrument};

@@ -3,7 +3,7 @@ use crate::entities::location::Location;
 use crate::entities::user::User;
 use crate::result::{BusErr, IndexerErr, SearchErr};
 use crate::testingtools::{pipe, MutexExt, Spy, Tx};
-use crate::use_cases::repository::{
+use crate::use_cases::state::{
     AppState, AppStateReader, AppStateWriter, SearchResult, State, StateReader, StateWriter,
 };
 

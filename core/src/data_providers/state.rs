@@ -1,4 +1,4 @@
-//! This is concrete implementation of [`crate::use_cases::repository`] abstractions.
+//! This is concrete implementation of [`crate::use_cases::state`] abstractions.
 //!
 //! It uses [`tantivy`] as full text search library.
 use crate::entities::document::DocDetails;
@@ -6,7 +6,7 @@ use crate::entities::location::Location;
 use crate::entities::user::User;
 use crate::result::{IndexerErr, SearchErr, StateErr};
 use crate::use_cases::config::Config;
-use crate::use_cases::repository::{
+use crate::use_cases::state::{
     AppState, AppStateReader, AppStateWriter, SearchEntry, SearchResult, State, StateReader,
     StateWriter,
 };

@@ -5,16 +5,16 @@ use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::fs::LocalFs;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::receiver::FsEventReceiver;
-use crate::data_providers::repository::TantivyState;
+use crate::data_providers::state::TantivyState;
 use crate::result::{BusErr, EventReceiverErr, SetupErr, StateErr};
 use crate::use_cases::bus::EventBus;
 use crate::use_cases::cipher::Cipher;
 use crate::use_cases::config::{CfgLoader, CfgResolver, Config};
 use crate::use_cases::fs::Fs;
 use crate::use_cases::receiver::EventRecv;
-use crate::use_cases::repository::State;
 use crate::use_cases::services::extractor::ExtractorCreator;
 use crate::use_cases::services::preprocessor::PreprocessorCreator;
+use crate::use_cases::state::State;
 
 use std::sync::Arc;
 

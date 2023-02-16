@@ -6,11 +6,11 @@ use crate::testingtools::services::encrypter::{
     failing as failing_cipher, tracked as tracked_cipher, CipherSpies,
 };
 use crate::testingtools::services::fs::{failing as failing_fs, tracked as tracked_fs, FsSpies};
-use crate::testingtools::services::repo::{tracked, StateSpies};
+use crate::testingtools::services::state::{tracked, StateSpies};
 use crate::testingtools::TestConfig;
 use crate::use_cases::cipher::Cipher;
 use crate::use_cases::fs::Fs;
-use crate::use_cases::repository::State;
+use crate::use_cases::state::State;
 
 use anyhow::Result;
 use base64::engine::general_purpose::STANDARD as b64;

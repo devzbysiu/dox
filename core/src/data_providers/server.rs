@@ -5,7 +5,7 @@ use crate::result::{DocumentReadErr, DocumentSaveErr, SearchErr, ThumbnailReadEr
 use crate::use_cases::cipher::CipherRead;
 use crate::use_cases::config::Config;
 use crate::use_cases::fs::Fs as Filesystem;
-use crate::use_cases::repository::{SearchResult, StateReader};
+use crate::use_cases::state::{SearchResult, StateReader};
 
 use anyhow::Context;
 use base64::engine::general_purpose::STANDARD as b64;

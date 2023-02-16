@@ -2,11 +2,12 @@ use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
 use crate::result::IndexerErr;
 use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher};
-use crate::use_cases::repository::StateWriter;
+use crate::use_cases::state::StateWriter;
 
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::thread;
 use tracing::{debug, error, instrument, trace, warn};
+
 type Result<T> = std::result::Result<T, IndexerErr>;
 
 pub struct Indexer {
@@ -81,7 +82,7 @@ mod test {
 
     use crate::configuration::telemetry::init_tracing;
     use crate::entities::document::DocDetails;
-    use crate::testingtools::services::repo::{failing, noop, tracked, working};
+    use crate::testingtools::services::state::{failing, noop, tracked, working};
     use crate::testingtools::unit::create_test_shim;
 
     use anyhow::Result;
