@@ -5,7 +5,7 @@ use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::fs::LocalFs;
 use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::receiver::FsEventReceiver;
-use crate::data_providers::repository::TantivyRepository;
+use crate::data_providers::repository::TantivyState;
 use crate::result::{BusErr, EventReceiverErr, RepositoryErr, SetupErr};
 use crate::use_cases::bus::EventBus;
 use crate::use_cases::cipher::Cipher;
@@ -67,7 +67,7 @@ pub fn extractor_factory() -> ExtractorCreator {
 
 pub fn repository<C: AsRef<Config>>(cfg: &C) -> Result<State, RepositoryErr> {
     let cfg = cfg.as_ref();
-    TantivyRepository::create(cfg)
+    TantivyState::create(cfg)
 }
 
 pub fn fs() -> Fs {

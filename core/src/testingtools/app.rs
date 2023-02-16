@@ -6,7 +6,7 @@ use crate::testingtools::services::encrypter::{
     failing as failing_cipher, tracked as tracked_cipher, CipherSpies,
 };
 use crate::testingtools::services::fs::{failing as failing_fs, tracked as tracked_fs, FsSpies};
-use crate::testingtools::services::repo::{tracked, RepoSpies};
+use crate::testingtools::services::repo::{tracked, StateSpies};
 use crate::testingtools::TestConfig;
 use crate::use_cases::cipher::Cipher;
 use crate::use_cases::fs::Fs;
@@ -49,7 +49,7 @@ pub struct App {
     client: Client,
     #[allow(unused)]
     config: TestConfig,
-    repo_spies: Option<RepoSpies>,
+    repo_spies: Option<StateSpies>,
     #[allow(unused)]
     cipher_spies: Option<CipherSpies>,
     fs_spies: Option<FsSpies>,
@@ -69,7 +69,7 @@ impl App {
         self.fs_spies().rm_file_called();
     }
 
-    fn repo_spies(&self) -> &RepoSpies {
+    fn repo_spies(&self) -> &StateSpies {
         self.repo_spies
             .as_ref()
             .unwrap_or_else(|| panic!("uninitialized tracked repo spies"))
@@ -136,7 +136,7 @@ impl App {
 pub struct AppBuilder {
     config: Option<TestConfig>,
     ctx: Option<Context>,
-    repo_spies: Option<RepoSpies>,
+    repo_spies: Option<StateSpies>,
     cipher_spies: Option<CipherSpies>,
     fs_spies: Option<FsSpies>,
 }
@@ -194,7 +194,7 @@ impl AppBuilder {
             .unwrap_or_else(|| panic!("uninitialized context"))
     }
 
-    fn repo_spies(&mut self) -> Option<RepoSpies> {
+    fn repo_spies(&mut self) -> Option<StateSpies> {
         self.repo_spies.take()
     }
 

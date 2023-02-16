@@ -11,17 +11,17 @@ use anyhow::{anyhow, Result};
 use std::sync::Arc;
 use tracing::instrument;
 
-pub fn tracked(repo: &State) -> (RepoSpies, State) {
-    TrackedRepo::wrap(repo)
+pub fn tracked(repo: &State) -> (StateSpies, State) {
+    TrackedState::wrap(repo)
 }
 
-pub struct TrackedRepo {
-    read: StateReader,
-    write: StateWriter,
+pub struct TrackedState {
+    reader: StateReader,
+    writer: StateWriter,
 }
 
-impl TrackedRepo {
-    fn wrap(repo: &State) -> (RepoSpies, State) {
+impl TrackedState {
+    fn wrap(repo: &State) -> (StateSpies, State) {
         let (search_tx, search_spy) = pipe();
         let (all_docs_tx, all_docs_spy) = pipe();
 
@@ -29,86 +29,86 @@ impl TrackedRepo {
         let (delete_tx, delete_spy) = pipe();
 
         (
-            RepoSpies::new(search_spy, all_docs_spy, index_spy, delete_spy),
+            StateSpies::new(search_spy, all_docs_spy, index_spy, delete_spy),
             Box::new(Self {
-                read: TrackedRepoRead::create(repo.reader(), search_tx, all_docs_tx),
-                write: TrackedRepoWrite::create(repo.writer(), index_tx, delete_tx),
+                reader: TrackedStateReader::create(repo.reader(), search_tx, all_docs_tx),
+                writer: TrackedStateWriter::create(repo.writer(), index_tx, delete_tx),
             }),
         )
     }
 }
 
-impl AppState for TrackedRepo {
+impl AppState for TrackedState {
     fn reader(&self) -> StateReader {
-        self.read.clone()
+        self.reader.clone()
     }
 
     fn writer(&self) -> StateWriter {
-        self.write.clone()
+        self.writer.clone()
     }
 }
 
-pub struct TrackedRepoRead {
-    read: StateReader,
+pub struct TrackedStateReader {
+    reader: StateReader,
     #[allow(unused)]
     search_tx: Tx,
     #[allow(unused)]
     all_docs_tx: Tx,
 }
 
-impl TrackedRepoRead {
-    fn create(read: StateReader, search_tx: Tx, all_docs_tx: Tx) -> StateReader {
+impl TrackedStateReader {
+    fn create(reader: StateReader, search_tx: Tx, all_docs_tx: Tx) -> StateReader {
         Arc::new(Self {
-            read,
+            reader,
             search_tx,
             all_docs_tx,
         })
     }
 }
 
-impl AppStateReader for TrackedRepoRead {
+impl AppStateReader for TrackedStateReader {
     fn search(&self, user: User, q: String) -> Result<SearchResult, SearchErr> {
-        self.read.search(user, q)
+        self.reader.search(user, q)
     }
 
     fn all_docs(&self, user: User) -> Result<SearchResult, SearchErr> {
-        self.read.all_docs(user)
+        self.reader.all_docs(user)
     }
 }
 
-pub struct TrackedRepoWrite {
-    write: StateWriter,
+pub struct TrackedStateWriter {
+    writer: StateWriter,
     index_tx: Tx,
     delete_tx: Tx,
 }
 
-impl TrackedRepoWrite {
-    fn create(write: StateWriter, index_tx: Tx, delete_tx: Tx) -> StateWriter {
+impl TrackedStateWriter {
+    fn create(writer: StateWriter, index_tx: Tx, delete_tx: Tx) -> StateWriter {
         Arc::new(Self {
-            write,
+            writer,
             index_tx,
             delete_tx,
         })
     }
 }
 
-impl AppStateWriter for TrackedRepoWrite {
+impl AppStateWriter for TrackedStateWriter {
     #[instrument(skip(self))]
     fn index(&self, docs_details: &[DocDetails]) -> Result<(), IndexerErr> {
-        let res = self.write.index(docs_details);
+        let res = self.writer.index(docs_details);
         self.index_tx.signal();
         res
     }
 
     #[instrument(skip(self))]
     fn delete(&self, loc: &Location) -> Result<(), IndexerErr> {
-        let res = self.write.delete(loc);
+        let res = self.writer.delete(loc);
         self.delete_tx.signal();
         res
     }
 }
 
-pub struct RepoSpies {
+pub struct StateSpies {
     #[allow(unused)]
     search_spy: Spy,
     #[allow(unused)]
@@ -117,7 +117,7 @@ pub struct RepoSpies {
     delete_spy: Spy,
 }
 
-impl RepoSpies {
+impl StateSpies {
     fn new(search_spy: Spy, all_docs_spy: Spy, index_spy: Spy, delete_spy: Spy) -> Self {
         Self {
             search_spy,
@@ -147,42 +147,42 @@ impl RepoSpies {
 }
 
 pub fn working() -> State {
-    WorkingRepo::make()
+    WorkingState::make()
 }
 
-struct WorkingRepo {
-    read: StateReader,
-    write: StateWriter,
+struct WorkingState {
+    reader: StateReader,
+    writer: StateWriter,
 }
 
-impl WorkingRepo {
+impl WorkingState {
     fn make() -> State {
         Box::new(Self {
-            read: WorkingRepoRead::new(),
-            write: WorkingRepoWrite::new(),
+            reader: WorkingStateReader::new(),
+            writer: WorkingStateWriter::new(),
         })
     }
 }
 
-impl AppState for WorkingRepo {
+impl AppState for WorkingState {
     fn reader(&self) -> StateReader {
-        self.read.clone()
+        self.reader.clone()
     }
 
     fn writer(&self) -> StateWriter {
-        self.write.clone()
+        self.writer.clone()
     }
 }
 
-struct WorkingRepoRead;
+struct WorkingStateReader;
 
-impl WorkingRepoRead {
+impl WorkingStateReader {
     fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
 
-impl AppStateReader for WorkingRepoRead {
+impl AppStateReader for WorkingStateReader {
     fn search(&self, _user: User, _q: String) -> Result<SearchResult, SearchErr> {
         Err(SearchErr::MissingIndex("error".into()))
     }
@@ -192,15 +192,15 @@ impl AppStateReader for WorkingRepoRead {
     }
 }
 
-struct WorkingRepoWrite;
+struct WorkingStateWriter;
 
-impl WorkingRepoWrite {
+impl WorkingStateWriter {
     fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
 
-impl AppStateWriter for WorkingRepoWrite {
+impl AppStateWriter for WorkingStateWriter {
     fn index(&self, _docs_details: &[DocDetails]) -> Result<(), IndexerErr> {
         Ok(())
     }
@@ -211,42 +211,42 @@ impl AppStateWriter for WorkingRepoWrite {
 }
 
 pub fn failing() -> State {
-    FailingRepo::make()
+    FailingState::make()
 }
 
-struct FailingRepo {
-    read: StateReader,
-    write: StateWriter,
+struct FailingState {
+    reader: StateReader,
+    writer: StateWriter,
 }
 
-impl FailingRepo {
+impl FailingState {
     fn make() -> State {
         Box::new(Self {
-            read: FailingRepoRead::new(),
-            write: FailingRepoWrite::new(),
+            reader: FailingStateReader::new(),
+            writer: FailingStateWriter::new(),
         })
     }
 }
 
-impl AppState for FailingRepo {
+impl AppState for FailingState {
     fn reader(&self) -> StateReader {
-        self.read.clone()
+        self.reader.clone()
     }
 
     fn writer(&self) -> StateWriter {
-        self.write.clone()
+        self.writer.clone()
     }
 }
 
-struct FailingRepoRead;
+struct FailingStateReader;
 
-impl FailingRepoRead {
+impl FailingStateReader {
     fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
 
-impl AppStateReader for FailingRepoRead {
+impl AppStateReader for FailingStateReader {
     fn search(&self, _user: User, _q: String) -> Result<SearchResult, SearchErr> {
         Err(SearchErr::MissingIndex("error".into()))
     }
@@ -256,15 +256,15 @@ impl AppStateReader for FailingRepoRead {
     }
 }
 
-struct FailingRepoWrite;
+struct FailingStateWriter;
 
-impl FailingRepoWrite {
+impl FailingStateWriter {
     fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
 
-impl AppStateWriter for FailingRepoWrite {
+impl AppStateWriter for FailingStateWriter {
     fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
         Err(IndexerErr::Bus(BusErr::Generic(anyhow!("error"))))
     }
@@ -275,42 +275,42 @@ impl AppStateWriter for FailingRepoWrite {
 }
 
 pub fn noop() -> State {
-    NoOpRepo::make()
+    NoOpState::make()
 }
 
-struct NoOpRepo {
-    read: StateReader,
-    write: StateWriter,
+struct NoOpState {
+    reader: StateReader,
+    writer: StateWriter,
 }
 
-impl NoOpRepo {
+impl NoOpState {
     fn make() -> State {
         Box::new(Self {
-            read: NoOpRepoRead::new(),
-            write: NoOpRepoWrite::new(),
+            reader: NoOpStateReader::new(),
+            writer: NoOpStateWriter::new(),
         })
     }
 }
 
-impl AppState for NoOpRepo {
+impl AppState for NoOpState {
     fn reader(&self) -> StateReader {
-        self.read.clone()
+        self.reader.clone()
     }
 
     fn writer(&self) -> StateWriter {
-        self.write.clone()
+        self.writer.clone()
     }
 }
 
-struct NoOpRepoRead;
+struct NoOpStateReader;
 
-impl NoOpRepoRead {
+impl NoOpStateReader {
     fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
 
-impl AppStateReader for NoOpRepoRead {
+impl AppStateReader for NoOpStateReader {
     fn search(&self, _user: User, _q: String) -> Result<SearchResult, SearchErr> {
         // nothing to do
         Ok(Vec::new().into())
@@ -322,15 +322,15 @@ impl AppStateReader for NoOpRepoRead {
     }
 }
 
-struct NoOpRepoWrite;
+struct NoOpStateWriter;
 
-impl NoOpRepoWrite {
+impl NoOpStateWriter {
     fn new() -> Arc<Self> {
         Arc::new(Self)
     }
 }
 
-impl AppStateWriter for NoOpRepoWrite {
+impl AppStateWriter for NoOpStateWriter {
     fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
         // nothing to do here
         Ok(())

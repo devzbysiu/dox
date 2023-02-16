@@ -29,12 +29,12 @@ use tracing::{debug, error, instrument, warn};
 
 type TantivyDocs = Vec<(f32, DocAddress)>;
 
-pub struct TantivyRepository {
+pub struct TantivyState {
     read: StateReader,
     write: StateWriter,
 }
 
-impl TantivyRepository {
+impl TantivyState {
     pub fn create(cfg: &Config) -> Result<State, RepositoryErr> {
         if cfg.index_dir.exists() && cfg.index_dir.is_file() {
             return Err(RepositoryErr::InvalidIndexPath(format!(
@@ -50,13 +50,17 @@ impl TantivyRepository {
         let schema = schema_builder.build();
         let indexes = Arc::new(DashMap::new());
         Ok(Box::new(Self {
-            read: Arc::new(TantivyRead::new(indexes.clone(), schema.clone())),
-            write: Arc::new(TantivyWrite::new(indexes, cfg.index_dir.clone(), schema)),
+            read: Arc::new(TantivyStateReader::new(indexes.clone(), schema.clone())),
+            write: Arc::new(TantivyStateWriter::new(
+                indexes,
+                cfg.index_dir.clone(),
+                schema,
+            )),
         }))
     }
 }
 
-impl AppState for TantivyRepository {
+impl AppState for TantivyState {
     fn reader(&self) -> StateReader {
         self.read.clone()
     }
@@ -67,12 +71,12 @@ impl AppState for TantivyRepository {
 }
 
 #[derive(Debug, Clone)]
-struct TantivyRead {
+struct TantivyStateReader {
     indexes: Arc<DashMap<User, Index>>,
     schema: Schema,
 }
 
-impl TantivyRead {
+impl TantivyStateReader {
     fn new(indexes: Arc<DashMap<User, Index>>, schema: Schema) -> Self {
         Self { indexes, schema }
     }
@@ -129,7 +133,7 @@ impl TantivyRead {
     }
 }
 
-impl AppStateReader for TantivyRead {
+impl AppStateReader for TantivyStateReader {
     #[instrument(skip(self))]
     fn search(&self, user: User, term: String) -> Result<SearchResult, SearchErr> {
         debug!("search of user: '{}', for: '{}'", user.email, term);
@@ -145,13 +149,13 @@ impl AppStateReader for TantivyRead {
 }
 
 #[derive(Debug, Clone)]
-struct TantivyWrite {
+struct TantivyStateWriter {
     indexes: Arc<DashMap<User, Index>>,
     idx_root: PathBuf,
     schema: Schema,
 }
 
-impl TantivyWrite {
+impl TantivyStateWriter {
     fn new(indexes: Arc<DashMap<User, Index>>, idx_root: PathBuf, schema: Schema) -> Self {
         Self {
             indexes,
@@ -184,7 +188,7 @@ impl TantivyWrite {
     }
 }
 
-impl AppStateWriter for TantivyWrite {
+impl AppStateWriter for TantivyStateWriter {
     #[instrument(skip(self, docs_details))]
     fn index(&self, docs_details: &[DocDetails]) -> Result<(), IndexerErr> {
         for doc_detail in docs_details {
@@ -308,7 +312,7 @@ mod test {
         File::create(&config.index_dir)?;
 
         // when
-        let result = TantivyRepository::create(&config);
+        let result = TantivyState::create(&config);
 
         // then
         assert_eq!(
@@ -341,7 +345,7 @@ mod test {
         // given
         init_tracing();
         let config = create_config()?;
-        let repo = TantivyRepository::create(&config)?;
+        let repo = TantivyState::create(&config)?;
         let user_email = FAKE_USER_EMAIL;
         let user = User::new(user_email);
         let tuples_to_index = vec![
@@ -404,7 +408,7 @@ mod test {
         // given
         init_tracing();
         let config = create_config()?;
-        let repo = TantivyRepository::create(&config)?;
+        let repo = TantivyState::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
             DocDetails::new(
@@ -457,7 +461,7 @@ mod test {
         // given
         init_tracing();
         let config = create_config()?;
-        let repo = TantivyRepository::create(&config)?;
+        let repo = TantivyState::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
             DocDetails::new(
@@ -502,7 +506,7 @@ mod test {
         // given
         init_tracing();
         let config = create_config()?;
-        let repo = TantivyRepository::create(&config)?;
+        let repo = TantivyState::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
             DocDetails::new(
@@ -565,7 +569,7 @@ mod test {
         // given
         init_tracing();
         let config = create_config()?;
-        let repo = TantivyRepository::create(&config)?;
+        let repo = TantivyState::create(&config)?;
         let user = User::new(FAKE_USER_EMAIL);
         let tuples_to_index = vec![
             DocDetails::new(
@@ -628,7 +632,7 @@ mod test {
         // given
         init_tracing();
         let config = create_config()?;
-        let repo = TantivyRepository::create(&config)?;
+        let repo = TantivyState::create(&config)?;
         // NOTE: Index data under fake user (inside `tuples_to_index`), then `delete` with test
         // `User` implementation which is different user
         repo.writer().index(&[Faker.fake()])?;
