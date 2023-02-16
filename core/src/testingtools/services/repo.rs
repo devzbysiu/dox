@@ -201,7 +201,8 @@ impl WorkingRepoWrite {
 }
 
 impl RepositoryWrite for WorkingRepoWrite {
-    fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
+    // FIXME: Fix this `std::result` inconsistency
+    fn index(&self, _docs_details: &[DocDetails]) -> Result<(), IndexerErr> {
         Ok(())
     }
 
