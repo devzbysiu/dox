@@ -4,24 +4,24 @@ use crate::entities::user::User;
 use crate::result::{BusErr, IndexerErr, SearchErr};
 use crate::testingtools::{pipe, MutexExt, Spy, Tx};
 use crate::use_cases::repository::{
-    Repo, RepoRead, RepoWrite, Repository, RepositoryRead, RepositoryWrite, SearchResult,
+    AppState, AppStateReader, AppStateWriter, SearchResult, State, StateReader, StateWriter,
 };
 
 use anyhow::{anyhow, Result};
 use std::sync::Arc;
 use tracing::instrument;
 
-pub fn tracked(repo: &Repo) -> (RepoSpies, Repo) {
+pub fn tracked(repo: &State) -> (RepoSpies, State) {
     TrackedRepo::wrap(repo)
 }
 
 pub struct TrackedRepo {
-    read: RepoRead,
-    write: RepoWrite,
+    read: StateReader,
+    write: StateWriter,
 }
 
 impl TrackedRepo {
-    fn wrap(repo: &Repo) -> (RepoSpies, Repo) {
+    fn wrap(repo: &State) -> (RepoSpies, State) {
         let (search_tx, search_spy) = pipe();
         let (all_docs_tx, all_docs_spy) = pipe();
 
@@ -31,25 +31,25 @@ impl TrackedRepo {
         (
             RepoSpies::new(search_spy, all_docs_spy, index_spy, delete_spy),
             Box::new(Self {
-                read: TrackedRepoRead::create(repo.read(), search_tx, all_docs_tx),
-                write: TrackedRepoWrite::create(repo.write(), index_tx, delete_tx),
+                read: TrackedRepoRead::create(repo.reader(), search_tx, all_docs_tx),
+                write: TrackedRepoWrite::create(repo.writer(), index_tx, delete_tx),
             }),
         )
     }
 }
 
-impl Repository for TrackedRepo {
-    fn read(&self) -> RepoRead {
+impl AppState for TrackedRepo {
+    fn reader(&self) -> StateReader {
         self.read.clone()
     }
 
-    fn write(&self) -> RepoWrite {
+    fn writer(&self) -> StateWriter {
         self.write.clone()
     }
 }
 
 pub struct TrackedRepoRead {
-    read: RepoRead,
+    read: StateReader,
     #[allow(unused)]
     search_tx: Tx,
     #[allow(unused)]
@@ -57,7 +57,7 @@ pub struct TrackedRepoRead {
 }
 
 impl TrackedRepoRead {
-    fn create(read: RepoRead, search_tx: Tx, all_docs_tx: Tx) -> RepoRead {
+    fn create(read: StateReader, search_tx: Tx, all_docs_tx: Tx) -> StateReader {
         Arc::new(Self {
             read,
             search_tx,
@@ -66,7 +66,7 @@ impl TrackedRepoRead {
     }
 }
 
-impl RepositoryRead for TrackedRepoRead {
+impl AppStateReader for TrackedRepoRead {
     fn search(&self, user: User, q: String) -> Result<SearchResult, SearchErr> {
         self.read.search(user, q)
     }
@@ -77,13 +77,13 @@ impl RepositoryRead for TrackedRepoRead {
 }
 
 pub struct TrackedRepoWrite {
-    write: RepoWrite,
+    write: StateWriter,
     index_tx: Tx,
     delete_tx: Tx,
 }
 
 impl TrackedRepoWrite {
-    fn create(write: RepoWrite, index_tx: Tx, delete_tx: Tx) -> RepoWrite {
+    fn create(write: StateWriter, index_tx: Tx, delete_tx: Tx) -> StateWriter {
         Arc::new(Self {
             write,
             index_tx,
@@ -92,7 +92,7 @@ impl TrackedRepoWrite {
     }
 }
 
-impl RepositoryWrite for TrackedRepoWrite {
+impl AppStateWriter for TrackedRepoWrite {
     #[instrument(skip(self))]
     fn index(&self, docs_details: &[DocDetails]) -> Result<(), IndexerErr> {
         let res = self.write.index(docs_details);
@@ -146,17 +146,17 @@ impl RepoSpies {
     }
 }
 
-pub fn working() -> Repo {
+pub fn working() -> State {
     WorkingRepo::make()
 }
 
 struct WorkingRepo {
-    read: RepoRead,
-    write: RepoWrite,
+    read: StateReader,
+    write: StateWriter,
 }
 
 impl WorkingRepo {
-    fn make() -> Repo {
+    fn make() -> State {
         Box::new(Self {
             read: WorkingRepoRead::new(),
             write: WorkingRepoWrite::new(),
@@ -164,12 +164,12 @@ impl WorkingRepo {
     }
 }
 
-impl Repository for WorkingRepo {
-    fn read(&self) -> RepoRead {
+impl AppState for WorkingRepo {
+    fn reader(&self) -> StateReader {
         self.read.clone()
     }
 
-    fn write(&self) -> RepoWrite {
+    fn writer(&self) -> StateWriter {
         self.write.clone()
     }
 }
@@ -182,7 +182,7 @@ impl WorkingRepoRead {
     }
 }
 
-impl RepositoryRead for WorkingRepoRead {
+impl AppStateReader for WorkingRepoRead {
     fn search(&self, _user: User, _q: String) -> Result<SearchResult, SearchErr> {
         Err(SearchErr::MissingIndex("error".into()))
     }
@@ -200,7 +200,7 @@ impl WorkingRepoWrite {
     }
 }
 
-impl RepositoryWrite for WorkingRepoWrite {
+impl AppStateWriter for WorkingRepoWrite {
     fn index(&self, _docs_details: &[DocDetails]) -> Result<(), IndexerErr> {
         Ok(())
     }
@@ -210,17 +210,17 @@ impl RepositoryWrite for WorkingRepoWrite {
     }
 }
 
-pub fn failing() -> Repo {
+pub fn failing() -> State {
     FailingRepo::make()
 }
 
 struct FailingRepo {
-    read: RepoRead,
-    write: RepoWrite,
+    read: StateReader,
+    write: StateWriter,
 }
 
 impl FailingRepo {
-    fn make() -> Repo {
+    fn make() -> State {
         Box::new(Self {
             read: FailingRepoRead::new(),
             write: FailingRepoWrite::new(),
@@ -228,12 +228,12 @@ impl FailingRepo {
     }
 }
 
-impl Repository for FailingRepo {
-    fn read(&self) -> RepoRead {
+impl AppState for FailingRepo {
+    fn reader(&self) -> StateReader {
         self.read.clone()
     }
 
-    fn write(&self) -> RepoWrite {
+    fn writer(&self) -> StateWriter {
         self.write.clone()
     }
 }
@@ -246,7 +246,7 @@ impl FailingRepoRead {
     }
 }
 
-impl RepositoryRead for FailingRepoRead {
+impl AppStateReader for FailingRepoRead {
     fn search(&self, _user: User, _q: String) -> Result<SearchResult, SearchErr> {
         Err(SearchErr::MissingIndex("error".into()))
     }
@@ -264,7 +264,7 @@ impl FailingRepoWrite {
     }
 }
 
-impl RepositoryWrite for FailingRepoWrite {
+impl AppStateWriter for FailingRepoWrite {
     fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
         Err(IndexerErr::Bus(BusErr::Generic(anyhow!("error"))))
     }
@@ -274,17 +274,17 @@ impl RepositoryWrite for FailingRepoWrite {
     }
 }
 
-pub fn noop() -> Repo {
+pub fn noop() -> State {
     NoOpRepo::make()
 }
 
 struct NoOpRepo {
-    read: RepoRead,
-    write: RepoWrite,
+    read: StateReader,
+    write: StateWriter,
 }
 
 impl NoOpRepo {
-    fn make() -> Repo {
+    fn make() -> State {
         Box::new(Self {
             read: NoOpRepoRead::new(),
             write: NoOpRepoWrite::new(),
@@ -292,12 +292,12 @@ impl NoOpRepo {
     }
 }
 
-impl Repository for NoOpRepo {
-    fn read(&self) -> RepoRead {
+impl AppState for NoOpRepo {
+    fn reader(&self) -> StateReader {
         self.read.clone()
     }
 
-    fn write(&self) -> RepoWrite {
+    fn writer(&self) -> StateWriter {
         self.write.clone()
     }
 }
@@ -310,7 +310,7 @@ impl NoOpRepoRead {
     }
 }
 
-impl RepositoryRead for NoOpRepoRead {
+impl AppStateReader for NoOpRepoRead {
     fn search(&self, _user: User, _q: String) -> Result<SearchResult, SearchErr> {
         // nothing to do
         Ok(Vec::new().into())
@@ -330,7 +330,7 @@ impl NoOpRepoWrite {
     }
 }
 
-impl RepositoryWrite for NoOpRepoWrite {
+impl AppStateWriter for NoOpRepoWrite {
     fn index(&self, _docs_details: &[DocDetails]) -> std::result::Result<(), IndexerErr> {
         // nothing to do here
         Ok(())

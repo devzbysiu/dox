@@ -8,17 +8,17 @@ use serde::Serialize;
 use std::collections::HashSet;
 use std::sync::Arc;
 
-pub type Repo = Box<dyn Repository>;
-pub type RepoRead = Arc<dyn RepositoryRead>;
-pub type RepoWrite = Arc<dyn RepositoryWrite>;
+pub type State = Box<dyn AppState>;
+pub type StateReader = Arc<dyn AppStateReader>;
+pub type StateWriter = Arc<dyn AppStateWriter>;
 
-pub trait Repository: Send {
-    fn read(&self) -> RepoRead;
-    fn write(&self) -> RepoWrite;
+pub trait AppState: Send {
+    fn reader(&self) -> StateReader;
+    fn writer(&self) -> StateWriter;
 }
 
 /// Allows to search and list all indexed documents .
-pub trait RepositoryRead: Sync + Send {
+pub trait AppStateReader: Sync + Send {
     /// Returns list of documents mathing passed query.
     fn search(&self, user: User, q: String) -> Result<SearchResult, SearchErr>;
     /// Returns list of all indexed documents.
@@ -26,7 +26,7 @@ pub trait RepositoryRead: Sync + Send {
 }
 
 /// Allows to index documents.
-pub trait RepositoryWrite: Sync + Send {
+pub trait AppStateWriter: Sync + Send {
     /// Indexes documents.
     fn index(&self, docs_details: &[DocDetails]) -> Result<(), IndexerErr>;
 

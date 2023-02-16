@@ -2,7 +2,7 @@ use crate::entities::document::DocDetails;
 use crate::entities::location::Location;
 use crate::result::IndexerErr;
 use crate::use_cases::bus::{BusEvent, EventBus, EventPublisher};
-use crate::use_cases::repository::RepoWrite;
+use crate::use_cases::repository::StateWriter;
 
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::thread;
@@ -21,7 +21,7 @@ impl Indexer {
     }
 
     #[instrument(skip(self, repo))]
-    pub fn run(self, repo: RepoWrite) {
+    pub fn run(self, repo: StateWriter) {
         // TODO: think about num_threads
         // TODO: should threadpool be shared between services?
         // TODO: should threadpool have it's own abstraction here?
@@ -38,7 +38,7 @@ impl Indexer {
     }
 
     #[instrument(skip(self, repo))]
-    fn index(&self, doc_details: Vec<DocDetails>, repo: RepoWrite) {
+    fn index(&self, doc_details: Vec<DocDetails>, repo: StateWriter) {
         let publ = self.bus.publisher();
         self.tp.spawn(move || {
             if let Err(e) = index(&doc_details, &repo, publ) {
@@ -48,7 +48,7 @@ impl Indexer {
     }
 
     #[instrument(skip(self, repo))]
-    fn cleanup(&self, loc: Location, repo: RepoWrite) {
+    fn cleanup(&self, loc: Location, repo: StateWriter) {
         debug!("pipeline failed, removing index data");
         let publ = self.bus.publisher();
         self.tp.spawn(move || {
@@ -60,7 +60,7 @@ impl Indexer {
 }
 
 #[instrument(skip(repo, publ))]
-fn index(doc_details: &[DocDetails], repo: &RepoWrite, publ: EventPublisher) -> Result<()> {
+fn index(doc_details: &[DocDetails], repo: &StateWriter, publ: EventPublisher) -> Result<()> {
     debug!("start indexing docs");
     repo.index(doc_details)?;
     debug!("docs indexed");
@@ -69,7 +69,7 @@ fn index(doc_details: &[DocDetails], repo: &RepoWrite, publ: EventPublisher) -> 
 }
 
 #[instrument(skip(repo, publ))]
-fn cleanup(loc: &Location, repo: &RepoWrite, publ: EventPublisher) -> Result<()> {
+fn cleanup(loc: &Location, repo: &StateWriter, publ: EventPublisher) -> Result<()> {
     repo.delete(loc)?;
     publ.send(BusEvent::DataRemoved)?;
     Ok(())
@@ -93,7 +93,7 @@ mod test {
         init_tracing();
         let (repo_spies, repo) = tracked(&working());
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo.write());
+        Indexer::new(shim.bus())?.run(repo.writer());
 
         // when
         shim.trigger_indexer(Faker.fake())?;
@@ -110,7 +110,7 @@ mod test {
         init_tracing();
         let repo = noop();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo.write());
+        Indexer::new(shim.bus())?.run(repo.writer());
         let doc_details: Vec<DocDetails> = Faker.fake();
 
         // when
@@ -131,7 +131,7 @@ mod test {
         let repo = noop();
         let mut shim = create_test_shim()?;
         let docs_details: Vec<DocDetails> = Faker.fake();
-        Indexer::new(shim.bus())?.run(repo.write());
+        Indexer::new(shim.bus())?.run(repo.writer());
 
         // when
         shim.trigger_indexer(docs_details.clone())?;
@@ -150,7 +150,7 @@ mod test {
         init_tracing();
         let repo = failing();
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo.write());
+        Indexer::new(shim.bus())?.run(repo.writer());
 
         // when
         shim.trigger_indexer(Faker.fake())?;
@@ -179,7 +179,7 @@ mod test {
             BusEvent::ThumbnailRemoved,
             BusEvent::PipelineFinished,
         ];
-        Indexer::new(shim.bus())?.run(repo.write());
+        Indexer::new(shim.bus())?.run(repo.writer());
 
         // when
         shim.send_events(&ignored_events)?;
@@ -202,7 +202,7 @@ mod test {
         init_tracing();
         let (repo_spies, repo) = tracked(&failing());
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo.write());
+        Indexer::new(shim.bus())?.run(repo.writer());
         shim.trigger_indexer(Faker.fake())?;
         assert!(repo_spies.index_called());
 
@@ -221,7 +221,7 @@ mod test {
         init_tracing();
         let (repo_spies, repo) = tracked(&noop());
         let mut shim = create_test_shim()?;
-        Indexer::new(shim.bus())?.run(repo.write());
+        Indexer::new(shim.bus())?.run(repo.writer());
 
         // when
         shim.trigger_document_encryption_failure()?;

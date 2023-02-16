@@ -7,8 +7,8 @@ use crate::entities::user::User;
 use crate::result::{IndexerErr, RepositoryErr, SearchErr};
 use crate::use_cases::config::Config;
 use crate::use_cases::repository::{
-    Repo, RepoRead, RepoWrite, Repository, RepositoryRead, RepositoryWrite, SearchEntry,
-    SearchResult,
+    AppState, AppStateReader, AppStateWriter, SearchEntry, SearchResult, State, StateReader,
+    StateWriter,
 };
 
 use base64::engine::general_purpose::STANDARD as b64;
@@ -30,12 +30,12 @@ use tracing::{debug, error, instrument, warn};
 type TantivyDocs = Vec<(f32, DocAddress)>;
 
 pub struct TantivyRepository {
-    read: RepoRead,
-    write: RepoWrite,
+    read: StateReader,
+    write: StateWriter,
 }
 
 impl TantivyRepository {
-    pub fn create(cfg: &Config) -> Result<Repo, RepositoryErr> {
+    pub fn create(cfg: &Config) -> Result<State, RepositoryErr> {
         if cfg.index_dir.exists() && cfg.index_dir.is_file() {
             return Err(RepositoryErr::InvalidIndexPath(format!(
                 "It needs to be a directory: '{}'",
@@ -56,12 +56,12 @@ impl TantivyRepository {
     }
 }
 
-impl Repository for TantivyRepository {
-    fn read(&self) -> RepoRead {
+impl AppState for TantivyRepository {
+    fn reader(&self) -> StateReader {
         self.read.clone()
     }
 
-    fn write(&self) -> RepoWrite {
+    fn writer(&self) -> StateWriter {
         self.write.clone()
     }
 }
@@ -129,7 +129,7 @@ impl TantivyRead {
     }
 }
 
-impl RepositoryRead for TantivyRead {
+impl AppStateReader for TantivyRead {
     #[instrument(skip(self))]
     fn search(&self, user: User, term: String) -> Result<SearchResult, SearchErr> {
         debug!("search of user: '{}', for: '{}'", user.email, term);
@@ -184,7 +184,7 @@ impl TantivyWrite {
     }
 }
 
-impl RepositoryWrite for TantivyWrite {
+impl AppStateWriter for TantivyWrite {
     #[instrument(skip(self, docs_details))]
     fn index(&self, docs_details: &[DocDetails]) -> Result<(), IndexerErr> {
         for doc_detail in docs_details {
@@ -378,10 +378,10 @@ mod test {
         ];
 
         // when
-        repo.write().index(&tuples_to_index)?;
+        repo.writer().index(&tuples_to_index)?;
         // TODO: this test should check only indexing but it's also
         // searching via all_documents
-        let all_docs = repo.read().all_docs(user)?;
+        let all_docs = repo.reader().all_docs(user)?;
 
         // then
         assert_eq!(
@@ -440,8 +440,8 @@ mod test {
         ];
 
         // when
-        repo.write().index(&tuples_to_index)?;
-        let results = repo.read().search(user, "line".into())?;
+        repo.writer().index(&tuples_to_index)?;
+        let results = repo.reader().search(user, "line".into())?;
 
         // then
         assert_eq!(
@@ -481,11 +481,11 @@ mod test {
         ];
 
         // when
-        repo.write().index(&tuples_to_index)?;
+        repo.writer().index(&tuples_to_index)?;
         // NOTE: it's not the same word as above, two letters of fuzziness is fine
-        let first_results = repo.read().search(user.clone(), "9fAB".into())?;
+        let first_results = repo.reader().search(user.clone(), "9fAB".into())?;
         // NOTE: three letters is too much
-        let second_results = repo.read().search(user, "9ABC".into())?;
+        let second_results = repo.reader().search(user, "9ABC".into())?;
 
         // then
         assert_eq!(
@@ -536,8 +536,8 @@ mod test {
                 user.clone(),
             ),
         ];
-        repo.write().index(&tuples_to_index)?;
-        let res = repo.read().search(user.clone(), "9fZX".into())?;
+        repo.writer().index(&tuples_to_index)?;
+        let res = repo.reader().search(user.clone(), "9fZX".into())?;
         assert_eq!(
             res,
             vec![
@@ -551,8 +551,8 @@ mod test {
         let loc = Location::FS(vec!["/any/path/filename3".into()]);
 
         // when
-        repo.write().delete(&loc)?;
-        let res = repo.read().search(user, "9fZX".into())?;
+        repo.writer().delete(&loc)?;
+        let res = repo.reader().search(user, "9fZX".into())?;
 
         // then
         assert_eq!(res, Vec::new().into());
@@ -599,8 +599,8 @@ mod test {
                 user.clone(),
             ),
         ];
-        repo.write().index(&tuples_to_index)?;
-        let res = repo.read().search(user.clone(), "9fZX".into())?;
+        repo.writer().index(&tuples_to_index)?;
+        let res = repo.reader().search(user.clone(), "9fZX".into())?;
         assert_eq!(
             res,
             vec![
@@ -614,8 +614,8 @@ mod test {
         let loc = Location::FS(vec!["/any/path/thumbnail3".into()]);
 
         // when
-        repo.write().delete(&loc)?;
-        let res = repo.read().search(user, "9fZX".into())?;
+        repo.writer().delete(&loc)?;
+        let res = repo.reader().search(user, "9fZX".into())?;
 
         // then
         assert_eq!(res, Vec::new().into());
@@ -631,11 +631,11 @@ mod test {
         let repo = TantivyRepository::create(&config)?;
         // NOTE: Index data under fake user (inside `tuples_to_index`), then `delete` with test
         // `User` implementation which is different user
-        repo.write().index(&[Faker.fake()])?;
+        repo.writer().index(&[Faker.fake()])?;
         let loc = Location::FS(vec![Faker.fake()]);
 
         // when
-        let res = repo.write().delete(&loc);
+        let res = repo.writer().delete(&loc);
 
         // then
         assert!(matches!(res, Err(IndexerErr::NoIndex(_))));

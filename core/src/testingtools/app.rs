@@ -10,7 +10,7 @@ use crate::testingtools::services::repo::{tracked, RepoSpies};
 use crate::testingtools::TestConfig;
 use crate::use_cases::cipher::Cipher;
 use crate::use_cases::fs::Fs;
-use crate::use_cases::repository::Repo;
+use crate::use_cases::repository::State;
 
 use anyhow::Result;
 use base64::engine::general_purpose::STANDARD as b64;
@@ -214,7 +214,7 @@ impl AppBuilder {
 }
 
 impl Context {
-    pub fn with_repo(&mut self, repo: Repo) -> &Self {
+    pub fn with_repo(&mut self, repo: State) -> &Self {
         self.repo = repo;
         self
     }

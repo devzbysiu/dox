@@ -5,7 +5,7 @@ use crate::result::{DocumentReadErr, DocumentSaveErr, SearchErr, ThumbnailReadEr
 use crate::use_cases::cipher::CipherRead;
 use crate::use_cases::config::Config;
 use crate::use_cases::fs::Fs as Filesystem;
-use crate::use_cases::repository::{RepoRead, SearchResult};
+use crate::use_cases::repository::{SearchResult, StateReader};
 
 use anyhow::Context;
 use base64::engine::general_purpose::STANDARD as b64;
@@ -19,7 +19,7 @@ use tracing::instrument;
 type Cfg = State<Config>;
 type Fs = State<Filesystem>;
 type Cipher = State<CipherRead>;
-type Repo = State<RepoRead>;
+type Repo = State<StateReader>;
 type Doc = Json<Document>;
 
 type SearchRes = Result<Json<SearchResult>, SearchErr>;

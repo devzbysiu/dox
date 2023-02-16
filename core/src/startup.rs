@@ -6,7 +6,7 @@ use crate::data_providers::server::{
 };
 use crate::result::SetupErr;
 use crate::use_cases::cipher::CipherRead;
-use crate::use_cases::repository::RepoRead;
+use crate::use_cases::repository::StateReader;
 use crate::use_cases::services::encrypter::Encrypter;
 use crate::use_cases::services::extractor::TxtExtractor;
 use crate::use_cases::services::indexer::Indexer;
@@ -42,7 +42,7 @@ pub fn rocket(ctx: Context) -> Rocket<Build> {
         .manage(cfg)
 }
 
-fn setup_core(ctx: Context) -> Result<(RepoRead, CipherRead), SetupErr> {
+fn setup_core(ctx: Context) -> Result<(StateReader, CipherRead), SetupErr> {
     let Context {
         cfg,
         bus,
@@ -65,8 +65,8 @@ fn setup_core(ctx: Context) -> Result<(RepoRead, CipherRead), SetupErr> {
     document_mover.run(fs.clone());
     thumbnail_generator.run(preprocessor_factory, fs);
     extractor.run(extractor_factory);
-    indexer.run(repo.write());
+    indexer.run(repo.writer());
     encrypter.run(cipher.write());
 
-    Ok((repo.read(), cipher.read()))
+    Ok((repo.reader(), cipher.read()))
 }
