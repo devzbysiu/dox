@@ -17,15 +17,15 @@ pub struct Indexer {
 
 impl Indexer {
     pub fn new(bus: EventBus) -> Result<Self> {
+        // TODO: think about num_threads
+        // TODO: should threadpool be shared between services?
+        // TODO: should threadpool have it's own abstraction here?
         let tp = ThreadPoolBuilder::new().num_threads(4).build()?;
         Ok(Self { bus, tp })
     }
 
     #[instrument(skip(self, state))]
     pub fn run(self, state: StateWriter) {
-        // TODO: think about num_threads
-        // TODO: should threadpool be shared between services?
-        // TODO: should threadpool have it's own abstraction here?
         let sub = self.bus.subscriber();
         thread::spawn(move || -> Result<()> {
             loop {
