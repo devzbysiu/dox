@@ -17,7 +17,7 @@ pub trait AppState: Send {
     fn writer(&self) -> StateWriter;
 }
 
-/// Allows to search and list all indexed documents .
+/// Allows to search and list all indexed documents.
 pub trait AppStateReader: Sync + Send {
     /// Returns list of documents mathing passed query.
     fn search(&self, user: User, q: String) -> Result<SearchResult, SearchErr>;

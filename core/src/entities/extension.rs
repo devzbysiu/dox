@@ -2,7 +2,7 @@
 //!
 //! Indexing and preprocessing strategies are based on the extension. See
 //! [`ExtractorFactoryImpl`](crate::data_providers::extractor::ExtractorFactoryImpl)
-//! and [`PreprocessorFactoryImpl`](crate::data_providers::preprocessor::PreprocessorFactoryImpl).
+//! and [`ThumbnailerFactoryImpl`](crate::data_providers::thumbnailer::ThumbnailerFactoryImpl).
 
 use crate::result::GeneralErr;
 

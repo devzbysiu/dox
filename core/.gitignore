@@ -4,3 +4,4 @@ target
 .development.env
 helpers
 tarpaulin-report.html
+tarpaulin-target

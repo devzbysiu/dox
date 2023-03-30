@@ -1,4 +1,4 @@
-use crate::configuration::factories::{fs, state, Context};
+use crate::configuration::factories::{fs, state, Runtime};
 use crate::entities::location::SafePathBuf;
 use crate::startup::rocket;
 use crate::testingtools::api::ApiResponse;
@@ -24,7 +24,7 @@ use urlencoding::encode;
 
 pub fn start_test_app() -> Result<App> {
     let config = TestConfig::new()?;
-    let client = Client::tracked(rocket(Context::new(&config)?))?;
+    let client = Client::tracked(rocket(Runtime::new(&config)?))?;
     Ok(App {
         client,
         config,
@@ -37,7 +37,7 @@ pub fn start_test_app() -> Result<App> {
 pub fn test_app() -> Result<AppBuilder> {
     let config = TestConfig::new()?;
     Ok(AppBuilder {
-        ctx: Some(Context::new(&config)?),
+        ctx: Some(Runtime::new(&config)?),
         config: Some(config),
         state_spies: None,
         cipher_spies: None,
@@ -135,7 +135,7 @@ impl App {
 
 pub struct AppBuilder {
     config: Option<TestConfig>,
-    ctx: Option<Context>,
+    ctx: Option<Runtime>,
     state_spies: Option<StateSpies>,
     cipher_spies: Option<CipherSpies>,
     fs_spies: Option<FsSpies>,
@@ -188,7 +188,7 @@ impl AppBuilder {
         })
     }
 
-    fn context(&mut self) -> Context {
+    fn context(&mut self) -> Runtime {
         self.ctx
             .take()
             .unwrap_or_else(|| panic!("uninitialized context"))
@@ -213,7 +213,7 @@ impl AppBuilder {
     }
 }
 
-impl Context {
+impl Runtime {
     pub fn with_state(&mut self, state: State) -> &Self {
         self.state = state;
         self

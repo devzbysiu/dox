@@ -1,7 +1,7 @@
 use crate::entities::location::{Location, SafePathBuf};
 use crate::helpers::PathRefExt;
-use crate::result::PreprocessorErr;
-use crate::use_cases::services::preprocessor::FilePreprocessor;
+use crate::result::ThumbnailerErr;
+use crate::use_cases::services::thumbnailer::ThumbnailMaker;
 
 use cairo::{Context, Format, ImageSurface};
 use poppler::{PopplerDocument, PopplerPage};
@@ -17,11 +17,11 @@ const FIRST: usize = 0;
 /// The thumbnail is used by the client application to display the document. Always the first page
 /// of the PDF document is used to generate the thumbnail.
 #[derive(Debug)]
-pub struct Pdf;
+pub struct PdfThumbnailer;
 
-impl Pdf {
+impl PdfThumbnailer {
     #[instrument(skip(self))]
-    fn generate(&self, pdf_path: &SafePathBuf, out_path: &Path) -> Result<(), PreprocessorErr> {
+    fn generate(&self, pdf_path: &SafePathBuf, out_path: &Path) -> Result<(), ThumbnailerErr> {
         let parent_path = out_path.parent().expect("failed to get parent dir");
         create_dir_all(parent_path)?;
         let page = first_page(pdf_path)?;
@@ -33,7 +33,7 @@ impl Pdf {
     }
 }
 
-fn first_page<P: AsRef<Path>>(pdf_path: P) -> Result<PopplerPage, PreprocessorErr> {
+fn first_page<P: AsRef<Path>>(pdf_path: P) -> Result<PopplerPage, ThumbnailerErr> {
     debug!("getting first page of PDF '{}'", pdf_path.str());
     let doc: PopplerDocument = PopplerDocument::new_from_file(pdf_path, "")?;
     Ok(doc
@@ -41,7 +41,7 @@ fn first_page<P: AsRef<Path>>(pdf_path: P) -> Result<PopplerPage, PreprocessorEr
         .unwrap_or_else(|| panic!("failed to get page")))
 }
 
-fn paint_background_and_scale(page: &PopplerPage) -> Result<ImageSurface, PreprocessorErr> {
+fn paint_background_and_scale(page: &PopplerPage) -> Result<ImageSurface, ThumbnailerErr> {
     debug!("painting while backgroud and scaling");
     let (width, height) = page.get_size();
     #[allow(clippy::cast_possible_truncation)]
@@ -56,9 +56,9 @@ fn paint_background_and_scale(page: &PopplerPage) -> Result<ImageSurface, Prepro
     Ok(surface)
 }
 
-impl FilePreprocessor for Pdf {
+impl ThumbnailMaker for PdfThumbnailer {
     #[instrument]
-    fn preprocess(&self, loc: &Location, target_dir: &Path) -> Result<Location, PreprocessorErr> {
+    fn mk_thumbnail(&self, loc: &Location, target_dir: &Path) -> Result<Location, ThumbnailerErr> {
         let Location::FS(paths) = loc;
         let mut result_paths = Vec::new();
         for pdf_path in paths {
@@ -74,22 +74,22 @@ impl FilePreprocessor for Pdf {
 mod test {
     use super::*;
 
-    use crate::data_providers::preprocessor::DirEntryExt;
+    use crate::data_providers::thumbnailer::DirEntryExt;
 
     use anyhow::Result;
     use claim::assert_err;
     use tempfile::tempdir;
 
     #[test]
-    fn pdf_preprocessor_returns_generated_thumbnail_location() -> Result<()> {
+    fn pdf_thumbnailer_returns_generated_thumbnail_location() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
-        let preprocessor = Pdf;
+        let thumbnailer = PdfThumbnailer;
         let paths = vec![SafePathBuf::from("res/doc1.pdf")];
         let target_path = tmp_dir.path().join(format!("{}.png", paths[0].rel_stem()));
 
         // when
-        let res = preprocessor.preprocess(&Location::FS(paths), tmp_dir.path())?;
+        let res = thumbnailer.mk_thumbnail(&Location::FS(paths), tmp_dir.path())?;
         let target_loc = Location::FS(vec![SafePathBuf::from(target_path)]);
 
         // then
@@ -99,16 +99,16 @@ mod test {
     }
 
     #[test]
-    fn pdf_preprocessor_puts_pdf_files_under_user_dir() -> Result<()> {
+    fn pdf_thumbnailer_puts_pdf_files_under_user_dir() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
-        let preprocessor = Pdf;
+        let thumbnailer = PdfThumbnailer;
         let paths = vec![SafePathBuf::from("res/doc1.pdf")];
         let is_empty = tmp_dir.path().read_dir()?.next().is_none();
         assert!(is_empty);
 
         // when
-        preprocessor.preprocess(&Location::FS(paths), tmp_dir.path())?;
+        thumbnailer.mk_thumbnail(&Location::FS(paths), tmp_dir.path())?;
         let user_dir = tmp_dir.path().read_dir()?.next().unwrap()?;
 
         // then
@@ -119,14 +119,14 @@ mod test {
     }
 
     #[test]
-    fn pdf_preprocessor_fails_with_non_pdf_files() {
+    fn pdf_thumbnailer_fails_with_non_pdf_files() {
         // given
         let tmp_dir = tempdir().unwrap();
-        let preprocessor = Pdf;
+        let thumbnailer = PdfThumbnailer;
         let paths = vec![SafePathBuf::from("res/doc8.jpg")];
 
         // when
-        let res = preprocessor.preprocess(&Location::FS(paths), tmp_dir.path());
+        let res = thumbnailer.mk_thumbnail(&Location::FS(paths), tmp_dir.path());
 
         // then
         assert_err!(res);

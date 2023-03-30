@@ -1,6 +1,6 @@
 #![allow(clippy::module_name_repetitions)]
 
-use crate::configuration::factories::{config_loader, config_resolver, Context};
+use crate::configuration::factories::{config_loader, config_resolver, Runtime};
 use crate::configuration::telemetry::init_tracing;
 use crate::result::SetupErr;
 use crate::startup::rocket;
@@ -23,7 +23,7 @@ mod testingtools;
 async fn main() -> Result<(), SetupErr> {
     init_tracing();
     let cfg = config_resolver(config_loader()).handle_config(path_override())?;
-    let _rocket = rocket(Context::new(cfg)?).launch().await?;
+    let _rocket = rocket(Runtime::new(cfg)?).launch().await?;
 
     Ok(())
 }

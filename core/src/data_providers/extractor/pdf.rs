@@ -33,10 +33,10 @@ impl DataExtractor for FromPdf {
 
 #[instrument]
 fn extract(path: &SafePathBuf) -> Result<DocDetails, ExtractorErr> {
-    let user = User::try_from(path)?;
     let filename = Filename::from(path);
     let text = extract_text(path)?;
     let thumbnailname = Thumbnailname::new(thumbnail_name(path))?;
+    let user = User::try_from(path)?;
     trace!("extracted text: '{}'", text);
     Ok(DocDetails::new(filename, text, thumbnailname, user))
 }

@@ -13,7 +13,7 @@ impl<T: AsRef<Path>> PathRefExt for T {
 
     #[cfg(test)]
     fn first_filename(&self) -> String {
-        use crate::data_providers::preprocessor::DirEntryExt;
+        use crate::data_providers::thumbnailer::DirEntryExt;
 
         self.as_ref()
             .read_dir()

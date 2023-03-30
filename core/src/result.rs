@@ -151,7 +151,7 @@ pub enum ExtractorErr {
 }
 
 #[derive(Debug, Error)]
-pub enum PreprocessorErr {
+pub enum ThumbnailerErr {
     #[error("Error when using bus.")]
     Bus(#[from] BusErr),
 
@@ -341,8 +341,8 @@ pub enum SetupErr {
     #[error("Failed to run encrypter.")]
     Encrypter(#[from] EncrypterErr),
 
-    #[error("Failed to run preprocessor.")]
-    Preprocessor(#[from] PreprocessorErr),
+    #[error("Failed to run thumbnailer.")]
+    Thumbnailer(#[from] ThumbnailerErr),
 
     #[error("Failed to run extractor.")]
     Extractor(#[from] ExtractorErr),

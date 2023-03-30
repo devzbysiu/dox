@@ -1,9 +1,9 @@
 use tracing::instrument;
 
-use crate::data_providers::preprocessor::image::Image;
-use crate::data_providers::preprocessor::pdf::Pdf;
+use crate::data_providers::thumbnailer::image::ImageThumbnailer;
+use crate::data_providers::thumbnailer::pdf::PdfThumbnailer;
 use crate::entities::extension::Ext;
-use crate::use_cases::services::preprocessor::{Preprocessor, PreprocessorFactory};
+use crate::use_cases::services::thumbnailer::{Thumbnailer, ThumbnailerFactory};
 
 #[cfg(test)]
 pub use test::DirEntryExt;
@@ -11,23 +11,23 @@ pub use test::DirEntryExt;
 pub mod image;
 pub mod pdf;
 
-/// Creates specific [`Preprocessor`] based on the extension.
+/// Creates specific [`Thumbnailer`] based on the extension.
 ///
-/// Each filetype requires different way of preprocessing a file. For example preprocessing a PDF
-/// file differs from preprocessing regular image (see
-/// [`FromPdf`](crate::data_providers::preprocessor::pdf::Pdf) and
-/// [`FromImage`](crate::data_providers::preprocessor::image::Image)).
+/// Each filetype requires different way of creating a thumbnail. For example creating a thumbnail
+/// of PDF file differs from creating a thumbnail of regular image (see
+/// [`FromPdf`](crate::data_providers::thumbnailer::pdf::Pdf) and
+/// [`FromImage`](crate::data_providers::thumbnailer::image::Image)).
 ///
 /// The type of a file is decided based on the file extension.
 #[derive(Debug)]
-pub struct PreprocessorFactoryImpl;
+pub struct ThumbnailerFactoryImpl;
 
-impl PreprocessorFactory for PreprocessorFactoryImpl {
+impl ThumbnailerFactory for ThumbnailerFactoryImpl {
     #[instrument(skip(self))]
-    fn make(&self, ext: &Ext) -> Preprocessor {
+    fn make(&self, ext: &Ext) -> Thumbnailer {
         match ext {
-            Ext::Png | Ext::Jpg | Ext::Webp => Box::new(Image),
-            Ext::Pdf => Box::new(Pdf),
+            Ext::Png | Ext::Jpg | Ext::Webp => Box::new(ImageThumbnailer),
+            Ext::Pdf => Box::new(PdfThumbnailer),
         }
     }
 }
@@ -44,7 +44,7 @@ mod test {
     use tempfile::tempdir;
 
     #[test]
-    fn test_processor_factory_with_correct_file() -> Result<()> {
+    fn test_thumbnailer_factory_with_correct_file() -> Result<()> {
         // given
         let test_cases = vec![
             (Ext::Png, "res/doc1.png", "doc1.png"),
@@ -52,7 +52,7 @@ mod test {
             (Ext::Webp, "res/doc4.webp", "doc4.webp"),
             (Ext::Pdf, "res/doc1.pdf", "doc1.png"),
         ];
-        let preprocessor_factory = PreprocessorFactoryImpl;
+        let thumbnailer_factory = ThumbnailerFactoryImpl;
 
         for test_case in test_cases {
             let ext = test_case.0;
@@ -61,8 +61,8 @@ mod test {
             let paths = vec![SafePathBuf::from(test_case.1)];
 
             // when
-            let extractor = preprocessor_factory.make(&ext);
-            extractor.preprocess(&Location::FS(paths), tmp_dir.path())?;
+            let extractor = thumbnailer_factory.make(&ext);
+            extractor.mk_thumbnail(&Location::FS(paths), tmp_dir.path())?;
 
             // then
             assert_eq!(tmp_dir.path().first_filename(), "res");

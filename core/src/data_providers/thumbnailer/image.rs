@@ -1,6 +1,6 @@
 use crate::entities::location::Location;
-use crate::result::{GeneralErr, PreprocessorErr};
-use crate::use_cases::services::preprocessor::FilePreprocessor;
+use crate::result::{GeneralErr, ThumbnailerErr};
+use crate::use_cases::services::thumbnailer::ThumbnailMaker;
 use std::fs::{self, create_dir_all};
 
 use std::path::Path;
@@ -11,17 +11,17 @@ use tracing::{debug, instrument};
 /// It utilizes [`fs::copy`] function to move a copy to target directory. Thumbnails directory
 /// comes from the configuration - see [`Config`](crate::configuration::cfg::Config).
 #[derive(Debug)]
-pub struct Image;
+pub struct ImageThumbnailer;
 
-impl FilePreprocessor for Image {
+impl ThumbnailMaker for ImageThumbnailer {
     #[instrument(skip(self))]
-    fn preprocess(&self, loc: &Location, target_dir: &Path) -> Result<Location, PreprocessorErr> {
+    fn mk_thumbnail(&self, loc: &Location, target_dir: &Path) -> Result<Location, ThumbnailerErr> {
         let Location::FS(paths) = loc;
         let mut result_paths = Vec::new();
         for p in paths {
             let ext = p.ext()?;
             if !ext.is_image() {
-                return Err(PreprocessorErr::InvalidExtension(
+                return Err(ThumbnailerErr::InvalidExtension(
                     GeneralErr::InvalidExtension,
                 ));
             }
@@ -40,7 +40,7 @@ impl FilePreprocessor for Image {
 mod test {
     use super::*;
 
-    use crate::data_providers::preprocessor::test::DirEntryExt;
+    use crate::data_providers::thumbnailer::test::DirEntryExt;
     use crate::entities::location::SafePathBuf;
     use crate::helpers::PathRefExt;
 
@@ -49,15 +49,15 @@ mod test {
     use tempfile::tempdir;
 
     #[test]
-    fn image_preprocessor_returns_generated_thumbnail_location() -> Result<()> {
+    fn image_thumbnailer_returns_generated_thumbnail_location() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
-        let preprocessor = Image;
+        let thumbnailer = ImageThumbnailer;
         let paths = vec![SafePathBuf::from("res/doc1.png")];
         let target_path = tmp_dir.path().join(format!("{}.png", paths[0].rel_stem()));
 
         // when
-        let res = preprocessor.preprocess(&Location::FS(paths), tmp_dir.path())?;
+        let res = thumbnailer.mk_thumbnail(&Location::FS(paths), tmp_dir.path())?;
         let target_loc = Location::FS(vec![SafePathBuf::from(target_path)]);
 
         // then
@@ -67,16 +67,16 @@ mod test {
     }
 
     #[test]
-    fn image_preprocessor_puts_image_files_in_user_dir() -> Result<()> {
+    fn image_thumbnailer_puts_image_files_in_user_dir() -> Result<()> {
         // given
         let tmp_dir = tempdir()?;
-        let preprocessor = Image;
+        let thumbnailer = ImageThumbnailer;
         let paths = vec![SafePathBuf::from("res/doc1.png")];
         let is_empty = tmp_dir.path().read_dir()?.next().is_none();
         assert!(is_empty);
 
         // when
-        preprocessor.preprocess(&Location::FS(paths), tmp_dir.path())?;
+        thumbnailer.mk_thumbnail(&Location::FS(paths), tmp_dir.path())?;
         let user_dir = tmp_dir.path().read_dir()?.next().unwrap()?;
 
         // then
@@ -87,14 +87,14 @@ mod test {
     }
 
     #[test]
-    fn image_preprocessor_fails_with_non_image_files() {
+    fn image_thumbnailer_fails_with_non_image_files() {
         // given
         let tmp_dir = tempdir().unwrap();
-        let preprocessor = Image;
+        let thumbnailer = ImageThumbnailer;
         let paths = vec![SafePathBuf::from("res/doc1.pdf")];
 
         // when
-        let res = preprocessor.preprocess(&Location::FS(paths), tmp_dir.path());
+        let res = thumbnailer.mk_thumbnail(&Location::FS(paths), tmp_dir.path());
 
         // then
         assert_err!(res);

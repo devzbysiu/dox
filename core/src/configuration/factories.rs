@@ -3,9 +3,9 @@ use crate::data_providers::cipher::Chacha20Poly1305Cipher;
 use crate::data_providers::config::{FsConfigLoader, FsConfigResolver};
 use crate::data_providers::extractor::ExtractorFactoryImpl;
 use crate::data_providers::fs::LocalFs;
-use crate::data_providers::preprocessor::PreprocessorFactoryImpl;
 use crate::data_providers::receiver::FsEventReceiver;
 use crate::data_providers::state::TantivyState;
+use crate::data_providers::thumbnailer::ThumbnailerFactoryImpl;
 use crate::result::{BusErr, EventReceiverErr, SetupErr, StateErr};
 use crate::use_cases::bus::EventBus;
 use crate::use_cases::cipher::Cipher;
@@ -13,23 +13,23 @@ use crate::use_cases::config::{CfgLoader, CfgResolver, Config};
 use crate::use_cases::fs::Fs;
 use crate::use_cases::receiver::EventRecv;
 use crate::use_cases::services::extractor::ExtractorCreator;
-use crate::use_cases::services::preprocessor::PreprocessorCreator;
+use crate::use_cases::services::thumbnailer::ThumbnailerCreator;
 use crate::use_cases::state::State;
 
 use std::sync::Arc;
 
-pub struct Context {
+pub struct Runtime {
     pub cfg: Config,
     pub bus: EventBus,
     pub fs: Fs,
     pub event_watcher: EventRecv,
-    pub preprocessor_factory: PreprocessorCreator,
+    pub thumbnailer_factory: ThumbnailerCreator,
     pub extractor_factory: ExtractorCreator,
     pub state: State,
     pub cipher: Cipher,
 }
 
-impl Context {
+impl Runtime {
     pub fn new<C: AsRef<Config>>(cfg: C) -> Result<Self, SetupErr> {
         let cfg = cfg.as_ref();
         Ok(Self {
@@ -37,7 +37,7 @@ impl Context {
             bus: event_bus()?,
             fs: fs(),
             event_watcher: event_watcher(cfg)?,
-            preprocessor_factory: preprocessor_factory(),
+            thumbnailer_factory: thumbnailer_factory(),
             extractor_factory: extractor_factory(),
             state: state(cfg)?,
             cipher: cipher(),
@@ -57,8 +57,8 @@ pub fn event_bus() -> Result<EventBus, BusErr> {
     Ok(Arc::new(LocalBus::new()?))
 }
 
-pub fn preprocessor_factory() -> PreprocessorCreator {
-    Box::new(PreprocessorFactoryImpl)
+pub fn thumbnailer_factory() -> ThumbnailerCreator {
+    Box::new(ThumbnailerFactoryImpl)
 }
 
 pub fn extractor_factory() -> ExtractorCreator {

@@ -37,8 +37,8 @@ fn extract_details(path: &SafePathBuf) -> Result<DocDetails, ExtractorErr> {
     let mut lt = LepTess::new(None, "pol")?;
     lt.set_image(path)?;
     let filename = Filename::from(path);
-    let thumbnailname = Thumbnailname::from(path);
     let body = lt.get_utf8_text()?;
+    let thumbnailname = Thumbnailname::from(path);
     let user = User::try_from(path)?;
     Ok(DocDetails::new(filename, body, thumbnailname, user))
 }

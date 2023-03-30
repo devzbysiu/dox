@@ -169,7 +169,7 @@ impl TestShim {
         Ok(())
     }
 
-    pub fn trigger_preprocessor(&mut self) -> Result<()> {
+    pub fn trigger_thumbnailer(&mut self) -> Result<()> {
         self.publ.send(BusEvent::DocsMoved(self.test_location()))?;
         Ok(())
     }
