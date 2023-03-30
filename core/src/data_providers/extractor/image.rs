@@ -34,9 +34,9 @@ fn extract_details(path: &SafePathBuf) -> Result<DocDetails, ExtractorErr> {
     debug!("executing OCR on {:?}", path);
     // NOTE: it's actually more efficient to create LepTess
     // each time than sharing it between threads
+    let filename = Filename::from(path);
     let mut lt = LepTess::new(None, "pol")?;
     lt.set_image(path)?;
-    let filename = Filename::from(path);
     let body = lt.get_utf8_text()?;
     let thumbnailname = Thumbnailname::from(path);
     let user = User::try_from(path)?;
